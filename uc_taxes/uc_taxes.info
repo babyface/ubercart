@@ -1,0 +1,5 @@
+; $Id: uc_taxes.info,v 1.1 2007/03/19 22:59:42 rszrama Exp $
+name = Taxes
+description = Define tax rates for customers' geographic locations and products sold.
+dependencies = uc_store
+package = "Ubercart - core (optional)"

@@ -1,0 +1,5 @@
+; $Id: uc_notify.info,v 1.1 2007/03/19 22:59:42 rszrama Exp $
+name = Notify
+description = Send email notifications to customers for checkout and updates.
+dependencies = uc_store uc_order
+package = "Ubercart - core (optional)"
