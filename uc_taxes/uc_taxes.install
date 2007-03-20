@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.install,v 1.1 2007/03/19 22:59:42 rszrama Exp $
+// $Id: uc_taxes.install,v 1.2 2007/03/20 16:44:39 rszrama Exp $
 
 function uc_taxes_install(){
   switch($GLOBALS['db_type']){
@@ -16,7 +16,7 @@ function uc_taxes_install(){
       );");
     break;
     case 'pgsql':
-      db_query('CREATE TABLE "uc_taxes" (
+      db_query('CREATE TABLE {uc_taxes} (
         "pcid" mediumint(9) unsigned NOT NULL default \'0\',
         "area" varchar(15) NOT NULL,
         "type" enum(\'code\',\'state\',\'country\') NOT NULL,
