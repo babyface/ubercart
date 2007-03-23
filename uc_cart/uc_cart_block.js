@@ -1,10 +1,12 @@
-// $Id: uc_cart_block.js,v 1.1 2007/03/19 22:59:42 rszrama Exp $
+// $Id: uc_cart_block.js,v 1.2 2007/03/23 15:49:53 rszrama Exp $
 
 /**
  * Collapse the shopping cart block at page load.
  */
 $(document).ready(function(){
-  $('#block-cart-contents').hide(0);
+  if (expanded_block == false) {
+    $('#block-cart-contents').hide(0);
+  }
 });
 
 /**
