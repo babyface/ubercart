@@ -1,4 +1,4 @@
-// $Id: uc_store.js,v 1.1 2007/03/19 22:59:42 rszrama Exp $
+// $Id: uc_store.js,v 1.2 2007/04/05 15:47:27 rszrama Exp $
 
 // Add the mouseover and mouseout functions for the store links block.
 $(document).ready(
@@ -47,7 +47,7 @@ $(document).ready(
       function() {
         $(this).dblclick(
           function() {
-            var url = base_path + 'admin/store/customers/orders/' + this.id.substring(9);
+            var url = base_path + '?q=admin/store/customers/orders/' + this.id.substring(9);
             window.location = url;
           }
         );
@@ -63,7 +63,7 @@ $(document).ready(
       function() {
         $(this).dblclick(
           function() {
-            var url = base_path + 'admin/store/orders/' + this.id.substring(6);
+            var url = base_path + '?q=admin/store/orders/' + this.id.substring(6);
             window.location = url;
           }
         );

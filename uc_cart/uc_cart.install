@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.install,v 1.1 2007/03/19 22:59:42 rszrama Exp $
+// $Id: uc_cart.install,v 1.2 2007/04/05 15:47:26 rszrama Exp $
 
 /**
  * Ubercart uc_cart.module schema
@@ -15,7 +15,7 @@ function uc_cart_install() {
         changed int(11) NOT NULL default '0',
         data text,
         KEY cart_id (cart_id)
-      );");
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
       break;
     case 'pgsql':
        db_query("CREATE TABLE {uc_cart_products} (
