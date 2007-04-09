@@ -1,4 +1,4 @@
-// $Id: uc_cart_block.js,v 1.2 2007/03/23 15:49:53 rszrama Exp $
+// $Id: uc_cart_block.js,v 1.3 2007/04/09 12:55:12 rszrama Exp $
 
 /**
  * Collapse the shopping cart block at page load.
@@ -17,9 +17,9 @@ function cart_toggle(uc_cart_path) {
 
   isrc = $('#block-cart-title-arrow').attr('src');
   if (isrc.toLowerCase().match("up") != null) {
-    $('#block-cart-title-arrow').attr('src', uc_cart_path + '/images/bullet-arrow-down.png');
+    $('#block-cart-title-arrow').attr('src', uc_cart_path + '/images/bullet-arrow-down.gif');
   }
   else {
-    $('#block-cart-title-arrow').attr('src', uc_cart_path + '/images/bullet-arrow-up.png');
+    $('#block-cart-title-arrow').attr('src', uc_cart_path + '/images/bullet-arrow-up.gif');
   }
 }                                                                             
