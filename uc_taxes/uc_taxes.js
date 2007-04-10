@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, base_path, li_titles, li_values; -*-
-// $Id: uc_taxes.js,v 1.2 2007/04/05 15:47:28 rszrama Exp $
+// $Id: uc_taxes.js,v 1.3 2007/04/10 16:21:24 rszrama Exp $
 
 $(document).ready(function(){
   getTax();
@@ -20,7 +20,7 @@ function getTax(){
   var order = 'O:8:"stdClass":' + order_size + ':{s:8:"products";' + encodeURIComponent($("[@name=cart_contents]").val())
     + 's:13:"delivery_zone";i:' + $("select[@name*=delivery_zone] option:selected").val()
     + ';s:20:"delivery_postal_code";s:' + $("input[@name*=delivery_postal_code]").val().length +':"' + encodeURIComponent($("input[@name*=delivery_postal_code]").val())
-  + '";s:16:"delivery_country":i:223;' + line_item + '}';
+  + '";s:16:"delivery_country":i:840;' + line_item + '}';
   $.ajax({
     type: "POST",
     url: base_path + "?q=taxes/" + order,
