@@ -1,4 +1,4 @@
-/* $Id: uc_store.css,v 1.1 2007/03/19 22:59:42 rszrama Exp $ */
+/* $Id: uc_store.css,v 1.2 2007/05/08 21:13:24 rszrama Exp $ */
 
 #store-links, #store-links ul {
   padding: 0;
@@ -101,5 +101,12 @@
 .uc-cust-orders-table .uc-store-icon {
   float: left;
   margin-right: .5em;
+}
+
+#store-footer {
+  width: 100%;
+  text-align: center;
+  font-size: x-small;
+  clear: both;
 }
 

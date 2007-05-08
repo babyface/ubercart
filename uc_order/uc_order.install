@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.2 2007/04/05 15:47:27 rszrama Exp $
+// $Id: uc_order.install,v 1.3 2007/05/08 21:13:24 rszrama Exp $
 
 /**
  * Implementation of hook_install().
@@ -206,6 +206,21 @@ function uc_order_install(){
               ."(4, 'Shipped', 1);");
     break;
   }
+}
+
+function uc_order_uninstall() {
+  db_query("DROP TABLE IF EXISTS {uc_orders}");
+  db_query("DROP TABLE IF EXISTS {uc_order_admin_comments}");
+  db_query("DROP TABLE IF EXISTS {uc_order_comments}");
+  db_query("DROP TABLE IF EXISTS {uc_order_line_items}");
+  db_query("DROP TABLE IF EXISTS {uc_order_log}");
+  db_query("DROP TABLE IF EXISTS {uc_order_products}");
+  db_query("DROP TABLE IF EXISTS {uc_order_statuses}");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_order_pane_%'");
+  variable_del('uc_order_number_displayed');
+  variable_del('uc_order_logging');
+  variable_del('uc_order_capitalize_addresses');
+  variable_del('uc_ubrowser_product_select');
 }
 
 function uc_order_update_1(){

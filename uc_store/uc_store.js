@@ -1,4 +1,4 @@
-// $Id: uc_store.js,v 1.2 2007/04/05 15:47:27 rszrama Exp $
+// $Id: uc_store.js,v 1.3 2007/05/08 21:15:31 rszrama Exp $
 
 // Add the mouseover and mouseout functions for the store links block.
 $(document).ready(

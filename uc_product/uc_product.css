@@ -1,4 +1,4 @@
-/* $Id: uc_product.css,v 1.2 2007/04/05 15:47:27 rszrama Exp $ */
+/* $Id: uc_product.css,v 1.3 2007/05/08 21:13:24 rszrama Exp $ */
 
 /*.node .links {
   clear: right;
@@ -60,4 +60,29 @@ h3.title {
 
 .node-form .product-field input {
   width: auto;
+}
+
+.product-ubrowser, .product-buffer {
+  background-color: #dddddd;
+  border: 1px solid #999999;
+  margin-bottom: 1em;
+  margin-right: 2em;
+  width: auto;
+}
+
+#buffer-images {
+  /* width: 100%; */
+}
+
+#buffer-images img {
+  margin: 2px;
+  padding: 2px;
+}
+
+#edit-reset {
+  clear: left;
+}
+
+table.product-list {
+  clear: both;
 }
