@@ -1,5 +1,6 @@
-; $Id: uc_product_kit.info,v 1.1 2007/03/19 22:59:42 rszrama Exp $
+; $Id: uc_product_kit.info,v 1.2 2007/06/07 21:41:42 rszrama Exp $
 name = Product Kit
 description = This node module represents two or more products that have been listed together. This presents a logical and convenient grouping of items to the customer.
 dependencies = uc_product
 package = Ubercart - extra
+
