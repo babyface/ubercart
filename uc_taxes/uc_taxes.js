@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, base_path, li_titles, li_values; -*-
-// $Id: uc_taxes.js,v 1.4 2007/05/08 21:13:24 rszrama Exp $
+// $Id: uc_taxes.js,v 1.5 2007/07/06 21:47:53 rszrama Exp $
 
 var pane = '';
 if ($("input[@name*=delivery_]").length){
@@ -21,7 +21,7 @@ function getTax(){
   var i = 0;
   for (key in li_titles){
     if (key != 'subtotal'){
-      line_item = 'i:' + i + ';a:2:{s:4:"type";s:'+ key.length + ':"'+ key + '";s:6:"amount";d:' + li_values[key] + ';}';
+      line_item = line_item + 'i:' + i + ';a:2:{s:4:"type";s:'+ key.length + ':"'+ key + '";s:6:"amount";d:' + li_values[key] + ';}';
       i++;
     }
   }
@@ -37,9 +37,9 @@ function getTax(){
     dataType: "json",
     success: function(taxes){
     //if (taxes.constructor == Array){
-      var i;
-      for (i in taxes){
-        set_line_item("tax_" + taxes[i].id, taxes[i].name, taxes[i].amount, 9);
+      var j;
+      for (j in taxes){
+        set_line_item("tax_" + taxes[j].id, taxes[j].name, taxes[j].amount, 9);
       }
     //}
     }

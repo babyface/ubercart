@@ -1,4 +1,4 @@
-// $Id: uc_cart.js,v 1.3 2007/05/08 21:13:23 rszrama Exp $
+// $Id: uc_cart.js,v 1.4 2007/07/06 21:47:51 rszrama Exp $
 
 /**
  * Scan the DOM and display the cancel and continue buttons.
@@ -62,7 +62,7 @@ function apply_address(type, address_str) {
   if ($('#edit-panes-' + type + '-pane-' + type + '-country').val() != address.country) {
     $('#edit-panes-' + type + '-pane-' + type + '-country').val(address.country);
     try {
-      uc_update_zone_select('edit-panes-' + type + '-pane-' + type + '-country', address.zone);
+      uc_update_zone_select('#edit-panes-' + type + '-pane-' + type + '-country', address.zone);
     }
     catch (err) {}
   }
