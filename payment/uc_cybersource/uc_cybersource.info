@@ -1,0 +1,6 @@
+; $Id: uc_cybersource.info,v 1.1 2007/09/13 15:57:14 rszrama Exp $
+name = "CyberSource"
+description = "Enable to process payments using CyberSource Silent Order POST."
+dependencies = uc_payment
+package = Ubercart - payment
+

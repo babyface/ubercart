@@ -1,4 +1,4 @@
-// $Id: uc_store.js,v 1.4 2007/06/07 21:41:41 rszrama Exp $
+// $Id: uc_store.js,v 1.5 2007/09/13 15:57:19 rszrama Exp $
 
 // Add the mouseover and mouseout functions for the store links block.
 sfHover = function() {
@@ -44,7 +44,7 @@ $(document).ready(
       function() {
         $(this).dblclick(
           function() {
-            var url = base_path + '?q=admin/store/customers/orders/' + this.id.substring(9);
+            var url = Drupal.settings('base_path') + '?q=admin/store/customers/orders/' + this.id.substring(9);
             window.location = url;
           }
         );
@@ -60,7 +60,7 @@ $(document).ready(
       function() {
         $(this).dblclick(
           function() {
-            var url = base_path + '?q=admin/store/orders/' + this.id.substring(6);
+            var url = Drupal.settings['base_path'] + '?q=admin/store/orders/' + this.id.substring(6);
             window.location = url;
           }
         );
@@ -76,7 +76,7 @@ $(document).ready(
       function() {
         $(this).click(
           function() {
-            window.location = base_path + this.id;
+            window.location = Drupal.settings['base_path'] + '?q=' + this.id;
           }
         );
       }

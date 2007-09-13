@@ -1,4 +1,4 @@
-; $Id: uc_product_kit.info,v 1.2 2007/06/07 21:41:42 rszrama Exp $
+; $Id: uc_product_kit.info,v 1.3 2007/09/13 15:57:19 rszrama Exp $
 name = Product Kit
 description = This node module represents two or more products that have been listed together. This presents a logical and convenient grouping of items to the customer.
 dependencies = uc_product

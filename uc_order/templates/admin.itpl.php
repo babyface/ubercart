@@ -1,5 +1,5 @@
 <?php
-// $Id: admin.itpl.php,v 1.1 2007/06/07 21:41:44 rszrama Exp $
+// $Id: admin.itpl.php,v 1.2 2007/09/13 15:57:19 rszrama Exp $
 
 /**
  * This file is the default admin notification template for Ubercart.

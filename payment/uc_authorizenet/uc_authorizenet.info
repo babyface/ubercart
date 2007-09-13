@@ -1,0 +1,6 @@
+; $Id: uc_authorizenet.info,v 1.1 2007/09/13 15:57:13 rszrama Exp $
+name = Authorize.net
+description = A gateway used to process payments using Authorize.net - AIM only.
+dependencies = uc_payment uc_credit
+package = Ubercart - payment
+

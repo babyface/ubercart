@@ -1,4 +1,4 @@
-; $Id: uc_product.info,v 1.3 2007/06/07 21:41:41 rszrama Exp $
+; $Id: uc_product.info,v 1.4 2007/09/13 15:57:19 rszrama Exp $
 name = Product
 description = REQUIRED. A module to represent items in an online store. Imagecache and CCK Image field recommended.
 dependencies = uc_store

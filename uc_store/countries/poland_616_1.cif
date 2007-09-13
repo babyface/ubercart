@@ -1,5 +1,5 @@
 <?php
-// $Id: poland_616_1.cif,v 1.1 2007/04/10 16:21:24 rszrama Exp $
+// $Id: poland_616_1.cif,v 1.2 2007/09/13 15:57:19 rszrama Exp $
 
 function poland_install() {
   db_query("INSERT INTO {uc_countries} VALUES ('616', 'Poland', 'PL', 'POL', 1)");

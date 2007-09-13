@@ -1,5 +1,5 @@
 <?php
-// $Id: singapore_702_1.cif,v 1.1 2007/07/10 20:57:31 rszrama Exp $
+// $Id: singapore_702_1.cif,v 1.2 2007/09/13 15:57:19 rszrama Exp $
 
 /**
  * Implementation of hook_install().

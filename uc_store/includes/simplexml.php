@@ -1,6 +1,6 @@
 <?php
 /**
-* @version		$Id: simplexml.php,v 1.1 2007/07/06 21:47:54 rszrama Exp $
+* @version		$Id: simplexml.php,v 1.2 2007/09/13 15:57:20 rszrama Exp $
 * @package		Joomla.Framework
 * @subpackage	Utilities
 * @copyright	Copyright (C) 2005 - 2007 Open Source Matters. All rights reserved.

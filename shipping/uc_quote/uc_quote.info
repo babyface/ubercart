@@ -1,0 +1,6 @@
+; $Id: uc_quote.info,v 1.1 2007/09/13 15:57:15 rszrama Exp $
+name = Shipping Quotes
+description = Retrieve and display quotes for shipping products.
+dependencies = uc_store uc_order uc_cart
+package = "Ubercart - core (optional)"
+

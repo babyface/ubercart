@@ -1,5 +1,5 @@
 <?php
-// $Id: XML2Array.php,v 1.1 2007/03/19 22:59:42 rszrama Exp $
+// $Id: XML2Array.php,v 1.2 2007/09/13 15:57:20 rszrama Exp $
 
 /* 
    By: bbellwfu@gmail.com from PHP.net comments for xml_parse!
@@ -31,9 +31,9 @@ class xml2Array {
                   xml_error_string(xml_get_error_code($this->resParser)),
                   xml_get_current_line_number($this->resParser)));
     }
-                        
+
     xml_parser_free($this->resParser);
-        
+
     return $this->arrOutput;
   }
 
