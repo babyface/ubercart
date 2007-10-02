@@ -1,4 +1,4 @@
-// $Id: uc_order.js,v 1.5 2007/09/13 15:57:18 rszrama Exp $
+// $Id: uc_order.js,v 1.6 2007/10/02 17:43:46 rszrama Exp $
 
 var customer_select = '';
 var add_product_browser = '';

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.1 2007/09/13 15:57:16 rszrama Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.2 2007/10/02 17:43:44 rszrama Exp $
 
 /**
  * @file

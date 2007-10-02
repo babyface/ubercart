@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, basePath, getTax; -*-
-// $Id: uc_quote.js,v 1.1 2007/09/13 15:57:15 rszrama Exp $
+// $Id: uc_quote.js,v 1.2 2007/10/02 17:43:42 rszrama Exp $
 
 var page;
 var details;

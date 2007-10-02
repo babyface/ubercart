@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.install,v 1.6 2007/09/13 15:57:17 rszrama Exp $
+// $Id: uc_catalog.install,v 1.7 2007/10/02 17:43:44 rszrama Exp $
 
 function uc_catalog_install(){
   //Find possible Product Catalog vocabulary.

@@ -1,5 +1,5 @@
 <?php
-// $Id: XML2Array.php,v 1.2 2007/09/13 15:57:20 rszrama Exp $
+// $Id: XML2Array.php,v 1.3 2007/10/02 17:43:48 rszrama Exp $
 
 /* 
    By: bbellwfu@gmail.com from PHP.net comments for xml_parse!

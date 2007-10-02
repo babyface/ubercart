@@ -1,4 +1,4 @@
-; $Id: uc_store.info,v 1.4 2007/09/13 15:57:19 rszrama Exp $
+; $Id: uc_store.info,v 1.5 2007/10/02 17:43:48 rszrama Exp $
 name = Store
 description = REQUIRED. Setup the store settings and manage your Ubercart site.
 dependencies = tapir ubrowser

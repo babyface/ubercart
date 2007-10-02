@@ -1,4 +1,4 @@
-; $Id: uc_weightquote.info,v 1.1 2007/09/13 15:57:16 rszrama Exp $
+; $Id: uc_weightquote.info,v 1.2 2007/10/02 17:43:43 rszrama Exp $
 name = Weight quote
 description = Assigns a shipping rate to products based on weight.
 dependencies = uc_quote

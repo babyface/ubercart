@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.install,v 1.7 2007/09/13 15:57:19 rszrama Exp $
+// $Id: uc_product.install,v 1.8 2007/10/02 17:43:47 rszrama Exp $
 
 /**
  * Ubercart uc_product.module schema

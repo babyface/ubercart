@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_checkout_pane.inc,v 1.1 2007/09/13 15:57:14 rszrama Exp $
+// $Id: uc_payment_checkout_pane.inc,v 1.2 2007/10/02 17:43:42 rszrama Exp $
 
 function uc_checkout_pane_payment($op, &$arg1, $arg2) {
   switch ($op) {

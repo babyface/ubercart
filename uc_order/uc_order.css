@@ -1,4 +1,4 @@
-/* $Id: uc_order.css,v 1.3 2007/09/13 15:57:18 rszrama Exp $ */
+/* $Id: uc_order.css,v 1.4 2007/10/02 17:43:46 rszrama Exp $ */
 
 .uc-orders-table tr.odd:hover, .uc-orders-table tr.even:hover {
   background-color: #ddd;

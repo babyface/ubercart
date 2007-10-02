@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, base_path, li_titles, li_values, tax_weight; -*-
-// $Id: uc_taxes.js,v 1.6 2007/09/13 15:57:20 rszrama Exp $
+// $Id: uc_taxes.js,v 1.7 2007/10/02 17:43:50 rszrama Exp $
 
 var pane = '';
 if ($("input[@name*=delivery_]").length){

@@ -1,4 +1,4 @@
-// $Id: uc_country_select.js,v 1.2 2007/09/13 15:57:19 rszrama Exp $
+// $Id: uc_country_select.js,v 1.3 2007/10/02 17:43:48 rszrama Exp $
 
 $(document).ready(
   function() {

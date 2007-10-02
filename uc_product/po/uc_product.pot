@@ -1,4 +1,4 @@
-# $Id: uc_product.pot,v 1.3 2007/09/13 15:57:19 rszrama Exp $
+# $Id: uc_product.pot,v 1.4 2007/10/02 17:43:47 rszrama Exp $
 #
 # LANGUAGE translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>

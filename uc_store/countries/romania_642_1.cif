@@ -1,5 +1,5 @@
 <?php
-// $Id: romania_642_1.cif,v 1.2 2007/09/13 15:57:19 rszrama Exp $
+// $Id: romania_642_1.cif,v 1.3 2007/10/02 17:43:48 rszrama Exp $
 
 function romania_install() {
   // VALUES = Country ID, Country Name, 2-digit Code, 3-digit Code, File Version

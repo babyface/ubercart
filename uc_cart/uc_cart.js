@@ -1,4 +1,4 @@
-// $Id: uc_cart.js,v 1.5 2007/09/13 15:57:16 rszrama Exp $
+// $Id: uc_cart.js,v 1.6 2007/10/02 17:43:44 rszrama Exp $
 
 var copy_box_checked = false;
 
