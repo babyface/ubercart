@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_order_pane.inc,v 1.2 2007/10/02 17:43:42 rszrama Exp $
+// $Id: uc_payment_order_pane.inc,v 1.3 2007/10/02 18:11:54 rszrama Exp $
 
 /**
  * @file
@@ -51,6 +51,9 @@ function uc_order_pane_payment($op, $arg1) {
       return $output;
 
     case 'edit-form':
+      drupal_add_js('misc/progress.js');
+      drupal_add_js("var def_payment_msg = '';", 'inline');
+      
       $form['payment'] = array(
         '#type' => 'fieldset',
         '#title' => t("Modify 'Payment Info'"),

@@ -1,4 +1,6 @@
 <?php
+// $Id: HOP.php,v 1.3 2007/10/02 18:11:54 rszrama Exp $
+
 ##################
 #  CyberSource Hosted Order Page library.  Inserts fields into the
 #  checkout form for posting data to the CyberSource Hosted Order

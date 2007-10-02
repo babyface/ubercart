@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, basePath, getTax; -*-
-// $Id: uc_quote.js,v 1.2 2007/10/02 17:43:42 rszrama Exp $
+// $Id: uc_quote.js,v 1.3 2007/10/02 18:11:55 rszrama Exp $
 
 var page;
 var details;
@@ -62,7 +62,7 @@ function quoteCallback(products){
   // progress.startMonitoring(Drupal.settings['base_path'] + "shipping/quote", 0);
   $.ajax({
     type: "POST",
-    url: Drupal.settings['base_path'] + "?q=cart/checkout/shipping/quote",
+    url: Drupal.settings['base_path'] + "cart/checkout/shipping/quote",
     data: details,
     dataType: "json",
     success: displayQuote

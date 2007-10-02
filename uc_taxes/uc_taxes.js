@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, base_path, li_titles, li_values, tax_weight; -*-
-// $Id: uc_taxes.js,v 1.7 2007/10/02 17:43:50 rszrama Exp $
+// $Id: uc_taxes.js,v 1.8 2007/10/02 18:11:58 rszrama Exp $
 
 var pane = '';
 if ($("input[@name*=delivery_]").length){
@@ -45,7 +45,7 @@ function getTax(){
     + line_item + '}';
   $.ajax({
     type: "POST",
-    url: Drupal.settings['base_path'] + "?q=taxes/calculate",
+    url: Drupal.settings['base_path'] + "taxes/calculate",
     data: 'order=' + order,
     dataType: "json",
     success: function(taxes){

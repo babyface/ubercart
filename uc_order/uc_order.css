@@ -1,4 +1,4 @@
-/* $Id: uc_order.css,v 1.4 2007/10/02 17:43:46 rszrama Exp $ */
+/* $Id: uc_order.css,v 1.5 2007/10/02 18:11:57 rszrama Exp $ */
 
 .uc-orders-table tr.odd:hover, .uc-orders-table tr.even:hover {
   background-color: #ddd;
@@ -180,3 +180,12 @@
 .product-options {
   font-size: .7em;
 }
+
+.update-controls div {
+  padding-right: 1em;
+}
+
+.update-controls div, .update-controls label {
+  display: inline;
+}
+

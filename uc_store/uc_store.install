@@ -1,4 +1,5 @@
 <?php
+// $Id: uc_store.install,v 1.7 2007/10/02 18:11:58 rszrama Exp $
 
 function uc_store_install(){
   switch($GLOBALS['db_type']){
