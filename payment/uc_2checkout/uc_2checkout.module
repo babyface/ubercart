@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_2checkout.module,v 1.3 2007/10/02 18:11:54 rszrama Exp $
+// $Id: uc_2checkout.module,v 1.4 2007/10/03 13:02:55 rszrama Exp $
 
 /**
  * @file
@@ -214,7 +214,7 @@ function uc_2checkout_complete($cart_id = 0) {
 
   $order = uc_order_load($_POST['merchant_order_id']);
 
-  if ($order === FALSE || $order->order_status != uc_get_order_status_id('in_checkout')) {
+  if ($order === FALSE || uc_order_status_data($order->order_status, 'state') != 'in_checkout') {
     print t('An error has occurred during payment.  Please contact us to ensure your order has submitted.');
     exit();
   }
