@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.11 2007/10/02 18:11:57 rszrama Exp $
+// $Id: uc_catalog.module,v 1.12 2007/10/04 14:48:25 rszrama Exp $
 
 /**
  * @file
@@ -569,7 +569,7 @@ function theme_uc_catalog_browse($tid = 0){
   //$args = func_get_args();
   //drupal_set_message('<pre>'. print_r($args, true) .'</pre>');
   $output = '';
-  $catalog = uc_catalog_get_page($tid);
+  $catalog = uc_catalog_get_page((int)$tid);
   if ($catalog->name != variable_get('uc_catalog_name', t('Catalog'))) {
     drupal_set_title($catalog->name);
   }

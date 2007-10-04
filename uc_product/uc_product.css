@@ -1,11 +1,4 @@
-/* $Id: uc_product.css,v 1.6 2007/10/02 17:43:47 rszrama Exp $ */
-
-/*.node .links {
-  clear: right;
-}*/ /* Decide in final theme if this is really desirable. */
-/* div.image {
-  cursor: pointer;
-} */
+/* $Id: uc_product.css,v 1.7 2007/10/04 14:48:25 rszrama Exp $ */
 
 .product_image {
   float: right;
@@ -86,3 +79,12 @@ h3.title {
 table.product-list {
   clear: both;
 }
+
+.add-feature div {
+  padding-right: 1em;
+}
+
+.add-feature div, .add-feature label {
+  display: inline;
+}
+
