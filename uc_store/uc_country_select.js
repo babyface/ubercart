@@ -1,4 +1,4 @@
-// $Id: uc_country_select.js,v 1.4 2007/10/02 18:11:58 rszrama Exp $
+// $Id: uc_country_select.js,v 1.5 2007/11/05 20:32:01 rszrama Exp $
 
 $(document).ready(
   function() {
@@ -17,6 +17,12 @@ function uc_update_zone_select(country_select, default_zone) {
 
   $.post(Drupal.settings['base_path'] + 'uc_js_util/zone_select', options,
          function (contents) {
+           if (contents.match('value="-1"') != null) {
+             $('#' + zone_select).attr('disabled', 'disabled');
+           }
+           else {
+             $('#' + zone_select).removeAttr('disabled');
+           }
            $('#' + zone_select).empty().append(contents).val(default_zone);
          }
   );

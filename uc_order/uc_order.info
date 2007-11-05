@@ -1,4 +1,4 @@
-; $Id: uc_order.info,v 1.4 2007/10/02 17:43:46 rszrama Exp $
+; $Id: uc_order.info,v 1.5 2007/11/05 20:31:59 rszrama Exp $
 name = Order
 description = REQUIRED. Receive and manage orders through your website.
 dependencies = token

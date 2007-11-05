@@ -1,4 +1,4 @@
-; $Id: uc_paypal.info,v 1.2 2007/10/02 17:43:42 rszrama Exp $
+; $Id: uc_paypal.info,v 1.3 2007/11/05 20:31:54 rszrama Exp $
 name = PayPal
 description = Integrates various PayPal payment services and IPN feedback.
 dependencies = uc_payment

@@ -1,0 +1,6 @@
+; $Id: uc_cart_links.info,v 1.1 2007/11/05 20:31:58 rszrama Exp $
+name = Cart Links
+description = Create specialized links to purchase products from other nodes.
+dependencies = uc_cart
+package = Ubercart - extra
+

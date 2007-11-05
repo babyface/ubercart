@@ -1,0 +1,5 @@
+; $Id: uc_file.info,v 1.1 2007/11/05 20:31:58 rszrama Exp $
+name = File Downloads
+description = Allows products to be associated with downloadable files.
+dependencies = uc_product
+package = "Ubercart - core (optional)"

@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, base_path, li_titles, li_values, tax_weight; -*-
-// $Id: uc_taxes.js,v 1.8 2007/10/02 18:11:58 rszrama Exp $
+// $Id: uc_taxes.js,v 1.9 2007/11/05 20:32:02 rszrama Exp $
 
 var pane = '';
 if ($("input[@name*=delivery_]").length){
@@ -15,7 +15,7 @@ $(document).ready(function(){
 });
 
 function getTax(){
-  var zone = $("select[@name*=" + pane + "_zone] option:selected").val();
+  var zone = $("select[@name*=" + pane + "_zone]").val();
   if (!zone){
     zone = "0";
   }
@@ -23,7 +23,7 @@ function getTax(){
   if (!code){
     code = '';
   }
-  var country = $("select[@name*=" + pane + "_country] option:selected").val();
+  var country = $("select[@name*=" + pane + "_country]").val();
   if (!country){
     country = "0";
   }

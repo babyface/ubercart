@@ -1,4 +1,13 @@
-/* $Id: uc_order.css,v 1.5 2007/10/02 18:11:57 rszrama Exp $ */
+/* $Id: uc_order.css,v 1.6 2007/11/05 20:31:59 rszrama Exp $ */
+
+.uc-orders-table {
+  width: 100%;
+  clear: right;
+}
+
+.uc-orders-table thead th {
+  white-space: nowrap;
+}
 
 .uc-orders-table tr.odd:hover, .uc-orders-table tr.even:hover {
   background-color: #ddd;

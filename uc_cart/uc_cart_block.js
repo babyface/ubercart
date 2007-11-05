@@ -1,4 +1,4 @@
-// $Id: uc_cart_block.js,v 1.6 2007/10/02 17:43:44 rszrama Exp $
+// $Id: uc_cart_block.js,v 1.7 2007/11/05 20:31:57 rszrama Exp $
 
 /**
  * Collapse the shopping cart block at page load.

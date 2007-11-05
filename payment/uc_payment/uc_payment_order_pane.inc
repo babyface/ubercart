@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_order_pane.inc,v 1.3 2007/10/02 18:11:54 rszrama Exp $
+// $Id: uc_payment_order_pane.inc,v 1.4 2007/11/05 20:31:54 rszrama Exp $
 
 /**
  * @file

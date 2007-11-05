@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_order_pane.inc,v 1.3 2007/10/02 18:11:57 rszrama Exp $
+// $Id: uc_order_order_pane.inc,v 1.4 2007/11/05 20:31:59 rszrama Exp $
 
 /**
  * @file
@@ -506,8 +506,7 @@ function uc_order_pane_order_comments($op, $arg1) {
           $rows[] = array(
             'data' => array(
               array('data' => date('m/d/Y', $comment->created), 'align' => 'center'),
-              //array('data' => uc_order_get_status_name($comment->order_status), 'align' => 'center'),
-              array('data' => $comment->title, 'align' => 'center'),
+              array('data' => $comment->title, 'align' => 'center', 'nowrap' => 'nowrap'),
               $comment->message
             ),
             'valign' => 'top'

@@ -1,4 +1,4 @@
-; $Id: uc_attribute.info,v 1.4 2007/10/02 17:43:43 rszrama Exp $
+; $Id: uc_attribute.info,v 1.5 2007/11/05 20:31:56 rszrama Exp $
 name = Attribute
 description = Allow the customer to choose attributes for a product at checkout.
 dependencies = uc_product

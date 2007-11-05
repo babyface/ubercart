@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.install,v 1.9 2007/10/02 20:11:43 rszrama Exp $
+// $Id: uc_product_kit.install,v 1.10 2007/11/05 20:32:00 rszrama Exp $
 
 function uc_product_kit_install(){
   switch($GLOBALS['db_type']){

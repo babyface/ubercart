@@ -1,0 +1,17 @@
+/* $Id: uc_file.css,v 1.1 2007/11/05 20:31:58 rszrama Exp $ */
+
+.duration  {
+	display:inline;
+} 
+
+.duration .form-item {
+	display:inline;
+}
+
+tr.group {
+	border:0px;
+}
+
+.file-name {
+	font-style: italic;
+}

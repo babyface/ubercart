@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.install,v 1.3 2007/10/02 18:11:54 rszrama Exp $
+// $Id: uc_payment.install,v 1.4 2007/11/05 20:31:54 rszrama Exp $
 
 function uc_payment_install(){
   $t = get_t();
@@ -82,13 +82,14 @@ function uc_payment_uninstall() {
   db_query("DROP TABLE IF EXISTS {uc_payment_cod}");
   db_query("DROP TABLE IF EXISTS {uc_payment_other}");
   db_query("DROP TABLE IF EXISTS {uc_payment_receipts}");
-  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_pg_%'");
-  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_payment_method_%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_pg_%%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_payment_method_%%'");
   db_query("DELETE FROM {sequences} WHERE name LIKE '{uc_payment_receipts}_receipt_id'");
   db_query("DELETE FROM {sequences} WHERE name LIKE '{uc_payment_check}_check_id'");
   variable_del('uc_payment_tracking');
   variable_del('uc_payment_deleting');
   variable_del('uc_payment_logging');
+  variable_del('uc_default_payment_msg');
   variable_del('uc_check_mailing_company');
   variable_del('uc_check_mailing_name');
   variable_del('uc_check_mailing_street1');

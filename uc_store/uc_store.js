@@ -1,4 +1,4 @@
-// $Id: uc_store.js,v 1.7 2007/10/02 18:11:58 rszrama Exp $
+// $Id: uc_store.js,v 1.8 2007/11/05 20:32:01 rszrama Exp $
 
 // Add the mouseover and mouseout functions for the store links block.
 sfHover = function() {

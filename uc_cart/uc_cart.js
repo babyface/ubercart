@@ -1,4 +1,4 @@
-// $Id: uc_cart.js,v 1.6 2007/10/02 17:43:44 rszrama Exp $
+// $Id: uc_cart.js,v 1.7 2007/11/05 20:31:57 rszrama Exp $
 
 var copy_box_checked = false;
 
@@ -92,9 +92,9 @@ function apply_address(type, address_str) {
   if ($('#edit-panes-' + temp + '-country').val() != address.country) {
     $('#edit-panes-' + temp + '-country').val(address.country);
     try {
-      uc_update_zone_select('#edit-panes-' + temp + '-country', address.zone);
+      uc_update_zone_select('edit-panes-' + temp + '-country', address.zone);
     }
-    catch (err) {}
+    catch (err) { }
   }
 
   $('#edit-panes-' + temp + '-zone').val(address.zone).trigger('change');

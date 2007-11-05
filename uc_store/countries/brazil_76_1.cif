@@ -1,5 +1,5 @@
 <?php
-// $Id: brazil_76_1.cif,v 1.2 2007/10/02 17:43:48 rszrama Exp $
+// $Id: brazil_76_1.cif,v 1.3 2007/11/05 20:32:01 rszrama Exp $
 
 function brazil_install() {
   // VALUES = Country ID, Country Name, 2-digit Code, 3-digit Code, File Version

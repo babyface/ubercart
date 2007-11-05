@@ -1,4 +1,4 @@
-# $Id: uc_viaklix.pot,v 1.1 2007/10/04 14:06:50 rszrama Exp $
+# $Id: uc_viaklix.pot,v 1.2 2007/11/05 20:31:54 rszrama Exp $
 #
 # LANGUAGE translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>

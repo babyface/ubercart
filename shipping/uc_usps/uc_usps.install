@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.install,v 1.3 2007/10/02 18:11:56 rszrama Exp $
+// $Id: uc_usps.install,v 1.4 2007/11/05 20:31:56 rszrama Exp $
 
 function uc_usps_install(){
   switch ($GLOBALS['db_type']){
@@ -25,6 +25,9 @@ function uc_usps_install(){
 
 function uc_usps_uninstall(){
   db_query("DROP TABLE {uc_usps_products}");
+  variable_del('uc_usps_user_id');
+  variable_del('uc_usps_services');
+  variable_del('uc_usps_markup');
 }
 
 function uc_usps_update_1(){
