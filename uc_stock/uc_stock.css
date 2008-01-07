@@ -1,0 +1,9 @@
+/* $Id: uc_stock.css,v 1.1 2008/01/07 20:56:45 rszrama Exp $ */
+
+.uc-stock-table tr.odd:hover, .uc-stock-table tr.even:hover {
+	background-color:#DDDDDD;
+}
+
+tbody tr.uc-stock-below-threshold {
+	background-color:#DDDDDD;
+}
