@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.14.2.1 2008/01/07 20:56:41 rszrama Exp $
+// $Id: uc_cart.module,v 1.14.2.2 2008/01/07 22:20:44 rszrama Exp $
 
 /**
  * @file
@@ -495,7 +495,7 @@ function uc_cart_uc_message() {
   global $user;
 
   $messages['checkout_instructions'] = '';
-  $messages['review_instructions'] = t('Your order is not complete. Please review the details of your order and click !submit if all the information is correct.  You may use the Back button to make changes to your order if necessary.', array('!submit' => variable_get('uc_checkout_submit_button', t('Submit Order'))));
+  $messages['review_instructions'] = t('Your order is not complete. Please review the details of your order and click !submit if all the information is correct.  You may use the Back button to make changes to your order if necessary.', array('!submit' => variable_get('uc_checkout_submit_button', t('Submit order'))));
   $messages['completion_message'] = t('Your order is complete!');
   $messages['completion_logged_in'] = t('Thank you for shopping at !site. While logged in, you may continue shopping or <a href="!url">click here</a> to view your current order status and order history.', array('!url' => url('user/'. $user->uid .'/orders', NULL, NULL, TRUE)));
   $messages['completion_existing_user'] = t('Thank you for shopping at !site. Your current order has been attached to the account we found matching your e-mail address.') .'<p>'. t('<a href="!url">Click here</a> to login and view your current order status and order history. Remember to login when you make your next purchase for a faster checkout experience!', array('!url' => url('user', NULL, NULL, TRUE)));
@@ -810,8 +810,8 @@ function uc_cart_checkout_settings_overview() {
     'items' => array(
       t('Checkout is !status.', array('!status' => variable_get('uc_checkout_enabled', TRUE) ? t('enabled') : t('disabled'))),
       t('Anonymous checkout is !status.', array('!status' => variable_get('uc_checkout_anonymous', TRUE) ? t('enabled') : t('disabled'))),
-      t('Review order button on checkout page says %text.', array('%text' => variable_get('uc_checkout_review_button', t('Review Order')))),
-      t('Submit order button on review page says %text.', array('%text' => variable_get('uc_checkout_submit_button', t('Submit Order')))),
+      t('Review order button on checkout page says %text.', array('%text' => variable_get('uc_checkout_review_button', t('Review order')))),
+      t('Submit order button on review page says %text.', array('%text' => variable_get('uc_checkout_submit_button', t('Submit order')))),
       t('Shipping fields are !option.', array('!option' => variable_get('uc_cart_delivery_not_shippable', TRUE) ? t('hidden when applicable') : t('always shown'))),
       t('Checkout panes are !option.', array('!option' => variable_get('uc_use_next_buttons', FALSE) ? t('collapsed with next buttons') : t('expanded by default'))),
       t('Collapsible panes will !text when their next buttons are clicked.', array('!text' => variable_get('uc_collapse_current_pane', FALSE) ? t('collapse') : t('not collapse'))),
@@ -928,13 +928,13 @@ function uc_cart_checkout_settings_form() {
     '#type' => 'textfield',
     '#title' => t('Review order button text'),
     '#description' => t('Change the text on the review order button at the bottom of the checkout screen.'),
-    '#default_value' => variable_get('uc_checkout_review_button', t('Review Order')),
+    '#default_value' => variable_get('uc_checkout_review_button', t('Review order')),
   );
   $form['general']['uc_checkout_submit_button'] = array(
     '#type' => 'textfield',
     '#title' => t('Submit order button text'),
     '#description' => t('Change the text on the submit order button at the bottom of the review screen.'),
-    '#default_value' => variable_get('uc_checkout_submit_button', t('Submit Order')),
+    '#default_value' => variable_get('uc_checkout_submit_button', t('Submit order')),
   );
   $form['general']['uc_cart_delivery_not_shippable'] = array(
     '#type' => 'checkbox',
@@ -1412,7 +1412,7 @@ function uc_cart_checkout_form() {
 
   $form['cart_contents'] = array('#type' => 'hidden', '#value' => serialize(uc_cart_get_contents()));
   $form['cancel'] = array('#type' => 'submit', '#submit' => FALSE, '#value' => t('Cancel'));
-  $form['continue'] = array('#type' => 'submit', '#value' => variable_get('uc_checkout_review_button', t('Review Order')));
+  $form['continue'] = array('#type' => 'submit', '#value' => variable_get('uc_checkout_review_button', t('Review order')));
 
   return $form;
 }
@@ -1596,7 +1596,7 @@ function uc_cart_checkout_review_form() {
   }
 
   $form['back'] = array('#type' => 'button', '#value' => t('Back'));
-  $form['submit'] = array('#type' => 'submit', '#value' => variable_get('uc_checkout_submit_button', t('Submit Order')));
+  $form['submit'] = array('#type' => 'submit', '#value' => variable_get('uc_checkout_submit_button', t('Submit order')));
 
   return $form;
 }
@@ -1682,13 +1682,6 @@ function uc_cart_complete_sale($order) {
         'roles' => array(),
         'status' => variable_get('uc_new_customer_status_active', TRUE) ? 1 : 0,
       );
-			if($_SESSION['new_user']['profile']) {
-				foreach($_SESSION['new_user']['profile'] as $category => $pfields) {
-					foreach($pfields as $field => $value) {
-						$fields[$field] = $value;
-					}
-				}
-			}
       $account = user_save('', $fields);
       if (variable_get('uc_new_customer_email', TRUE)) {
         $variables = array('!username' => $fields['name'], '!site' => variable_get('site_name', 'Drupal'), '!password' => $fields['pass'], '!uri' => $base_url, '!uri_brief' => substr($base_url, strlen('http://')), '!mailto' => $fields['mail'], '!date' => format_date(time()), '!login_uri' => url('user', NULL, NULL, TRUE), '!edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '!login_url' => user_pass_reset_url($account));
