@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_order_pane.inc,v 1.3 2007/10/02 18:11:57 rszrama Exp $
+// $Id: uc_order_order_pane.inc,v 1.4.2.1 2008/01/07 20:56:44 rszrama Exp $
 
 /**
  * @file
@@ -24,7 +24,7 @@ function uc_order_pane_ship_to($op, $arg1) {
     case 'edit-form':
       $form['ship_to'] = array(
         '#type' => 'fieldset',
-        '#title' => t("Modify 'Ship to' Information"),
+        '#title' => t("Modify 'Ship to' information"),
         '#collapsible' => TRUE,
         '#collapsed' => FALSE,
       );
@@ -110,7 +110,7 @@ function uc_order_pane_bill_to($op, $arg1) {
     case 'edit-form':
       $form['bill_to'] = array(
         '#type' => 'fieldset',
-        '#title' => t("Modify 'Bill to' Information"),
+        '#title' => t("Modify 'Bill to' information"),
         '#collapsible' => TRUE,
         '#collapsed' => FALSE,
       );
@@ -155,12 +155,12 @@ function uc_order_pane_bill_to($op, $arg1) {
     case 'edit-title':
       uc_add_base_path_js();
       $output .= ' <img src="'. base_path() . drupal_get_path('module', 'uc_store')
-                .'/images/address_book.gif" alt="Select from address book." '
-                .'title="Select from address book." onclick="load_address_select('. $arg1['order_uid']['#value'] .', \'#billing_address_select\', \'billing\');" '
+                .'/images/address_book.gif" alt="'. t('Select from address book.') .'" '
+                .'title="'. t('Select from address book.') .'" onclick="load_address_select('. $arg1['order_uid']['#value'] .', \'#billing_address_select\', \'billing\');" '
                 .'style="position: relative; top: 2px; cursor: pointer;" />';
       $output .= ' <img src="'. base_path() . drupal_get_path('module', 'uc_store') 
-               .'/images/copy.gif" alt="Copy shipping information." title="'
-               .'Copy shipping information." onclick="uc_order_copy_shipping_to_billing();" '
+               .'/images/copy.gif" alt="'. t('Copy shipping information.') .'" title="'
+               . t('Copy shipping information.') .'" onclick="uc_order_copy_shipping_to_billing();" '
                .'style="position: relative; top: 2px; cursor: pointer;" />';
       return $output;
 
@@ -201,7 +201,7 @@ function uc_order_pane_customer($op, $arg1) {
     case 'edit-form':
       $form['customer'] = array(
         '#type' => 'fieldset',
-        '#title' => t("Modify 'Customer Info'"),
+        '#title' => t("Modify 'Customer info'"),
         '#collapsible' => TRUE,
         '#collapsed' => FALSE
       );
@@ -234,8 +234,8 @@ function uc_order_pane_customer($op, $arg1) {
     case 'edit-title':
       uc_add_base_path_js();
       $output .= ' <img src="'. base_path() . drupal_get_path('module', 'uc_store')
-                .'/images/order_view.gif" alt="Search for an existing customer." '
-                .'title="Search for an existing customer." onclick="load_customer_search();" '
+                .'/images/order_view.gif" alt="'. t('Search for an existing customer.') .'" '
+                .'title="'. t('Search for an existing customer.') .'" onclick="load_customer_search();" '
                 .'style="position: relative; top: 2px; cursor: pointer;" />';
       $output .= ' <img src="'. base_path() . drupal_get_path('module', 'uc_store')
                 .'/images/menu_customers_small.gif" alt="'. t('Create a new customer.') .'" '
@@ -279,8 +279,7 @@ function uc_order_pane_products($op, $arg1) {
       drupal_add_js('uc_order_load_product_edit_div('. $arg1['order_id']['#value'] .');', 'inline');
 
       $output = '<div id="products-selector"></div>'
-               .'<div id="products-container">Loading product information... (<em>If nothing happens, '
-               .'make sure you have Javascript enabled.</em>)</div>';
+               .'<div id="products-container">'. t('Loading product information... (<em>If nothing happens, make sure you have Javascript enabled.</em>)') .'</div>';
       return $output;
 
     case 'edit-title':
@@ -416,7 +415,7 @@ function uc_order_pane_line_items($op, $arg1) {
                         .'" title="'. t('Remove line item.') .'" style="'
                         .'cursor: pointer; position: relative; top: 3px;" '
                         .'onclick="confirm_line_item_delete(\''
-                       . t('Remove this line item?') .'\', this.id);" />',
+                       . addslashes(t('Remove this line item?')) .'\', this.id);" />',
           );
           $form['line_items'][$item['line_item_id']]['amount'] = array(
             '#type' => 'textfield',
@@ -497,7 +496,7 @@ function uc_order_pane_order_comments($op, $arg1) {
       $comments = uc_order_comments_load($arg1->order_id);
       $header = array(t('Date'), t('Status'), array('data' => t('Message'), 'width' => '100%'));
       $rows[] = array(
-        date('m/d/Y', $arg1->created),
+        format_date($arg1->created, 'custom', 'm/d/Y'),
         array('data' => '-', 'align' => 'center'),
         t('Order created.')
       );
@@ -505,9 +504,8 @@ function uc_order_pane_order_comments($op, $arg1) {
         foreach ($comments as $comment) {
           $rows[] = array(
             'data' => array(
-              array('data' => date('m/d/Y', $comment->created), 'align' => 'center'),
-              //array('data' => uc_order_get_status_name($comment->order_status), 'align' => 'center'),
-              array('data' => $comment->title, 'align' => 'center'),
+              array('data' => format_date($comment->created, 'custom', 'm/d/Y'), 'align' => 'center'),
+              array('data' => $comment->title, 'align' => 'center', 'nowrap' => 'nowrap'),
               $comment->message
             ),
             'valign' => 'top'
@@ -532,7 +530,7 @@ function uc_order_pane_admin_comments($op, $arg1) {
     case 'edit-form':
       $form['admin_comment_field'] = array(
         '#type' => 'fieldset',
-        '#title' => t('Add an Admin Comment'),
+        '#title' => t('Add an admin comment'),
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       );
@@ -645,7 +643,7 @@ function uc_order_view_update_form_submit($form_id, $form_values) {
   if ($form_values['status'] != $form_values['current_status']) {
     if (uc_order_update_status($form_values['order_id'], $form_values['status'])) {
       if (is_null($form_values['order_comment']) || strlen($form_values['order_comment']) == 0) {
-        uc_order_comment_save($form_values['order_id'], $user->uid, '-', 'order', $form_values['status']);
+        uc_order_comment_save($form_values['order_id'], $user->uid, '-', 'order', $form_values['status'], $form_values['notify']);
       }
     }
   }
@@ -776,7 +774,7 @@ function op_order_comments_view_table($op, $comments) {
     case 'data':
       if (is_array($comments)) {
         foreach ($comments as $comment) {
-          $data['date'][] = array('data' => date('m/d/Y<\b\r />g:i:s A', $comment->created), 'align' => 'center', 'nowrap' => 'true');
+          $data['date'][] = array('data' => format_date($comment->created, 'custom', 'm/d/Y<\b\r />g:i:s A'), 'align' => 'center', 'nowrap' => 'true');
           $data['user'][] = array('data' => uc_get_initials($comment->uid), 'align' => 'center');
           $data['notified'][] = array('data' => (($comment->notified == 1) ? '<img src="'. base_path() . drupal_get_path('module', 'uc_order') .'/images/true-icon.gif" />': '<img src="'. base_path() . drupal_get_path('module', 'uc_order') .'/images/false-icon.gif" />'), 'align' => 'center');
           $data['status'][] = array('data' => $comment->title, 'align' => 'center');
@@ -808,7 +806,7 @@ function op_admin_comments_view_table($op, $comments) {
     case 'data':
       if (is_array($comments)) {
         foreach ($comments as $comment) {
-          $data['date'][] = array('data' => date('m/d/Y<\b\r />g:i:s A', $comment->created), 'align' => 'center', 'nowrap' => 'true', 'valign' => 'top');
+          $data['date'][] = array('data' => format_date($comment->created, 'custom', 'm/d/Y<\b\r />g:i:s A'), 'align' => 'center', 'nowrap' => 'true', 'valign' => 'top');
           $data['user'][] = array('data' => uc_get_initials($comment->uid), 'align' => 'center', 'valign' => 'top');
           $data['comment'][] = array('data' => $comment->message, 'valign' => 'top');
         }

@@ -1,25 +1,28 @@
 <?php
-// $Id: uc_payment_checkout_pane.inc,v 1.3 2007/10/02 18:11:54 rszrama Exp $
+// $Id: uc_payment_checkout_pane.inc,v 1.4.2.1 2008/01/07 20:56:38 rszrama Exp $
 
 function uc_checkout_pane_payment($op, &$arg1, $arg2) {
   switch ($op) {
     case 'view':
-      drupal_add_js('misc/progress.js');
-      if (module_exists('uc_taxes')){
-        drupal_add_js('var tax_weight = '. variable_get('uc_li_tax_weight', 9), 'inline');
-        drupal_add_js(drupal_get_path('module', 'uc_taxes') .'/uc_taxes.js');
+      if (variable_get('uc_payment_show_order_total_preview', TRUE)) {
+        drupal_add_js('misc/progress.js');
+        if (module_exists('uc_taxes')){
+          drupal_add_js('var tax_weight = '. variable_get('uc_li_tax_weight', 9), 'inline');
+          drupal_add_js(drupal_get_path('module', 'uc_taxes') .'/uc_taxes.js');
+        }
+        drupal_add_js("var def_payment_msg = '". addslashes(variable_get('uc_default_payment_msg', t('Continue with checkout to complete payment.'))) ."';", 'inline');
+  
+        $contents['current_total'] = array(
+          '#type' => 'hidden',
+          '#value' => $arg1->order_total > 0 ? $arg1->order_total : NULL,
+        );
+        $contents['shown_total'] = array(
+          '#value' => '<div style="padding: .5em 1em; margin-bottom: 1em; border: dashed 1px #bbb;" '
+                     .'id="line-items-div"><em>'. t('Preparing order total preview...') .'</em></div>',
+          '#weight' => -20,
+        );
       }
-      drupal_add_js("var def_payment_msg = '". variable_get('uc_default_payment_msg', t('Continue with checkout to complete payment.')) ."';", 'inline');
 
-      $contents['current_total'] = array(
-        '#type' => 'hidden',
-        '#value' => $arg1->order_total > 0 ? $arg1->order_total : NULL,
-      );
-      $contents['shown_total'] = array(
-        '#value' => '<div style="padding: .5em 1em; margin-bottom: 1em; border: dashed 1px #bbb;" '
-                   .'id="line-items-div"><em>'. t('Preparing order total preview...') .'</em></div>',
-        '#weight' => -20,
-      );
       $description = t('Select a payment method from the following options.');
 
       $methods = _payment_method_list();
@@ -30,7 +33,7 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
       }
       $contents['payment_method'] = array(
         '#type' => 'radios',
-        '#title' => t('Payment Method'),
+        '#title' => t('Payment method'),
         '#options' => $options,
         '#default_value' => count($options) == 1 ? array_pop(array_keys($options)) : $arg1->payment_method,
         '#disabled' => count($options) == 1 ? TRUE : FALSE,
@@ -89,6 +92,14 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
         }
       }
       return $review;
+
+    case 'settings':
+      $form['uc_payment_show_order_total_preview'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Show the order total preview on the payment pane.'),
+        '#default_value' => variable_get('uc_payment_show_order_total_preview', TRUE),
+      );
+      return $form;
   }
 }
 

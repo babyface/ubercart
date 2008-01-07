@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.7 2007/10/02 18:11:57 rszrama Exp $
+// $Id: uc_order.install,v 1.8.2.1 2008/01/07 20:56:44 rszrama Exp $
 
 /**
  * Implementation of hook_install().
@@ -37,6 +37,7 @@ function uc_order_install(){
         billing_postal_code varchar(10) NOT NULL,
         billing_country mediumint(9) NOT NULL,
         payment_method varchar(32) NOT NULL,
+        data text,
         created int(11) NOT NULL,
         modified int(11) NOT NULL,
         PRIMARY KEY (order_id),
@@ -56,7 +57,7 @@ function uc_order_install(){
         comment_id mediumint(9) NOT NULL auto_increment,
         order_id mediumint(9) NOT NULL,
         uid mediumint(9) NOT NULL,
-        order_status tinyint(4) NOT NULL,
+        order_status varchar(32) NOT NULL,
         notified tinyint(4) NOT NULL,
         message text NOT NULL,
         created int(11) NOT NULL,
@@ -142,19 +143,19 @@ function uc_order_install(){
         payment_method varchar(32) NOT NULL default 0,
         created integer NOT NULL default 0,
         modified integer NOT NULL default 0,
-        PRIMARY KEY (order_id),
-        KEY uid (uid),
-        KEY order_status (order_status)
-      );");
+        PRIMARY KEY (order_id)
+			);");
+      db_query("CREATE INDEX {uc_orders}_uid ON {uc_orders} (uid)");
+      db_query("CREATE INDEX {uc_orders}_order_status ON {uc_orders} (order_status)");
       db_query("CREATE TABLE {uc_order_admin_comments} (
         comment_id integer NOT NULL default 0,
         order_id integer NOT NULL default 0,
         uid integer NOT NULL default 0,
         message text NOT NULL default '',
         created integer NOT NULL default 0,
-        PRIMARY KEY (comment_id),
-        KEY order_id (order_id)
+        PRIMARY KEY (comment_id)
       );");
+			db_query("CREATE INDEX {uc_order_admin_comments}_order_id ON {uc_order_admin_comments} (order_id)");
       db_query("CREATE TABLE {uc_order_comments} (
         comment_id integer NOT NULL default 0,
         order_id integer NOT NULL default 0,
@@ -163,9 +164,9 @@ function uc_order_install(){
         notified smallint NOT NULL default 0,
         message text NOT NULL default '',
         created integer NOT NULL default 0,
-        PRIMARY KEY (comment_id),
-        KEY order_id (order_id)
+        PRIMARY KEY (comment_id)
       );");
+			db_query("CREATE INDEX {uc_order_comments}_order_id ON {uc_order_comments} (order_id)");
       db_query("CREATE TABLE {uc_order_line_items} (
         line_item_id integer NOT NULL default 0,
         order_id integer NOT NULL default 0,
@@ -173,18 +174,18 @@ function uc_order_install(){
         title varchar(128) NOT NULL default '',
         amount decimal(10,2) NOT NULL default 0.00,
         weight smallint NOT NULL default 0,
-        PRIMARY KEY (line_item_id),
-        KEY order_id (order_id)
+        PRIMARY KEY (line_item_id)
       );");
+			db_query("CREATE INDEX {uc_order_line_items}_order_id ON {uc_order_line_items} (order_id)");
       db_query("CREATE TABLE {uc_order_log} (
         order_log_id integer NOT NULL default 0,
         order_id integer NOT NULL default 0,
         uid integer NOT NULL default 0,
         changes text NOT NULL default '',
         created integer NOT NULL default 0,
-        PRIMARY KEY (order_log_id),
-        KEY order_id (order_id)
+        PRIMARY KEY (order_log_id)
       );");
+			db_query("CREATE INDEX {uc_order_log}_order_id ON {uc_order_log} (order_id)");
       db_query("CREATE TABLE {uc_order_products} (
         order_product_id integer NOT NULL default 0,
         order_id integer NOT NULL default 0,
@@ -197,23 +198,22 @@ function uc_order_install(){
         price decimal(10,2) NOT NULL default 0.00,
         weight float NOT NULL default 0.0,
         data text NOT NULL default '',
-        PRIMARY KEY (order_product_id),
-        KEY order_id (order_id)
+        PRIMARY KEY (order_product_id)
       );");
+			db_query("CREATE INDEX {uc_order_products}_order_id ON {uc_order_products} (order_id)");
       db_query("CREATE TABLE {uc_order_statuses} (
         order_status_id varchar(32) NOT NULL,
         title varchar(48) NOT NULL,
         state varchar(32) NOT NULL,
-        weight smallint(9) NOT NULL,
-        locked tinyint(4) NOT NULL,
+        weight smallint NOT NULL,
+        locked smallint NOT NULL,
         PRIMARY KEY  (order_status_id)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
-      db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES "
-              ."('canceled', '". $t('Canceled') ."', 'canceled', -20, 1), "
-              ."('in_checkout', '". $t('In checkout') ."', 'in_checkout', -10, 1), "
-              ."('pending', '". $t('Pending') ."', 'post_checkout', 0, 1), "
-              ."('processing', '". $t('Processing') ."', 'post_checkout', 5, 1), "
-              ."('completed', '". $t('Completed') ."', 'completed', 20, 1);");
+      );");
+      db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('canceled', '". $t('Canceled') ."', 'canceled', -20, 1);");
+      db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('in_checkout', '". $t('In checkout') ."', 'in_checkout', -10, 1);");
+      db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('pending', '". $t('Pending') ."', 'post_checkout', 0, 1);");
+      db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('processing', '". $t('Processing') ."', 'post_checkout', 5, 1);");
+      db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('completed', '". $t('Completed') ."', 'completed', 20, 1);");
       break;
   }
 }
@@ -232,6 +232,8 @@ function uc_order_uninstall() {
   variable_del('uc_order_logging');
   variable_del('uc_order_capitalize_addresses');
   variable_del('uc_ubrowser_product_select');
+  variable_del('uc_cust_view_order_invoices');
+  variable_del('uc_cust_order_invoice_template');
 }
 
 function uc_order_update_1(){
@@ -303,3 +305,25 @@ function uc_order_update_3() {
 
   return $ret;
 }
+
+function uc_order_update_4() {
+  // Because I forgot to change the CREATE statement...
+  $ret[] = update_sql("ALTER TABLE {uc_order_comments} CHANGE order_status order_status VARCHAR(32) NOT NULL");
+
+  return $ret;
+}
+
+function uc_order_update_5() {
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_orders} ADD data text");
+    break;
+    case 'pgsql':
+      db_add_column($ret, 'uc_orders', 'data', 'text', array());
+    break;
+  }
+
+  return $ret;
+}
+

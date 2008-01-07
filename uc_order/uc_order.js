@@ -1,4 +1,4 @@
-// $Id: uc_order.js,v 1.7 2007/10/02 18:11:57 rszrama Exp $
+// $Id: uc_order.js,v 1.8.2.1 2008/01/07 20:56:44 rszrama Exp $
 
 var customer_select = '';
 var add_product_browser = '';
@@ -157,7 +157,8 @@ function load_new_customer_form() {
 
 function check_new_customer_address() {
   var options = {
-    'email' : $('#customer-select #edit-email').val()
+    'email' : $('#customer-select #edit-email').val(),
+    'sendmail' : $('#customer-select #edit-sendmail').attr('checked')
   };
   $.post(Drupal.settings['base_path'] + 'admin/store/orders/customer/new/check/' + options['email'], options,
          function (contents) {

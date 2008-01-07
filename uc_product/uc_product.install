@@ -1,5 +1,10 @@
 <?php
-// $Id: uc_product.install,v 1.10 2007/10/04 14:48:25 rszrama Exp $
+// $Id: uc_product.install,v 1.11.2.1 2008/01/07 20:56:44 rszrama Exp $
+
+/**
+ * @file
+ * Database installation, uninstallation, and updates for the product module.
+ */
 
 /**
  * Ubercart uc_product.module schema
@@ -39,6 +44,7 @@ function uc_product_install() {
         `default_qty` smallint(5) unsigned NOT NULL default 1,
         `unique_hash` varchar(32) NOT NULL,
         `ordering` tinyint(2) NOT NULL default 0,
+        `shippable` tinyint(2) NOT NULL default 1,
         PRIMARY KEY  (`vid`)
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
     break;
@@ -50,13 +56,13 @@ function uc_product_install() {
         PRIMARY KEY  (pcid)
       );");
       db_query("CREATE TABLE {uc_product_features} (
-        pfid mediumint(9) NOT NULL default 0,
-        nid mediumint(9) NOT NULL default 0,
+        pfid integer NOT NULL default 0,
+        nid integer NOT NULL default 0,
         fid varchar(32) NOT NULL,
         description text,
-        PRIMARY KEY (pfid),
-        KEY nid (nid)
+				PRIMARY KEY (pfid)
       );");
+			db_query("CREATE INDEX {uc_product_features}_nid ON {uc_product_features} (nid)");
       db_query("CREATE TABLE {uc_products} (
         vid integer NOT NULL default 0,
         nid integer NOT NULL default 0,
@@ -66,21 +72,19 @@ function uc_product_install() {
         sell_price decimal(10,2) NOT NULL default 0.00,
         weight float NOT NULL default 0,
         weight_units varchar(255) NOT NULL default 'lb',
-        length float unsigned NOT NULL default 0,
-        width float unsigned NOT NULL default 0,
-        height float unsigned NOT NULL default 0,
+        length float NOT NULL default 0,
+        width float NOT NULL default 0,
+        height float NOT NULL default 0,
         length_units varchar(255) NOT NULL default 'in',
-        pkg_qty smallint unsigned NOT NULL default 1,
-        default_qty smallint unsigned NOT NULL default 1,
+        pkg_qty smallint NOT NULL default 1,
+        default_qty smallint NOT NULL default 1,
         unique_hash varchar(32) NOT NULL default '',
-        ordering smallint(2) NOT NULL default 0,
+        ordering smallint NOT NULL default 0,
+				shippable smallint NOT NULL default 1,
         PRIMARY KEY (vid)
       );");
     break;
   }
-  
-  $file_path = file_create_path('ubercart_images');
-  file_check_directory($file_path, FILE_CREATE_DIRECTORY);
 }
 
 function uc_product_uninstall(){
@@ -298,5 +302,20 @@ function uc_product_update_9() {
       break;
   }
 
+  return $ret;
+}
+
+// Update to add the shippable column to the product table.
+function uc_product_update_10() {
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_products} ADD shippable tinyint(2) NOT NULL default 1");
+    break;
+    case 'pgsql':
+      db_add_column($ret, 'uc_products', 'shippable', 'tinyint', array('not null' => true, 'default' => 1));
+    break;
+  }
   return $ret;
 }

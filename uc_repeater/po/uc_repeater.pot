@@ -1,16 +1,14 @@
-# $Id: uc_repeater.pot,v 1.1 2007/10/04 13:54:30 rszrama Exp $
+# $Id: uc_repeater.pot,v 1.2.2.1 2008/01/07 20:56:45 rszrama Exp $
 #
-# LANGUAGE translation of Drupal (uc_repeater.module)
+# LANGUAGE translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>
-# Generated from files:
-#  uc_repeater.module,v 1.3 2007/10/02 18:11:58 rszrama
-#  uc_repeater.info,v 1.3 2007/10/02 18:11:58 rszrama
+# Generated from file: n/a
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2007-10-04 09:50-0400\n"
+"POT-Creation-Date: 2008-01-04 15:56-0500\n"
 "PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
 "Last-Translator: NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
@@ -77,14 +75,6 @@ msgstr ""
 
 #: uc_repeater.module:132
 msgid "The configuration options have been saved."
-msgstr ""
-
-#: uc_repeater.module:43
-msgid "administer catalog repeater"
-msgstr ""
-
-#: uc_repeater.module:0
-msgid "uc_repeater"
 msgstr ""
 
 #: uc_repeater.info:0

@@ -1,7 +1,7 @@
-/* $Id: uc_cart_block.css,v 1.5 2007/10/02 17:43:44 rszrama Exp $ */
+/* $Id: uc_cart_block.css,v 1.6.2.1 2008/01/07 20:56:42 rszrama Exp $ */
 
 #block-cart-icon {
-  padding-right: 5px;
+  padding-right: 1em;
 }
 
 #block-cart-title-bar {
@@ -24,12 +24,10 @@
   padding-right: 5px;
 }
 .block-cart-title-bar {
-  cursor: pointer;
   white-space: nowrap;
 }
-#block-cart-title-bar-text {
-  position: relative;
-  left: 4px;
+.cart-block-toggle {
+  cursor: pointer;
 }
 #block-cart-title-arrow {
   position: relative;

@@ -1,18 +1,19 @@
-// $Id: uc_cart_block.js,v 1.6 2007/10/02 17:43:44 rszrama Exp $
+// $Id: uc_cart_block.js,v 1.7.2.1 2008/01/07 20:56:42 rszrama Exp $
 
 /**
  * Collapse the shopping cart block at page load.
  */
 $(document).ready(function(){
-  if (expanded_block == false) {
+  if (collapsed_block == true) {
     $('#block-cart-contents').hide(0);
   }
+  $('.cart-block-toggle').click(function() { cart_block_toggle(); } );
 });
 
 /**
  * Toggle the shopping cart block open and closed.
  */
-function cart_toggle(uc_cart_path) {
+function cart_block_toggle() {
   $('#block-cart-contents').toggle();
 
   isrc = $('#block-cart-title-arrow').attr('src');

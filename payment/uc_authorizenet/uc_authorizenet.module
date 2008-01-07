@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_authorizenet.module,v 1.2 2007/10/02 17:43:41 rszrama Exp $
+// $Id: uc_authorizenet.module,v 1.3.2.1 2008/01/07 20:56:37 rszrama Exp $
 
 /**
  * @file
@@ -58,6 +58,7 @@ function uc_authorizenet_settings_form() {
     '#description' => t('Transaction mode used for processing orders.'),
     '#options' => array(
       'production' => t('Production'),
+      'live_test' => t('Test - Live account'),
       'test' => t('Test'),
     ),
     '#default_value' => variable_get('authnet_aim_transaction_mode', 'test'),
@@ -74,7 +75,7 @@ function uc_authorizenet_settings_form() {
   );*/
   $form['authnet_aim_settings']['authnet_aim_customer_notification'] = array(
     '#type' => 'select',
-    '#title' => t('Customer Notifications'),
+    '#title' => t('Customer notifications'),
     '#description' => t('Should Authorize.net e-mail a receipt to the customer?'),
     '#options' => array(
       'TRUE' => t('Enabled'),
@@ -98,7 +99,7 @@ function uc_authorizenet_settings_form() {
 
 function uc_authorizenet_charge($order_id, $amount, $data) {
   if (!function_exists('curl_init')) {
-    drupal_set_message(t('The Authorize.net AIM service requires curl.  Please talk to your system administrator to get this configured.'));
+    drupal_set_message(t('The Authorize.net AIM service requires cURL.  Please talk to your system administrator to get this configured.'));
     return array('success' => FALSE);
   }
 
@@ -124,9 +125,9 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
   $submit_data = array(
     'x_version' => '3.1',
     'x_delim_data' => 'TRUE',
-	  'x_relay_response' => 'FALSE',
+    'x_relay_response' => 'FALSE',
     'x_login' => variable_get('authnet_aim_login_id', ''),
-	  'x_tran_key' => variable_get('authnet_aim_transaction_key', ''),
+    'x_tran_key' => variable_get('authnet_aim_transaction_key', ''),
     'x_amount' => uc_currency_format($amount, FALSE, FALSE, '.'),
     'x_card_num' => $order->payment_details['cc_number'],
     'x_exp_date' => $order->payment_details['cc_exp_month'] .'/'. $order->payment_details['cc_exp_year'],
@@ -156,23 +157,28 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
     'x_ship_to_country' => uc_get_country_data(array('country_id' => $order->delivery_country)),
     'x_description' => $description,
     'created' => $order->created,
-	  'modified' => $order->modified,
+    'modified' => $order->modified,
   );
 
   $submit_data['x_country'] = $submit_data['x_country'][0]['country_iso_code_2'];
   $submit_data['x_ship_to_country'] = $submit_data['x_ship_to_country'][0]['country_iso_code_2'];
 
-  if (variable_get('authnet_aim_transaction_mode', 'test') == 'test') {
-	  $submit_data['x_test_request'] = 'TRUE';
-	  $url = 'https://test.authorize.net/gateway/transact.dll';
+  $transaction_mode = variable_get('authnet_aim_transaction_mode', 'test');
+  if ($transaction_mode == 'test') {
+    $submit_data['x_test_request'] = 'TRUE';
+    $url = 'https://test.authorize.net/gateway/transact.dll';
+  }
+  elseif ($transaction_mode == 'live_test'){
+    $submit_data['x_test_request'] = 'TRUE';
+    $url = 'https://certification.authorize.net/gateway/transact.dll';
   }
   else {
-	  $submit_data['x_test_request'] = 'FALSE';
-	  $url = 'https://secure.authorize.net/gateway/transact.dll';
+    $submit_data['x_test_request'] = 'FALSE';
+    $url = 'https://secure.authorize.net/gateway/transact.dll';
   }
 
   while (list($key, $value) = each($submit_data)) {
-	  $data .= $key .'='. urlencode(ereg_replace(',', '', $value)) .'&';
+    $data .= $key .'='. urlencode(ereg_replace(',', '', $value)) .'&';
   }
 
   $data = substr($data, 0, -1);
@@ -187,6 +193,9 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
   curl_setopt($ch, CURLOPT_NOPROGRESS, 1);
   curl_setopt($ch, CURLOPT_FOLLOWLOCATION,0);
   $authorize = curl_exec($ch);
+  if ($error = curl_error($ch)) {
+    watchdog('uc_authorizenet', $error, WATCHDOG_ERROR);
+  }
   curl_close($ch);
 
   $response = split('\,', $authorize);
@@ -198,7 +207,7 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
   $x_approval_code = $approval_code[0];
 
   if ($x_response_code != '1') {
-	  $message = t('Credit card declined: !amount', array('!amount' => uc_currency_format($amount)));
+    $message = t('Credit card declined: !amount', array('!amount' => uc_currency_format($amount)));
     $result = array(
       'success' => FALSE,
       'comment' => t('Credit card payment declined: !text', array('!text' => $x_response_text)),

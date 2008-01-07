@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.install,v 1.2 2007/10/02 17:43:43 rszrama Exp $
+// $Id: uc_shipping.install,v 1.3.2.1 2008/01/07 20:56:40 rszrama Exp $
 
 function uc_shipping_install(){
   switch($GLOBALS['db_type']){
@@ -44,7 +44,7 @@ function uc_shipping_install(){
         `length` float UNSIGNED NULL,
         `width` float UNSIGNED NULL,
         `height` float UNSIGNED NULL,
-        `units` varchar(255) NULL,
+        `length_units` varchar(255) NULL,
         `value` decimal(10,2) UNSIGNED NULL,
         `sid` mediumint(11) UNSIGNED NULL,
         `tracking_number` varchar(255) NULL,
@@ -60,24 +60,24 @@ function uc_shipping_install(){
     break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_shipments} (
-        sid integer UNSIGNED NOT NULL default 0,
-        order_id integer UNSIGNED NOT NULL default 0,
+        sid integer NOT NULL default 0,
+        order_id integer NOT NULL default 0,
         o_first_name varchar(255) NOT NULL default '',
         o_last_name varchar(255) NOT NULL default '',
         o_company varchar(255) NOT NULL default '',
         o_street1 varchar(255) NOT NULL default '',
         o_street2 varchar(255) NOT NULL default '',
         o_city varchar(255) NOT NULL default '',
-        o_zone integer UNSIGNED NOT NULL default 0,
+        o_zone integer NOT NULL default 0,
         o_postal_code varchar(255) NOT NULL default '',
-        o_country integer UNSIGNED NOT NULL default 0,
+        o_country integer NOT NULL default 0,
         d_first_name varchar(255) NOT NULL default '',
         d_last_name varchar(255) NOT NULL default '',
         d_company varchar(255) NOT NULL default '',
         d_street1 varchar(255) NOT NULL default '',
         d_street2 varchar(255) NOT NULL default '',
         d_city varchar(255) NOT NULL default '',
-        d_zone integer UNSIGNED NOT NULL default 0,
+        d_zone integer NOT NULL default 0,
         d_postal_code varchar(255) NOT NULL default '',
         d_country integer UNSIGNED NOT NULL default 0,
         shipping_method varchar(255) NOT NULL default '',
@@ -91,24 +91,24 @@ function uc_shipping_install(){
         PRIMARY KEY (sid)
       );");
       db_query("CREATE TABLE {uc_packages} (
-        package_id integer UNSIGNED NOT NULL default 0,
-        order_id integer UNSIGNED NOT NULL default 0,
+        package_id integer NOT NULL default 0,
+        order_id integer NOT NULL default 0,
         shipping_type varchar(255) NOT NULL default '',
         pkg_type varchar(255) NOT NULL default '',
-        length float UNSIGNED NULL,
-        width float UNSIGNED NULL,
-        height float UNSIGNED NULL,
-        units varchar(255) NULL,
-        value decimal(10,2) UNSIGNED NULL,
-        sid integer UNSIGNED NULL,
+        length float NULL,
+        width float NULL,
+				height float NULL,
+        length_units varchar(255) NULL,
+        value decimal(10,2) NULL,
+        sid integer NULL,
         tracking_number varchar(255) NULL,
         label_image varchar(255) NULL,
         PRIMARY KEY (package_id)
       );");
       db_query("CREATE TABLE {uc_packaged_products} (
-        package_id integer UNSIGNED NOT NULL default 0,
-        order_product_id integer UNSIGNED NOT NULL default 0,
-        qty ionteger UNSIGNED NOT NULL default 0,
+        package_id integer NOT NULL default 0,
+        order_product_id integer NOT NULL default 0,
+        qty ionteger NOT NULL default 0,
         PRIMARY KEY (package_id, order_product_id)
       );");
     break;
@@ -119,4 +119,18 @@ function uc_shipping_uninstall(){
   db_query("DROP TABLE {uc_shipments}");
   db_query("DROP TABLE {uc_packages}");
   db_query("DROP TABLE {uc_packaged_products}");
+}
+
+function uc_shipping_update_1(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_packages} CHANGE units length_units varchar(255) NULL");
+    break;
+    case 'pgsql':
+      db_change_column($ret, 'uc_packages', 'units', 'length_units', 'varchar(255)', array('not null' => false));
+    break;
+  }
+  return $ret;
 }

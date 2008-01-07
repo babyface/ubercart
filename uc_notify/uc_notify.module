@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_notify.module,v 1.9 2007/10/02 18:11:57 rszrama Exp $
+// $Id: uc_notify.module,v 1.10.2.1 2008/01/07 20:56:43 rszrama Exp $
 
 /**
  * @file
@@ -116,16 +116,15 @@ function uc_notify_uc_message() {
 /**
  * Implementation of hook_order().
  */
-function uc_notify_order($op, $arg1, $status){
+function uc_notify_order($op, $arg1, $arg2){
   switch ($op){
     case 'update':
-      $order = uc_order_load($arg1);
       foreach (uc_order_status_list('general') as $data) {
         $statuses[] = $data['id'];
       }
-      if (uc_order_status_data($order->order_status, 'state') == 'in_checkout' &&
-          in_array($status, $statuses)) {
-        uc_notify_checkout($order);
+      if (uc_order_status_data($arg1->order_status, 'state') == 'in_checkout' &&
+          in_array($arg2, $statuses)) {
+        uc_notify_checkout($arg1);
       }
       break;
   }
@@ -227,7 +226,7 @@ function uc_notify_checkout_form() {
   $form['cust']['uc_notify_cust_checkout_custom'] = array(
     '#type' => 'textarea',
     '#title' => t('Custom template (if selected above)'),
-    '#description' => l(t('Uses Uc_order and Global tokens.'), 'admin/store/help/tokens'),
+    '#description' => l(t('Uses order and global tokens.'), 'admin/store/help/tokens'),
     '#default_value' => variable_get('uc_notify_cust_checkout_custom', ''),
     '#rows' => 5,
   );
@@ -279,7 +278,7 @@ function uc_notify_order_update_form(){
   $form['uc_notify_order_update_enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Send order update e-mails to customers when specified.'),
-    '#default_value' => variable_get('uc_notify_order_update_enable', TRUE),
+    '#default_value' => variable_get('uc_notify_order_update_enabled', TRUE),
   );
   $form['uc_notify_order_update_subject'] = array(
     '#type' => 'textfield',
@@ -320,16 +319,15 @@ function uc_notify_checkout($order) {
     else {
       $body = uc_order_load_invoice($order, 'checkout-mail', $template);
     }
-    $body = token_replace_multiple($body, array('global' => NULL, 'uc_order' => $order));
+    $body = token_replace_multiple($body, array('global' => NULL, 'order' => $order));
 
     $subject = variable_get('uc_notify_cust_checkout_subject', t('Your Order at [store-name]'));
-    $subject = token_replace_multiple($subject, array('global' => NULL, 'uc_order' => $order));
+    $subject = token_replace_multiple($subject, array('global' => NULL, 'order' => $order));
 
     $email_to = $order->primary_email;
-    $email_from = variable_get('uc_store_email_from', ini_get('sendmail_from'));
     $headers = uc_notify_headers();
 
-    $sent = drupal_mail('checkout', $email_to, $subject, $body, $email_from, $headers);
+    $sent = drupal_mail('checkout', $email_to, $subject, $body, uc_store_email_from(), $headers);
 
     if ($sent) {
       $changes[] = t('Checkout message sent to @email.', array('@email' => $order->primary_email));
@@ -349,10 +347,10 @@ function uc_notify_checkout($order) {
     else {
       $body = uc_order_load_invoice($order, 'admin-mail', $template);
     }
-    $body = token_replace_multiple($body, array('global' => NULL, 'uc_order' => $order));
+    $body = token_replace_multiple($body, array('global' => NULL, 'order' => $order));
 
     $subject = variable_get('uc_notify_admin_checkout_subject', t('New Order at [store-name]'));
-    $subject = token_replace_multiple($subject, array('global' => NULL, 'uc_order' => $order));
+    $subject = token_replace_multiple($subject, array('global' => NULL, 'order' => $order));
 
     $email_from = variable_get('uc_store_email_from', ini_get('sendmail_from'));
     $headers = uc_notify_headers();
@@ -378,19 +376,17 @@ function uc_notify_order_update($form_id, $form_values){
     }
 
     $body = variable_get('uc_notify_order_update_body', uc_get_message('order_update_email'));
-    $body = token_replace_multiple($body, array('global' => NULL, 'uc_order' => $order));
+    $body = token_replace_multiple($body, array('global' => NULL, 'order' => $order));
 
     $subject = variable_get('uc_notify_order_update_subject', t('Order #[order-id] Update'));
-    $subject = token_replace_multiple($subject, array('global' => NULL, 'uc_order' => $order));
+    $subject = token_replace_multiple($subject, array('global' => NULL, 'order' => $order));
 
     $email_to = $order->primary_email;
-    $email_from = variable_get('uc_store_email_from', ini_get('sendmail_from'));
     $headers = uc_notify_headers();
 
     $sent = drupal_mail('order_comment', $order->primary_email, $subject,
                         check_markup($body, variable_get('uc_checkout_status_format', 3), FALSE),
-                        variable_get('uc_store_email_from', ini_get('sendmail_from')),
-                        uc_notify_headers());
+                        uc_store_email_from(), uc_notify_headers());
 
     if ($sent) {
       $changes[] = t('Customer notified of order update.');

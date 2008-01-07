@@ -1,6 +1,21 @@
 <?php
-// $Id: uc_usps.module,v 1.3 2007/10/02 18:11:56 rszrama Exp $
+// $Id: uc_usps.module,v 1.5.2.1 2008/01/07 20:56:40 rszrama Exp $
 
+/**
+ * @file
+ * Shipping quote method module that receives quotes from the United States
+ * Postal Service via XML web service.
+ *
+ * Coded by Lyle Mantooth.
+ */
+
+/******************************************************************************
+ * Drupal Hooks                                                               *
+ ******************************************************************************/
+
+/**
+ * Implementation of hook_menu().
+ */
 function uc_usps_menu($may_cache){
   $items = array();
   
@@ -17,20 +32,27 @@ function uc_usps_menu($may_cache){
   return $items;
 }
 
+/**
+ * Implementation of hook_form_alter().
+ *
+ * Add package type to products.
+ *
+ * @see uc_product_form
+ */
 function uc_usps_form_alter($form_id, &$form){
   $node = $form['#node'];
   $product_types = uc_product_node_info();
   if (is_object($node) && $form_id == $node->type .'_node_form' && isset($product_types[$node->type])){
-    $enabled = variable_get('uc_quote_enabled', array('usps' => true));
+    $enabled = variable_get('uc_quote_enabled', array());
     $form['shipping']['usps'] = array('#type' => 'fieldset',
-      '#title' => t('USPS Product Description'),
+      '#title' => t('USPS product description'),
       '#collapsible' => true,
       '#collapsed' => ($enabled['usps'] == false || uc_product_get_shipping_type($node) != 'small_package'),
       '#weight' => 2,
       '#tree' => true,
     );
     $form['shipping']['usps']['container'] = array('#type' => 'select',
-      '#title' => t('Package Type'),
+      '#title' => t('Package type'),
       '#options' => _uc_usps_pkg_types(),
       '#default_value' => $node->usps['container'] ? $node->usps['container'] : 0,
     );
@@ -67,177 +89,191 @@ function uc_usps_nodeapi(&$node, $op){
   }
 }
 
+/******************************************************************************
+ * Workflow-ng Hooks                                                          *
+ ******************************************************************************/
+
+/**
+ * Implementation of hook_configuration().
+ *
+ * Connect USPS quote action and event.
+ */
+function uc_usps_configuration(){
+  $enabled = variable_get('uc_quote_enabled', array());
+  $configurations = array(
+    'uc_usps_get_quote' => array(
+      '#label' => t('Shipping quote from USPS'),
+      '#event' => 'get_quote_from_usps',
+      '#module' => 'uc_usps',
+      '#active' => $enabled['usps'],
+    ),
+    'uc_usps_get_intl_quote' => array(
+      '#label' => t('Shipping quote from USPS Intl.'),
+      '#event' => 'get_quote_from_usps_intl',
+      '#module' => 'uc_usps',
+      '#active' => $enabled['usps_intl'],
+    ),
+  );
+  // Domestic areas include U.S., American Samoa, Guam, Puerto Rico, and the Virgin Islands
+  $countries = array(16, 316, 630, 840, 850);
+  $us_area_condition = workflow_ng_use_condition('uc_order_condition_delivery_country', array(
+    '#label' => t('Is in domestic US areas (US, AS, GU, PR, VI)'),
+    '#settings' => array(
+      'countries' => $countries,
+    ),
+  ));
+  $not_us_area_condition = workflow_ng_use_condition('uc_order_condition_delivery_country', array(
+    '#label' => t('Is not in domestic US areas (US, AS, GU, PR, VI)'),
+    '#negate' => true,
+    '#settings' => array(
+      'countries' => $countries,
+    ),
+  ));
+  
+  $action = workflow_ng_use_action('uc_quote_action_get_quote', array(
+    '#label' => t('Fetch a shipping quote'),
+  ));
+  $configurations['uc_usps_get_quote'] = workflow_ng_configure($configurations['uc_usps_get_quote'], $action, $us_area_condition);
+  $configurations['uc_usps_get_intl_quote'] = workflow_ng_configure($configurations['uc_usps_get_intl_quote'], $action, $not_us_area_condition);
+  
+  return $configurations;
+}
+
+/******************************************************************************
+ * Übercart Hooks                                                             *
+ ******************************************************************************/
+
+/**
+ * Implementation of Übercart's hook_shipping_type().
+ */
 function uc_usps_shipping_type(){
   $weight = variable_get('uc_quote_type_weight', array('small_package' => 0));
   
   $types = array('small_package' => array(
     'id' => 'small_package',
-    'title' => t('Small Package'),
+    'title' => t('Small package'),
     'weight' => $weight['small_package'],
   ));
   
   return $types;
 }
 
+/**
+ * Implementation of Übercart's hook_shipping_method().
+ */
 function uc_usps_shipping_method(){
-  $enabled = variable_get('uc_quote_enabled', array('usps' => true));
-  $weight = variable_get('uc_quote_method_weight', array('usps' => 0));
+  $enabled = variable_get('uc_quote_enabled', array());
+  $weight = variable_get('uc_quote_method_weight', array('usps' => 0, 'usps_intl' => 1));
   
-  $methods = array('usps' => array(
-    'id' => 'usps',
-    'title' => t('U.S. Postal Service'),
-    'quote' => array(
-      'type' => 'small_package',
-      'callback' => 'uc_usps_quote',
-      'accessorials' => _uc_usps_services(),
+  $methods = array(
+    'usps' => array(
+      'id' => 'usps',
+      'title' => t('U.S. Postal Service'),
+      'quote' => array(
+        'type' => 'small_package',
+        'callback' => 'uc_usps_quote',
+        'accessorials' => _uc_usps_services(),
+      ),
+      'enabled' => $enabled['usps'],
+      'weight' => $weight['usps'],
     ),
-    'enabled' => $enabled['usps'],
-    'weight' => $weight['usps'],
-  ));
+    'usps_intl' => array(
+      'id' => 'usps_intl',
+      'title' => t('U.S. Postal Service (Intl.)'),
+      'quote' => array(
+        'type' => 'small_package',
+        'callback' => 'uc_usps_intl_quote',
+        'accessorials' => _uc_usps_intl_services(),
+      ),
+      'enabled' => $enabled['usps_intl'],
+      'weight' => $weight['usps_intl'],
+    ),
+  );
   
   return $methods;
 }
 
+/******************************************************************************
+ * Menu Callbacks                                                             *
+ ******************************************************************************/
+
+/**
+ * Configure USPS settings.
+ *
+ * @ingroup forms
+ */
 function uc_usps_admin_settings(){
   $form = array();
   
   $form['uc_usps_user_id'] = array('#type' => 'textfield',
-    '#title' => t('USPS User ID'),
+    '#title' => t('USPS user ID'),
+    '#description' => t('To acquire or locate your user ID, refer to the <a href="!url">USPS documentation</a>.', array('!url' => 'http://www.ubercart.org/docs/user/312/usps_web_tool_shipping_quote_settings')),
     '#default_value' => variable_get('uc_usps_user_id', ''),
   );
   $form['uc_usps_services'] = array('#type' => 'checkboxes',
-    '#title' => t('USPS Services'),
+    '#title' => t('USPS services'),
     '#default_value' => variable_get('uc_usps_services', _uc_usps_services()),
     '#options' => _uc_usps_services(),
     '#description' => t('Select the USPS services that are available to customers. Be sure to include the services that the Postal Service agrees are available to you.'),
   );
+  $form['uc_usps_intl_services'] = array('#type' => 'checkboxes',
+    '#title' => t('USPS international services'),
+    '#default_value' => variable_get('uc_usps_intl_services', _uc_usps_intl_services()),
+    '#options' => _uc_usps_intl_services(),
+    '#description' => t('Select the USPS services that are available to customers. Be sure to include the services that the Postal Service agrees are available to you.'),
+  );
+  $form['uc_usps_markup_type'] = array('#type' => 'select',
+    '#title' => t('Markup type'),
+    '#default_value' => variable_get('uc_usps_markup_type', 'percentage'),
+    '#options' => array(
+      'percentage' => t('Percentage (%)'),
+      'multiplier' => t('Multiplier (×)'),
+      'currency' => t('Addition (!currency)', array('!currency' => variable_get('uc_currency_sign', '$'))),
+    ),
+  );
   $form['uc_usps_markup'] = array('#type' => 'textfield',
-    '#title' => t('Shipping Rate Markup'),
-    '#default_value' => variable_get('uc_usps_markup', '0%'),
+    '#title' => t('Shipping rate markup'),
+    '#default_value' => variable_get('uc_usps_markup', '0'),
     '#description' => t('Markup shipping rate quote by dollar amount, percentage, or multiplier.'),
+  );
+  $form['uc_usps_all_in_one'] = array('#type' => 'radios',
+    '#title' => t('Product packages'),
+    '#default_value' => variable_get('uc_usps_all_in_one', 1),
+    '#options' => array(
+      0 => t('Each in its own package'),
+      1 => t('All in one'),
+    ),
+    '#description' => t('Indicate whether each product is quoted as shipping separately or all in one package.'),
   );
   
   return system_settings_form($form);
 }
 
+/******************************************************************************
+ * Module Functions                                                           *
+ ******************************************************************************/
+
+/**
+ * Callback for retrieving USPS shipping quote.
+ *
+ * @param $products
+ *   Array of cart contents.
+ * @param $details
+ *   Order details other than product information.
+ * @return
+ *   JSON object containing rate, error, and debugging information.
+ */
 function uc_usps_quote($products, $details){
   include_once(drupal_get_path('module', 'uc_store') .'/includes/simplexml.php');
-  
-  $packages = array();
-  foreach ($products as $product){
-    if (!$product->pkg_qty){
-      $product->pkg_qty = 1;
-    }
-    $num_of_pkgs = (int)($product->qty / $product->pkg_qty);
-
-    $package = drupal_clone($product);
-    $package->description = $product->model;
-    $weight = $product->weight * $product->pkg_qty;
-    switch($product->weight_units){
-      case 'g':
-        $weight = $weight / 1000;
-      case 'kg':
-        $weight = $weight * 2.2;
-      case 'lb':
-        $package->pounds = floor($weight);
-        $package->ounces = 16 * ($weight - $package->pounds);
-      break;
-      case 'oz':
-        $package->pounds = floor($weight / 16);
-        $package->ounces = $weight % 16;
-      break;
-    }
-    $package->container = $product->usps['container'];
-    $package->length = max($product->length, $product->width);
-    $package->width = min($product->length, $product->width);
-    $package->height = $product->height;
-    if ($package->length < $package->width){
-      list($package->length, $package->width) = array($package->width, $package->length);
-    }
-    $package->girth = 2 * $package->width + 2 * $package->height;
-    $package->size = $package->length + $package->girth;
-    if ($package->size <= 84){
-      $package->size = 'REGULAR';
-    }
-    else if ($package->size <= 108){
-      $package->size = 'LARGE';
-    }
-    else if ($package->size <= 130){
-      $package->size = 'OVERSIZE';
-    }
-    else{
-      $package->size = 'GI-HUGE-IC'; // Too big for the U.S. Postal service.
-    }
-    $package->machinable = (
-      $package->length >= 6 && $package->length <= 34 &&
-      $package->width >= 0.25 && $package->width <= 17 &&
-      $package->height >= 3.5 && $package->height >= 17 &&
-      ($package->pounds == 0 ? $package->ounces >= 6 : true) &&
-      $package->pounds <= 35 &&
-      ($package->pounds == 35 ? $package->ounces == 0 : true)
-    );
-    $package->price = $product->price * $product->pkg_qty;
-    $package->qty = $num_of_pkgs;
-    $packages[] = $package;
-
-    $remaining_qty = $product->qty % $product->pkg_qty;
-    if ($remaining_qty){
-      $package = drupal_clone($product);
-      $package->description = $product->model;
-      $weight = $product->weight * $remaining_qty;
-      switch($product->weight_units){
-        case 'g':
-          $weight = $weight / 1000;
-        case 'kg':
-          $weight = $weight * 2.2;
-        case 'lb':
-          $package->pounds = floor($weight);
-          $package->ounces = 16 * ($weight - $package->pounds);
-        break;
-        case 'oz':
-          $package->pounds = floor($weight / 16);
-          $package->ounces = $weight % 16;
-        break;
-      }
-      $package->container = $product->usps['container'];
-      $package->length = max($product->length, $product->width);
-      $package->width = min($product->length, $product->width);
-      $package->height = $product->height;
-      $package->girth = 2 * $package->width + 2 * $package->height;
-      $package->size = $package->length + $package->girth;
-      if ($package->size <= 84){
-        $package->size = 'REGULAR';
-      }
-      else if ($package->size <= 108){
-        $package->size = 'LARGE';
-      }
-      else if ($package->size <= 130){
-        $package->size = 'OVERSIZE';
-      }
-      else{
-        $package->size = 'GI-HUGE-IC'; // Too big for the U.S. Postal service.
-      }
-      $package->machinable = (
-        $package->length >= 6 && $package->length <= 34 &&
-        $package->width >= 0.25 && $package->width <= 17 &&
-        $package->height >= 3.5 && $package->height >= 17 &&
-        ($package->pounds == 0 ? $package->ounces >= 6 : true) &&
-        $package->pounds <= 35 &&
-      ($package->pounds == 35 ? $package->ounces == 0 : true)
-      );
-      $package->price = $product->price * $remaining_qty;
-      $package->qty = 1;
-      $packages[] = $package;
-    }
-  }
+  //drupal_set_message('<pre>'. print_r($products, true) .'</pre>');
+  //drupal_set_message('<pre>'. print_r($details, true) .'</pre>');
+  $packages = _uc_usps_package_products($products);
   
   $orig = variable_get('uc_quote_store_default_address', new stdClass());
   $orig->email = variable_get('uc_store_email', '');
   
   $dest = (object)$details;
   
-  // TODO: Check for international shipping and change these accordingly.
-  // Hopefully the response XML isn't too different.
   $usps_server = 'production.shippingapis.com';
   $api_dll = 'ShippingAPI.dll';
   $connection_url = 'http://'. $usps_server .'/'. $api_dll;
@@ -254,7 +290,7 @@ function uc_usps_quote($products, $details){
   if (is_array($response->document->package)){
     foreach ($response->document->package as $package){
       if (isset($package->error)){
-        
+        $services['data']['error'] .= $package->error[0]->description[0]->data() .'<br />';
       }
       else{
         foreach ($package->postage as $postage){
@@ -262,15 +298,15 @@ function uc_usps_quote($products, $details){
           if ($attr['classid'] === 0 || $attr['classid'] === '0'){
             $attr['classid'] = 'zero';
           }
-          $services[$attr['classid']]['label'] = $postage->mailservice[0]->data();
+          $services[$attr['classid']]['label'] = t('U.S.P.S. @service', array('@service' => $postage->mailservice[0]->data()));
           $services[$attr['classid']]['rate'] += uc_usps_markup($postage->rate[0]->data());
         }
       }
     }
   }
-  $usps_services = variable_get('uc_usps_services', _uc_usps_services());
+  $usps_services = array_filter(variable_get('uc_usps_services', _uc_usps_services()));
   foreach ($services as $service => $quote){
-    if (!in_array($service, $usps_services)){
+    if ($service != 'data' || !in_array($service, $usps_services)){
       unset($services[$service]);
     }
   }
@@ -317,6 +353,95 @@ function uc_usps_quote($products, $details){
   return $services;
 }
 
+/**
+ * Callback for retrieving USPS shipping quote to other countries.
+ *
+ * @param $products
+ *   Array of cart contents.
+ * @param $details
+ *   Order details other than product information.
+ * @return
+ *   JSON object containing rate, error, and debugging information.
+ */
+function uc_usps_intl_quote($products, $details){
+  include_once(drupal_get_path('module', 'uc_store') .'/includes/simplexml.php');
+
+  
+  $packages = _uc_usps_package_products($products);
+
+  
+  $orig = variable_get('uc_quote_store_default_address', new stdClass());
+  $orig->email = variable_get('uc_store_email', '');
+  
+  $dest = (object)$details;
+  
+  $usps_server = 'production.shippingapis.com';
+  $api_dll = 'ShippingAPI.dll';
+  $connection_url = 'http://'. $usps_server .'/'. $api_dll;
+  
+  $request = uc_usps_intl_rate_request($packages, $orig, $dest);
+  $result = drupal_http_request($connection_url, array(), 'POST', $request);
+  if (user_access('configure quotes') && variable_get('uc_quote_display_debug', false)){
+    $services['data']['debug'] .= htmlentities($result->data) ."<br />\n";
+  }
+  $response = new JSimpleXML();
+  $response->loadString($result->data);
+   
+  // drupal_set_message('<pre>'. htmlentities($result->data) .'</pre>');
+  
+  $services = array();
+  if (is_array($response->document->package)){
+  
+    foreach ($response->document->package as $package){
+      if (isset($package->error)){
+        
+      }
+      else{
+        foreach ($package->service as $service){
+          $attr = $service->attributes();
+          if ($attr['id'] === 0 || $attr['id'] === '0'){
+            $attr['id'] = 'zero';
+          }
+          $services[$attr['id']]['label'] = t('USPS @service', array('@service' => $service->svcdescription[0]->data()));
+          $services[$attr['id']]['rate'] += uc_usps_markup($service->postage[0]->data());
+        }
+      }
+    }
+  }
+  
+  $usps_services = variable_get('uc_usps_intl_services', _uc_usps_intl_services());
+  foreach ($services as $service => $quote){
+    if (!in_array($service, $usps_services)){
+      unset($services[$service]);
+    }
+  }
+
+  foreach ($services as $key => $quote){
+    if (isset($quote['rate'])){
+      $services[$key]['format'] = uc_currency_format($quote['rate']);
+      $services[$key]['option_label'] = $quote['label'];
+    }
+  }
+  
+  uasort($services, '_uc_usps_sort_quotes');
+  
+  return $services;
+}  
+  
+
+
+/**
+ * Construct an XML quote request.
+ *
+ * @param $packages
+ *   Array of packages received from the cart.
+ * @param $origin
+ *   Delivery origin address information.
+ * @param $destination
+ *   Delivery destination address information.
+ * @return
+ *   RateV3Request XML document to send to USPS
+ */
 function uc_usps_rate_request($packages, $origin, $destination){
   $request  = '<RateV3Request USERID="' . variable_get('uc_usps_user_id', '') . '">';
   $services_count = 0;
@@ -327,7 +452,7 @@ function uc_usps_rate_request($packages, $origin, $destination){
       '<ZipOrigination>' . $origin->postal_code . '</ZipOrigination>' .
       '<ZipDestination>' . $destination->postal_code . '</ZipDestination>' .
       '<Pounds>' . intval($package->pounds) . '</Pounds>' .
-      '<Ounces>' . intval($package->ounces) . '</Ounces>' .
+      '<Ounces>' . number_format($package->ounces, 1, '.', '') . '</Ounces>' .
       '<Container>' . $package->container . '</Container>' .
       '<Size>' . $package->size . '</Size>' .
       '<Machinable>' . ($package->machinable ? 'True' : 'False') . '</Machinable>' .
@@ -341,25 +466,191 @@ function uc_usps_rate_request($packages, $origin, $destination){
   return $request;
 }
 
+/*
+ * uc_usps_intl_rate_request function (added by Erik - feel free to improve)
+ *
+ */
+ 
+function uc_usps_intl_rate_request($packages, $origin, $destination){
+  $request  = '<IntlRateRequest USERID="' . variable_get('uc_usps_user_id', '') . '">';
+  $services_count = 0;
+
+  // This needs to be international name per USPS website. See http://pe.usps.com/text/Imm/immctry.htm
+  $shipto_country = uc_get_country_data(array('country_id' => $destination->country));
+  
+  foreach($packages as $package){
+    $request .= '<Package ID="' . $services_count . '">' .
+      '<Pounds>' . intval($package->pounds) . '</Pounds>' .
+      '<Ounces>' . number_format($package->ounces, 1, '.', '') . '</Ounces>' .
+      '<MailType>Package</MailType>' .
+      '<Country>'.$shipto_country[0]['country_name'].'</Country>' .    
+      '</Package>';
+
+    $services_count++;
+  }
+  $request .= '</IntlRateRequest>';
+
+  $request = 'API=IntlRate&XML=' . urlencode($request);
+  return $request;
+}
+ 
 /**
- * Modifies the rate received from USPS before displaying to the customer.
+ * Modify the rate received from USPS before displaying to the customer.
  */
 function uc_usps_markup($rate){
-  $markup = variable_get('uc_usps_markup', '0%');
-  if (strpos($markup, '%') !== false){
-    return $rate + $rate * floatval(rtrim($markup, '%')) / 100;
-  }
-  else if (strpos($markup, '$') !== false){
-    return $rate + floatval(ltrim($markup, '$'));
-  }
-  else if (floatval($markup)){
-    return $rate + $rate * floatval($markup);
+  $markup = variable_get('uc_usps_markup', '0');
+  $type = variable_get('uc_usps_markup_type', 'percentage');
+  if (is_numeric(trim($markup))){
+    switch ($type){
+      case 'percentage':
+        return $rate + $rate * floatval(trim($markup)) / 100;
+      case 'multiplier':
+        return $rate * floatval(trim($markup));
+      case 'currency':
+        return $rate + floatval(trim($markup));
+    }
   }
   else{
     return $rate;
   }
 }
 
+function _uc_usps_package_products($products){
+  $packages = array();
+  if (variable_get('uc_usps_all_in_one', true)){
+    $package = new stdClass();
+    foreach ($products as $product){
+      $package->price += $product->price * $product->qty;
+      $weight += $product->weight * $product->qty * uc_weight_conversion($product->weight_units, 'lb');
+    }
+    $package->pounds = floor($weight);
+    $package->ounces = 16 * ($weight - $package->pounds);
+    $package->container = 'RECTANGULAR';
+    $package->size = 'REGULAR';
+    // Packages are "machinable" if heavier than 6oz. and less than 35lbs.
+    $package->machinable = (
+      ($package->pounds == 0 ? $package->ounces >= 6 : true) &&
+      $package->pounds <= 35 &&
+      ($package->pounds == 35 ? $package->ounces == 0 : true)
+    );
+    $package->qty = 1;
+    $packages[] = $package;
+  }
+  else{
+    foreach ($products as $product){
+      if (!$product->pkg_qty){
+        $product->pkg_qty = 1;
+      }
+      $num_of_pkgs = (int)($product->qty / $product->pkg_qty);
+  
+      $package = drupal_clone($product);
+      $package->description = $product->model;
+      $weight = $product->weight * $product->pkg_qty;
+      switch($product->weight_units){
+        case 'g':
+          $weight = $weight / 1000;
+        case 'kg':
+          $weight = $weight * 2.2;
+        case 'lb':
+          $package->pounds = floor($weight);
+          $package->ounces = 16 * ($weight - $package->pounds);
+        break;
+        case 'oz':
+          $package->pounds = floor($weight / 16);
+          $package->ounces = $weight % 16;
+        break;
+      }
+      $package->container = $product->usps['container'];
+      $length_conversion = uc_length_conversion($product->length_units, 'in');
+      $package->length = max($product->length, $product->width) * $length_conversion;
+      $package->width = min($product->length, $product->width) * $length_conversion;
+      $package->height = $product->height * $length_conversion;
+      if ($package->length < $package->width){
+        list($package->length, $package->width) = array($package->width, $package->length);
+      }
+      $package->girth = 2 * $package->width + 2 * $package->height;
+      $package->size = $package->length + $package->girth;
+      if ($package->size <= 84){
+        $package->size = 'REGULAR';
+      }
+      else if ($package->size <= 108){
+        $package->size = 'LARGE';
+      }
+      else if ($package->size <= 130){
+        $package->size = 'OVERSIZE';
+      }
+      else{
+        $package->size = 'GI-HUGE-IC'; // Too big for the U.S. Postal service.
+      }
+      $package->machinable = (
+        $package->length >= 6 && $package->length <= 34 &&
+        $package->width >= 0.25 && $package->width <= 17 &&
+        $package->height >= 3.5 && $package->height >= 17 &&
+        ($package->pounds == 0 ? $package->ounces >= 6 : true) &&
+        $package->pounds <= 35 &&
+        ($package->pounds == 35 ? $package->ounces == 0 : true)
+      );
+      $package->price = $product->price * $product->pkg_qty;
+      $package->qty = $num_of_pkgs;
+      $packages[] = $package;
+  
+      $remaining_qty = $product->qty % $product->pkg_qty;
+      if ($remaining_qty){
+        $package = drupal_clone($product);
+        $package->description = $product->model;
+        $weight = $product->weight * $remaining_qty;
+        switch($product->weight_units){
+          case 'g':
+            $weight = $weight / 1000;
+          case 'kg':
+            $weight = $weight * 2.2;
+          case 'lb':
+            $package->pounds = floor($weight);
+            $package->ounces = 16 * ($weight - $package->pounds);
+          break;
+          case 'oz':
+            $package->pounds = floor($weight / 16);
+            $package->ounces = $weight % 16;
+          break;
+        }
+        $package->container = $product->usps['container'];
+        $package->length = max($product->length, $product->width) * $length_conversion;
+        $package->width = min($product->length, $product->width) * $length_conversion;
+        $package->height = $product->height * $length_conversion;
+        $package->girth = 2 * $package->width + 2 * $package->height;
+        $package->size = $package->length + $package->girth;
+        if ($package->size <= 84){
+          $package->size = 'REGULAR';
+        }
+        else if ($package->size <= 108){
+          $package->size = 'LARGE';
+        }
+        else if ($package->size <= 130){
+          $package->size = 'OVERSIZE';
+        }
+        else{
+          $package->size = 'GI-HUGE-IC'; // Too big for the U.S. Postal service.
+        }
+        $package->machinable = (
+          $package->length >= 6 && $package->length <= 34 &&
+          $package->width >= 0.25 && $package->width <= 17 &&
+          $package->height >= 3.5 && $package->height >= 17 &&
+          ($package->pounds == 0 ? $package->ounces >= 6 : true) &&
+          $package->pounds <= 35 &&
+        ($package->pounds == 35 ? $package->ounces == 0 : true)
+        );
+        $package->price = $product->price * $remaining_qty;
+        $package->qty = 1;
+        $packages[] = $package;
+      }
+    }
+  }
+  return $packages;
+}
+
+/**
+ * Convenience function for select form elements.
+ */
 function _uc_usps_pkg_types(){
   return array(
     'VARIABLE' => t('Variable'),
@@ -370,6 +661,9 @@ function _uc_usps_pkg_types(){
   );
 }
 
+/**
+ * Convenience function for select form elements.
+ */
 function _uc_usps_services(){
   return array(
     'zero' => t('U.S.P.S. First-Class'),
@@ -387,10 +681,24 @@ function _uc_usps_services(){
   );
 }
 
+function _uc_usps_intl_services(){
+  return array(
+    1 => t('Express Mail International (EMS)'),
+    2 => t('Priority Mail International'),
+    3 => t('First-Class Mail International'),
+    4 => t('Global Express Guaranteed'),
+    6 => t('Global Express Guaranteed Non-Document Rectangular'),
+    7 => t('Global Express Guaranteed Non-Document Non-Rectangular'),
+    8 => t('Priority Mail International Flat Rate Envelope'),
+    9 => t('Priority Mail International Flat Rate Box'),
+    10 => t('Express Mail International (EMS) Flat Rate Envelope'),
+  );
+}
+
 /**
  * Callback for uasort().
  *
- * Sorts service rates by increasing price.
+ * Sort service rates by increasing price.
  */
 function _uc_usps_sort_quotes($a, $b){
   $ar = $a['rate'];

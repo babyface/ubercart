@@ -1,6 +1,6 @@
-; $Id: test_gateway.info,v 1.2 2007/10/02 17:43:42 rszrama Exp $
+; $Id: test_gateway.info,v 1.3.2.1 2008/01/07 20:56:38 rszrama Exp $
 name = Test Gateway
-description = A generic gateway used to test the payment system.
-dependencies = uc_payment
+description = Adds a credit card gateway that simulates a successful payment for testing checkout.
+dependencies = uc_payment uc_credit
 package = Ubercart - payment
 

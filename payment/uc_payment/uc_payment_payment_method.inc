@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_payment_method.inc,v 1.2 2007/10/02 17:43:42 rszrama Exp $
+// $Id: uc_payment_payment_method.inc,v 1.3.2.1 2008/01/07 20:56:38 rszrama Exp $
 
 /**
  * Handle the generic payment method "Other."
@@ -140,7 +140,7 @@ function uc_payment_method_cod($op, &$arg1) {
       break;
 
     case 'order-delete':
-      db_query("DELETE FROM {uc_payment_cod} WHERE order_id = %d", $arg1);
+      db_query("DELETE FROM {uc_payment_cod} WHERE order_id = %d", $arg1->order_id);
       break;
 
     case 'settings':
@@ -161,14 +161,14 @@ function uc_payment_method_cod($op, &$arg1) {
 
 function uc_payment_method_cod_form($order) {
   $form['table1'] = array('#value' => '<style>.cod-table div, .cod-table { display: inline; }</style><table class="cod-table"><tr><td class="form-item" colspan="3"><label>'. t('Enter a desired delivery date:') .'</label></td></tr><tr><td>');
-  $month = (!empty($order->payment_details['delivery_month'])) ? $order->payment_details['delivery_month'] : date('n');
+  $month = (!empty($order->payment_details['delivery_month'])) ? $order->payment_details['delivery_month'] : format_date(time(), 'custom', 'n');
   $form['cod_delivery_month'] = uc_select_month(NULL, $month);
   $form['table2'] = array('#value' => '</td><td>');
-  $day = (!empty($order->payment_details['delivery_day'])) ? $order->payment_details['delivery_day'] : date('j');
+  $day = (!empty($order->payment_details['delivery_day'])) ? $order->payment_details['delivery_day'] : format_date(time(), 'custom', 'j');
   $form['cod_delivery_day'] = uc_select_day(NULL, $day);
   $form['table3'] = array('#value' => '</td><td>');
-  $year = (!empty($order->payment_details['delivery_year'])) ? $order->payment_details['delivery_year'] : date('Y');
-  $form['cod_delivery_year'] = uc_select_year(NULL, $year, date('Y'), date('Y') + 1);
+  $year = (!empty($order->payment_details['delivery_year'])) ? $order->payment_details['delivery_year'] : format_date(time(), 'custom', 'Y');
+  $form['cod_delivery_year'] = uc_select_year(NULL, $year, format_date(time(), 'custom', 'Y'), format_date(time(), 'custom', 'Y') + 1);
   $form['table4'] = array('#value' => '</td></tr></table>');
 
   return $form;
@@ -203,7 +203,7 @@ function uc_payment_method_check($op, &$arg1) {
                                      variable_get('uc_check_mailing_city', ''),
                                      variable_get('uc_check_mailing_zone', ''),
                                      variable_get('uc_check_mailing_postal_code', ''),
-                                     variable_get('uc_store_country', 840))
+                                     variable_get('uc_check_mailing_country', 840))
                   .'</p><p>'. variable_get('uc_check_policy', '') .'</p>';
       }
       return $details;
@@ -231,7 +231,7 @@ function uc_payment_method_check($op, &$arg1) {
                                      variable_get('uc_check_mailing_city', ''),
                                      variable_get('uc_check_mailing_zone', ''),
                                      variable_get('uc_check_mailing_postal_code', ''),
-                                     variable_get('uc_store_country', 840)));
+                                     variable_get('uc_check_mailing_country', 840)));
       }
       return $review;
 
@@ -242,7 +242,7 @@ function uc_payment_method_check($op, &$arg1) {
       $result = db_query("SELECT clear_date FROM {uc_payment_check} WHERE "
                         ."order_id = %d ", $arg1->order_id);
       if ($check = db_fetch_object($result)) {
-        $output = t('Clear Date:') .' '. date('m/d/Y', $check->clear_date);
+        $output = t('Clear Date:') .' '. format_date($check->clear_date, 'custom', 'm/d/Y');
       }
       else {
         $output = l(t('Receive Check'), 'admin/store/orders/'. $arg1->order_id .'/receive_check');
@@ -257,8 +257,8 @@ function uc_payment_method_check($op, &$arg1) {
       $result = db_query("SELECT clear_date FROM {uc_payment_check} WHERE "
                         ."order_id = %d ", $arg1->order_id);
       if ($check = db_fetch_object($result)) {
-        $output = t('Check Received') .'<br />'
-                . t('Expected Clear Date:') .'<br />'. date('m/d/Y', $check->clear_date);
+        $output = t('Check received') .'<br />'
+                . t('Expected clear date:') .'<br />'. format_date($check->clear_date, 'custom', 'm/d/Y');
       }
       return $output;
 
@@ -273,10 +273,10 @@ function uc_payment_method_check($op, &$arg1) {
       $form['uc_check_mailing_city'] = uc_textfield(uc_get_field_name('city'), variable_get('uc_check_mailing_city', ''), FALSE);
       $form['uc_check_mailing_zone'] = uc_zone_select(uc_get_field_name('zone'), variable_get('uc_check_mailing_zone', ''), FALSE);
       $form['uc_check_mailing_postal_code'] = uc_textfield(uc_get_field_name('postal_code'), variable_get('uc_check_mailing_postal_code', ''), FALSE, NULL, 10, 10);
-      $form['uc_check_country'] = uc_country_select(uc_get_field_name('country'), variable_get('uc_check_country', 840));
+      $form['uc_check_mailing_country'] = uc_country_select(uc_get_field_name('country'), variable_get('uc_check_mailing_country', 840));
       $form['uc_check_policy'] = array(
         '#type' => 'textarea',
-        '#title' => t('Check Payment Policy'),
+        '#title' => t('Check payment policy'),
         '#description' => t('Instructions for customers on the checkout page.'),
         '#default_value' => variable_get('uc_check_policy', t('Personal and business checks will be held for up to 10 business days to ensure payment clears before an order is shipped.')),
         '#rows' => 3,
@@ -320,12 +320,12 @@ function uc_payment_receive_check_form($order_id) {
     '#size' => 64,
     '#maxlength' => 256,
   );
-  $form['clear_month'] = uc_select_month(NULL, date('n'));
-  $form['clear_day'] = uc_select_day(NULL, date('j'));
-  $form['clear_year'] = uc_select_year(NULL, date('Y'), date('Y'), date('Y') + 1);
+  $form['clear_month'] = uc_select_month(NULL, format_date(time(), 'custom', 'n'));
+  $form['clear_day'] = uc_select_day(NULL, format_date(time(), 'custom', 'j'));
+  $form['clear_year'] = uc_select_year(NULL, format_date(time(), 'custom', 'Y'), format_date(time(), 'custom', 'Y'), format_date(time(), 'custom', 'Y') + 1);
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Receive Check'),
+    '#value' => t('Receive check'),
   );
 
   return $form;
@@ -335,7 +335,7 @@ function theme_uc_payment_receive_check_form($form) {
   drupal_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
 
   $output = '<p>'. t('Use the form to enter the check into the payments system and set the expected clear date.') .'</p>';
-  $output .= '<p><strong>'. t('Order Balance:') .'</strong> '
+  $output .= '<p><strong>'. t('Order balance:') .'</strong> '
            . drupal_render($form['balance']) .'</p>';
 
   $output .= drupal_render($form['check_exists'])

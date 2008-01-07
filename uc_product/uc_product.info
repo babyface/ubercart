@@ -1,6 +1,6 @@
-; $Id: uc_product.info,v 1.5 2007/10/02 17:43:47 rszrama Exp $
+; $Id: uc_product.info,v 1.6.2.1 2008/01/07 20:56:44 rszrama Exp $
 name = Product
 description = REQUIRED. A module to represent items in an online store. Imagecache and CCK Image field recommended.
-dependencies = uc_store
+dependencies = uc_store ubrowser
 package = Ubercart - core
 

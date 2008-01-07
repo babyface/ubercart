@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.install,v 1.2 2007/10/02 17:43:41 rszrama Exp $
+// $Id: uc_credit.install,v 1.3.2.1 2008/01/07 20:56:38 rszrama Exp $
 
 /**
  * Implementation of hook_install().
@@ -24,18 +24,18 @@ function uc_credit_install() {
       break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_payment_credit} (
-        credit_id mediumint(9) NOT NULL,
-        order_id mediumint(9) NOT NULL,
+        credit_id integer NOT NULL,
+        order_id integer NOT NULL,
         cc_type varchar(255) NOT NULL,
         cc_owner varchar(64) NOT NULL,
         cc_number varchar(16) NOT NULL,
-        cc_exp_month tinyint(4) NOT NULL,
-        cc_exp_year smallint(6) NOT NULL,
+        cc_exp_month smallint NOT NULL,
+        cc_exp_year smallint NOT NULL,
         cc_cvv varchar(4) NOT NULL,
         cc_bank varchar(255) NOT NULL,
-        PRIMARY KEY (credit_id),
-        KEY order_id (order_id)
-      )");
+        PRIMARY KEY (credit_id)
+      );");
+			db_query("CREATE INDEX {uc_payment_credit}_order_id ON {uc_payment_credit} (order_id)");
       break;
   }
 }

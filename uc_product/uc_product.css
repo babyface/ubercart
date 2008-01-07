@@ -1,4 +1,4 @@
-/* $Id: uc_product.css,v 1.7 2007/10/04 14:48:25 rszrama Exp $ */
+/* $Id: uc_product.css,v 1.8.2.1 2008/01/07 20:56:44 rszrama Exp $ */
 
 .product_image {
   float: right;
@@ -51,8 +51,9 @@ h3.title {
   margin-bottom: 0;
 }
 
-.node-form .product-field input {
+.node-form .product-field .form-text {
   width: auto;
+  display: inline;
 }
 
 .product-ubrowser, .product-buffer {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.install,v 1.3 2007/10/02 18:11:56 rszrama Exp $
+// $Id: uc_weightquote.install,v 1.4.2.1 2008/01/07 20:56:41 rszrama Exp $
 
 function uc_weightquote_install(){
   switch($GLOBALS['db_type']){
@@ -14,8 +14,8 @@ function uc_weightquote_install(){
     break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_weightquote_products} (
-        vid integer unsigned NOT NULL default 0
-        nid integer unsigned NOT NULL default 0,
+        vid integer NOT NULL default 0
+        nid integer NOT NULL default 0,
         rate float NOT NULL default 0,
         PRIMARY KEY (vid)
       );");
@@ -25,6 +25,8 @@ function uc_weightquote_install(){
 
 function uc_weightquote_uninstall(){
   db_query("DROP TABLE {uc_weightquote_products}");
+  variable_del('uc_weightquote_base_rate');
+  variable_del('uc_weightqutoe_product_default');
 }
 
 function uc_weightquote_update_1(){

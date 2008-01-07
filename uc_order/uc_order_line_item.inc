@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_line_item.inc,v 1.2 2007/10/02 17:43:46 rszrama Exp $
+// $Id: uc_order_line_item.inc,v 1.3.2.1 2008/01/07 20:56:44 rszrama Exp $
 
 /**
  * @file
@@ -54,30 +54,13 @@ function uc_line_item_total($op, $arg1) {
 /**
  * Calculate the total value of line items of types that should be calculated.
  */
-function uc_line_items_calculate($order, $taxable_only = FALSE) {
-  if ($taxable_only == TRUE) {
-    $total = array();
-  }
-  else {
-    $total = 0;
-  }
+function uc_line_items_calculate($order) {
+  $total = 0;
 
   if (is_array($order->line_items)) {
     foreach ($order->line_items as $item) {
       if (_line_item_data($item['type'], 'calculated') == TRUE) {
-        if ($taxable_only == TRUE) {
-          if (($rate = _line_item_data($item['type'], 'tax_rate')) > 0) {
-            if (!isset($total[$rate])) {
-              $total[$rate] = $item['amount'];
-            }
-            else {
-              $total[$rate] += $item['amount'];
-            }
-          }
-        }
-        else {
-          $total += $item['amount'];
-        }
+        $total += $item['amount'];
       }
     }
   }

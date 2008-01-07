@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.install,v 1.3 2007/10/02 18:11:55 rszrama Exp $
+// $Id: uc_quote.install,v 1.4.2.1 2008/01/07 20:56:40 rszrama Exp $
 
 function uc_quote_install(){
   switch($GLOBALS['db_type']){
@@ -54,33 +54,33 @@ function uc_quote_install(){
         PRIMARY KEY (id_type, id)
       );");
       db_query("CREATE TABLE {uc_quote_manufacturer_locations} (
-        tid integer UNSIGNED NOT NULL default 0,
+        tid integer NOT NULL default 0,
         first_name varchar(255) NOT NULL default '',
         last_name varchar(255) NOT NULL default '',
         company varchar(255) NOT NULL default '',
         street1 varchar(255) NOT NULL default '',
         street2 varchar(255) NOT NULL default '',
         city varchar(255) NOT NULL default '',
-        zone integer UNSIGNED NOT NULL default 0,
+        zone integer NOT NULL default 0,
         postal_code varchar(255) NOT NULL default '',
-        country integer UNSIGNED NOT NULL default '',
+        country integer NOT NULL default '',
         PRIMARY KEY (tid)
       );");
       db_query("CREATE TABLE {uc_quote_product_locations} (
-        nid integer UNSIGNED NOT NULL default 0,
+        nid integer NOT NULL default 0,
         first_name varchar(255) NOT NULL default '',
         last_name varchar(255) NOT NULL default '',
         company varchar(255) NOT NULL default '',
         street1 varchar(255) NOT NULL default '',
         street2 varchar(255) NOT NULL default '',
         city varchar(255) NOT NULL default '',
-        zone integer UNSIGNED NOT NULL default 0,
+        zone integer NOT NULL default 0,
         postal_code varchar(255) NOT NULL default '',
-        country integer UNSIGNED NOT NULL default '',
+        country integer NOT NULL default '',
         PRIMARY KEY (nid)
       );");
       db_query("CREATE TABLE {uc_order_quotes} (
-        oid integer unsigned NOT NULL default 0,
+        oid integer NOT NULL default 0,
         method varchar(25) NOT NULL default '',
         accessorials varchar(255) NOT NULL default '',
         rate decimal(10,2) NOT NULL default 0.00,
@@ -92,12 +92,18 @@ function uc_quote_install(){
 }
 
 function uc_quote_uninstall(){
-  db_query("DROP TABLE {uc_quote_types}");
   db_query("DROP TABLE {uc_quote_shipping_types}");
   db_query("DROP TABLE {uc_quote_manufacturer_locations}");
   db_query("DROP TABLE {uc_quote_product_locations}");
   db_query("DROP TABLE {uc_order_quotes}");
-  db_query("DROP TABLE {uc_order_fulfillments}");
+  variable_del('uc_quote_store_default_address');
+  variable_del('uc_quote_log_errors');
+  variable_del('uc_quote_display_debug');
+  variable_del('uc_quote_require_quote');
+  variable_del('uc_quote_enabled');
+  variable_del('uc_quote_method_weight');
+  variable_del('uc_quote_type_weight');
+  variable_del('uc_store_shipping_type');
 }
 
 function uc_quote_update_1(){

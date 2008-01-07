@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.install,v 1.3 2007/10/02 18:11:55 rszrama Exp $
+// $Id: uc_flatrate.install,v 1.4.2.1 2008/01/07 20:56:39 rszrama Exp $
 
 function uc_flatrate_install(){
   switch($GLOBALS['db_type']){
@@ -8,23 +8,43 @@ function uc_flatrate_install(){
       db_query("CREATE TABLE {uc_flatrate_products} (
         `vid` mediumint(9) unsigned NOT NULL default 0,
         `nid` mediumint(9) unsigned NOT NULL default 0,
-        `rate` float NOT NULL default '0',
+        `mid` mediumint(9) unsigned NOT NULL default 0,
+        `rate` decimal(10,2) NOT NULL default 0.00,
         PRIMARY KEY (`vid`)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
+      db_query("CREATE TABLE {uc_flatrate_methods} (
+        `mid` mediumint(9) unsigned NOT NULL default 0,
+        `title` varchar(255) NOT NULL default '',
+        `label` varchar(255) NOT NULL default '',
+        `base_rate` decimal(10,2) NOT NULL default 0.00,
+        `product_rate` decimal(10,2) NOT NULL default 0.00,
+        PRIMARY KEY (`mid`)
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
     break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_flatrate_products} (
-        vid integer unsigned NOT NULL default 0,
-        nid integer unsigned NOT NULL default 0,
-        rate float NOT NULL default 0.0,
+        vid integer NOT NULL default 0,
+        nid integer NOT NULL default 0,
+        mid mediumint(9) unsigned NOT NULL default 0,
+        rate decimal(10,2) NOT NULL default 0.00,
         PRIMARY KEY (vid)
       );");
+      db_query("CREATE TABLE {uc_flatrate_methods} (
+        mid mediumint(9) unsigned NOT NULL default 0,
+        title varchar(255) NOT NULL default '',
+        label varchar(255) NOT NULL default '',
+        base_rate decimal(10,2) NOT NULL default 0.00,
+        product_rate decimal(10,2) NOT NULL default 0.00,
+        PRIMARY KEY (`mid`)
+      );");
+      db_query("CREATE INDEX {uc_flatrate_methods}_mid_idx ON {uc_flatrate_methods}(mid)");
     break;
   }
 }
 
 function uc_flatrate_uninstall(){
   db_query("DROP TABLE {uc_flatrate_products}");
+  db_query("DROP TABLE {uc_flatrate_methods}");
 }
 
 function uc_flatrate_update_1(){
@@ -50,5 +70,83 @@ function uc_flatrate_update_1(){
       $ret[] = update_sql("ALTER TABLE {uc_flatrate_products} ADD PRIMARY KEY (vid)");
     break;
   }
+  return $ret;
+}
+
+function uc_flatrate_update_2(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_flatrate_products} CHANGE rate rate decimal(10,2) NOT NULL default 0.00");
+      $ret[] = update_sql("ALTER TABLE {uc_flatrate_products} ADD COLUMN mid mediumint(9) unsigned NOT NULL default 0 AFTER nid");
+      $ret[] = update_sql("CREATE TABLE {uc_flatrate_methods} (
+        `mid` mediumint(9) unsigned NOT NULL default 0,
+        `title` varchar(255) NOT NULL default '',
+        `label` varchar(255) NOT NULL default '',
+        `base_rate` decimal(10,2) NOT NULL default 0.00,
+        `product_rate` decimal(10,2) NOT NULL default 0.00,
+        PRIMARY KEY (`mid`)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
+    break;
+    case 'pgsql':
+      db_change_column($ret, 'uc_flatrate_products', 'rate', 'rate', 'decimal(10,2)', array('not null' => true, 'default' => 0));
+      db_add_column($ret, 'uc_flatrate_products', 'mid', 'mediumint(9) unsigned', array('not null' => true, 'default' => 0));
+      $ret[] = update_sql("CREATE TABLE {uc_flatrate_methods} (
+        mid mediumint(9) unsigned NOT NULL default 0,
+        title varchar(255) NOT NULL default '',
+        label varchar(255) NOT NULL default '',
+        base_rate decimal(10,2) NOT NULL default 0.00,
+        product_rate decimal(10,2) NOT NULL default 0.00,
+        PRIMARY KEY (mid)
+      );");
+      $ret[] = update_sql("CREATE INDEX {uc_flatrate_methods}_mid_idx ON {uc_flatrate_methods}(mid)");
+    break;
+  }
+  
+  $set_var = false;
+  $enabled = variable_get('uc_quote_enabled', array());
+  $weight = variable_get('uc_quote_method_weight', array('flatrate' => 0, 'order_rate' => 1));
+  $base_rate = variable_get('uc_flatrate_product_base_rate', 0);
+  $product_rate = variable_get('uc_flatrate_product_default', 0);
+  $changes = db_num_rows(db_query("SELECT * FROM {uc_flatrate_products}"));
+  $mid = db_next_id('{uc_flatrate_methods}_mid');
+  $ret[] = update_sql("INSERT INTO {uc_flatrate_methods} (mid, title, label, base_rate, product_rate) VALUES (". $mid .", '". t('Flat rate per product') ."', '". t('Shipping rate') ."', ". $base_rate .", ". $product_rate .")");
+  $ret[] = update_sql("UPDATE {uc_flatrate_products} SET mid = ". $mid);
+  $enabled['flatrate_'. $mid] = $enabled['flatrate'];
+  $weight['flatrate_'. $mid] = $weight['flatrate'];
+  unset($enabled['flatrate'], $weight['flatrate']);
+
+  if ($configuration = db_fetch_object(db_query("SELECT data FROM {workflow_ng_cfgs} WHERE name = '%s'", 'uc_flatrate_get_quote'))){
+    $configuration->name = 'uc_flatrate_get_quote_'. $mid;
+    $configuration->data = unserialize($configuration->data);
+    $configuration->data['#event'] = 'get_quote_from_flatrate_'. $mid;
+    $result = db_query("UPDATE {workflow_ng_cfgs} SET name = '". $configuration->name ."', data = '". serialize($configuration->data) ."' WHERE name = 'uc_flatrate_get_quote'");
+    $ret[] = array('success' => $result !== FALSE, 'query' => check_plain("UPDATE {workflow_ng_cfgs} SET name = '". $configuration->name ."', data = '". serialize($configuration->data) ."' WHERE name = 'uc_flatrate_get_quote'"));
+  }
+
+  $order_rate = variable_get('uc_flatrate_order_rate', 0);
+  $mid = db_next_id('{uc_flatrate_methods}_mid');
+  $ret[] = update_sql("INSERT INTO {uc_flatrate_methods} (mid, title, label, base_rate) VALUES (". $mid .", '". t('Flat rate per order') ."', '". t('Shipping rate') ."', ". $order_rate .")");
+  $enabled['flatrate_'. $mid] = $enabled['order_rate'];
+  $weight['flatrate_'. $mid] = $weight['order_rate'];
+  unset($enabled['order_rate'], $weight['order_rate']);
+  
+  if ($configuration = db_fetch_object(db_query("SELECT data FROM {workflow_ng_cfgs} WHERE name = '%s'", 'uc_flatrate_get_quote_by_order'))){
+    $configuration->name = 'uc_flatrate_get_quote_'. $mid;
+    $configuration->data = unserialize($configuration->data);
+    $configuration->data['#event'] = 'get_quote_from_flatrate_'. $mid;
+    $result = db_query("UPDATE {workflow_ng_cfgs} SET name = '". $configuration->name ."', data = '". serialize($configuration->data) ."' WHERE name = 'uc_flatrate_get_quote_by_order'");
+    $ret[] = array('success' => $result !== FALSE, 'query' => check_plain("UPDATE {workflow_ng_cfgs} SET name = '". $configuration->name ."', data = '". serialize($configuration->data) ."' WHERE name = 'uc_flatrate_get_quote_by_order'"));
+  }
+  
+  variable_set('uc_quote_enabled', $enabled);
+  variable_set('uc_quote_method_weight', $weight);
+  workflow_ng_clear_cache();
+  
+  variable_del('uc_flatrate_product_base_rate');
+  variable_del('uc_flatrate_product_default');
+  variable_del('uc_flatrate_order_rate');
+  
   return $ret;
 }

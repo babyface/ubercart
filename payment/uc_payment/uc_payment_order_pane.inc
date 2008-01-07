@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_order_pane.inc,v 1.3 2007/10/02 18:11:54 rszrama Exp $
+// $Id: uc_payment_order_pane.inc,v 1.4.2.1 2008/01/07 20:56:38 rszrama Exp $
 
 /**
  * @file
@@ -56,7 +56,7 @@ function uc_order_pane_payment($op, $arg1) {
       
       $form['payment'] = array(
         '#type' => 'fieldset',
-        '#title' => t("Modify 'Payment Info'"),
+        '#title' => t("Modify 'Payment info'"),
         '#collapsible' => TRUE,
         '#collapsed' => FALSE
       );

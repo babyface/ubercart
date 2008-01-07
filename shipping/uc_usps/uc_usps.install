@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.install,v 1.3 2007/10/02 18:11:56 rszrama Exp $
+// $Id: uc_usps.install,v 1.4.2.1 2008/01/07 20:56:40 rszrama Exp $
 
 function uc_usps_install(){
   switch ($GLOBALS['db_type']){
@@ -8,15 +8,15 @@ function uc_usps_install(){
       db_query("CREATE TABLE {uc_usps_products} (
         `vid` mediumint(9) unsigned NOT NULL default 0,
         `nid` mediumint(9) unsigned NOT NULL default 0,
-        `container` varchar(2) NOT NULL,
+        `container` varchar(255) NOT NULL,
         PRIMARY KEY (`vid`)
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
     break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_usps_products} (
-        vid integer unsigned NOT NULL default 0,
-        nid integer unsigned NOT NULL default 0,
-        container varchar(2) NOT NULL default '',
+        vid integer NOT NULL default 0,
+        nid integer NOT NULL default 0,
+        container varchar(255) NOT NULL default '',
         PRIMARY KEY (vid)
       );");
     break;
@@ -25,6 +25,9 @@ function uc_usps_install(){
 
 function uc_usps_uninstall(){
   db_query("DROP TABLE {uc_usps_products}");
+  variable_del('uc_usps_user_id');
+  variable_del('uc_usps_services');
+  variable_del('uc_usps_markup');
 }
 
 function uc_usps_update_1(){
@@ -64,6 +67,39 @@ function uc_usps_update_2(){
         db_query("UPDATE {uc_usps_products} SET vid = %d WHERE nid = %d", $product->vid, $product->nid);
       }
       $ret[] = update_sql("ALTER TABLE {uc_usps_products} ADD PRIMARY KEY (vid)");
+    break;
+  }
+  return $ret;
+}
+
+function uc_usps_update_3(){
+  $ret = array();
+  $markup = variable_get('uc_usps_markup', '0%');
+  if (strpos($markup, '%') !== false){
+    variable_set('uc_usps_markup_type', 'percentage');
+    variable_set('uc_usps_markup', floatval(rtrim($markup, '%')));
+  }
+  else if (strpos($markup, '$') !== false){
+    variable_set('uc_usps_markup_type', 'currency');
+    variable_set('uc_usps_markup', floatval(ltrim($markup, '$')));
+  }
+  else if (floatval($markup)){
+    variable_set('uc_usps_markup_type', 'multiplier');
+    variable_set('uc_usps_markup', floatval($markup));
+  }
+  $ret[] = array('success' => true, 'query' => 'Added USPS markup type.');
+  return $ret;
+}
+
+function uc_usps_update_4(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_usps_products} CHANGE container container varchar(255) NOT NULL");
+    break;
+    case 'pgsql':
+      db_change_column($ret, 'uc_usps_products', 'container', 'container', 'varchar(255)', array('not null' => true, 'default' => ''));
     break;
   }
   return $ret;
