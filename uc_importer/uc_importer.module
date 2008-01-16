@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_importer.module,v 1.6.2.1 2008/01/07 20:56:43 rszrama Exp $
+// $Id: uc_importer.module,v 1.6.2.2 2008/01/16 21:56:55 rszrama Exp $
 
 /**
  * @file
@@ -60,6 +60,7 @@ function uc_importer_menu($may_cache){
     $items[] = array('path' => 'admin/store/settings/importer',
       'access' => user_access('import'),
       'title' => t('Importer settings'),
+      'description' => t('Configure the importer settings.'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('uc_importer_admin_settings'),
       'type' => MENU_NORMAL_ITEM,
@@ -253,7 +254,7 @@ function uc_importer_export_form_submit($form_id, $form_values){
     if ($file = file_save_data($xml, file_directory_temp() .'/uc_export.xml', FILE_EXISTS_REPLACE)){
       //drupal_set_message(print_r($file, true));
       file_transfer($file, array(
-        'Content-Type: application/xml',
+        'Content-Type: application/xml; charset=utf-8',
         'Content-Length: '. filesize($file),
         'Content-Disposition: attachment; filename="'. $file .'"',
       ));
@@ -403,7 +404,7 @@ function uc_importer_export($nids){
     $data[$type] = array_unique($ids);
   }
   drupal_set_message('<pre>'. print_r($data, true) .'</pre>');
-  $xml = '<?xml version="1.0"?>'. "\n";
+  $xml = '<?xml version="1.0" encoding="utf-8" ?>'. "\n";
   $xml .= '<store xmlns="http://www.ubercart.org" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.ubercart.org http://www.ubercart.org/files/store.xsd">';
   if (is_array($data['vocabularies']) && !empty($data['categories'])){
     $xml .= _uc_importer_export_vocabularies($data['vocabularies']);
@@ -471,8 +472,8 @@ function _uc_importer_export_categories($categories){
     $parents = taxonomy_get_parents($tid);
     $xml .= '<id>'. $term->tid .'</id>';
     $xml .= '<vid>'. $term->vid .'</vid>';
-    $xml .= '<name>'. htmlentities($term->name) .'</name>';
-    $xml .= '<description>'. htmlentities($term->description) .'</description>';
+    $xml .= '<name>'. htmlentities($term->name, ENT_QUOTES, "UTF-8") .'</name>';
+    $xml .= '<description>'. htmlentities($term->description, ENT_QUOTES, "UTF-8") .'</description>';
     foreach ($parents as $parent){
       $xml .= '<parent>'. $parent->tid .'</parent>';
     }
@@ -492,7 +493,7 @@ function _uc_importer_export_manufacturers($manufacturers){
     $manufacturer = uc_manufacturer_load($tid);
     $xml .= '<manufacturer>';
     $xml .= '<id>'. $manufacturer->tid .'</id>';
-    $xml .= '<name>'. htmlentities($manufacturer->name) .'</name>';
+    $xml .= '<name>'. htmlentities($manufacturer->name, ENT_QUOTES, "UTF-8") .'</name>';
     $xml .= isset($manufacturer->url) && !empty($manufacturer->url) ? ('<url>'. $manufacturer->url .'</url>') : '';
     $xml .= isset($manufacturer->phone_no) && !empty($manufacturer->phone_no) ? ('<phone_no>'. $manufacturer->phone_no .'</phone_no>') : '';
     $xml .= isset($manufacturer->fax_no) && !empty($manufacturer->fax_no) ? ('<fax_no>'. $manufacturer->fax_no .'</fax_no>') : '';
@@ -512,14 +513,14 @@ function _uc_importer_export_attributes($attributes){
     $attribute = uc_attribute_load($aid, 'product');
     $xml .= '<attribute>';
     $xml .= '<id>'. $attribute->aid .'</id>';
-    $xml .= '<name>'. htmlentities($attribute->name) .'</name>';
+    $xml .= '<name>'. htmlentities($attribute->name, ENT_QUOTES, "UTF-8") .'</name>';
     $xml .= '<ordering>'. $attribute->ordering .'</ordering>';
     if (is_array($attribute->options) && count($attribute->options)){
       $xml .= '<options>';
       foreach ($attribute->options as $option){
         $xml .= '<option>';
         $xml .= '<id>'. $option->oid .'</id>';
-        $xml .= '<name>'. htmlentities($option->name) .'</name>';
+        $xml .= '<name>'. htmlentities($option->name, ENT_QUOTES, "UTF-8") .'</name>';
         $xml .= '<price>'. $option->price .'</price>';
         $xml .= '<weight>'. $option->weight .'</weight>';
         $xml .= '<ordering>'. $option->ordering .'</ordering>';
@@ -544,8 +545,8 @@ function _uc_importer_export_classes($classes){
     $class = uc_product_class_load($pcid);
     $xml .= '<class>';
     $xml .= '<id>'. $class->pcid .'</id>';
-    $xml .= '<name>'. htmlentities($class->name) .'</name>';
-    $xml .= '<description>'. htmlentities($class->description) .'</description>';
+    $xml .= '<name>'. htmlentities($class->name, ENT_QUOTES, "UTF-8") .'</name>';
+    $xml .= '<description>'. htmlentities($class->description, ENT_QUOTES, "UTF-8") .'</description>';
     $xml .= uc_importer_invoke('export', 'class', $pcid);
     $xml .= '</class>';
   }
@@ -564,12 +565,12 @@ function _uc_importer_export_products($products){
     $xml .= '<unique_hash>'. $product->unique_hash .'</unique_hash>';
     $xml .= '<id>'. $product->nid .'</id>';
     $xml .= '<type>'. $product->type .'</type>';
-    $xml .= '<name>'. htmlentities($product->title) .'</name>';
-    $xml .= '<description>'. htmlentities($product->body) .'</description>';
-    $xml .= '<model>'. htmlentities($product->model) .'</model>';
+    $xml .= '<name>'. htmlentities($product->title, ENT_QUOTES, "UTF-8") .'</name>';
+    $xml .= '<description>'. htmlentities($product->body, ENT_QUOTES, "UTF-8") .'</description>';
+    $xml .= '<model>'. htmlentities($product->model, ENT_QUOTES, "UTF-8") .'</model>';
     if (module_exists('uc_manufacturer')){
       $manufacturer = uc_product_get_manufacturer($product->nid);
-      $xml .= isset($manufacturer->tid) ? ('<manufacturer>'. htmlentities($manufacturer->name) .'</manufacturer>') : '';
+      $xml .= isset($manufacturer->tid) ? ('<manufacturer>'. htmlentities($manufacturer->name, ENT_QUOTES, "UTF-8") .'</manufacturer>') : '';
     }
     $xml .= isset($product->list_price) ? ('<list_price>'. $product->list_price .'</list_price>') : '';
     $xml .= isset($product->cost) ? ('<cost>'. $product->cost .'</cost>') : '';
@@ -638,7 +639,7 @@ function _uc_importer_export_products($products){
         foreach ($attributes as $attribute){
           $xml .= '<attribute>';
           $xml .= '<id>'. $attribute->aid .'</id>';
-          $xml .= '<name>'. htmlentities($attribute->name) .'</name>';
+          $xml .= '<name>'. htmlentities($attribute->name, ENT_QUOTES, "UTF-8") .'</name>';
           $xml .= '<ordering>'. $attribute->ordering .'</ordering>';
           $xml .= '<default_option>'. $attribute->default_option .'</default_option>';
           if (!empty($attribute->options)){
@@ -646,7 +647,7 @@ function _uc_importer_export_products($products){
             foreach ($attribute->options as $option){
               $xml .= '<option>';
               $xml .= '<id>'. $option->oid .'</id>';
-              $xml .= '<name>'. htmlentities($option->name) .'</name>';
+              $xml .= '<name>'. htmlentities($option->name, ENT_QUOTES, "UTF-8") .'</name>';
               $xml .= '<price>'. $option->price .'</price>';
               $xml .= '<weight>'. $option->weight .'</weight>';
               $xml .= '<ordering>'. $option->ordering .'</ordering>';
@@ -665,8 +666,8 @@ function _uc_importer_export_products($products){
         $xml .= '<adjustments>';
         while ($adjustment = db_fetch_object($result)){
           $xml .= '<adjustment>';
-          $xml .= '<combination>'. htmlentities($adjustment->combination) .'</combination>';
-          $xml .= '<model>'. htmlentities($adjustment->model) .'</model>';
+          $xml .= '<combination>'. htmlentities($adjustment->combination, ENT_QUOTES, "UTF-8") .'</combination>';
+          $xml .= '<model>'. htmlentities($adjustment->model, ENT_QUOTES, "UTF-8") .'</model>';
           $xml .= uc_importer_invoke('export', 'adjustment', $adjustment, $product->nid);
           $xml .= '</adjustment>';
         }
@@ -691,26 +692,26 @@ function _uc_importer_export_orders($orders){
       $xml .= '<order>';
       $xml .= '<order_status>'. uc_order_status_data($order->order_status, 'title') .'</order_status>';
       $xml .= '<order_total>'. $order->order_total .'</order_total>';
-      $xml .= '<primary_email>'. htmlentities($order->primary_email) .'</primary_email>';
-      $xml .= '<delivery_first_name>'. htmlentities($order->delivery_first_name) .'</delivery_first_name>';
-      $xml .= '<delivery_last_name>'. htmlentities($order->delivery_last_name) .'</delivery_last_name>';
-      $xml .= '<delivery_phone>'. htmlentities($order->delivery_phone) .'</delivery_phone>';
-      $xml .= '<delivery_company>'. htmlentities($order->delivery_company) .'</delivery_company>';
-      $xml .= '<delivery_street1>'. htmlentities($order->delivery_street1) .'</delivery_street1>';
-      $xml .= '<delivery_street2>'. htmlentities($order->delivery_street2) .'</delivery_street2>';
-      $xml .= '<delivery_city>'. htmlentities($order->delivery_city) .'</delivery_city>';
+      $xml .= '<primary_email>'. htmlentities($order->primary_email, ENT_QUOTES, "UTF-8") .'</primary_email>';
+      $xml .= '<delivery_first_name>'. htmlentities($order->delivery_first_name, ENT_QUOTES, "UTF-8") .'</delivery_first_name>';
+      $xml .= '<delivery_last_name>'. htmlentities($order->delivery_last_name, ENT_QUOTES, "UTF-8") .'</delivery_last_name>';
+      $xml .= '<delivery_phone>'. htmlentities($order->delivery_phone, ENT_QUOTES, "UTF-8") .'</delivery_phone>';
+      $xml .= '<delivery_company>'. htmlentities($order->delivery_company, ENT_QUOTES, "UTF-8") .'</delivery_company>';
+      $xml .= '<delivery_street1>'. htmlentities($order->delivery_street1, ENT_QUOTES, "UTF-8") .'</delivery_street1>';
+      $xml .= '<delivery_street2>'. htmlentities($order->delivery_street2, ENT_QUOTES, "UTF-8") .'</delivery_street2>';
+      $xml .= '<delivery_city>'. htmlentities($order->delivery_city, ENT_QUOTES, "UTF-8") .'</delivery_city>';
       $xml .= '<delivery_zone>'. $order->delivery_zone .'</delivery_zone>';
-      $xml .= '<delivery_zip>'. htmlentities($order->delivery_zip) .'</delivery_zip>';
+      $xml .= '<delivery_zip>'. htmlentities($order->delivery_zip, ENT_QUOTES, "UTF-8") .'</delivery_zip>';
       $xml .= '<delivery_country>'. $order->delivery_country .'</delivery_country>';
-      $xml .= '<billing_first_name>'. htmlentities($order->billing_first_name) .'</billing_first_name>';
-      $xml .= '<billing_last_name>'. htmlentities($order->billing_last_name) .'</billing_last_name>';
-      $xml .= '<billing_phone>'. htmlentities($order->billing_phone) .'</billing_phone>';
-      $xml .= '<billing_company>'. htmlentities($order->billing_company) .'</billing_company>';
-      $xml .= '<billing_street1>'. htmlentities($order->billing_street1) .'</billing_street1>';
-      $xml .= '<billing_street2>'. htmlentities($order->billing_street2) .'</billing_street2>';
-      $xml .= '<billing_city>'. htmlentities($order->billing_city) .'</billing_city>';
+      $xml .= '<billing_first_name>'. htmlentities($order->billing_first_name, ENT_QUOTES, "UTF-8") .'</billing_first_name>';
+      $xml .= '<billing_last_name>'. htmlentities($order->billing_last_name, ENT_QUOTES, "UTF-8") .'</billing_last_name>';
+      $xml .= '<billing_phone>'. htmlentities($order->billing_phone, ENT_QUOTES, "UTF-8") .'</billing_phone>';
+      $xml .= '<billing_company>'. htmlentities($order->billing_company, ENT_QUOTES, "UTF-8") .'</billing_company>';
+      $xml .= '<billing_street1>'. htmlentities($order->billing_street1, ENT_QUOTES, "UTF-8") .'</billing_street1>';
+      $xml .= '<billing_street2>'. htmlentities($order->billing_street2, ENT_QUOTES, "UTF-8") .'</billing_street2>';
+      $xml .= '<billing_city>'. htmlentities($order->billing_city, ENT_QUOTES, "UTF-8") .'</billing_city>';
       $xml .= '<billing_zone>'. $order->billing_zone .'</billing_zone>';
-      $xml .= '<billing_zip>'. htmlentities($order->billing_zip) .'</billing_zip>';
+      $xml .= '<billing_zip>'. htmlentities($order->billing_zip, ENT_QUOTES, "UTF-8") .'</billing_zip>';
       $xml .= '<billing_country>'. $order->billing_country .'</billing_country>';
       $xml .= '<payment_method>'. $order->payment_method .'</payment_method>';
       if (!empty($order->products)){
@@ -718,15 +719,15 @@ function _uc_importer_export_orders($orders){
         foreach ($order->products as $product){
           $xml .= '<product>';
           $xml .= '<qty>'. $product->qty .'</qty>';
-          $xml .= '<name>'. htmlentities($product->title) .'</name>';
+          $xml .= '<name>'. htmlentities($product->title, ENT_QUOTES, "UTF-8") .'</name>';
           if ($product->manufacturer){
-            $xml .= '<manufacturer>'. htmlentities($product->manufacturer) .'</manufacturer>';
+            $xml .= '<manufacturer>'. htmlentities($product->manufacturer, ENT_QUOTES, "UTF-8") .'</manufacturer>';
           }
-          $xml .= '<model>'. htmlentities($product->model) .'</model>';
+          $xml .= '<model>'. htmlentities($product->model, ENT_QUOTES, "UTF-8") .'</model>';
           $xml .= '<cost>'. $product->cost .'</cost>';
           $xml .= '<price>'. $product->price .'</price>';
           $xml .= '<weight>'. $product->weight .'</weight>';
-          $xml .= '<data>'. htmlentities($product->data) .'</data>';
+          $xml .= '<data>'. htmlentities($product->data, ENT_QUOTES, "UTF-8") .'</data>';
           $xml .= uc_importer_invoke('export', 'order-product', $order_id, $product->order_product_id);
           $xml .= '</product>';
         }
@@ -736,7 +737,7 @@ function _uc_importer_export_orders($orders){
           $xml .= '<method>'. $quote['method'] .'</method>';
           $xml .= '<accessorials>'. $quote['accessorials'] .'</accessorials>';
           $xml .= '<rate>'. $quote['rate'] .'</rate>';
-          $xml .= '<quote_form>'. htmlentities($quote['quote_form']) .'</quote_form>';
+          $xml .= '<quote_form>'. htmlentities($quote['quote_form'], ENT_QUOTES, "UTF-8") .'</quote_form>';
           $xml .= uc_importer_invoke('export', 'quote', $order_id);
         $xml .= '</quote>';
         if (!empty($order->line_items)){
@@ -744,7 +745,7 @@ function _uc_importer_export_orders($orders){
           foreach ($order->line_items as $line_item){
             $xml .= '<line_item>';
             $xml .= '<type>'. $line_item['type'] .'</type>';
-            $xml .= '<title>'. htmlentities($line_item['title']) .'</title>';
+            $xml .= '<title>'. htmlentities($line_item['title'], ENT_QUOTES, "UTF-8") .'</title>';
             $xml .= '<amount>'. $line_item['amount'] .'</amount>';
             $xml .= '<weight>'. $line_item['weight'] .'</weight>';
             $xml .= uc_importer_invoke('export', 'line_item', $line_item->line_item_id);
@@ -802,8 +803,8 @@ function uc_importer_import($xml){
             }
             else{
               $vocab = array(
-                'name' => html_entity_decode((string)$vocabulary_data->name[0]->data()),
-                'description' => html_entity_decode((string)$vocabulary_data->description[0]->data()),
+                'name' => html_entity_decode((string)$vocabulary_data->name[0]->data(), ENT_QUOTES, "UTF-8"),
+                'description' => html_entity_decode((string)$vocabulary_data->description[0]->data(), ENT_QUOTES, "UTF-8"),
                 'relations' => (int)$vocabulary_data->relations[0]->data(),
                 'hierarchy' => (int)$vocabulary_data->hierarchy[0]->data(),
                 'multiple' => (int)$vocabulary_data->multiple[0]->data(),
@@ -834,7 +835,7 @@ function uc_importer_import($xml){
               $vid = isset($id_map['vocabularies'][(int)$category_data->vid[0]->data()]) ? $id_map['vocabularies'][(int)$category_data->vid[0]->data()] : variable_get('uc_catalog_vid', 0);
               $id_map['categories'][(string)$category_data->id[0]->data()] = $tid;
               $new_categories[] = $tid;
-              db_query("INSERT INTO {term_data} (tid, vid, name, description) VALUES (%d, %d, '%s', '%s')", $tid, $vid, html_entity_decode((string)$category_data->name[0]->data()), html_entity_decode((string)$category_data->description[0]->data()));
+              db_query("INSERT INTO {term_data} (tid, vid, name, description) VALUES (%d, %d, '%s', '%s')", $tid, $vid, html_entity_decode((string)$category_data->name[0]->data(), ENT_QUOTES, "UTF-8"), html_entity_decode((string)$category_data->description[0]->data(), ENT_QUOTES, "UTF-8"));
             }
           }
           foreach ($store->document->categories[0]->category as $category_data){
@@ -888,7 +889,7 @@ function uc_importer_import($xml){
         if (isset($store->document->attributes)){
           foreach ($store->document->attributes[0]->attribute as $attribute_data){
             $attribute = new stdClass();
-            $attribute->name = html_entity_decode($attribute_data->name[0]->data());
+            $attribute->name = html_entity_decode((string)$attribute_data->name[0]->data(), ENT_QUOTES, "UTF-8");
             $attribute->ordering = isset($attribute_data->ordering) ? (int)$attribute_data->ordering[0]->data() : 0;
             $result = db_query("SELECT aid FROM {uc_attributes} WHERE name LIKE '%s\\__' OR name LIKE '%s'", $attribute->name, $attribute->name);
             if ($aid = db_result($result)){
@@ -907,7 +908,7 @@ function uc_importer_import($xml){
               if (isset($attribute_data->options)){
                 foreach ($attribute_data->options[0]->option as $option_data){
                   $option = new stdClass();
-                  $option->name = html_entity_decode((string)$option_data->name[0]->data());
+                  $option->name = html_entity_decode((string)$option_data->name[0]->data(), ENT_QUOTES, "UTF-8");
                   $option->price = isset($option_data->price) ? (float)$option_data->price[0]->data() : 0;
                   $option->weight = isset($option_data->weight) ? (float)$option_data->weight[0]->data() : 0;
                   $option->ordering = isset($option_data->ordering) ? (integer)$option_data->ordering[0]->data() : 0;
@@ -1010,11 +1011,11 @@ function uc_importer_import($xml){
             }
           }
           $product->unique_hash = (string)$product_data->unique_hash[0]->data();
-          $product->title = html_entity_decode((string)$product_data->name[0]->data());
-          $product->body = html_entity_decode((string)$product_data->description[0]->data());
-          $product->model = html_entity_decode((string)$product_data->model[0]->data());
+          $product->title = html_entity_decode((string)$product_data->name[0]->data(), ENT_QUOTES, "UTF-8");
+          $product->body = html_entity_decode((string)$product_data->description[0]->data(), ENT_QUOTES, "UTF-8");
+          $product->model = html_entity_decode((string)$product_data->model[0]->data(), ENT_QUOTES, "UTF-8");
           /* if (module_exists('uc_manufacturer') && $manufacturer = variable_get('uc_manufacturer_vid', 0)){
-            $product->taxonomy['tags'][$manufacturer] = html_entity_decode((string)$product_data->manufacturer[0]->data());
+            $product->taxonomy['tags'][$manufacturer] = html_entity_decode((string)$product_data->manufacturer[0]->data(), ENT_QUOTES, "UTF-8");
           } */
           $product->list_price = (float)$product_data->list_price[0]->data();
           $product->cost = (float)$product_data->cost[0]->data();
@@ -1060,8 +1061,8 @@ function uc_importer_import($xml){
                 }
                 $product->field_image_cache[$i] = array(
                   'fid' => (file_exists($local_path) ? db_result(db_query("SELECT fid FROM {files} WHERE nid = %d AND filepath = '%s'", $nid, $local_path)) : 'upload'),
-                  'title' => isset($image->title) ? html_entity_decode((string)$image->title[0]->data()) : '',
-                  'alt' => isset($image->alt) ? html_entity_decode((string)$image->alt[0]->data()) : '',
+                  'title' => isset($image->title) ? html_entity_decode((string)$image->title[0]->data(), ENT_QUOTES, "UTF-8") : '',
+                  'alt' => isset($image->alt) ? html_entity_decode((string)$image->alt[0]->data(), ENT_QUOTES, "UTF-8") : '',
                   'filename' => basename($image_path),
                   'filepath' => $local_path,
                   'filesize' => $size,
@@ -1077,9 +1078,9 @@ function uc_importer_import($xml){
               foreach ($field_data->delta as $delta){
                 $columns = array();
                 foreach ($delta->children() as $value_data){
-                  $columns[$value_data->name()] = html_entity_decode((string)$value_data->data());
+                  $columns[$value_data->name()] = html_entity_decode((string)$value_data->data(), ENT_QUOTES, "UTF-8");
                 }
-                $field_name = html_entity_decode((string)$field_data->name[0]->data());
+                $field_name = html_entity_decode((string)$field_data->name[0]->data(), ENT_QUOTES, "UTF-8");
                 if (!is_array($product->$field_name)){
                   $product->$field_name = array();
                 }
@@ -1104,7 +1105,7 @@ function uc_importer_import($xml){
               foreach($product_data->attributes[0]->attribute as $attribute_data){
                 if (!isset($id_map['attributes'][(string)$attribute_data->id[0]->data()])){
                   $attribute = new stdClass();
-                  $attribute->name = html_entity_decode((string)$attribute_data->name[0]->data());
+                  $attribute->name = html_entity_decode((string)$attribute_data->name[0]->data(), ENT_QUOTES, "UTF-8");
                   $attribute->ordering = isset($attribute_data->ordering) ? (int)$attribute_data->ordering[0]->data() : 0;
                   drupal_execute('uc_attribute_form', (array)$attribute);
                   $id_map['attributes'][(string)$attribute_data->id[0]->data()] = db_result(db_query("SELECT aid FROM {uc_attributes} WHERE name = '%s'", $attribute->name));
@@ -1117,7 +1118,7 @@ function uc_importer_import($xml){
                   foreach ($attribute_data->options[0]->option as $option_data){
                     if (!isset($id_map['options'][(string)$option_data->id[0]->data()])){
                       $option = new stdClass();
-                      $option->name = html_entity_decode((string)$option_data->name[0]->data());
+                      $option->name = html_entity_decode((string)$option_data->name[0]->data(), ENT_QUOTES, "UTF-8");
                       $option->price = (float)$option_data->price[0]->data();
                       $option->weight = (float)$option_data->weight[0]->data();
                       $option->ordering = isset($option_data->ordering) ? (int)$option_data->ordering[0]->data() : 0;
@@ -1150,14 +1151,14 @@ function uc_importer_import($xml){
             if (isset($product_data->adjustments)){
               foreach ($product_data->adjustments[0]->adjustment as $adjustment_data){
                 $combination = array();
-                $old_combo = unserialize(html_entity_decode((string)$adjustment_data->combination[0]->data()));
+                $old_combo = unserialize(html_entity_decode((string)$adjustment_data->combination[0]->data(), ENT_QUOTES, "UTF-8"));
                 if (is_array($old_combo)){
                   foreach ($old_combo as $aid => $oid){
                     $combination[$id_map['attributes'][$aid]] = $id_map['options'][$oid];
                   }
                   $adjustment = array(
                     'combo_array' => serialize($combination),
-                    'model' => html_entity_decode((string)$adjustment_data->model[0]->data()),
+                    'model' => html_entity_decode((string)$adjustment_data->model[0]->data(), ENT_QUOTES, "UTF-8"),
                   );
                   $adjustments['body'][] = $adjustment;
                   module_invoke_all('xml_importer', 'adjustment', $adjustment, $adjustment_data, $store, $id_map);

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.1.2.1 2008/01/07 20:56:42 rszrama Exp $
+// $Id: uc_file.module,v 1.1.2.2 2008/01/16 21:56:56 rszrama Exp $
 
 /**
  * @file
@@ -108,7 +108,7 @@ function uc_file_user($op, &$edit, &$account, $category = NULL) {
 		case 'form': 
 			if (user_access('administer users')) {
 				$file_downloads = db_query("SELECT * FROM {uc_file_users} as u INNER JOIN {uc_files} as f ON u.fid = f.fid WHERE `uid` = %d",$account->uid);
-				$files = db_query("SELECT * FROM {uc_files}");
+				$files = db_query("SELECT * FROM {uc_files} ORDER BY `filename` ASC");
 				$available_downloads = array();
 				$available_files = array();
 				while ($file_download = db_fetch_object($file_downloads)) {
@@ -153,7 +153,8 @@ function uc_file_user($op, &$edit, &$account, $category = NULL) {
 			}
 			if (!empty($edit['add_file'])) {
 				foreach ($edit['add_file'] as $fid) {
-					_user_table_action('allow',$fid,$account->uid);
+          $pfid = db_result(db_query("SELECT `pfid` FROM {uc_file_products} WHERE `fid` = %d", $fid));
+					_user_table_action('allow',$fid,$account->uid,$pfid);
 				}
 			}
 			break;
@@ -235,6 +236,28 @@ function uc_file_product_feature() {
   );
 	
 	return $features;
+}
+
+/**
+ * Implementation of hook_store_status().
+ */
+function uc_file_store_status() {
+  $message = array();
+  if (!is_dir(variable_get('uc_file_base_dir', NULL))) {
+    $message[] = array(
+      'status' => 'warning', 
+      'title' => t('File Downloads'),
+      'desc' => t('The file downloads directory is not valid or set. Set a valid directory in the <a href="!url">product feature settings</a> under the file download settings fieldset.',array('!url' => url('admin/store/settings/products/edit/features'))),
+    );
+  }
+  else {
+    $message[] = array(
+      'status' => 'ok', 
+      'title' => t('File Downloads'),
+      'desc' => t('The file downloads directory has been set and is working.'),
+    );
+  }
+  return $message;
 }
 
 /**

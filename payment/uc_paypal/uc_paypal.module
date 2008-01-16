@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.4.2.1 2008/01/07 20:56:38 rszrama Exp $
+// $Id: uc_paypal.module,v 1.4.2.2 2008/01/16 21:56:57 rszrama Exp $
 
 /**
  * @file
@@ -340,7 +340,7 @@ function uc_paypal_wpp_charge($order_id, $amount, $data){
   }
 
   $nvp_request = array(
-    'METHOD' => 'doDirectPayment',
+    'METHOD' => 'DoDirectPayment',
     'PAYMENTACTION' => variable_get('uc_paypal_wpp_payment_action', 'Sale'),
     'IPADDRESS' => $_SERVER['REMOTE_ADDR'],
     'AMT' => uc_currency_format($amount, FALSE, FALSE, '.'),
@@ -870,7 +870,7 @@ function uc_paypal_ec_checkout($form_id, $form_values) {
   }
 
   $nvp_response = uc_paypal_api_request($nvp_request, variable_get('uc_paypal_wpp_server', 'https://api-3t.sandbox.paypal.com/nvp'));
-drupal_set_message('<pre>'. print_r($nvp_response, TRUE) .'</pre>');
+
   if ($nvp_response['ACK'] != 'Success') {
     drupal_set_message(t('Error message from PayPal:<br>!message', array('!message' => $nvp_response['L_LONGMESSAGE0'])), 'error');
     drupal_goto('cart/checkout');

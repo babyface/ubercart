@@ -1,7 +1,8 @@
 <?php
-// $Id: uc_catalog.install,v 1.8.2.1 2008/01/07 20:56:42 rszrama Exp $
+// $Id: uc_catalog.install,v 1.8.2.2 2008/01/16 21:56:50 rszrama Exp $
 
 function uc_catalog_install(){
+  $t = get_t();
   //Find possible Product Catalog vocabulary.
   $result = db_query("SELECT vid FROM {vocabulary} WHERE name = 'Product Catalog'");
   if ($vocab = db_fetch_object($result)){
@@ -10,7 +11,7 @@ function uc_catalog_install(){
   else{ //If none, create one.
     $vid = db_next_id('{vocabulary}_vid');
     db_query("INSERT INTO {vocabulary} (vid, name, description, help, relations, hierarchy, multiple, required, tags, module, weight)
-      VALUES (%d, '%s', '%s', '%s', 0, 2, 1, 0, 0, 'uc_catalog', 0)", $vid, t('Catalog'), t('Categories for organizing products by type or function.'), t('Hold Ctrl while clicking to select multiple categories.'));
+      VALUES (%d, '%s', '', '%s', 0, 2, 1, 0, 0, 'uc_catalog', 0)", $vid, $t('Catalog'), $t('Hold Ctrl while clicking to select multiple categories.'));
     db_query("INSERT INTO {vocabulary_node_types} (vid, type) VALUES (%d, 'product')", $vid);
   }
   variable_set('uc_catalog_vid', $vid);

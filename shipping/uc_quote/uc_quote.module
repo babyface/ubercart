@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.4.2.1 2008/01/07 20:56:40 rszrama Exp $
+// $Id: uc_quote.module,v 1.4.2.2 2008/01/16 21:56:50 rszrama Exp $
 
 /**
  * @file
@@ -32,6 +32,7 @@ function uc_quote_menu($may_cache){
     $items[] = array('path' => 'admin/store/settings/quotes',
       'access' => user_access('configure quotes'),
       'title' => t('Shipping quote settings'),
+      'description' => t('Configure the shipping quote settings.'),
       'callback' => 'uc_quote_overview',
       'type' => MENU_NORMAL_ITEM,
     );
@@ -107,48 +108,50 @@ function uc_quote_taxonomy($op, $type, $object = null){
  * Load, save, and delete the shipping type and default shipping address of products.
  */
 function uc_quote_nodeapi(&$node, $op, $arg3 = null, $arg4 = null){
-  switch($op){
-    case 'submit':
-      if (isset($node->shipping_type)){
-        uc_quote_set_shipping_type('product', $node->nid, $node->shipping_type);
-      }
-    break;
-    case 'insert':
-    case 'update':
-      db_query("DELETE FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid);
-      db_query("INSERT INTO {uc_quote_product_locations} (nid, first_name, last_name, company, street1, street2, city, zone, postal_code, country) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)",
-        $node->nid, $node->first_name, $node->last_name, $node->company, $node->street1, $node->street2, $node->city, $node->zone, $node->postal_code, $node->country
-      );
-    break;
-    case 'load':
-      // Can't just use uc_product_get_shipping_type() because $node->manufacturer doesn't necessarily exist yet.
-      if (module_exists('uc_manufacturer')){
-        $manufacturer = uc_product_get_manufacturer($node->nid);
-      }
-      $shipping_type = db_result(db_query("SELECT shipping_type FROM {uc_quote_shipping_types} WHERE id_type = 'product' AND id = %d", $node->nid));
-      if (!$shipping_type){
-        if (isset($manufacturer)){
-          $shipping_type = db_result(db_query("SELECT shipping_type FROM {uc_quote_shipping_types} WHERE id_type = 'manufacturer' AND id = %d", $manufacturer->tid));
+  if (in_array($node->type, array_keys(uc_product_node_info()))){
+    switch($op){
+      case 'submit':
+        if (isset($node->shipping_type)){
+          uc_quote_set_shipping_type('product', $node->nid, $node->shipping_type);
         }
-        if (!$shipping_type){
-          $shipping_type = variable_get('uc_store_shipping_type', 'small_package');
-        }
-      }
-      $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid));
-      if (empty($address)){
+      break;
+      case 'insert':
+      case 'update':
+        db_query("DELETE FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid);
+        db_query("INSERT INTO {uc_quote_product_locations} (nid, first_name, last_name, company, street1, street2, city, zone, postal_code, country) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)",
+          $node->nid, $node->first_name, $node->last_name, $node->company, $node->street1, $node->street2, $node->city, $node->zone, $node->postal_code, $node->country
+        );
+      break;
+      case 'load':
+        // Can't just use uc_product_get_shipping_type() because $node->manufacturer doesn't necessarily exist yet.
         if (module_exists('uc_manufacturer')){
-          $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $manufacturer->tid));
+          $manufacturer = uc_product_get_manufacturer($node->nid);
         }
+        $shipping_type = db_result(db_query("SELECT shipping_type FROM {uc_quote_shipping_types} WHERE id_type = 'product' AND id = %d", $node->nid));
+        if (!$shipping_type){
+          if (isset($manufacturer)){
+            $shipping_type = db_result(db_query("SELECT shipping_type FROM {uc_quote_shipping_types} WHERE id_type = 'manufacturer' AND id = %d", $manufacturer->tid));
+          }
+          if (!$shipping_type){
+            $shipping_type = variable_get('uc_store_shipping_type', 'small_package');
+          }
+        }
+        $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid));
         if (empty($address)){
-          $address = variable_get('uc_quote_store_default_address', new stdClass());
+          if (module_exists('uc_manufacturer')){
+            $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $manufacturer->tid));
+          }
+          if (empty($address)){
+            $address = variable_get('uc_quote_store_default_address', new stdClass());
+          }
         }
-      }
-      return array('shipping_type' => $shipping_type, 'shipping_address' => $address);
-    break;
-    case 'delete':
-      db_query("DELETE FROM {uc_quote_shipping_types} WHERE id_type = 'product' AND id = %d", $node->nid);
-      db_query("DELETE FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid);
-    break;
+        return array('shipping_type' => $shipping_type, 'shipping_address' => $address);
+      break;
+      case 'delete':
+        db_query("DELETE FROM {uc_quote_shipping_types} WHERE id_type = 'product' AND id = %d", $node->nid);
+        db_query("DELETE FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid);
+      break;
+    }
   }
 }
 
@@ -231,6 +234,10 @@ function uc_quote_form_alter($form_id, &$form){
     );
     
     //$form['#submit']['uc_quote_form_alter_submit'] = array($type);
+  }
+  else if ($form_id == 'uc_cart_checkout_form' && isset($form['panes']['quotes'])){
+    $form['#validate']['uc_quote_save_choice'] = array();
+    $form['#pre_render'][] = 'uc_quote_cache_quotes';
   }
 }
 
@@ -359,14 +366,20 @@ function uc_quote_action_get_quote($order, $method){
   }
   ob_start();
   if (function_exists($method['quote']['callback'])){
-    $quote_data = call_user_func($method['quote']['callback'], $order->products, $details, $method);
+    // This feels wrong, but it's the only way I can ensure that shipping
+    // methods won't mess up the products in their methods.
+    $products = array();
+    foreach ($order->products as $key => $item){
+      $products[$key] = drupal_clone($item);
+    }
+    $quote_data = call_user_func($method['quote']['callback'], $products, $details, $method);
   }
   $messages = ob_get_contents();
   ob_end_clean();
   //drupal_set_message('<pre>'. print_r($quote_data, true) .'</pre>');
   if ($messages && variable_get('uc_quote_log_errors', false)){
     watchdog('quote', $messages, WATCHDOG_WARNING);
-    watchdog('quote', '<pre>'. print_r($quote_data, true) .'</pre>'. WATCHDOG_WARNING);
+    watchdog('quote', '<pre>'. print_r($quote_data, true) .'</pre>', WATCHDOG_WARNING);
   }
   print serialize($quote_data);
 }
@@ -972,32 +985,8 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2){
       $contents['quote_button'] = array(
         '#type' => 'button',
         '#value' => t('Click to calculate shipping'),
+        '#weight' => 0,
       );
-      
-      // display previous quote, if any
-      if (isset($arg1->quote['quote_form'])){
-        $contents['quote'] = array('#type' => 'markup',
-          '#value' => '<div id="quote" class="solid-border" style="margin-top: 1em;">'. $arg1->quote['quote_form'] .'</div>',
-        );
-        $methods = module_invoke_all('shipping_method');
-        $method = $methods[$arg1->quote['method']];
-        drupal_add_js('$(document).ready(function(){
-          $("#quote").find("input:radio[@value='. $arg1->quote['method'] . '---'. $arg1->quote['accessorials'] .']").eq(0).change().attr("checked", "checked")
-          /* if (set_line_item != undefined){
-            set_line_item("shipping", "'. $method['quote']['accessorials'][$arg1->quote['accessorials']] .'", '. $arg1->quote['rate'] .', 1);
-          }
-          try {
-            getTax();
-            setTaxCallbacks();
-          }
-          catch (err) { } */
-        })', 'inline');
-      }
-      else{
-        $contents['quote'] = array('#type' => 'markup',
-          '#value' => '<div id="quote"></div>',
-        );
-      }
       
       drupal_add_js(array(
         'uc_quote' => array(
@@ -1028,7 +1017,7 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2){
         var quoteButton = $("input:radio[@name=quote-option]").click(function(){
           var quoteButton = $(this);
           var label = quoteButton.parent("label").text().split(":", 2)[0];
-          quoteButton.end()
+          quoteButton.end();
           var rate = $("input:hidden[@name=\'rate[" + quoteButton.val() + "]\']").val();
           set_line_item("shipping", label, rate, 1);
         }).filter("[@value='. $default .']").click();
@@ -1036,7 +1025,7 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2){
         if (quoteDiv.length && $("#quote input[@name=quote-form]").length == 0){
           quoteDiv.append("<input type=\"hidden\" name=\"quote-form\" value=\"" + encodeURIComponent(quoteDiv.html()) + "\" />");
         }
-      })', 'inline');
+      });', 'inline');
 
       return array('description' => $description, 'contents' => $contents);
 
@@ -1069,7 +1058,7 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2){
       $quote_option = explode('---', $_POST['quote-option']);
       $arg1->quote['method'] = $quote_option[0];
       $arg1->quote['accessorials'] = $quote_option[1];
-      $arg1->quote['quote_form'] = rawurldecode($_POST['quote-form']);
+      $_SESSION['quote_form'] = rawurldecode($_POST['quote-form']);
       $methods = array_filter(module_invoke_all('shipping_method'), '_uc_quote_method_enabled');
       $method = $methods[$quote_option[0]];
       $quote_data = array();
@@ -1222,6 +1211,49 @@ function uc_order_pane_quotes($op, $arg1){
         }
       }
     break;
+  }
+}
+
+function uc_quote_save_choice($form_values){
+  if (form_get_errors()){
+    $quote_option = explode('---', $_POST['quote-option']);
+    $_SESSION['quote'] = array('method' => $quote_option[0],
+      'accessorials' => $quote_option[1],
+      'rate' => $_POST['rate'][$_POST['quote-option']],
+      'quote_form' => $_POST['quote-form'],
+    );
+  }
+}
+
+function uc_quote_cache_quotes($form_id, &$form){
+  if ($form_id == 'uc_cart_checkout_form'){
+    if (form_get_errors()){
+      $quote = $_SESSION['quote'];
+      $form['panes']['quotes']['quote'] = array('#type' => 'markup',
+        '#value' => '<div id="quote" class="solid-border" style="margin-top: 1em;">'. rawurldecode($_SESSION['quote']['quote_form']) .'</div>',
+        '#weight' => 1,
+      );
+      $methods = module_invoke_all('shipping_method');
+      $method = $methods[$quote['method']];
+      drupal_add_js('$(document).ready(function(){
+        $("#quote").find("input:radio[@value='. $quote['method'] . '---'. $quote['accessorials'] .']").eq(0).change().attr("checked", "checked");
+        if (set_line_item != undefined){
+          set_line_item("shipping", "'. $method['quote']['accessorials'][$quote['accessorials']] .'", '. $quote['rate'] .', 1);
+        }
+        try {
+          getTax();
+          setTaxCallbacks();
+        }
+        catch (err) { }
+      });', 'inline');
+      unset($_SESSION['quote']);
+    }
+    else{
+      $form['panes']['quotes']['quote'] = array('#type' => 'markup',
+        '#value' => '<div id="quote"></div>',
+        '#weight' => 1,
+      );
+    }
   }
 }
 

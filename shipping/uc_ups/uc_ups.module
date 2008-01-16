@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.4.2.1 2008/01/07 20:56:40 rszrama Exp $
+// $Id: uc_ups.module,v 1.4.2.2 2008/01/16 21:56:52 rszrama Exp $
 
 /**
  * @file
@@ -71,7 +71,7 @@ function uc_ups_form_alter($form_id, &$form){
     $ups['pkg_type'] = array('#type' => 'select',
       '#title' => t('Package type'),
       '#options' => _uc_ups_pkg_types(),
-      '#default_value' => $node->ups['pkg_type'] ? $node->ups['pkg_type'] : '02',
+      '#default_value' => $node->ups['pkg_type'] ? $node->ups['pkg_type'] : '04',
     );
     $form['shipping']['ups'] = $ups;
     if ($enabled['ups']){
@@ -96,29 +96,31 @@ function uc_ups_product_alter_validate($form_id, $form_values){
  * Implementation of hook_nodeapi().
  */
 function uc_ups_nodeapi(&$node, $op){
-  switch ($op){
-    case 'insert':
-    case 'update':
-      if (isset($node->ups)){
-        $ups_values = $node->ups;
-        if (!$node->revision){
-          db_query("DELETE FROM {uc_ups_products} WHERE vid = %d", $node->vid);
+  if (in_array($node->type, array_keys(uc_product_node_info()))){
+    switch ($op){
+      case 'insert':
+      case 'update':
+        if (isset($node->ups)){
+          $ups_values = $node->ups;
+          if (!$node->revision){
+            db_query("DELETE FROM {uc_ups_products} WHERE vid = %d", $node->vid);
+          }
+          db_query("INSERT INTO {uc_ups_products} (vid, nid, pkg_type) VALUES (%d, %d, '%s')",
+            $node->vid, $node->nid, $ups_values['pkg_type']);
         }
-        db_query("INSERT INTO {uc_ups_products} (vid, nid, pkg_type) VALUES (%d, %d, '%s')",
-          $node->vid, $node->nid, $ups_values['pkg_type']);
-      }
-    break;
-    case 'load':
-      if (uc_product_get_shipping_type($node) == 'small_package'){
-        return array('ups' => db_fetch_array(db_query("SELECT * FROM {uc_ups_products} WHERE vid = %d", $node->vid)));
-      }
-    break;
-    case 'delete':
-      db_query("DELETE FROM {uc_ups_products} WHERE nid = %d", $node->nid);
-    break;
-    case 'delete revision':
-      db_query("DELETE FROM {uc_ups_products} WHERE vid = %d", $node->vid);
-    break;
+      break;
+      case 'load':
+        if (uc_product_get_shipping_type($node) == 'small_package'){
+          return array('ups' => db_fetch_array(db_query("SELECT * FROM {uc_ups_products} WHERE vid = %d", $node->vid)));
+        }
+      break;
+      case 'delete':
+        db_query("DELETE FROM {uc_ups_products} WHERE nid = %d", $node->nid);
+      break;
+      case 'delete revision':
+        db_query("DELETE FROM {uc_ups_products} WHERE vid = %d", $node->vid);
+      break;
+    }
   }
 }
 
@@ -805,8 +807,7 @@ function uc_ups_quote($products, $details){
     $shipment_weight = 0;
     $package = new stdClass();
     foreach ($products as $product){
-      $product->weight *= $product->qty * uc_weight_conversion($product->weight_units, 'lb');
-      $shipment_weight += $product->weight;
+      $shipment_weight += $product->weight * $product->qty * uc_weight_conversion($product->weight_units, 'lb');
       $conversion = uc_weight_conversion($product->length_units, 'in');
       $package->price += $product->price * $product->qty;
       $package->length = max($product->length * $conversion, $package->length);

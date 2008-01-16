@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.4.2.1 2008/01/07 20:56:38 rszrama Exp $
+// $Id: uc_credit.module,v 1.4.2.2 2008/01/16 21:56:56 rszrama Exp $
 
 /**
  * @file
@@ -591,7 +591,7 @@ function theme_uc_payment_method_credit_form($form) {
   }
   elseif (arg(2) == 'orders') {
     $output = '<table class="order-edit-table">';
-    if (variable_get('uc_credit_type_enabled', TRUE)) {
+    if (variable_get('uc_credit_type_enabled', FALSE)) {
       $form['cc_type']['#title'] = '';
       $output .= '<tr><td class="oet-label">'. t('Card Type:') .'</td><td>'
                . drupal_render($form['cc_type']) .'</td></tr>';

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.install,v 1.4.2.1 2008/01/07 20:56:39 rszrama Exp $
+// $Id: uc_flatrate.install,v 1.4.2.2 2008/01/16 21:56:54 rszrama Exp $
 
 function uc_flatrate_install(){
   switch($GLOBALS['db_type']){
@@ -10,7 +10,7 @@ function uc_flatrate_install(){
         `nid` mediumint(9) unsigned NOT NULL default 0,
         `mid` mediumint(9) unsigned NOT NULL default 0,
         `rate` decimal(10,2) NOT NULL default 0.00,
-        PRIMARY KEY (`vid`)
+        PRIMARY KEY (`vid`, `mid`)
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
       db_query("CREATE TABLE {uc_flatrate_methods} (
         `mid` mediumint(9) unsigned NOT NULL default 0,
@@ -27,7 +27,7 @@ function uc_flatrate_install(){
         nid integer NOT NULL default 0,
         mid mediumint(9) unsigned NOT NULL default 0,
         rate decimal(10,2) NOT NULL default 0.00,
-        PRIMARY KEY (vid)
+        PRIMARY KEY (vid, mid)
       );");
       db_query("CREATE TABLE {uc_flatrate_methods} (
         mid mediumint(9) unsigned NOT NULL default 0,
@@ -117,12 +117,15 @@ function uc_flatrate_update_2(){
   $weight['flatrate_'. $mid] = $weight['flatrate'];
   unset($enabled['flatrate'], $weight['flatrate']);
 
-  if ($configuration = db_fetch_object(db_query("SELECT data FROM {workflow_ng_cfgs} WHERE name = '%s'", 'uc_flatrate_get_quote'))){
+  if (db_table_exists('workflow_ng_cfgs') && $configuration = db_fetch_object(db_query("SELECT data FROM {workflow_ng_cfgs} WHERE name = '%s'", 'uc_flatrate_get_quote'))){
     $configuration->name = 'uc_flatrate_get_quote_'. $mid;
     $configuration->data = unserialize($configuration->data);
     $configuration->data['#event'] = 'get_quote_from_flatrate_'. $mid;
     $result = db_query("UPDATE {workflow_ng_cfgs} SET name = '". $configuration->name ."', data = '". serialize($configuration->data) ."' WHERE name = 'uc_flatrate_get_quote'");
     $ret[] = array('success' => $result !== FALSE, 'query' => check_plain("UPDATE {workflow_ng_cfgs} SET name = '". $configuration->name ."', data = '". serialize($configuration->data) ."' WHERE name = 'uc_flatrate_get_quote'"));
+  }
+  else{
+    $ret[] = array('success' => FALSE, 'query' => check_plain("UPDATE {workflow_ng_cfgs} SET name = '". $configuration->name ."', data = '". serialize($configuration->data) ."' WHERE name = 'uc_flatrate_get_quote'"));
   }
 
   $order_rate = variable_get('uc_flatrate_order_rate', 0);
@@ -132,21 +135,40 @@ function uc_flatrate_update_2(){
   $weight['flatrate_'. $mid] = $weight['order_rate'];
   unset($enabled['order_rate'], $weight['order_rate']);
   
-  if ($configuration = db_fetch_object(db_query("SELECT data FROM {workflow_ng_cfgs} WHERE name = '%s'", 'uc_flatrate_get_quote_by_order'))){
+  if (db_table_exists('workflow_ng_cfgs') && $configuration = db_fetch_object(db_query("SELECT data FROM {workflow_ng_cfgs} WHERE name = '%s'", 'uc_flatrate_get_quote_by_order'))){
     $configuration->name = 'uc_flatrate_get_quote_'. $mid;
     $configuration->data = unserialize($configuration->data);
     $configuration->data['#event'] = 'get_quote_from_flatrate_'. $mid;
     $result = db_query("UPDATE {workflow_ng_cfgs} SET name = '". $configuration->name ."', data = '". serialize($configuration->data) ."' WHERE name = 'uc_flatrate_get_quote_by_order'");
     $ret[] = array('success' => $result !== FALSE, 'query' => check_plain("UPDATE {workflow_ng_cfgs} SET name = '". $configuration->name ."', data = '". serialize($configuration->data) ."' WHERE name = 'uc_flatrate_get_quote_by_order'"));
   }
+  else{
+    $ret[] = array('success' => FALSE, 'query' => check_plain("UPDATE {workflow_ng_cfgs} SET name = '". $configuration->name ."', data = '". serialize($configuration->data) ."' WHERE name = 'uc_flatrate_get_quote_by_order'"));
+  }
   
   variable_set('uc_quote_enabled', $enabled);
   variable_set('uc_quote_method_weight', $weight);
-  workflow_ng_clear_cache();
+  if (module_exists('workflow_ng')){
+    workflow_ng_clear_cache();
+  }
   
   variable_del('uc_flatrate_product_base_rate');
   variable_del('uc_flatrate_product_default');
   variable_del('uc_flatrate_order_rate');
   
+  return $ret;
+}
+
+function uc_flatrate_update_3(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_flatrate_products} DROP PRIMARY KEY, ADD PRIMARY KEY (`vid`, `mid`)");
+    break;
+    case 'pgsql':
+      $ret[] = update_sql("ALTER TABLE {uc_flatrate_products} DROP CONSTRAINT {uc_flatrate_products}_pkey, ADD PRIMARY KEY (vid, mid)");
+    break;
+  }
   return $ret;
 }

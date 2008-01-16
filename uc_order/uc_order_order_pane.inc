@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_order_pane.inc,v 1.4.2.1 2008/01/07 20:56:44 rszrama Exp $
+// $Id: uc_order_order_pane.inc,v 1.4.2.2 2008/01/16 21:56:51 rszrama Exp $
 
 /**
  * @file
@@ -16,8 +16,11 @@
  */
 function uc_order_pane_ship_to($op, $arg1) {
   switch ($op) {
-    case 'view':
     case 'customer':
+      if (!uc_order_is_shippable($arg1)) {
+        return;
+      }
+    case 'view':
       $output = uc_order_address($arg1, 'delivery') .'<br />'. $arg1->delivery_phone;
       return $output;
 

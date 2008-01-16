@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.13.2.1 2008/01/07 20:56:46 rszrama Exp $
+// $Id: uc_store.module,v 1.13.2.2 2008/01/16 21:56:57 rszrama Exp $
 
 /**
  * @file
@@ -20,13 +20,13 @@
  */
 define('KG_TO_KG', 1);
 define('KG_TO_G', 1000);
-define('KG_TO_LB', 2.204622622);
-define('KG_TO_OZ', 35.27396195);
+define('KG_TO_LB', 2.204622621849);
+define('KG_TO_OZ', 35.27396194958);
 
 define('G_TO_G', 1);
 define('G_TO_KG', 0.001);
-define('G_TO_LB', 0.002204623);
-define('G_TO_OZ', 0.035273962);
+define('G_TO_LB', 0.002204622622);
+define('G_TO_OZ', 0.03527396195);
 
 define('LB_TO_LB', 1);
 define('LB_TO_OZ', 16);
@@ -39,10 +39,24 @@ define('OZ_TO_G', 28.349523125);
 define('OZ_TO_KG', 0.028349523);
 
 define('IN_TO_IN', 1);
+define('IN_TO_FT', 0.083333333333);
 define('IN_TO_CM', 2.54);
+define('IN_TO_MM', 25.4);
+
+define('FT_TO_FT', 1);
+define('FT_TO_IN', 12);
+define('FT_TO_CM', 30.48);
+define('FT_TO_MM', 304.8);
 
 define('CM_TO_CM', 1);
-define('CM_TO_IN', 0.393700787);
+define('CM_TO_IN', 0.393700787402);
+define('CM_TO_FT', 0.03280839895);
+define('CM_TO_MM', 10);
+
+define('MM_TO_MM', 1);
+define('MM_TO_IN', 0.03937007874);
+define('MM_TO_FT', 0.003280839895);
+define('MM_TO_CM', 0.1);
 
 /*******************************************************************************
  * Hook Functions (Drupal)
@@ -361,7 +375,7 @@ function uc_store_token_values($type, $object = NULL) {
       $values['store-url'] = variable_get('uc_store_url', $base_url);
       $values['store-link'] = l(variable_get('uc_store_name', t('Our store')), variable_get('uc_store_url', $base_url));
       $values['store-owner'] = variable_get('uc_store_owner', '');
-      $values['store-email'] = variable_get('uc_store_email_from', '');
+      $values['store-email'] = variable_get('uc_store_email', '');
       $values['store-phone'] = variable_get('uc_store_phone', '');
       $values['store-address'] = uc_store_address();
       $values['store-help-url'] = url(variable_get('uc_notify_store_help_page', ''), NULL, NULL, TRUE);
@@ -1529,7 +1543,9 @@ function uc_store_format_settings_form() {
   );
   $units = array(
     'in' => t('Inches'),
+    'ft' => t('Feet'),
     'cm' => t('Centimeters'),
+    'mm' => t('Millimeters'),
   );
   $form['length']['uc_length_unit'] = array(
     '#type' => 'select',
@@ -1955,8 +1971,10 @@ function uc_length_format($value, $unit = NULL) {
   }
   
   $defaults = array(
-    'in' => '!value in.',
+    'in' => '!valuein.',
+    'ft' => '!valueft.',
     'cm' => '!valuecm',
+    'mm' => '!valuemm',
   );
 
   $pattern = variable_get('uc_length_format_'. $unit, $defaults[$unit]);
@@ -2834,11 +2852,11 @@ if (!function_exists('currency_api_get_list')){
 
 // Returns the e-mail from string in the format of Store Name <store@email.com>
 function uc_store_email_from() {
-  $email_from = variable_get('uc_store_email', NULL);
+  $email_from = variable_get('uc_store_email', '');
   if (empty($email_from)) {
-    $email_from = ini_get('sendmail_from');
+    $email_from = variable_get('site_mail', ini_get('sendmail_from'));
   }
-  $store = variable_get('uc_store_name', NULL);
+  $store = variable_get('uc_store_name', '');
   if (!empty($store)) {
     $email_from = $store .' <'. $email_from .'>';
   }

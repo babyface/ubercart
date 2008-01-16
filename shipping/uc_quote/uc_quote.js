@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, getTax; -*-
-// $Id: uc_quote.js,v 1.4.2.1 2008/01/07 20:56:40 rszrama Exp $
+// $Id: uc_quote.js,v 1.4.2.2 2008/01/16 21:56:50 rszrama Exp $
 
 var page;
 var details;
@@ -22,7 +22,7 @@ function setTaxCallbacks(){
     var i = $(this).val();
     try {
       var label = $(this).parent().text();
-      set_line_item("shipping", label.substr(0, label.indexOf(":")), Number($(this).parent().prev().val()).toFixed(2), 1);
+      set_line_item("shipping", label.substr(0, label.indexOf(":")), Math.round($(this).parent().prev().val() * 100) / 100, 1);
       getTax();
     }
     catch(err) { }
@@ -101,18 +101,18 @@ function displayQuote(data){
       
       if (data[i].rate != undefined){
         if (numQuotes > 1 && page != 'cart'){
-          item = "<input type=\"hidden\" name=\"rate[" + i + "]\" value=\"" + Number(data[i].rate).toFixed(2) + "\" />"
+          item = "<input type=\"hidden\" name=\"rate[" + i + "]\" value=\"" + (Math.round(data[i].rate * 100) / 100) + "\" />"
             + "<label class=\"option\">"
             + "<input type=\"radio\" class=\"form-radio\" name=\"quote-option\" value=\"" + i + "\" />"
             + label + ": " + data[i].format + "</label>";
         }
         else{
           item = "<input type=\"hidden\" name=\"quote-option\" value=\"" + i + "\" />"
-            + "<input type=\"hidden\" name=\"rate[" + i + "]\" value=\"" + Number(data[i].rate).toFixed(2) + "\" />"
+            + "<input type=\"hidden\" name=\"rate[" + i + "]\" value=\"" + (Math.round(data[i].rate * 100) / 100) + "\" />"
             + "<label class=\"option\">" + label + ": " + data[i].format + "</label>";
           if (page == "checkout"){
             if (label != "" && set_line_item != undefined){
-              set_line_item("shipping", label, Number(data[i].rate).toFixed(2), 1);
+              set_line_item("shipping", label, Math.round(data[i].rate * 100) / 100, 1);
             }
           }
         }
@@ -128,7 +128,7 @@ function displayQuote(data){
         quoteDiv.find("input:radio[@value=" + i +"]").change(function(){
           var i = $(this).val();
           try {
-            set_line_item("shipping", data[i].option_label, Number(data[i].rate).toFixed(2), 1);
+            set_line_item("shipping", data[i].option_label, Math.round(data[i].rate * 100) / 100, 1);
             getTax();
           }
           catch(err) { }

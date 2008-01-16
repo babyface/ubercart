@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.5.2.1 2008/01/07 20:56:40 rszrama Exp $
+// $Id: uc_usps.module,v 1.5.2.2 2008/01/16 21:56:50 rszrama Exp $
 
 /**
  * @file
@@ -54,7 +54,7 @@ function uc_usps_form_alter($form_id, &$form){
     $form['shipping']['usps']['container'] = array('#type' => 'select',
       '#title' => t('Package type'),
       '#options' => _uc_usps_pkg_types(),
-      '#default_value' => $node->usps['container'] ? $node->usps['container'] : 0,
+      '#default_value' => $node->usps['container'] ? $node->usps['container'] : 'RECTANGULAR',
     );
   }
 }
@@ -63,29 +63,31 @@ function uc_usps_form_alter($form_id, &$form){
  * Implementation of hook_nodeapi().
  */
 function uc_usps_nodeapi(&$node, $op){
-  switch ($op){
-    case 'insert':
-    case 'update':
-      if (isset($node->usps)){
-        $usps_values = $node->usps;
-        if (!$node->revision){
-          db_query("DELETE FROM {uc_usps_products} WHERE vid = %d", $node->vid);
+  if (in_array($node->type, array_keys(uc_product_node_info()))){
+    switch ($op){
+      case 'insert':
+      case 'update':
+        if (isset($node->usps)){
+          $usps_values = $node->usps;
+          if (!$node->revision){
+            db_query("DELETE FROM {uc_usps_products} WHERE vid = %d", $node->vid);
+          }
+          db_query("INSERT INTO {uc_usps_products} (vid, nid, container) VALUES (%d, %d, '%s')",
+            $node->vid, $node->nid, $usps_values['container']);
         }
-        db_query("INSERT INTO {uc_usps_products} (vid, nid, container) VALUES (%d, %d, '%s')",
-          $node->vid, $node->nid, $usps_values['container']);
-      }
-    break;
-    case 'load':
-      if (uc_product_get_shipping_type($node) == 'small_package'){
-        return array('usps' => db_fetch_array(db_query("SELECT * FROM {uc_usps_products} WHERE vid = %d", $node->vid)));
-      }
-    break;
-    case 'delete':
-      db_query("DELETE FROM {uc_usps_products} WHERE nid = %d", $node->nid);
-    break;
-    case 'delete revision':
-      db_query("DELETE FROM {uc_usps_products} WHERE vid = %d", $node->vid);
-    break;
+      break;
+      case 'load':
+        if (uc_product_get_shipping_type($node) == 'small_package'){
+          return array('usps' => db_fetch_array(db_query("SELECT * FROM {uc_usps_products} WHERE vid = %d", $node->vid)));
+        }
+      break;
+      case 'delete':
+        db_query("DELETE FROM {uc_usps_products} WHERE nid = %d", $node->nid);
+      break;
+      case 'delete revision':
+        db_query("DELETE FROM {uc_usps_products} WHERE vid = %d", $node->vid);
+      break;
+    }
   }
 }
 
@@ -267,6 +269,7 @@ function uc_usps_quote($products, $details){
   include_once(drupal_get_path('module', 'uc_store') .'/includes/simplexml.php');
   //drupal_set_message('<pre>'. print_r($products, true) .'</pre>');
   //drupal_set_message('<pre>'. print_r($details, true) .'</pre>');
+  $services = array();
   $packages = _uc_usps_package_products($products);
   
   $orig = variable_get('uc_quote_store_default_address', new stdClass());
@@ -286,7 +289,6 @@ function uc_usps_quote($products, $details){
   $response = new JSimpleXML();
   $response->loadString($result->data);
   
-  $services = array();
   if (is_array($response->document->package)){
     foreach ($response->document->package as $package){
       if (isset($package->error)){
@@ -306,7 +308,7 @@ function uc_usps_quote($products, $details){
   }
   $usps_services = array_filter(variable_get('uc_usps_services', _uc_usps_services()));
   foreach ($services as $service => $quote){
-    if ($service != 'data' || !in_array($service, $usps_services)){
+    if ($service != 'data' && !in_array($service, $usps_services)){
       unset($services[$service]);
     }
   }

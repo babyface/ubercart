@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.14.2.2 2008/01/07 22:20:44 rszrama Exp $
+// $Id: uc_cart.module,v 1.14.2.3 2008/01/16 21:56:53 rszrama Exp $
 
 /**
  * @file
@@ -330,13 +330,10 @@ function theme_uc_cart_block_title($cart_image, $arrow_up_image) {
  * Theme the shopping cart block content.
  */
 function theme_uc_cart_block_content() {
-  /* The e-commerce cart has a bit here that takes into account page caching
-     for anonymous users.  This would really only affect anonymous users browsing
-     with items in their cart, not just people browsing the site.  If there is
-     a performance issue, this should be a place to look to tweak...  -RS  */
+  global $user;
 
-  if (!module_exists('uc_store')) {
-    return '<div id="block-cart-contents"><p>The module uc_store must be enabled for the cart block to function properly.</p></div>';
+  if (!$user->uid) {
+    
   }
 
   if (variable_get('uc_cart_show_help_text', FALSE)) {
@@ -409,10 +406,12 @@ function uc_cart_exit() {
 }
 
 function uc_cart_nodeapi(&$node, $op, $arg3, $arg4){
-  switch ($op){
-    case 'delete':
-      db_query("DELETE FROM {uc_cart_products} WHERE nid = %d", $node->nid);
-    break;
+  if (in_array($node->type, array_keys(uc_product_node_info()))){
+    switch ($op){
+      case 'delete':
+        db_query("DELETE FROM {uc_cart_products} WHERE nid = %d", $node->nid);
+      break;
+    }
   }
 }
 
@@ -1198,9 +1197,10 @@ function theme_uc_cart_view_form($form) {
 
   $output .= '<div id="cart-form-buttons"><div id="cart-button-shopping">'
            . $continue_shopping_link .'</div>'
-           . drupal_render($form['order_id']) . drupal_render($form['form_id'])
+           /*. drupal_render($form['order_id']) . drupal_render($form['form_id'])
            . drupal_render($form['form_token']) . drupal_render($form['update'])
-           . drupal_render($form['checkout']) .'</div>';
+           . drupal_render($form['checkout']) .'</div>';*/
+           . drupal_render($form) .'</div>';
 
   return $output;
 }
@@ -1461,6 +1461,7 @@ function uc_cart_checkout_form_submit($form_id, $form_values) {
   }
   else {
     $order = new stdClass();
+    $order->uid = $user->uid;
     $order->order_id = $_SESSION['cart_order'];
     $order->order_status = uc_order_state_default('in_checkout');
   }
@@ -1675,10 +1676,10 @@ function uc_cart_complete_sale($order) {
     }
     else {
       $fields = array(
-        'name' => empty($_SESSION['new_user']['name']) ? $order->primary_email : $_SESSION['new_user']['name'],
+        'name' => empty($order->data['new_user']['name']) ? $order->primary_email : $order->data['new_user']['name'],
         'mail' => $order->primary_email,
         'init' => $order->primary_email,
-        'pass' => empty($_SESSION['new_user']['pass']) ? user_password(variable_get('uc_pwd_length', 6)) : $_SESSION['new_user']['pass'],
+        'pass' => empty($order->data['new_user']['pass']) ? user_password(variable_get('uc_pwd_length', 6)) : $order->data['new_user']['pass'],
         'roles' => array(),
         'status' => variable_get('uc_new_customer_status_active', TRUE) ? 1 : 0,
       );

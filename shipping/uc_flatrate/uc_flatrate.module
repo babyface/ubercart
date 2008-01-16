@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.module,v 1.4.2.1 2008/01/07 20:56:39 rszrama Exp $
+// $Id: uc_flatrate.module,v 1.4.2.2 2008/01/16 21:56:54 rszrama Exp $
 
 /**
  * @file
@@ -84,42 +84,44 @@ function uc_flatrate_form_alter($form_id, &$form){
  * Implementation of hook_nodeapi().
  */
 function uc_flatrate_nodeapi(&$node, $op){
-  switch($op){
-    case 'insert':
-    case 'update':
-      if (is_array($node->flatrate)){
-        foreach ($node->flatrate as $mid => $rate){
-          if (!empty($rate)){
-            if (!$node->revision){
-              db_query("DELETE FROM {uc_flatrate_products} WHERE vid = %d", $node->vid);
+  if (in_array($node->type, array_keys(uc_product_node_info()))){
+    switch($op){
+      case 'insert':
+      case 'update':
+        if (is_array($node->flatrate)){
+          if (!$node->revision){
+            db_query("DELETE FROM {uc_flatrate_products} WHERE vid = %d", $node->vid);
+          }
+          foreach ($node->flatrate as $mid => $rate){
+            if ($rate !== ''){
+              db_query("INSERT INTO {uc_flatrate_products} (vid, nid, mid, rate) VALUES (%d, %d, %d, %f)",
+                $node->vid, $node->nid, $mid, $rate);
             }
-            db_query("INSERT INTO {uc_flatrate_products} (vid, nid, mid, rate) VALUES (%d, %d, %d, %f)",
-              $node->vid, $node->nid, $mid, $rate);
           }
         }
-      }
-    break;
-    case 'load':
-      $return = array('flatrate' => array());
-      $result = db_query("SELECT mid, rate FROM {uc_flatrate_products} WHERE vid = %d", $node->vid);
-      while ($rate = db_fetch_object($result)){
-        $return['flatrate'][$rate->mid] = $rate->rate;
-      }
-      $result = db_query("SELECT mid, product_rate FROM {uc_flatrate_methods}");
-      while ($method = db_fetch_object($result)){
-        $rate = $return['flatrate'][$method->mid];
-        if ($rate === null || $rate == -1){
-          $return['flatrate'][$method->mid] = $method->product_rate;
+      break;
+      case 'load':
+        $return = array('flatrate' => array());
+        $result = db_query("SELECT mid, rate FROM {uc_flatrate_products} WHERE vid = %d", $node->vid);
+        while ($rate = db_fetch_object($result)){
+          $return['flatrate'][$rate->mid] = $rate->rate;
         }
-      }
-      return $return;
-    break;
-    case 'delete':
-      db_query("DELETE FROM {uc_flatrate_products} WHERE nid = %d", $node->nid);
-    break;
-    case 'delete revision':
-      db_query("DELETE FROM {uc_flatrate_products} WHERE vid = %d", $node->vid);
-    break;
+        $result = db_query("SELECT mid, product_rate FROM {uc_flatrate_methods}");
+        while ($method = db_fetch_object($result)){
+          $rate = $return['flatrate'][$method->mid];
+          if ($rate === null || $rate < 0){
+            $return['flatrate'][$method->mid] = $method->product_rate;
+          }
+        }
+        return $return;
+      break;
+      case 'delete':
+        db_query("DELETE FROM {uc_flatrate_products} WHERE nid = %d", $node->nid);
+      break;
+      case 'delete revision':
+        db_query("DELETE FROM {uc_flatrate_products} WHERE vid = %d", $node->vid);
+      break;
+    }
   }
 }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_workflow.inc,v 1.1.2.1 2008/01/07 20:56:44 rszrama Exp $
+// $Id: uc_order_workflow.inc,v 1.1.2.2 2008/01/16 21:56:51 rszrama Exp $
 
 /**
  * @file
@@ -77,6 +77,12 @@ function uc_order_condition_info() {
     '#label' => t("Check an order's number of products"),
     '#arguments' => array('order' => $order_arg),
     '#description' => t('Deterimines if the order has the specified number of products, possibly of a certain type.'),
+    '#module' => t('Order: Product'),
+  );
+  $conditions['uc_order_condition_products_weight'] = array(
+    '#label' => t("Check an order's total weight"),
+    '#arguments' => array('order' => $order_arg),
+    '#description' => t('Deterimines if the order has the specified weight, possibly counting only a certain type of product.'),
     '#module' => t('Order: Product'),
   );
   $conditions['uc_order_condition_is_shippable'] = array(
@@ -399,6 +405,92 @@ function uc_order_condition_count_products_submit($form_id, $form_values){
     'products' => $form_values['products'],
     'product_count_value' => $form_values['product_count_value'],
     'product_count_comparison' => $form_values['product_count_comparison'],
+  );
+}
+
+function uc_order_condition_products_weight($order, $settings){
+  $totals = array('all' => 0);
+  $total = 0;
+  foreach ($order->products as $product){
+    $unit_conversion = uc_weight_conversion($product->weight_units, $settings['weight_units']);
+    $totals['all'] += $product->qty * $product->weight * $unit_conversion;
+    $totals[$product->model] = $product->qty * $product->weight * $unit_conversion;
+  }
+  if (in_array('all', $settings['products'])){
+    $total = $totals['all'];
+  }
+  else{
+    foreach ($settings['products'] as $product){
+      $total += $totals[$product];
+    }
+  }
+  switch ($settings['product_weight_comparison']) {
+    case 'less':
+      return $total < $settings['product_weight_value'];
+    case 'less_equal':
+      return $total <= $settings['product_weight_value'];
+    case 'equal':
+      return $total == $settings['product_weight_value'];
+    case 'greater_equal':
+      return $total >= $settings['product_weight_value'];
+    case 'greater':
+      return $total > $settings['product_weight_value'];
+  }
+}
+
+function uc_order_condition_products_weight_form($settings = array()){
+  $options = array('all' => t('<All products>'));
+  $result = db_query("SELECT nid, model FROM {uc_products}");
+  while ($product = db_fetch_object($result)){
+    $options[$product->nid] = $product->model;
+  }
+  $form['products'] = array('#type' => 'select',
+    '#title' => t('Products'),
+    '#options' => $options,
+    '#default_value' => $settings['products'],
+    '#description' => check_plain(t('Selecting "<All products>" will override any other selections and returns the total number of products in the order.')),
+    '#multiple' => true,
+  );
+  $form['weight_units'] = array('#type' => 'select',
+    '#title' => t('Unit of measurement'),
+    '#default_value' => variable_get('uc_weight_unit', 'lb'),
+    '#options' => array(
+      'lb' => t('Pounds'),
+      'kg' => t('Kilograms'),
+      'oz' => t('Ounces'),
+      'g' => t('Grams'),
+    ),
+  );
+  $form['product_weight_value'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Product weight value'),
+    '#description' => t('Specify a value to compare the product weight against.'),
+    '#default_value' => $settings['product_weight_value'],
+    '#size' => 16,
+  );
+  
+  $options = array(
+    'less' => t('Total is less than specified value.'),
+    'less_equal' => t('Total is less than or equal to specified value.'),
+    'equal' => t('Total is equal to specified value.'),
+    'greater_equal' => t('Total is greater than or equal to specified value.'),
+    'greater' => t('Total is greater than specified value.'),
+  );
+  $form['product_weight_comparison'] = array(
+    '#type' => 'radios',
+    '#title' => t('Product count comparison type'),
+    '#options' => $options,
+    '#default_value' => isset($settings['product_weight_comparison']) ? $settings['product_weight_comparison'] : 'greater_equal',
+  );
+  
+  return $form;
+}
+
+function uc_order_condition_products_weight_submit($form_id, $form_values){
+  return array(
+    'products' => $form_values['products'],
+    'product_weight_value' => $form_values['product_weight_value'],
+    'product_weight_comparison' => $form_values['product_weight_comparison'],
   );
 }
 

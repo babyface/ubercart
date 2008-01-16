@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.4.2.1 2008/01/07 20:56:38 rszrama Exp $
+// $Id: uc_payment.module,v 1.4.2.2 2008/01/16 21:56:50 rszrama Exp $
 
 /**
  * @file
@@ -601,7 +601,7 @@ function uc_payment_get_totals() {
     if (!empty($line[2])) {
       $output .= '<tr><td align="right"><b>'. $line[2] .':</b></td>'
                 .'<td align="right">'. uc_currency_format($line[1]) .'</td></tr>';
-      $grand_total += number_format($line[1], 2);
+      $grand_total += round($line[1], 2);
     }
   }
 

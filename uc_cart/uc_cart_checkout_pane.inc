@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.4.2.1 2008/01/07 20:56:42 rszrama Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.4.2.2 2008/01/16 21:56:53 rszrama Exp $
 
 /**
  * @file
@@ -83,7 +83,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
           $contents['new_account']['pass'] = array(
             '#type' => 'password',
             '#title' => t('Password'),
-            '#default_value' => $_SESSION['new_user']['pass'],
+            '#default_value' => $arg1->data['new_user']['pass'],
             '#maxlength' => 32,
             '#size' => 32,
           );
@@ -91,7 +91,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
             '#type' => 'password',
             '#title' => t('Confirm password'),
             '#description' => t('Passwords must match to proceed.'),
-            '#default_value' => $_SESSION['new_user']['pass_confirm'],
+            '#default_value' => $arg1->data['new_user']['pass_confirm'],
             '#maxlength' => 32,
             '#size' => 32,
           );
@@ -146,7 +146,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
               drupal_set_message(t('The username %name is already taken. Please enter a different name or leave the field blank for your username to be your e-mail address.', array('%name' => $arg2['new_account']['name'])), 'error');
               return FALSE;
             }
-            $_SESSION['new_user']['name'] = $arg2['new_account']['name'];
+            $arg1->data['new_user']['name'] = $arg2['new_account']['name'];
           }
           // Validate the password.
           if (variable_get('uc_cart_new_account_pass', TRUE)) {
@@ -154,7 +154,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
               drupal_set_message(t('The passwords you entered did not match. Please try again.'), 'error');
               return FALSE;
             }
-            $_SESSION['new_user']['pass'] = $arg2['new_account']['pass'];
+            $arg1->data['new_user']['pass'] = $arg2['new_account']['pass'];
           }
         }
       }
@@ -240,6 +240,9 @@ function uc_checkout_pane_delivery($op, &$arg1, $arg2) {
           $country_id = $arg1->delivery_country;
         }
         $contents['delivery_zone'] = uc_zone_select(uc_get_field_name('zone'), $arg1->delivery_zone, NULL, $country_id, 'name', uc_address_field_required('zone'));
+        if (isset($_POST['panes']) && count($contents['delivery_zone']['#options']) == 1) {
+          $contents['delivery_zone']['#required'] = FALSE;
+        }
       }
       if (uc_address_field_enabled('postal_code')) {
         $contents['delivery_postal_code'] = uc_textfield(uc_get_field_name('postal_code'), $arg1->delivery_postal_code, uc_address_field_required('postal_code'), NULL, 10, 10);
@@ -325,6 +328,9 @@ function uc_checkout_pane_billing($op, &$arg1, $arg2) {
           $country_id = $arg1->billing_country;
         }
         $contents['billing_zone'] = uc_zone_select(uc_get_field_name('zone'), $arg1->billing_zone, NULL, $country_id, 'name', uc_address_field_required('zone'));
+        if (isset($_POST['panes']) && count($contents['billing_zone']['#options']) == 1) {
+          $contents['billing_zone']['#required'] = FALSE;
+        }
       }
       if (uc_address_field_enabled('postal_code')) {
         $contents['billing_postal_code'] = uc_textfield(uc_get_field_name('postal_code'), $arg1->billing_postal_code, uc_address_field_required('postal_code'), NULL, 10, 10);

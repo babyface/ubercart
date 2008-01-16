@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.8.2.1 2008/01/07 20:56:44 rszrama Exp $
+// $Id: uc_order.install,v 1.8.2.2 2008/01/16 21:56:51 rszrama Exp $
 
 /**
  * Implementation of hook_install().
@@ -144,7 +144,7 @@ function uc_order_install(){
         created integer NOT NULL default 0,
         modified integer NOT NULL default 0,
         PRIMARY KEY (order_id)
-			);");
+      );");
       db_query("CREATE INDEX {uc_orders}_uid ON {uc_orders} (uid)");
       db_query("CREATE INDEX {uc_orders}_order_status ON {uc_orders} (order_status)");
       db_query("CREATE TABLE {uc_order_admin_comments} (
@@ -155,7 +155,7 @@ function uc_order_install(){
         created integer NOT NULL default 0,
         PRIMARY KEY (comment_id)
       );");
-			db_query("CREATE INDEX {uc_order_admin_comments}_order_id ON {uc_order_admin_comments} (order_id)");
+      db_query("CREATE INDEX {uc_order_admin_comments}_order_id ON {uc_order_admin_comments} (order_id)");
       db_query("CREATE TABLE {uc_order_comments} (
         comment_id integer NOT NULL default 0,
         order_id integer NOT NULL default 0,
@@ -166,7 +166,7 @@ function uc_order_install(){
         created integer NOT NULL default 0,
         PRIMARY KEY (comment_id)
       );");
-			db_query("CREATE INDEX {uc_order_comments}_order_id ON {uc_order_comments} (order_id)");
+      db_query("CREATE INDEX {uc_order_comments}_order_id ON {uc_order_comments} (order_id)");
       db_query("CREATE TABLE {uc_order_line_items} (
         line_item_id integer NOT NULL default 0,
         order_id integer NOT NULL default 0,
@@ -176,7 +176,7 @@ function uc_order_install(){
         weight smallint NOT NULL default 0,
         PRIMARY KEY (line_item_id)
       );");
-			db_query("CREATE INDEX {uc_order_line_items}_order_id ON {uc_order_line_items} (order_id)");
+      db_query("CREATE INDEX {uc_order_line_items}_order_id ON {uc_order_line_items} (order_id)");
       db_query("CREATE TABLE {uc_order_log} (
         order_log_id integer NOT NULL default 0,
         order_id integer NOT NULL default 0,
@@ -185,7 +185,7 @@ function uc_order_install(){
         created integer NOT NULL default 0,
         PRIMARY KEY (order_log_id)
       );");
-			db_query("CREATE INDEX {uc_order_log}_order_id ON {uc_order_log} (order_id)");
+      db_query("CREATE INDEX {uc_order_log}_order_id ON {uc_order_log} (order_id)");
       db_query("CREATE TABLE {uc_order_products} (
         order_product_id integer NOT NULL default 0,
         order_id integer NOT NULL default 0,
@@ -200,7 +200,7 @@ function uc_order_install(){
         data text NOT NULL default '',
         PRIMARY KEY (order_product_id)
       );");
-			db_query("CREATE INDEX {uc_order_products}_order_id ON {uc_order_products} (order_id)");
+      db_query("CREATE INDEX {uc_order_products}_order_id ON {uc_order_products} (order_id)");
       db_query("CREATE TABLE {uc_order_statuses} (
         order_status_id varchar(32) NOT NULL,
         title varchar(48) NOT NULL,
@@ -244,14 +244,14 @@ function uc_order_update_1(){
       $ret[] = update_sql("ALTER TABLE {uc_orders} CHANGE billing_zip billing_postal_code VARCHAR(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL");
       break;
     case 'pgsql':
-      $ret[] = update_sql("ALTER TABLE {uc_orders} CHANGE delivery_zip delivery_postal_code VARCHAR(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default ''");
-      $ret[] = update_sql("ALTER TABLE {uc_orders} CHANGE billing_zip billing_postal_code VARCHAR(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default ''");
+      db_change_column($ret, 'uc_orders', 'delivery_zip', 'delivery_postal_code', 'varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_orders', 'billing_zip', 'billing_postal_code', 'varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci', array('not null' => true, 'default' => ''));
       break;
   }
   $result = db_query("SELECT order_id FROM {uc_orders} ORDER BY order_id DESC LIMIT 1");
   if ($data = db_fetch_object($result)) {
-    $ret[] = update_sql("INSERT INTO {sequences} (name, id) VALUES "
-                       ."('{uc_orders}_order_id', %d)", $data->order_id);
+    $result = db_query("INSERT INTO {sequences} (name, id) VALUES ('{uc_orders}_order_id', %d)", $data->order_id);
+    $ret[] = array('success' => $result !== false, 'query' => "INSERT INTO {sequences} (name, id) VALUES ('{uc_orders}_order_id'. ". $data->order_id .")");
   }
   return $ret;
 }
@@ -263,21 +263,31 @@ function uc_order_update_2() {
       $ret[] = update_sql("ALTER TABLE {uc_order_products} CHANGE weight weight FLOAT NOT NULL DEFAULT 0.0");
       break;
     case 'pgsql':
-      $ret[] = update_sql("ALTER TABLE {uc_order_products} CHANGE weight weight FLOAT NOT NULL DEFAULT 0.0");
+      db_change_column($ret, 'uc_order_products', 'weight', 'weight', 'float', array('not null' => true, 'default' => 0.0));
       break;
   }
   return $ret;
 }
 
 function uc_order_update_3() {
+  $ret = array();
   // Update orders and comments to hold string values for order statuses.
-  $ret[] = update_sql("ALTER TABLE {uc_orders} CHANGE order_status order_status VARCHAR(32) NOT NULL");
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_orders} CHANGE order_status order_status VARCHAR(32) NOT NULL");
+      $ret[] = update_sql("ALTER TABLE {uc_order_comments} CHANGE order_status order_status VARCHAR(32) NOT NULL");
+    break;
+    case 'pgsql':
+      db_change_column($ret, 'uc_orders', 'order_status', 'order_status', 'varchar(32)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_order_comments', 'order_status', 'order_status', 'varchar(32)', array('not null' => true, 'default' => ''));
+    break;
+  }
   $ret[] = update_sql("UPDATE {uc_orders} SET order_status = 'in_checkout' WHERE order_status = '0'");
   $ret[] = update_sql("UPDATE {uc_orders} SET order_status = 'pending' WHERE order_status = '1'");
   $ret[] = update_sql("UPDATE {uc_orders} SET order_status = 'processing' WHERE order_status = '2' OR order_status = '3'");
   $ret[] = update_sql("UPDATE {uc_orders} SET order_status = 'completed' WHERE order_status = '4'");
 
-  $ret[] = update_sql("ALTER TABLE {uc_order_comments} CHANGE order_status order_status VARCHAR(32) NOT NULL");
   $ret[] = update_sql("UPDATE {uc_order_comments} SET order_status = 'in_checkout' WHERE order_status = '0'");
   $ret[] = update_sql("UPDATE {uc_order_comments} SET order_status = 'pending' WHERE order_status = '1'");
   $ret[] = update_sql("UPDATE {uc_order_comments} SET order_status = 'processing' WHERE order_status = '2' OR order_status = '3'");
@@ -285,11 +295,23 @@ function uc_order_update_3() {
 
   // Clean out the old order status table and redefine its structure.
   if ($_SESSION['statuses'] !== TRUE) {
-    $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE order_status_id order_status_id VARCHAR(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default ''");
-    $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE title title VARCHAR(48) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default ''");
-    $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE notify state VARCHAR(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default ''");
-    $ret[] = update_sql("ALTER TABLE {uc_order_statuses} ADD weight MEDIUMINT(9) NOT NULL");
-    $ret[] = update_sql("ALTER TABLE {uc_order_statuses} ADD locked TINYINT NOT NULL DEFAULT '0'");
+    switch ($GLOBALS['db_type']){
+      case 'mysql':
+      case 'mysqli':
+        $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE order_status_id order_status_id VARCHAR(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default ''");
+        $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE title title VARCHAR(48) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default ''");
+        $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE notify state VARCHAR(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default ''");
+        $ret[] = update_sql("ALTER TABLE {uc_order_statuses} ADD weight MEDIUMINT(9) NOT NULL");
+        $ret[] = update_sql("ALTER TABLE {uc_order_statuses} ADD locked TINYINT NOT NULL DEFAULT '0'");
+      break;
+      case 'pgsql':
+        db_change_column($ret, 'uc_order_statuses', 'order_status_id', 'order_status_id', 'varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci', array('not null' => true, 'default' => ''));
+        db_change_column($ret, 'uc_order_statuses', 'title', 'title', 'varchar(48) CHARACTER SET utf8 COLLATE utf8_general_ci', array('not null' => true, 'default' => ''));
+        db_change_column($ret, 'uc_order_statuses', 'notify', 'state', 'varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci', array('not null' => true, 'default' => ''));
+        db_add_column($ret, 'uc_order_statuses', 'weight', 'integer', array('not null' => true, 'default' => 0));
+        db_add_column($ret, 'uc_order_statuses', 'locked', 'smallint', array('not null' => true, 'default' => 0));
+      break;
+    }
     $ret[] = update_sql("DELETE FROM {uc_order_statuses} WHERE order_status_id LIKE '_'");
     $_SESSION['statuses'] = TRUE;
   }
@@ -307,8 +329,17 @@ function uc_order_update_3() {
 }
 
 function uc_order_update_4() {
+  $ret = array();
   // Because I forgot to change the CREATE statement...
-  $ret[] = update_sql("ALTER TABLE {uc_order_comments} CHANGE order_status order_status VARCHAR(32) NOT NULL");
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_order_comments} CHANGE order_status order_status VARCHAR(32) NOT NULL");
+    break;
+    case 'pgsql':
+      db_change_column($ret, 'uc_order_comments', 'order_status', 'order_status', 'varchar(32)', array('not null' => true, 'default' => ''));
+    break;
+  }
 
   return $ret;
 }

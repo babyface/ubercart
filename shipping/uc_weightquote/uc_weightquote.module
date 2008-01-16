@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.module,v 1.4.2.1 2008/01/07 20:56:41 rszrama Exp $
+// $Id: uc_weightquote.module,v 1.4.2.2 2008/01/16 21:56:56 rszrama Exp $
 
 /**
  * @file
@@ -66,32 +66,34 @@ function uc_weightquote_form_alter($form_id, &$form){
  * Implementation of hook_nodeapi().
  */
 function uc_weightquote_nodeapi(&$node, $op){
-  switch($op){
-    case 'insert':
-    case 'update':
-      if (!empty($node->weightquote)){
-        if (!$node->revision){
-          db_query("DELETE FROM {uc_weightquote_products} WHERE vid = %d", $node->vid);
+  if (in_array($node->type, array_keys(uc_product_node_info()))){
+    switch($op){
+      case 'insert':
+      case 'update':
+        if ($node->weightquote !== ''){
+          if (!$node->revision){
+            db_query("DELETE FROM {uc_weightquote_products} WHERE vid = %d", $node->vid);
+          }
+          db_query("INSERT INTO {uc_weightquote_products} (vid, nid, rate) VALUES (%d, %d, %f)",
+            $node->vid, $node->nid, $node->weightquote);
         }
-        db_query("INSERT INTO {uc_weightquote_products} (vid, nid, rate) VALUES (%d, %d, %f)",
-          $node->vid, $node->nid, $node->weightquote);
-      }
-    break;
-    case 'load':
-      $rate = db_result(db_query("SELECT rate FROM {uc_weightquote_products} WHERE vid = %d", $node->vid));
-      if ($rate === false || $rate == -1){
-        return array('weightquote' => variable_get('uc_weightquote_product_default', 0.00));
-      }
-      else{
-        return array('weightquote' => $rate);
-      }
-    break;
-    case 'delete':
-      db_query("DELETE FROM {uc_weightquote_products} WHERE nid = %d", $node->nid);
-    break;
-    case 'delete revision':
-      db_query("DELETE FROM {uc_weightquote_products} WHERE vid = %d", $node->vid);
-    break;
+      break;
+      case 'load':
+        $rate = db_result(db_query("SELECT rate FROM {uc_weightquote_products} WHERE vid = %d", $node->vid));
+        if ($rate === false || $rate < 0){
+          return array('weightquote' => variable_get('uc_weightquote_product_default', 0.00));
+        }
+        else{
+          return array('weightquote' => $rate);
+        }
+      break;
+      case 'delete':
+        db_query("DELETE FROM {uc_weightquote_products} WHERE nid = %d", $node->nid);
+      break;
+      case 'delete revision':
+        db_query("DELETE FROM {uc_weightquote_products} WHERE vid = %d", $node->vid);
+      break;
+    }
   }
 }
 
@@ -201,7 +203,7 @@ function uc_weightquote_quote($products, $details){
   $rate = 0;
   foreach ($products as $product){
     $node = node_load($product->nid);
-    $rate += $node->weightquote * $product->qty * $product->weight * uc_weight_conversion($product->weight_units, variable_get('uc_weight_unit', 'lb'));
+    $rate += $node->weightquote * $product->qty * $product->weight * uc_weight_conversion($node->weight_units, variable_get('uc_weight_unit', 'lb'));
   }
   $rate += variable_get('uc_weightquote_base_rate', 0);
   

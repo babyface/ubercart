@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_notify.module,v 1.10.2.1 2008/01/07 20:56:43 rszrama Exp $
+// $Id: uc_notify.module,v 1.10.2.2 2008/01/16 21:56:53 rszrama Exp $
 
 /**
  * @file
@@ -301,7 +301,7 @@ function uc_notify_order_update_form(){
  * Return the headers for the notification emails.
  */
 function uc_notify_headers($extras = array()) {
-  $extras += array(
+  $extras = $extras + array(
     'Content-Type' => 'text/html; charset=UTF-8; format=flowed',
   );
   return $extras;

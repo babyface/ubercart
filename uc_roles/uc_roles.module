@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.1.2.1 2008/01/07 20:56:45 rszrama Exp $
+// $Id: uc_roles.module,v 1.1.2.2 2008/01/16 21:56:53 rszrama Exp $
 
 /**
  * @file
@@ -253,7 +253,7 @@ function uc_roles_user($op, &$edit, &$account, $category = NULL) {
             'class' => 'member',
           );
         }
-        return array(strtr(variable_get('uc_roles_default_expiration_header', uc_get_message('uc_roles_user_expiration_header')), $substitution) => $items);
+        return array(variable_get('uc_roles_default_expiration_header', uc_get_message('uc_roles_user_expiration_header')) => $items);
       }
       break;
     default:
@@ -303,12 +303,12 @@ function uc_roles_order($op, $order, $status) {
               if ($status == variable_get('uc_roles_default_order_status','completed')) {
                 $existing_role = db_fetch_object(db_query("SELECT * FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d",$order_user->uid,$role->rid));
                 if (!is_null($existing_role->expiration)) {
-                  _role_action('renew', $order_user, $role->rid, _get_expiration_date($role->duration, $role->granularity,$existing_role->expiration));
+                  _role_action('renew', $order_user, $role->rid, _get_expiration_date(($role->duration * $product->qty), $role->granularity,$existing_role->expiration));
                   uc_order_comment_save($order->order_id, $user->uid, t('User has had the %role_name role renewed.', array('%role_name' => _get_role_name($role->rid))));
                   _email_user('renew', $order_user, $existing_role, $order);
                 }
                 else {
-                  _role_action('grant', $order_user, $role->rid, _get_expiration_date($role->duration, $role->granularity));
+                  _role_action('grant', $order_user, $role->rid, _get_expiration_date(($role->duration * $product->qty), $role->granularity));
                   uc_order_comment_save($order->order_id, $user->uid, t('User has been granted the %role_name role.', array('%role_name' => _get_role_name($role->rid))));
                   _email_user('grant', $order_user, $role, $order);
                 }
@@ -723,7 +723,7 @@ function uc_roles_feature_settings() {
     '#type' => 'textfield',
     '#title' => t('Message'),
     '#default_value' => variable_get('uc_roles_default_expiration_message',uc_get_message('uc_roles_user_expiration_message')),
-    '#description' => t('The message, with its accompanying title, and the header displayed above all role expirations. "!role_name" and "!date" will translate to the Drupal role name and role expiration date.'),
+    '#description' => t('The message, with its accompanying title, and the header displayed above all role expirations. In the <strong>Title</strong> & <strong>Message</strong> fields "!role_name" and "!date" will translate to the corresponding Drupal role name and role expiration date.'),
   );
   return $form;
 }

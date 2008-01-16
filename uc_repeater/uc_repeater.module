@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_repeater.module,v 1.3 2007/10/02 18:11:58 rszrama Exp $
+// $Id: uc_repeater.module,v 1.4.2.1 2008/01/16 21:56:54 rszrama Exp $
 
 /**
  * @file
@@ -55,15 +55,17 @@ function uc_repeater_form_alter($form_id, &$form){
 }
 
 function uc_repeater_nodeapi(&$node, $op, $arg3 = null, $arg4 = null){
-  switch ($op){
-    case 'insert':
-    case 'update':
-      if ($node->uc_repeater_export){
-        // Reset cached nodes to send the new node content.
-        node_load(0, null, true);
-        uc_repeater_export($node->nid);
-      }
-    break;
+  if (in_array($node->type, array_keys(uc_product_node_info()))){
+    switch ($op){
+      case 'insert':
+      case 'update':
+        if ($node->uc_repeater_export){
+          // Reset cached nodes to send the new node content.
+          node_load(0, null, true);
+          uc_repeater_export($node->nid);
+        }
+      break;
+    }
   }
 }
 

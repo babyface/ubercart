@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.14.2.1 2008/01/07 20:56:42 rszrama Exp $  // JTR - v.062 - 2007-11-21
+// $Id: uc_catalog.module,v 1.14.2.2 2008/01/16 21:56:50 rszrama Exp $  // JTR - v.062 - 2007-11-21
 
 /**
  * @file
@@ -75,6 +75,7 @@ function uc_catalog_menu($may_cache){
     $items[] = array('path' => 'admin/store/settings/catalog',
       'access' => user_access('administer catalog'),
       'title' => t('Catalog settings'),
+      'description' => t('Configure the catalog settings.'),
       'callback' => 'uc_catalog_settings_overview',
       'type' => MENU_NORMAL_ITEM,
     );
@@ -369,7 +370,11 @@ function uc_catalog_block($op = 'list', $delta = 0, $edit = array()){
             $content .= $html;
           }
           $content .= theme("uc_catalog_block_end");
-          $block = array('subject' => l(variable_get('uc_catalog_name', t('Catalog')), 'catalog'), 'content' => $content);
+          $subject = variable_get('uc_catalog_name', t('Catalog'));
+          if (variable_get('uc_catalog_block_link', true)){
+            $subject = l($subject, 'catalog');
+          }
+          $block = array('subject' => $subject, 'content' => $content);
           break;
 
         case 1:
@@ -481,6 +486,10 @@ function _uc_catalog_pathauto_alias($category, $op){
     $count++;
   }
   return $count;
+}
+
+function uc_catalog_path_alias_types(){
+  return array('catalog/' => t('catalog pages'));
 }
 
 /******************************************************************************
