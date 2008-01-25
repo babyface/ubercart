@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.install,v 1.9.2.1 2008/01/07 20:56:41 rszrama Exp $
+// $Id: uc_attribute.install,v 1.9.2.2 2008/01/25 22:19:31 rszrama Exp $
 
 function uc_attribute_install(){
   switch($GLOBALS['db_type']){
@@ -245,6 +245,20 @@ function uc_attribute_update_5(){
       db_add_column($ret, 'uc_attribute_options', 'cost', 'decimal(10,2)', array('not null' => true, 'default' => 0.0));
       db_add_column($ret, 'uc_class_attribute_options', 'cost', 'decimal(10,2)', array('not null' => true, 'default' => 0.0));
       db_add_column($ret, 'uc_product_options', 'cost', 'decimal(10,2)', array('not null' => true, 'default' => 0.0));
+    break;
+  }
+  return $ret;
+}
+
+function uc_attribute_update_6(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_product_attributes} ADD COLUMN required tinyint(2) NOT NULL default 0 AFTER default_option");
+    break;
+    case 'pgsql':
+      db_add_column($ret, 'uc_product_attributes', 'required', 'smallint', array('not null' => true, 'default' => 0));
     break;
   }
   return $ret;

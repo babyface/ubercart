@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_order_pane.inc,v 1.4.2.1 2008/01/07 20:56:38 rszrama Exp $
+// $Id: uc_payment_order_pane.inc,v 1.4.2.2 2008/01/25 22:19:29 rszrama Exp $
 
 /**
  * @file
@@ -62,9 +62,7 @@ function uc_order_pane_payment($op, $arg1) {
       );
       $methods = _payment_method_list();
       foreach ($methods as $method) {
-        if ($method['backend'] == TRUE) {
-          $options[$method['id']] = $method['name'];
-        }
+        $options[$method['id']] = $method['name'];
       }
       $form['payment']['payment_method'] = array(
         '#type' => 'select',
@@ -81,9 +79,7 @@ function uc_order_pane_payment($op, $arg1) {
       $methods = _payment_method_list();
       $js = 'var methods = {';
       foreach ($methods as $method) {
-        if ($method['backend'] == TRUE) {
-          $js .= '"'. $method['name'] .'": "' . $method['id'] .'", ';
-        }
+        $js .= '"'. $method['name'] .'": "' . $method['id'] .'", ';
       }
       $js = rtrim($js, ' ,') .'};';
       drupal_add_js($js, 'inline');

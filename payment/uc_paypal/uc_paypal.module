@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.4.2.2 2008/01/16 21:56:57 rszrama Exp $
+// $Id: uc_paypal.module,v 1.4.2.3 2008/01/25 22:19:31 rszrama Exp $
 
 /**
  * @file
@@ -170,7 +170,6 @@ function uc_paypal_payment_method() {
     'callback' => 'uc_payment_method_paypal_wps',
     'weight' => 1,
     'checkout' => FALSE,
-    'backend' => TRUE,
   );
 
   $methods[] = array(
@@ -182,7 +181,6 @@ function uc_paypal_payment_method() {
     'callback' => 'uc_payment_method_paypal_ec',
     'weight' => 1,
     'checkout' => FALSE,
-    'backend' => TRUE,
   );
 
   return $methods;
@@ -1233,7 +1231,7 @@ function uc_paypal_wps_form($order) {
   }
 
   // Account for stores that just want to authorize funds instead of capture.
-  if (variable_get('uc_paypal_wps_payment_action', 'Sale') == 'Authorize') {
+  if (variable_get('uc_paypal_wps_payment_action', 'Sale') == 'Authorization') {
     $data['paymentaction'] = 'authorization';
   }
 

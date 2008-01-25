@@ -1,4 +1,4 @@
-/* $Id: uc_order.css,v 1.6.2.1 2008/01/07 20:56:44 rszrama Exp $ */
+/* $Id: uc_order.css,v 1.6.2.2 2008/01/25 22:19:33 rszrama Exp $ */
 
 .order-overview-form {
   float: left;
@@ -231,4 +231,16 @@
 
 .update-controls .form-submit {
   margin: 0em;
+}
+
+.address-select-box #uc-order-address-book-form {
+  margin-bottom: 0em;
+}
+
+.order-pane.abs-left .form-submit {
+  margin: 0.5em 0.5em 0.5em 0em;
+}
+
+.order-pane #customer-select form {
+  margin-bottom: 0em;
 }

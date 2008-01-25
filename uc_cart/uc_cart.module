@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.14.2.3 2008/01/16 21:56:53 rszrama Exp $
+// $Id: uc_cart.module,v 1.14.2.4 2008/01/25 22:19:33 rszrama Exp $
 
 /**
  * @file
@@ -332,9 +332,10 @@ function theme_uc_cart_block_title($cart_image, $arrow_up_image) {
 function theme_uc_cart_block_content() {
   global $user;
 
-  if (!$user->uid) {
-    
-  }
+  // Disabled until we figure out if this is actually screwing up caching. -RS
+  //if (!$user->uid && variable_get('cache', 0) !== 0) {
+  //  return t('<a href="!url">View</a> your shopping cart.', array('!url' => url('cart')));
+  //}
 
   if (variable_get('uc_cart_show_help_text', FALSE)) {
     $output = '<span class="cart-help-text">'
@@ -383,7 +384,7 @@ function theme_uc_cart_block_content() {
     $output .= '<tr><td colspan="2" class="cart-block-summary-checkout">'. $view . $checkout .'</td></tr>';
   }
   $output .= '</tbody></table>';
-  
+
   return $output;
 }
 
@@ -495,10 +496,10 @@ function uc_cart_uc_message() {
 
   $messages['checkout_instructions'] = '';
   $messages['review_instructions'] = t('Your order is not complete. Please review the details of your order and click !submit if all the information is correct.  You may use the Back button to make changes to your order if necessary.', array('!submit' => variable_get('uc_checkout_submit_button', t('Submit order'))));
-  $messages['completion_message'] = t('Your order is complete!');
-  $messages['completion_logged_in'] = t('Thank you for shopping at !site. While logged in, you may continue shopping or <a href="!url">click here</a> to view your current order status and order history.', array('!url' => url('user/'. $user->uid .'/orders', NULL, NULL, TRUE)));
-  $messages['completion_existing_user'] = t('Thank you for shopping at !site. Your current order has been attached to the account we found matching your e-mail address.') .'<p>'. t('<a href="!url">Click here</a> to login and view your current order status and order history. Remember to login when you make your next purchase for a faster checkout experience!', array('!url' => url('user', NULL, NULL, TRUE)));
-  $messages['completion_new_user'] = t('Thank you for shopping at !site. A new account has been created for you here that you may use to view your current order status.') . t('<p><a href="!url">Click here</a> to login to your new account using the following information:', array('!url' => url('user', NULL, NULL, TRUE))) . t('<p><strong>Username:</strong> !new_username<br /><strong>Password:</strong> !new_password');
+  $messages['completion_message'] = t('Your order is complete! Your order number is [order-id].');
+  $messages['completion_logged_in'] = t('Thank you for shopping at [store-name]. While logged in, you may continue shopping or <a href="!url">click here</a> to view your current order status and order history.', array('!url' => url('user/'. $user->uid .'/orders', NULL, NULL, TRUE)));
+  $messages['completion_existing_user'] = t('Thank you for shopping at [store-name]. Your current order has been attached to the account we found matching your e-mail address.') .'<p>'. t('<a href="!url">Click here</a> to login and view your current order status and order history. Remember to login when you make your next purchase for a faster checkout experience!', array('!url' => url('user', NULL, NULL, TRUE)));
+  $messages['completion_new_user'] = t('Thank you for shopping at [store-name]. A new account has been created for you here that you may use to view your current order status.') . t('<p><a href="!url">Click here</a> to login to your new account using the following information:', array('!url' => url('user', NULL, NULL, TRUE))) . t('<p><strong>Username:</strong> !new_username<br /><strong>Password:</strong> !new_password');
   $messages['continue_shopping'] = l(t('Click to return to the front page.'), '<front>', array(), NULL, NULL, TRUE);
 
   return $messages;
@@ -662,19 +663,17 @@ function uc_cart_cart_settings_form() {
   $form['anonymous'] = array(
     '#type' => 'fieldset',
     '#title' => t('Anonymous cart duration'),
+    '#description' => t('Set the length of time products remain in the cart for customers who <strong>have not</strong> logged in.'),
     '#collapsible' => FALSE,
   );
-  $form['anonymous']['instructions'] = array(
-    '#value' => '<div>'. t('Set the length of time products remain in the cart for customers who <strong>have not</strong> logged in.') .'</div>',
-  );
-  $form['anonymous']['table1'] = array('#value' => '<table><tbody style="border: 0px;"><tr><td>');
   $form['anonymous']['uc_cart_anon_duration'] = array(
     '#type' => 'select',
     '#title' => t('Duration'),
     '#options' => drupal_map_assoc(uc_range(1, 60)),
     '#default_value' => variable_get('uc_cart_anon_duration', '4'),
+    '#prefix' => '<div style="float: left; margin-right: 1em;">',
+    '#suffix' => '</div>',
   );
-  $form['anonymous']['table2'] = array('#value' => '</td><td style="padding-left: 1em;">');
   $form['anonymous']['uc_cart_anon_unit'] = array(
     '#type' => 'select',
     '#title' => t('Unit of time'),
@@ -686,24 +685,24 @@ function uc_cart_cart_settings_form() {
       'years' => t('Year(s)'),
     ),
     '#default_value' => variable_get('uc_cart_anon_unit', 'hours'),
+    '#prefix' => '<div style="float: left; margin-right: 1em;">',
+    '#suffix' => '</div>',
   );
-  $form['anonymous']['table3'] = array('#value' => '</td></tr></tbody></table>');
+
   $form['authenticated'] = array(
     '#type' => 'fieldset',
     '#title' => t('Authenticated cart duration'),
+    '#description' => t('Set the length of time products remain in the cart for customers who <strong>have</strong> logged in.'),
     '#collapsible' => FALSE,
   );  
-  $form['authenticated']['instructions'] = array(
-    '#value' => '<div>'. t('Set the length of time products remain in the cart for customers who <strong>have</strong> logged in.') .'</div>',
-  );
-  $form['authenticated']['table1'] = array('#value' => '<table><tbody style="border: 0px;"><tr><td>');
   $form['authenticated']['uc_cart_auth_duration'] = array(
     '#type' => 'select',
     '#title' => t('Duration'),
     '#options' => drupal_map_assoc(uc_range(1, 24)),
     '#default_value' => variable_get('uc_cart_auth_duration', '1'),
+    '#prefix' => '<div style="float: left; margin-right: 1em;">',
+    '#suffix' => '</div>',
   );
-  $form['authenticated']['table2'] = array('#value' => '</td><td style="padding-left: 1em;">');
   $form['authenticated']['uc_cart_auth_unit'] = array(
     '#type' => 'select',
     '#title' => t('Unit of time'),
@@ -714,8 +713,9 @@ function uc_cart_cart_settings_form() {
       'years' => t('Year(s)'),
     ),
     '#default_value' => variable_get('uc_cart_auth_unit', 'years'),
+    '#prefix' => '<div style="float: left; margin-right: 1em;">',
+    '#suffix' => '</div>',
   );
-  $form['authenticated']['table3'] = array('#value' => '</td></tr></tbody></table>');
 
   $form['continue_shopping'] = array(
     '#type' => 'fieldset',
@@ -1050,7 +1050,7 @@ function uc_cart_checkout_messages_form() {
   $form['uc_msg_order_submit'] = array(
     '#type' => 'textarea',
     '#title' => t('Checkout completion message header'),
-    '#description' => t('Header for message displayed after a user checks out.'),
+    '#description' => t('Header for message displayed after a user checks out. <a href="!url">Uses order and global tokens</a>.', array('!url' => 'admin/store/help/tokens')),
     '#default_value' => variable_get('uc_msg_order_submit', uc_get_message('completion_message')),
     '#rows' => 3,
   );
@@ -1059,14 +1059,13 @@ function uc_cart_checkout_messages_form() {
   $form['checkout_messages'] = array(
     '#type' => 'fieldset',
     '#title' => t('Checkout completion message body'),
-    '#description' => t("In the following three boxes, you may use !site to print the site name, !new_username for the username of a newly created account, and !new_password for that account's password."),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
+    '#description' => t("In the following three boxes, you may use the special tokens !new_username for the username of a newly created account and !new_password for that account's password."),
+    '#collapsible' => FALSE,
   );
   $form['checkout_messages']['uc_msg_order_logged_in'] = array(
     '#type' => 'textarea',
     '#title' => t('Checkout completion for logged-in users'),
-    '#description' => t('Message displayed upon checkout for a user who has logged in.'),
+    '#description' => t('Message displayed upon checkout for a user who has logged in. <a href="!url">Uses order and global tokens</a>.', array('!url' => 'admin/store/help/tokens')),
     '#default_value' => variable_get('uc_msg_order_logged_in', uc_get_message('completion_logged_in')),
     '#rows' => 3,
   );
@@ -1074,7 +1073,7 @@ function uc_cart_checkout_messages_form() {
   $form['checkout_messages']['uc_msg_order_existing_user'] = array(
     '#type' => 'textarea',
     '#title' => t('Checkout completion for existing users'),
-    '#description' => t("Message displayed upon checkout for a user who has an account but wasn't logged in."),
+    '#description' => t("Message displayed upon checkout for a user who has an account but wasn't logged in. <a href=\"!url\">Uses order and global tokens</a>.", array('!url' => 'admin/store/help/tokens')),
     '#default_value' => variable_get('uc_msg_order_existing_user', uc_get_message('completion_existing_user')),
     '#rows' => 3,
   );
@@ -1082,7 +1081,7 @@ function uc_cart_checkout_messages_form() {
   $form['checkout_messages']['uc_msg_order_new_user'] = array(
     '#type' => 'textarea',
     '#title' => t('Checkout completion for new users'),
-    '#description' => t('Message displayed upon checkout for a new user whose account was just created.'),
+    '#description' => t('Message displayed upon checkout for a new user whose account was just created. <a href="!url">Uses order and global tokens</a>.', array('!url' => 'admin/store/help/tokens')),
     '#default_value' => variable_get('uc_msg_order_new_user', uc_get_message('completion_new_user')),
     '#rows' => 3,
   );
@@ -1091,7 +1090,7 @@ function uc_cart_checkout_messages_form() {
   $form['uc_msg_continue_shopping'] = array(
     '#type' => 'textarea',
     '#title' => t('Continue shopping message'),
-    '#description' => t('Message displayed upon checkout to direct customers to another part of your site.'),
+    '#description' => t('Message displayed upon checkout to direct customers to another part of your site. <a href="!url">Uses order and global tokens</a>.', array('!url' => 'admin/store/help/tokens')),
     '#default_value' => variable_get('uc_msg_continue_shopping', uc_get_message('continue_shopping')),
     '#rows' => 3,
   );
@@ -1705,8 +1704,8 @@ function uc_cart_complete_sale($order) {
                          variable_get('uc_msg_order_submit_format', 3), FALSE);
   $show_message = check_markup(variable_get('uc_msg_order_'. $message_type, uc_get_message('completion_'. $message_type)),
                                variable_get('uc_msg_order_'. $message_type .'_format', 3), FALSE);
+
   if ($show_message != '') {
-    $variables['!site'] = variable_get('uc_store_name', t('our store'));
     $variables['!new_username'] = check_plain($_SESSION['new_user']['name']);
     $variables['!new_password'] = check_plain($_SESSION['new_user']['pass']);
     $output .= '<p>'. strtr($show_message, $variables) .'</p>';
@@ -1714,6 +1713,8 @@ function uc_cart_complete_sale($order) {
   $output .= '<p>'. check_markup(variable_get('uc_msg_continue_shopping', uc_get_message('continue_shopping')),
                       variable_get('uc_msg_order_submit_format', 3),
                       FALSE) .'</p>';
+
+  $output = token_replace_multiple($output, array('global' => NULL, 'order' => $order));
 
   // Move an order's status from "In Checkout" to "Pending"
   $status = db_result(db_query("SELECT order_status FROM {uc_orders} WHERE order_id = %d", $order->order_id));

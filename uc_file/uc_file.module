@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.1.2.2 2008/01/16 21:56:56 rszrama Exp $
+// $Id: uc_file.module,v 1.1.2.3 2008/01/25 22:19:33 rszrama Exp $
 
 /**
  * @file
@@ -106,7 +106,7 @@ function uc_file_user($op, &$edit, &$account, $category = NULL) {
 			_user_table_action('remove',NULL,$account->uid);
 			break;
 		case 'form': 
-			if (user_access('administer users')) {
+			if (user_access('administer users') && (is_null($category) || $category == 'account')) {
 				$file_downloads = db_query("SELECT * FROM {uc_file_users} as u INNER JOIN {uc_files} as f ON u.fid = f.fid WHERE `uid` = %d",$account->uid);
 				$files = db_query("SELECT * FROM {uc_files} ORDER BY `filename` ASC");
 				$available_downloads = array();
@@ -1019,7 +1019,14 @@ function _file_download_transfer($file_user, $ip, $fid) {
 		exit();
 	}
 	else {
-		ob_end_clean();
+    //Check any if any hook_file_transfer_alter calls alter the download
+    foreach (module_implements('file_transfer_alter') as $module) {
+      $name = $module .'_file_transfer_alter';
+      $file_path = $name($file_user, $ip, $fid, $file_path);
+    }
+    $data = fopen($file_path,'rb');
+    
+    ob_end_clean();
 		$http_headers = array (
 			'Pragma: no-cache',
 			'Expires: 0',
@@ -1034,8 +1041,7 @@ function _file_download_transfer($file_user, $ip, $fid) {
 			$header = preg_replace('/\r?\n(?!\t| )/', '', $header);
 			drupal_set_header($header);
 		}
-		
-		$data = fopen($file_path,'rb');
+    
 		while (!feof($data)) {
 			print fread($data, UC_FILE_BYTE_SIZE);
 		}

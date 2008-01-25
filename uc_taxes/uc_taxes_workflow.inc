@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes_workflow.inc,v 1.1.2.1 2008/01/07 20:56:46 rszrama Exp $
+// $Id: uc_taxes_workflow.inc,v 1.1.2.2 2008/01/25 22:19:35 rszrama Exp $
 
 /**
  * @file
@@ -58,6 +58,15 @@ function uc_taxes_action_info(){
     ),
     '#module' => t('Taxes'),
   );
+  $actions['uc_taxes_action_apply_tax_subtotal'] = array(
+    '#label' => t('Apply a subtotal excluding taxes'),
+    '#arguments' => array(
+      'order' => array('#entity' => 'order', '#label' => t('Order')),
+      'tax' => array('#entity' => 'tax', '#label' => t('Tax')),
+      'tax_line_item' => array('#entity' => 'tax_line_item', '#label' => t('Line Item')),
+    ),
+    '#module' => t('Taxes'),
+  );
   return $actions;
 }
 
@@ -94,6 +103,22 @@ function uc_taxes_action_apply_tax($order, $tax){
     return array('tax_line_item' => $line_item);
   }
 }
+
+/**
+ * Workflow-ng action callback to calculate a tax.
+ *
+ * @param $order
+ *   The order object being considered.
+ * @param $tax
+ *   The tax rule calculating the amount.
+ * @return
+ *   The line item array representing the amount of tax.
+ */
+function uc_taxes_action_apply_tax_subtotal($order, $tax){
+    $line_item = (object)array('id' => 'subtotal_'. $tax->id, 'name' => t('Subtotal excluding taxes'), 'amount' => 2, 'weight' => 8);
+    return array('tax_line_item' => $line_item);
+}
+
 
 /**
  * Implementation of hook_configuration().

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_order_pane.inc,v 1.4.2.2 2008/01/16 21:56:51 rszrama Exp $
+// $Id: uc_order_order_pane.inc,v 1.4.2.3 2008/01/25 22:19:33 rszrama Exp $
 
 /**
  * @file
@@ -247,7 +247,7 @@ function uc_order_pane_customer($op, $arg1) {
       return $output;
 
     case 'edit-theme':
-      $output = '<table class="order-edit-table">';
+      $output = '<div id="customer-select"></div><table class="order-edit-table">';
       foreach (element_children($arg1['customer']['text']) as $field) {
         $title = $arg1['customer']['text'][$field]['#title'];
         $arg1['customer']['text'][$field]['#title'] = NULL;
@@ -255,8 +255,7 @@ function uc_order_pane_customer($op, $arg1) {
                  . drupal_render($arg1['customer']['text'][$field]) .'</td></tr>';
       }
       $output .= '</table>'. drupal_render($arg1['customer']['primary_email'])
-               . drupal_render($arg1['customer']['uid'])
-                .'<div id="customer-select"></div>';
+               . drupal_render($arg1['customer']['uid']);
       return $output;
 
     case 'edit-process':

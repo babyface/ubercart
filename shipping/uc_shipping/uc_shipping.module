@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.5.2.1 2008/01/07 20:56:40 rszrama Exp $
+// $Id: uc_shipping.module,v 1.5.2.2 2008/01/25 22:19:31 rszrama Exp $
 
 /**
  * @file
@@ -792,7 +792,6 @@ function uc_shipping_shipment_view($order_id, $sid){
  */
 function uc_shipping_shipment_edit($order_id, $shipment){
   drupal_add_css(drupal_get_path('module', 'uc_shipping') .'/uc_shipping.css');
-  drupal_add_js(drupal_get_path('module', 'uc_shipping') .'/uc_shipping.js');
   $order = uc_order_load($order_id);
   if (is_numeric($shipment)){
     $shipment = uc_shipping_shipment_load($shipment);
@@ -877,41 +876,7 @@ function uc_shipping_shipment_edit($order_id, $shipment){
     );
   }
 
-  $form['origin'] = array('#type' => 'fieldset',
-    '#title' => t('Origin address'),
-    '#collapsible' => true,
-    '#collapsed' => false,
-    '#weight' => -2,
-    '#theme' => 'uc_shipping_address',
-  );
-  $form['origin']['pickup_address_select'] = uc_shipping_select_address($addresses, 'apply_address(\'pickup\', this.value);', t('Saved Addresses'), TRUE);
-  $form['origin']['pickup_address_select']['#weight'] = -2;
-  $form['origin']['pickup_email'] = uc_textfield(uc_get_field_name('email'), variable_get('uc_store_email', null), FALSE);
-  $form['origin']['pickup_email']['#weight'] = -1;
-  $form['origin']['pickup_first_name'] = uc_textfield(uc_get_field_name('first_name'), $shipment->o_first_name, FALSE);
-  $form['origin']['pickup_last_name'] = uc_textfield(uc_get_field_name('last_name'), $shipment->o_last_name, FALSE);
-  $form['origin']['pickup_company'] = uc_textfield(uc_get_field_name('company'), $shipment->o_company, FALSE);
-  $form['origin']['pickup_street1'] = uc_textfield(uc_get_field_name('street1'), $shipment->o_street1, FALSE, NULL, 64);
-  $form['origin']['pickup_street2'] = uc_textfield(uc_get_field_name('street2'), $shipment->o_street2, FALSE, NULL, 64);
-  $form['origin']['pickup_city'] = uc_textfield(uc_get_field_name('city'), $shipment->o_city, FALSE);
-  if (isset($_POST['pickup_country'])){
-    $country = $_POST['pickup_country'];
-  }
-  else{
-    $country = $shipment->o_country;
-  }
-  $form['origin']['pickup_zone'] = uc_zone_select(uc_get_field_name('zone'), $shipment->o_zone, null, $country);
-  $form['origin']['pickup_country'] = uc_country_select(uc_get_field_name('country'), $shipment->o_country);
-  $form['origin']['pickup_postal_code'] = uc_textfield(uc_get_field_name('postal_code'), $shipment->o_postal_code, FALSE, NULL, 10, 10);
-
-  $order_form = uc_order_pane_ship_to('edit-form', $order);
-  $form['destination'] = $order_form['ship_to'];
-  $form['destination']['delivery_email'] = uc_textfield(uc_get_field_name('email'), $order->primary_email, FALSE);
-  $form['destination']['delivery_email']['#weight'] = -1;
-  $form['destination']['#title'] = t('Destination Address');
-  $form['destination']['#collapsible'] = true;
-  $form['destination']['#weight'] = -1;
-  $form['destination']['#theme'] = 'uc_shipping_address';
+  $form = array_merge($form, uc_shipping_address_form($addresses, $order));
   
   $form['shipment'] = array('#type' => 'fieldset',
     '#title' => t('Shipment data'),
@@ -1341,12 +1306,27 @@ function uc_shipping_order_pane_packages($op, $arg1){
  */
 function uc_shipping_select_address($addresses, $onchange = '', $title = NULL, $icon_suffix = FALSE){
   if (!is_array($addresses) || count($addresses) == 0) {
-    return NULL;
+    $addresses = array();
+  }
+  $store_address = variable_get('uc_quote_store_default_address', new stdClass());
+  if (!in_array($store_address, $addresses)){
+    $addresses[] = $store_address;
   }
 
-  $options = array('0' => t('Select one...'));
+  $blank = array('first_name' => '',
+    'last_name' => '',
+    'phone' => '',
+    'company' => '',
+    'street1' => '',
+    'street2' => '',
+    'city' => '',
+    'postal_code' => '',
+    'country' => 0,
+    'zone' => 0,
+  );
+  $options = array(drupal_to_js($blank) => t('<Reset fields>'));
   foreach ($addresses as $address) {
-    $options[drupal_to_js($address)] = $address->street1;
+    $options[drupal_to_js($address)] = $address->company ? $address->company : $address->street1;
   }
 
   $select = array(
@@ -1360,3 +1340,44 @@ function uc_shipping_select_address($addresses, $onchange = '', $title = NULL, $
   return $select;
 }
 
+function uc_shipping_address_form($addresses, $order){
+  drupal_add_js(drupal_get_path('module', 'uc_shipping') .'/uc_shipping.js');
+  $form = array();
+  $form['origin'] = array('#type' => 'fieldset',
+    '#title' => t('Origin address'),
+    '#collapsible' => true,
+    '#collapsed' => false,
+    '#weight' => -2,
+    '#theme' => 'uc_shipping_address',
+  );
+  $address = reset($addresses);
+  $form['origin']['pickup_address_select'] = uc_shipping_select_address($addresses, 'apply_address(\'pickup\', this.value);', t('Saved Addresses'), TRUE);
+  $form['origin']['pickup_address_select']['#weight'] = -2;
+  $form['origin']['pickup_email'] = uc_textfield(uc_get_field_name('email'), variable_get('uc_store_email', null), FALSE);
+  $form['origin']['pickup_email']['#weight'] = -1;
+  $form['origin']['pickup_first_name'] = uc_textfield(uc_get_field_name('first_name'), $address->o_first_name, FALSE);
+  $form['origin']['pickup_last_name'] = uc_textfield(uc_get_field_name('last_name'), $address->o_last_name, FALSE);
+  $form['origin']['pickup_company'] = uc_textfield(uc_get_field_name('company'), $address->o_company, FALSE);
+  $form['origin']['pickup_street1'] = uc_textfield(uc_get_field_name('street1'), $address->o_street1, FALSE, NULL, 64);
+  $form['origin']['pickup_street2'] = uc_textfield(uc_get_field_name('street2'), $address->o_street2, FALSE, NULL, 64);
+  $form['origin']['pickup_city'] = uc_textfield(uc_get_field_name('city'), $address->o_city, FALSE);
+  $form['origin']['pickup_country'] = uc_country_select(uc_get_field_name('country'), $address->o_country);
+  if (isset($_POST['pickup_country'])){
+    $country = $_POST['pickup_country'];
+  }
+  else{
+    $country = $address->o_country;
+  }
+  $form['origin']['pickup_zone'] = uc_zone_select(uc_get_field_name('zone'), $address->o_zone, null, $country);
+  $form['origin']['pickup_postal_code'] = uc_textfield(uc_get_field_name('postal_code'), $address->o_postal_code, FALSE, NULL, 10, 10);
+
+  $order_form = uc_order_pane_ship_to('edit-form', $order);
+  $form['destination'] = $order_form['ship_to'];
+  $form['destination']['delivery_email'] = uc_textfield(uc_get_field_name('email'), $order->primary_email, FALSE);
+  $form['destination']['delivery_email']['#weight'] = -1;
+  $form['destination']['#title'] = t('Destination Address');
+  $form['destination']['#collapsible'] = true;
+  $form['destination']['#weight'] = -1;
+  $form['destination']['#theme'] = 'uc_shipping_address';
+  return $form;
+}

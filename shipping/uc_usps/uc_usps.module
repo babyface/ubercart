@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.5.2.2 2008/01/16 21:56:50 rszrama Exp $
+// $Id: uc_usps.module,v 1.5.2.3 2008/01/25 22:19:31 rszrama Exp $
 
 /**
  * @file
@@ -270,38 +270,44 @@ function uc_usps_quote($products, $details){
   //drupal_set_message('<pre>'. print_r($products, true) .'</pre>');
   //drupal_set_message('<pre>'. print_r($details, true) .'</pre>');
   $services = array();
-  $packages = _uc_usps_package_products($products);
-  
-  $orig = variable_get('uc_quote_store_default_address', new stdClass());
-  $orig->email = variable_get('uc_store_email', '');
+  $addresses = array(variable_get('uc_quote_store_default_address', new stdClass()));
+  $packages = _uc_usps_package_products($products, $addresses);
+  if (!count($packages)){
+    return array();
+  }
   
   $dest = (object)$details;
   
   $usps_server = 'production.shippingapis.com';
   $api_dll = 'ShippingAPI.dll';
   $connection_url = 'http://'. $usps_server .'/'. $api_dll;
-  $request = uc_usps_rate_request($packages, $orig, $dest);
-
-  $result = drupal_http_request($connection_url, array(), 'POST', $request);
-  if (user_access('configure quotes') && variable_get('uc_quote_display_debug', false)){
-    $services['data']['debug'] .= htmlentities($result->data) ."<br />\n";
-  }
-  $response = new JSimpleXML();
-  $response->loadString($result->data);
   
-  if (is_array($response->document->package)){
-    foreach ($response->document->package as $package){
-      if (isset($package->error)){
-        $services['data']['error'] .= $package->error[0]->description[0]->data() .'<br />';
-      }
-      else{
-        foreach ($package->postage as $postage){
-          $attr = $postage->attributes();
-          if ($attr['classid'] === 0 || $attr['classid'] === '0'){
-            $attr['classid'] = 'zero';
+  foreach ($packages as $key => $ship_packages){
+    $orig = $addresses[$key];
+    $orig->email = variable_get('uc_store_email', '');
+    $request = uc_usps_rate_request($ship_packages, $orig, $dest);
+  
+    $result = drupal_http_request($connection_url, array(), 'POST', $request);
+    if (user_access('configure quotes') && variable_get('uc_quote_display_debug', false)){
+      $services['data']['debug'] .= htmlentities($result->data) ."<br />\n";
+    }
+    $response = new JSimpleXML();
+    $response->loadString($result->data);
+    
+    if (is_array($response->document->package)){
+      foreach ($response->document->package as $package){
+        if (isset($package->error)){
+          $services['data']['error'] .= $package->error[0]->description[0]->data() .'<br />';
+        }
+        else{
+          foreach ($package->postage as $postage){
+            $attr = $postage->attributes();
+            if ($attr['classid'] === 0 || $attr['classid'] === '0'){
+              $attr['classid'] = 'zero';
+            }
+            $services[$attr['classid']]['label'] = t('U.S.P.S. @service', array('@service' => $postage->mailservice[0]->data()));
+            $services[$attr['classid']]['rate'] += uc_usps_markup($postage->rate[0]->data());
           }
-          $services[$attr['classid']]['label'] = t('U.S.P.S. @service', array('@service' => $postage->mailservice[0]->data()));
-          $services[$attr['classid']]['rate'] += uc_usps_markup($postage->rate[0]->data());
         }
       }
     }
@@ -312,14 +318,14 @@ function uc_usps_quote($products, $details){
       unset($services[$service]);
     }
   }
-  $transitreq  = 'USERID="' . variable_get('uc_usps_user_id', '') .'">' .
+  /* $transitreq  = 'USERID="' . variable_get('uc_usps_user_id', '') .'">' .
     '<OriginZip>' . $orig->postal_code . '</OriginZip>' .
-    '<DestinationZip>' . $dest->postal_code . '</DestinationZip>';
+    '<DestinationZip>' . $dest->postal_code . '</DestinationZip>'; */
   foreach ($services as $key => $quote){
     if (isset($quote['rate'])){
       $services[$key]['format'] = uc_currency_format($quote['rate']);
       $services[$key]['option_label'] = $quote['label'];
-      if (strpos($quote['label'], 'Express') !== false){
+      /* if (strpos($quote['label'], 'Express') !== false){
         $transreq = 'API=ExpressMailCommitment&XML='. urlencode(str_replace('Zip', 'ZIP', '<ExpressMailCommitmentRequest ' . $transitreq . '<Date/></ExpressMailCommitmentRequest>'));
       }
       elseif (strpos($quote['label'], 'Priority') !== false){
@@ -346,7 +352,7 @@ function uc_usps_quote($products, $details){
           $services[$key]['commitment'] = $transresp->document->commitment[0]->commitmentname[0]->data() .' -- '. $transresp->document->commitment[0]->commitmenttime[0]->data();
           $services[$key]['option_label'] .= ', '. $services[$key]['commitment'];
         }
-      }
+      } */
     }
   }
   
@@ -368,12 +374,12 @@ function uc_usps_quote($products, $details){
 function uc_usps_intl_quote($products, $details){
   include_once(drupal_get_path('module', 'uc_store') .'/includes/simplexml.php');
 
-  
-  $packages = _uc_usps_package_products($products);
-
-  
-  $orig = variable_get('uc_quote_store_default_address', new stdClass());
-  $orig->email = variable_get('uc_store_email', '');
+  $services = array();
+  $addresses = array(variable_get('uc_quote_store_default_address', new stdClass()));
+  $packages = _uc_usps_package_products($products, $addresses);
+  if (!count($packages)){
+    return array();
+  }
   
   $dest = (object)$details;
   
@@ -381,36 +387,38 @@ function uc_usps_intl_quote($products, $details){
   $api_dll = 'ShippingAPI.dll';
   $connection_url = 'http://'. $usps_server .'/'. $api_dll;
   
-  $request = uc_usps_intl_rate_request($packages, $orig, $dest);
-  $result = drupal_http_request($connection_url, array(), 'POST', $request);
-  if (user_access('configure quotes') && variable_get('uc_quote_display_debug', false)){
-    $services['data']['debug'] .= htmlentities($result->data) ."<br />\n";
-  }
-  $response = new JSimpleXML();
-  $response->loadString($result->data);
-   
-  // drupal_set_message('<pre>'. htmlentities($result->data) .'</pre>');
-  
-  $services = array();
-  if (is_array($response->document->package)){
-  
-    foreach ($response->document->package as $package){
-      if (isset($package->error)){
-        
-      }
-      else{
-        foreach ($package->service as $service){
-          $attr = $service->attributes();
-          if ($attr['id'] === 0 || $attr['id'] === '0'){
-            $attr['id'] = 'zero';
+  foreach ($packages as $key => $ship_packages){
+    $orig = $addresses[$key];
+    $orig->email = variable_get('uc_store_email', '');
+    $request = uc_usps_intl_rate_request($ship_packages, $orig, $dest);
+    $result = drupal_http_request($connection_url, array(), 'POST', $request);
+    if (user_access('configure quotes') && variable_get('uc_quote_display_debug', false)){
+      $services['data']['debug'] .= htmlentities($result->data) ."<br />\n";
+    }
+    $response = new JSimpleXML();
+    $response->loadString($result->data);
+     
+    // drupal_set_message('<pre>'. htmlentities($result->data) .'</pre>');
+    
+    if (is_array($response->document->package)){
+    
+      foreach ($response->document->package as $package){
+        if (isset($package->error)){
+          $services['data']['error'] .= $package->error[0]->description[0]->data() .'<br />';
+        }
+        else{
+          foreach ($package->service as $service){
+            $attr = $service->attributes();
+            if ($attr['id'] === 0 || $attr['id'] === '0'){
+              $attr['id'] = 'zero';
+            }
+            $services[$attr['id']]['label'] = t('USPS @service', array('@service' => $service->svcdescription[0]->data()));
+            $services[$attr['id']]['rate'] += uc_usps_markup($service->postage[0]->data());
           }
-          $services[$attr['id']]['label'] = t('USPS @service', array('@service' => $service->svcdescription[0]->data()));
-          $services[$attr['id']]['rate'] += uc_usps_markup($service->postage[0]->data());
         }
       }
     }
   }
-  
   $usps_services = variable_get('uc_usps_intl_services', _uc_usps_intl_services());
   foreach ($services as $service => $quote){
     if (!in_array($service, $usps_services)){
@@ -517,29 +525,48 @@ function uc_usps_markup($rate){
   }
 }
 
-function _uc_usps_package_products($products){
+function _uc_usps_package_products($products, &$addresses){
+  $last_key = 0;
   $packages = array();
   if (variable_get('uc_usps_all_in_one', true)){
-    $package = new stdClass();
     foreach ($products as $product){
-      $package->price += $product->price * $product->qty;
-      $weight += $product->weight * $product->qty * uc_weight_conversion($product->weight_units, 'lb');
+      if ($product->nid){
+        $address = uc_quote_get_default_shipping_address($product->nid);
+        $key = array_search($address, $addresses);
+        if ($key === false){
+          $addresses[++$last_key] = $address;
+          $key = $last_key;
+          $packages[$key][0] = new stdClass();
+        }
+      }
+      $packages[$key][0]->price += $product->price * $product->qty;
+      $packages[$key][0]->weight += $product->weight * $product->qty * uc_weight_conversion($product->weight_units, 'lb');
     }
-    $package->pounds = floor($weight);
-    $package->ounces = 16 * ($weight - $package->pounds);
-    $package->container = 'RECTANGULAR';
-    $package->size = 'REGULAR';
-    // Packages are "machinable" if heavier than 6oz. and less than 35lbs.
-    $package->machinable = (
-      ($package->pounds == 0 ? $package->ounces >= 6 : true) &&
-      $package->pounds <= 35 &&
-      ($package->pounds == 35 ? $package->ounces == 0 : true)
-    );
-    $package->qty = 1;
-    $packages[] = $package;
+    foreach ($packages as $key => $package){
+      $packages[$key][0]->pounds = floor($package->weight);
+      $packages[$key][0]->ounces = 16 * ($package->weight - $packages[$key][0]->pounds);
+      $packages[$key][0]->container = 'RECTANGULAR';
+      $packages[$key][0]->size = 'REGULAR';
+      // Packages are "machinable" if heavier than 6oz. and less than 35lbs.
+      $packages[$key][0]->machinable = (
+        ($packages[$key][0]->pounds == 0 ? $packages[$key][0]->ounces >= 6 : true) &&
+        $packages[$key][0]->pounds <= 35 &&
+        ($packages[$key][0]->pounds == 35 ? $packages[$key][0]->ounces == 0 : true)
+      );
+      $packages[$key][0]->qty = 1;
+    }
   }
   else{
     foreach ($products as $product){
+      $addr_key = 0;
+      if ($product->nid){
+        $address = uc_quote_get_default_shipping_address($product->nid);
+        $key = array_search($address, $addresses);
+        if ($key === false){
+          $addresses[++$last_key] = $address;
+          $key = $last_key;
+        }
+      }
       if (!$product->pkg_qty){
         $product->pkg_qty = 1;
       }
@@ -594,7 +621,7 @@ function _uc_usps_package_products($products){
       );
       $package->price = $product->price * $product->pkg_qty;
       $package->qty = $num_of_pkgs;
-      $packages[] = $package;
+      $packages[$key][] = $package;
   
       $remaining_qty = $product->qty % $product->pkg_qty;
       if ($remaining_qty){
@@ -643,7 +670,7 @@ function _uc_usps_package_products($products){
         );
         $package->price = $product->price * $remaining_qty;
         $package->qty = 1;
-        $packages[] = $package;
+        $packages[$key][] = $package;
       }
     }
   }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.1.2.2 2008/01/16 21:56:53 rszrama Exp $
+// $Id: uc_roles.module,v 1.1.2.3 2008/01/25 22:19:34 rszrama Exp $
 
 /**
  * @file
@@ -131,7 +131,7 @@ function uc_roles_user($op, &$edit, &$account, $category = NULL) {
       db_query("DELETE FROM {uc_roles_expirations} WHERE uid = %d",$account->uid);
       break;
     case 'form': 
-      if (user_access('administer users')) {
+      if (user_access('administer users') && (is_null($category) || $category == 'account')) {
         $role_choices = _get_role_choices(array_keys($account->roles));
         
         //Assoc array, for Drupal form elements
@@ -1020,11 +1020,16 @@ function _role_action($op, $user, $rid, $timestamp = NULL) {
       user_save($user, array('roles' => $roles_list));
       db_query("DELETE FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d",$user->uid, $rid);
       break;
-    case 'renew';
+    case 'renew':
       if (!is_null($timestamp)) {
         $expiration = db_result(db_query("SELECT expiration FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d",$user->uid,$rid));
         if ($expiration) {
           db_query("UPDATE {uc_roles_expirations} SET expiration = %d WHERE uid = %d AND rid = %d",$timestamp,$user->uid,$rid);
+          //Add role in case it doesn't exist
+          if (!in_array($rid,array_keys($user->roles))) {
+            $roles_list = $user->roles + array($rid => _get_role_name($rid));
+            user_save($user, array('roles' => $roles_list));
+          }
         }
       }
       break;

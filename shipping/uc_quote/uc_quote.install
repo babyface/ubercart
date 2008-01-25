@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.install,v 1.4.2.1 2008/01/07 20:56:40 rszrama Exp $
+// $Id: uc_quote.install,v 1.4.2.2 2008/01/25 22:19:31 rszrama Exp $
 
 function uc_quote_install(){
   switch($GLOBALS['db_type']){
@@ -204,5 +204,12 @@ function uc_quote_update_3(){
       db_change_column($ret, 'uc_quote_product_locations', 'address2', 'street2', 'varchar(255)', array('not null' => true, 'default' => ''));
     break;
   }
+  return $ret;
+}
+
+function uc_quote_update_4(){
+  $ret = array();
+  $ret[] = update_sql("DELETE FROM {uc_quote_product_locations} WHERE street1 = ''");
+  $ret[] = update_sql("DELETE FROM {uc_quote_manufacturer_locations} WHERE street1 = ''");
   return $ret;
 }

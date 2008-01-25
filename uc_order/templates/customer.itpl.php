@@ -1,5 +1,5 @@
 <?php
-// $Id: customer.itpl.php,v 1.4.2.1 2008/01/07 20:56:44 rszrama Exp $
+// $Id: customer.itpl.php,v 1.4.2.2 2008/01/25 22:19:33 rszrama Exp $
 
 /**
  * This file is the default customer invoice template for Ubercart.
@@ -72,11 +72,17 @@
                       <td valign="top" width="50%">
                         <b><?php echo t('Billing Address:'); ?></b><br />
                         [order-billing-address]<br />
+                        <br />
+                        <b><?php echo t('Billing Phone:'); ?></b><br />
+                        [order-billing-phone]<br />
                       </td>
                       <?php if (uc_order_is_shippable($order)) { ?>
                       <td valign="top" width="50%">
                         <b><?php echo t('Shipping Address:'); ?></b><br />
                         [order-shipping-address]<br />
+                        <br />
+                        <b><?php echo t('Shipping Phone:'); ?></b><br />
+                        [order-shipping-phone]<br />
                       </td>
                       <?php } ?>
                     </tr>

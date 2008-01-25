@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_checkout_pane.inc,v 1.4.2.2 2008/01/16 21:56:50 rszrama Exp $
+// $Id: uc_payment_checkout_pane.inc,v 1.4.2.3 2008/01/25 22:19:29 rszrama Exp $
 
 function uc_checkout_pane_payment($op, &$arg1, $arg2) {
   switch ($op) {
@@ -31,16 +31,22 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
           $options[$method['id']] = $method['title'];
         }
       }
+      if (isset($_POST['panes']) && in_array($_POST['panes']['payment']['payment_method'], array_keys($options))) {
+        $default = $_POST['panes']['payment']['payment_method'];
+      }
+      else {
+        $default = (count($options) == 1 || !isset($arg1->payment_method)) ? key($options) : $arg1->payment_method;
+      }
       $contents['payment_method'] = array(
         '#type' => 'radios',
         '#title' => t('Payment method'),
         '#options' => $options,
-        '#default_value' => count($options) == 1 ? array_pop(array_keys($options)) : $arg1->payment_method,
+        '#default_value' => $default,
         '#disabled' => count($options) == 1 ? TRUE : FALSE,
         '#required' => TRUE,
         '#attributes' => array('onclick' => "get_payment_details('". base_path() ."?q=cart/checkout/payment_details/' + this.value);"),
       );
-      drupal_add_js("\$(document).ready( function () { show_default_payment_details('". base_path() ."?q=cart/checkout/payment_details/'); } );", 'inline');
+      drupal_add_js("\$(document).ready( function () { get_payment_details('". base_path() ."?q=cart/checkout/payment_details/". $default ."'); } );", 'inline');
       $contents['details'] = array(
         '#value' => '<div id="payment_details" class="solid-border display-none"></div>',
       );

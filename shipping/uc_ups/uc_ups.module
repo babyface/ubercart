@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.4.2.2 2008/01/16 21:56:52 rszrama Exp $
+// $Id: uc_ups.module,v 1.4.2.3 2008/01/25 22:19:31 rszrama Exp $
 
 /**
  * @file
@@ -802,29 +802,49 @@ function uc_ups_quote($products, $details){
   
   $method = uc_ups_shipping_method();
   
+  $addresses = array(variable_get('uc_quote_store_default_address', new stdClass()));
+  $last_key = 0;
   $packages = array();
   if (variable_get('uc_ups_all_in_one', true)){
-    $shipment_weight = 0;
-    $package = new stdClass();
     foreach ($products as $product){
-      $shipment_weight += $product->weight * $product->qty * uc_weight_conversion($product->weight_units, 'lb');
+      if ($product->nid){
+        $address = uc_quote_get_default_shipping_address($product->nid);
+        $key = array_search($address, $addresses);
+        if ($key === false){
+          $addresses[++$last_key] = $address;
+          $key = $last_key;
+          $packages[$key][0] = new stdClass();
+        }
+      }
+      $packages[$key][0]->weight += $product->weight * $product->qty * uc_weight_conversion($product->weight_units, 'lb');
       $conversion = uc_weight_conversion($product->length_units, 'in');
-      $package->price += $product->price * $product->qty;
-      $package->length = max($product->length * $conversion, $package->length);
-      $package->width = max($product->width * $conversion, $package->width);
-      $package->height = max($product->height * $conversion, $package->height);
+      $packages[$key][0]->price += $product->price * $product->qty;
+      $packages[$key][0]->length = max($product->length * $conversion, $package->length);
+      $packages[$key][0]->width = max($product->width * $conversion, $package->width);
+      $packages[$key][0]->height = max($product->height * $conversion, $package->height);
     }
-    $package->length_units = 'in';
-    $package->weight_units = 'lb';
-    $package->weight = $shipment_weight;
-    $package->qty = 1;
-    $package->pkg_type = '02';
-    if ($package->weight){
-      $packages[] = $package;
+    foreach ($packages as $key => $package){
+      if (!$package[0]->weight){
+        unset($packages[$key]);
+        continue;
+      }
+      $packages[$key][0]->length_units = 'in';
+      $packages[$key][0]->weight_units = 'lb';
+      $packages[$key][0]->qty = 1;
+      $packages[$key][0]->pkg_type = '02';
     }
   }
   else{
     foreach ($products as $product){
+      $addr_key = 0;
+      if ($product->nid){
+        $address = uc_quote_get_default_shipping_address($product->nid);
+        $key = array_search($address, $addresses);
+        if ($key === false){
+          $addresses[++$last_key] = $address;
+          $key = $last_key;
+        }
+      }
       if (!$product->pkg_qty){
         $product->pkg_qty = 1;
       }
@@ -836,7 +856,7 @@ function uc_ups_quote($products, $details){
         $package->qty = $num_of_pkgs;
         $package->pkg_type = $product->ups ? $product->ups['pkg_type'] : '02';
         if ($package->weight){
-          $packages[] = $package;
+          $packages[$key][] = $package;
         }
       }
       $remaining_qty = $product->qty % $product->pkg_qty;
@@ -848,7 +868,7 @@ function uc_ups_quote($products, $details){
         $package->qty = 1;
         $package->pkg_type = $product->ups ? $product->ups['pkg_type'] : '02';
         if ($package->weight){
-          $packages[] = $package;
+          $packages[$key][] = $package;
         }
       }
     }
@@ -859,43 +879,48 @@ function uc_ups_quote($products, $details){
   
   $dest = (object)$details;
   
-  $orig = variable_get('uc_quote_store_default_address', new stdClass());
-  $orig->email = variable_get('uc_store_email', '');
-  foreach (array_keys(array_filter(variable_get('uc_ups_services', array()))) as $ups_service){
-    $quote = array();
-    $request = uc_ups_shipping_quote($packages, $orig, $dest, $ups_service);
-    $resp = drupal_http_request(variable_get('uc_ups_connection_address', 'https://wwwcie.ups.com/ups.app/xml/') .'Rate', array(), 'POST', $request);
-    if (user_access('configure quotes') && variable_get('uc_quote_display_debug', false)){
-      $quote['debug'] = /* '<pre>'. print_r($packages, true) .'</pre>' . */ htmlentities($request) .' <br /><br /> '. htmlentities($resp->data);
-    }
-    $response = new JSimpleXML();
-    $response->loadString($resp->data);
-    if (isset($response->document->response[0]->error)){
-      foreach($response->document->response[0]->error as $error){
-        $quote['error'][] = $error->errorseverity[0]->data() .' '. $error->errorcode[0]->data() .': '. $error->errordescription[0]->data();
-        if ($error->errorseverity[0]->data() == 'HardError'){
-          $quotes[$ups_service] = $quote;
-          break;
+  foreach ($packages as $key => $ship_packages){
+    $orig = $addresses[$key];
+    $orig->email = variable_get('uc_store_email', '');
+    foreach (array_keys(array_filter(variable_get('uc_ups_services', array()))) as $ups_service){
+      $request = uc_ups_shipping_quote($ship_packages, $orig, $dest, $ups_service);
+      $resp = drupal_http_request(variable_get('uc_ups_connection_address', 'https://wwwcie.ups.com/ups.app/xml/') .'Rate', array(), 'POST', $request);
+      if (user_access('configure quotes') && variable_get('uc_quote_display_debug', false)){
+        $quotes[$ups_service]['debug'] .= /* '<pre>'. print_r($ship_packages, true) .'</pre>' . */ htmlentities($request) .' <br /><br /> '. htmlentities($resp->data);
+      }
+      $response = new JSimpleXML();
+      $response->loadString($resp->data);
+      if (isset($response->document->response[0]->error)){
+        foreach($response->document->response[0]->error as $error){
+          $quotes[$ups_service]['error'][] = $error->errorseverity[0]->data() .' '. $error->errorcode[0]->data() .': '. $error->errordescription[0]->data();
+          if ($error->errorseverity[0]->data() == 'HardError'){
+            // All or nothing quote. If some products can't be shipped by 
+            // a certain service, no quote is given for that service. If
+            // that means no quotes are given at all, they'd better call in.
+            unset($quotes[$ups_service]['rate']);
+          }
+        }
+      }
+      // if NegotiatedRates exist, quote based on those, otherwise, use TotalCharges
+      if (isset($response->document->ratedshipment)){
+        $charge = $response->document->ratedshipment[0]->totalcharges[0];
+        if (isset($response->document->ratedshipment[0]->negotiatedrates)){
+          $charge = $response->document->ratedshipment[0]->negotiatedrates[0]->netsummarycharges[0]->grandtotal[0];
+        }
+        if (!isset($charge->currencycode) || $charge->currencycode[0]->data() == variable_get('uc_currency_code', "USD")){
+          $rate = uc_ups_markup($charge->monetaryvalue[0]->data());
+          $quotes[$ups_service]['rate'] += $rate;
         }
       }
     }
-    // if NegotiatedRates exist, quote based on those, otherwise, use TotalCharges
-    if (isset($response->document->ratedshipment)){
-      $charge = $response->document->ratedshipment[0]->totalcharges[0];
-      if (isset($response->document->ratedshipment[0]->negotiatedrates)){
-        $charge = $response->document->ratedshipment[0]->negotiatedrates[0]->netsummarycharges[0]->grandtotal[0];
-      }
-      if (!isset($charge->currencycode) || $charge->currencycode[0]->data() == variable_get('uc_currency_code', "USD")){
-        $rate = uc_ups_markup($charge->monetaryvalue[0]->data());
-        $quote['rate'] = $rate;
-        $quote['format'] = uc_currency_format($rate);
-        $quote['option_label'] = '<img class="ups_logo" src="'. base_path() . drupal_get_path('module', 'uc_ups') .'/uc_ups_logo.gif" /> '. $method['ups']['quote']['accessorials'][$ups_service] . t(' Rate');
-      }
-    }
-    $quotes[$ups_service] = $quote;
   }
-  
   uasort($quotes, '_uc_ups_sort_quotes');
+  foreach ($quotes as $key => $quote){
+    if (isset($quote['rate'])){
+      $quotes[$key]['format'] = uc_currency_format($quote['rate']);
+      $quotes[$key]['option_label'] = '<img class="ups_logo" src="'. base_path() . drupal_get_path('module', 'uc_ups') .'/uc_ups_logo.gif" /> '. $method['ups']['quote']['accessorials'][$key] . t(' Rate');
+    }
+  }
   
   /**
    * Ugly hack to work around PHP bug, details here:
@@ -941,7 +966,6 @@ function uc_ups_fulfill_order($order_id, $package_ids){
   $form = array();
   $pkg_types = _uc_ups_pkg_types();
   if ($order = uc_order_load($order_id)){
-    drupal_add_js(drupal_get_path('module', 'uc_shipping') .'/uc_shipping.js');
     $form['order_id'] = array('#type' => 'value', '#value' => $order_id);
     $packages = array();
     $addresses = array();
@@ -1008,41 +1032,8 @@ function uc_ups_fulfill_order($order_id, $package_ids){
       }
     }
     
-    if (isset($product)){
-      $address = uc_quote_get_default_shipping_address($product->nid);
-    }
-    $form['origin'] = array('#type' => 'fieldset',
-      '#title' => t('Origin address'),
-      '#collapsible' => true,
-      '#collapsed' => false,
-      '#weight' => -2,
-    );
-    $form['origin']['pickup_address_select'] = uc_shipping_select_address($addresses, 'apply_address(\'pickup\', this.value);', t('Saved Addresses'), TRUE);
-    $form['origin']['pickup_address_select']['#weight'] = -2;
-    $form['origin']['pickup_email'] = uc_textfield(uc_get_field_name('email'), variable_get('uc_store_email', null), true);
-    $form['origin']['pickup_email']['#weight'] = -1;
-    $form['origin']['pickup_first_name'] = uc_textfield(uc_get_field_name('first_name'), $address->first_name, false);
-    $form['origin']['pickup_last_name'] = uc_textfield(uc_get_field_name('last_name'), $address->last_name, true);
-    $form['origin']['pickup_company'] = uc_textfield(uc_get_field_name('company'), $address->company, true);
-    $form['origin']['pickup_street1'] = uc_textfield(uc_get_field_name('street1'), $address->street1, true, NULL, 64);
-    $form['origin']['pickup_street2'] = uc_textfield(uc_get_field_name('street2'), $address->street2, FALSE, NULL, 64);
-    $form['origin']['pickup_city'] = uc_textfield(uc_get_field_name('city'), $address->city, true);
-    if (isset($_POST['pickup_country'])){
-      $country = $_POST['pickup_country'];
-    }
-    else{
-      $country = $address->country;
-    }
-    $form['origin']['pickup_zone'] = uc_zone_select(uc_get_field_name('zone'), $address->zone, null, $country, 'name', true);
-    $form['origin']['pickup_country'] = uc_country_select(uc_get_field_name('country'), $address->country, null, 'name', true);
-    $form['origin']['pickup_postal_code'] = uc_textfield(uc_get_field_name('postal_code'), $address->postal_code, true, NULL, 10, 10);
-
-    $order_form = uc_order_pane_ship_to('edit-form', $order);
-    $form['destination'] = $order_form['ship_to'];
-    $form['destination']['delivery_email'] = uc_textfield(uc_get_field_name('email'), $order->primary_email, FALSE);
-    $form['destination']['delivery_email']['#weight'] = -1;
-    $form['destination']['#title'] = t('Destination Address');
-    $form['destination']['#weight'] = -1;
+    $form = array_merge($form, uc_shipping_address_form($addresses, $order));
+    
     foreach (array('delivery_email', 'delivery_last_name', 'delivery_company', 'delivery_street1', 'delivery_city', 'delivery_zone', 'delivery_country', 'delivery_postal_code') as $field){
       $form['destination'][$field]['#required'] = true;
     }

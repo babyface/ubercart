@@ -1,9 +1,10 @@
-// $Id: uc_payment.js,v 1.4.2.1 2008/01/07 20:56:38 rszrama Exp $
+// $Id: uc_payment.js,v 1.4.2.2 2008/01/25 22:19:29 rszrama Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
 var li_values = {};
 var li_weight = {};
+var li_summed = {};
 
 // Timestamps for last time line items or payment details were updated.
 var line_update = 0;
@@ -12,15 +13,18 @@ var payment_update = 0;
 /**
  * Sets a line item in the order total preview.
  */
-function set_line_item(key, title, value, weight) {
+function set_line_item(key, title, value, weight, summed) {
   var do_update = false;
 
+  if (summed === undefined){
+    summed = 1;
+  }
   // Check to see if we're actually changing anything and need to update.
   if (window.li_values[key] === undefined) {
     do_update = true;
   }
   else {
-    if (li_titles[key] != title || li_values[key] != value || li_weight[key] != weight) {
+    if (li_titles[key] != title || li_values[key] != value || li_weight[key] != weight || li_summed[key] != summed) {
       do_update = true;
     }
   }
@@ -37,12 +41,13 @@ function set_line_item(key, title, value, weight) {
       li_titles[key] = title;
       li_values[key] = value;
       li_weight[key] = weight;
+      li_summed[key] = summed;
     }
     // Put all the existing line item data into a single array.
     var li_info = {};
     $.each(li_titles,
       function(a, b) {
-        li_info[a] = li_weight[a] + ';' + li_values[a] + ';' + li_titles[a];
+        li_info[a] = li_weight[a] + ';' + li_values[a] + ';' + li_titles[a] + ';' + li_summed[a];
       }
     );
 
@@ -88,19 +93,6 @@ function get_payment_details(path) {
         else {
           $('#payment_details').empty().append(details);
         }
-      }
-    }
-  );
-}
-
-/**
- * Display the details box for the default option.
- */
-function show_default_payment_details(path) {
-  $('#payment-pane .form-radios .form-radio').each(
-    function() {
-      if (this.checked) {
-        get_payment_details(path + this.value);
       }
     }
   );

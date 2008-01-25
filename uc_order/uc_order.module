@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.1 2008/01/07 20:56:44 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.2 2008/01/25 22:19:33 rszrama Exp $
 
 /**
  * @file
@@ -350,9 +350,10 @@ function uc_order_token_values($type, $object = NULL) {
       $values['order-total'] = uc_currency_format($order->order_total);
       $values['order-email'] = check_plain($order->primary_email);
       $values['order-shipping-address'] = uc_order_address($order, 'delivery');
-      
+      $values['order-shipping-phone'] = check_plain($order->delivery_phone);
       $values['order-shipping-method'] = is_null($ship_method) ? t('Standard delivery') : $ship_method;
       $values['order-billing-address'] = uc_order_address($order, 'billing');
+      $values['order-billing-phone'] = check_plain($order->billing_phone);
       if (variable_get('uc_customer_list_address', 'billing') == 'shipping') {
         $values['order-first-name'] = check_plain($order->delivery_first_name);
         $values['order-last-name'] = check_plain($order->delivery_last_name);
@@ -388,7 +389,9 @@ function uc_order_token_list($type = 'all') {
     $tokens['order']['order-total'] = t('The order total.');
     $tokens['order']['order-email'] = t('The primary e-mail address of the order.');
     $tokens['order']['order-shipping-address'] = t('The order shipping address.');
+    $tokens['order']['order-shipping-phone'] = t('The phone number for the shipping address.');
     $tokens['order']['order-billing-address'] = t('The order billing address.');
+    $tokens['order']['order-billing-phone'] = t('The phone number for the billing address.');
     $tokens['order']['order-shipping-method'] = t('The title of the first shipping line item.');
     $tokens['order']['order-first-name'] = t('The first name associated with the order.');
     $tokens['order']['order-last-name'] = t('The last name associated with the order.');
@@ -1604,8 +1607,8 @@ function uc_order_view($order_id, $view = 'view') {
   }
 
   if ($view == 'customer' && variable_get('uc_cust_view_order_invoices', TRUE)) {
-    drupal_add_js("function open_invoice() { window.open(Drupal.settings['base_path'] + '?q=". 'user/'. arg(1) .'/order/'. arg(3) .'/invoice/print' ."', '". t('Invoice') ."', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=600,height=480,left=50,top=50'); return FALSE; }", 'inline');
-    $contents = '<a href="" onclick="open_invoice();">'
+    drupal_add_js("function open_invoice() { window.open(Drupal.settings['base_path'] + 'user/". arg(1) ."/order/". arg(3) ."/invoice/print', '". t('Invoice') ."', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=600,height=480,left=50,top=50'); }", 'inline');
+    $contents = '<a href="#" onclick="open_invoice();">'
                . uc_store_get_icon('file:print') .' '
                . t('Click to open a window with a printable invoice.') .'</a>';
     $output .= '<div class="order-pane">'. $contents .'</div>';
@@ -2218,6 +2221,8 @@ function uc_order_address_book_form($uid = 0, $type = 'billing', $func = '') {
   }
   else {
     $form['addresses'] = uc_select_address($uid, $type, $func, t('Select an address'));
+    $form['addresses']['#prefix'] = '<div style="float: left; margin-right: 1em;">';
+    $form['addresses']['#suffix'] = '</div>';
   }
 
   $form['close'] = array(
@@ -2500,9 +2505,16 @@ function uc_order_new($uid = 0, $state = 'in_checkout') {
   $order->order_status = uc_order_state_default($state);
   $order->primary_email = $email;
 
-  db_query("INSERT INTO {uc_orders} VALUES (%d, %d, '%s', 0, '%s', '', '', '', "
-          ."'', '', '', '', 0, '', 0, '', '', '', '', '', '', '', 0, 0, 0, '', "
-          ."%d, %d, '')", $order->order_id, $uid, $order->order_status, $email, time(), time());
+  db_query("INSERT INTO {uc_orders} (order_id, uid, order_status, order_total, "
+          ."primary_email, delivery_first_name, delivery_last_name, delivery_phone, "
+          ."delivery_company, delivery_street1, delivery_street2, delivery_city, "
+          ."delivery_zone, delivery_postal_code, delivery_country, billing_first_name, "
+          ."billing_last_name, billing_phone, billing_company, billing_street1, "
+          ."billing_street2, billing_city, billing_zone, billing_postal_code, "
+          ."billing_country, payment_method, data, created, modified) VALUES "
+          ."(%d, %d, '%s', 0, '%s', '', '', '', '', '', '', '', 0, '', 0, '', "
+          ."'', '', '', '', '', '', 0, 0, 0, '', '', %d, %d)", $order->order_id,
+           $uid, $order->order_status, $email, time(), time());
 
   module_invoke_all('order', 'new', $order, NULL);
 

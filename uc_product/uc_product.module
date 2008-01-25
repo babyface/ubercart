@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.13.2.1 2008/01/07 20:56:44 rszrama Exp $
+// $Id: uc_product.module,v 1.13.2.2 2008/01/25 22:19:34 rszrama Exp $
 
 /**
  * @file
@@ -1082,47 +1082,72 @@ function uc_product_views_tables(){
 /**
  * Conditionally add editablefields support.
  */
-function uc_product_views_tables_alter($tables){
+function uc_product_views_tables_alter(&$tables){
   if (module_exists('editablefields')){
-    $tables['uc_products']['fields']['model']['option'] = array(
-      '#type' => 'select',
-      '#options' => array(
-        'display' => t('Display'),
-        'editable' => t('Editable'),
-      ),
-    );
+    if (is_array($tables['uc_products']['fields']['model']['option'])){
+      $tables['uc_products']['fields']['model']['option']['#options']['editable'] = t('Editable');
+    }
+    else{
+      $tables['uc_products']['fields']['model']['option'] = array(
+        '#type' => 'select',
+        '#options' => array(
+          'display' => t('Display'),
+          'editable' => t('Editable'),
+        ),
+      );
+    }
     $tables['uc_products']['fields']['model']['form_parents'] = 'base][model';
-    $tables['uc_products']['fields']['list_price']['option'] = array(
-      '#type' => 'select',
-      '#options' => array(
-        'display' => t('Display'),
-        'editable' => t('Editable'),
-      ),
-    );
+    if (is_array($tables['uc_products']['fields']['list_price']['option'])){
+      $tables['uc_products']['fields']['list_price']['option']['#options']['editable'] = t('Editable');
+    }
+    else{
+      $tables['uc_products']['fields']['list_price']['option'] = array(
+        '#type' => 'select',
+        '#options' => array(
+          'display' => t('Display'),
+          'editable' => t('Editable'),
+        ),
+      );
+    }
     $tables['uc_products']['fields']['list_price']['form_parents'] = 'base][prices][list_price';
-    $tables['uc_products']['fields']['cost']['option'] = array(
-      '#type' => 'select',
-      '#options' => array(
-        'display' => t('Display'),
-        'editable' => t('Editable'),
-      ),
-    );
+    if (is_array($tables['uc_products']['fields']['cost']['option'])){
+      $tables['uc_products']['fields']['cost']['option']['#options']['editable'] = t('Editable');
+    }
+    else{
+      $tables['uc_products']['fields']['cost']['option'] = array(
+        '#type' => 'select',
+        '#options' => array(
+          'display' => t('Display'),
+          'editable' => t('Editable'),
+        ),
+      );
+    }
     $tables['uc_products']['fields']['cost']['form_parents'] = 'base][prices][cost';
-    $tables['uc_products']['fields']['sell_price']['option'] = array(
-      '#type' => 'select',
-      '#options' => array(
-        'display' => t('Display'),
-        'editable' => t('Editable'),
-      ),
-    );
+    if (is_array($tables['uc_products']['fields']['sell_price']['option'])){
+      $tables['uc_products']['fields']['sell_price']['option']['#options']['editable'] = t('Editable');
+    }
+    else{
+      $tables['uc_products']['fields']['sell_price']['option'] = array(
+        '#type' => 'select',
+        '#options' => array(
+          'display' => t('Display'),
+          'editable' => t('Editable'),
+        ),
+      );
+    }
     $tables['uc_products']['fields']['sell_price']['form_parents'] = 'base][prices][sell_price';
-    $tables['uc_products']['fields']['weight']['option'] = array(
-      '#type' => 'select',
-      '#options' => array(
-        'display' => t('Display'),
-        'editable' => t('Editable'),
-      ),
-    );
+    if (is_array($tables['uc_products']['fields']['weight']['option'])){
+      $tables['uc_products']['fields']['weight']['option']['#options']['editable'] = t('Editable');
+    }
+    else{
+      $tables['uc_products']['fields']['weight']['option'] = array(
+        '#type' => 'select',
+        '#options' => array(
+          'display' => t('Display'),
+          'editable' => t('Editable'),
+        ),
+      );
+    }
     $tables['uc_products']['fields']['weight']['form_parents'] = 'base][weight';
   }
 }
@@ -1465,16 +1490,9 @@ function uc_product_image_defaults($checks){
     content_clear_type_cache();
   }
   if (!$product_field_check){
-    $image_path = file_create_path('ubercart_images');
-    if (file_check_directory($image_path)){
-      $image_path = 'ubercart_images';
-    }
-    else{
-      $image_path = '';
-    }
     $widget_settings = array(
       'max_resolution' => '0',
-      'image_path' => $image_path,
+      'image_path' => '',
       'custom_alt' => 1,
       'custom_title' => 1,
       'teaser_preset' => null,
@@ -1567,7 +1585,6 @@ function uc_product_image_defaults($checks){
       }
     }
   }
-  file_check_directory(file_create_path('ubercart_images'), FILE_CREATE_DIRECTORY);
   cache_clear_all('imagecache:presets', 'cache');
   drupal_goto('admin/store');
 }

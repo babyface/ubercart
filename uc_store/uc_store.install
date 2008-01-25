@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.install,v 1.8.2.1 2008/01/07 20:56:46 rszrama Exp $
+// $Id: uc_store.install,v 1.8.2.2 2008/01/25 22:19:34 rszrama Exp $
 
 function uc_store_install(){
   switch($GLOBALS['db_type']){
@@ -68,6 +68,7 @@ function uc_store_install(){
 function uc_store_uninstall() {
   db_query("DROP TABLE {uc_countries}");
   db_query("DROP TABLE {uc_zones}");
+  db_query("DROP TABLE {uc_store_footers}");
   db_query("DELETE FROM {variable} WHERE name LIKE 'user_initials_%%'");
   db_query("DELETE FROM {variable} WHERE name LIKE 'uc_address_format_%%'");
   db_query("DELETE FROM {sequences} WHERE name LIKE '{uc_zones}_zone_id'");

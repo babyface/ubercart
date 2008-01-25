@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.14.2.2 2008/01/16 21:56:50 rszrama Exp $  // JTR - v.062 - 2007-11-21
+// $Id: uc_catalog.module,v 1.14.2.3 2008/01/25 22:19:33 rszrama Exp $  // JTR - v.062 - 2007-11-21
 
 /**
  * @file
@@ -371,7 +371,7 @@ function uc_catalog_block($op = 'list', $delta = 0, $edit = array()){
           }
           $content .= theme("uc_catalog_block_end");
           $subject = variable_get('uc_catalog_name', t('Catalog'));
-          if (variable_get('uc_catalog_block_link', true)){
+          if (variable_get('uc_catalog_block_title', true)){
             $subject = l($subject, 'catalog');
           }
           $block = array('subject' => $subject, 'content' => $content);
@@ -1037,9 +1037,9 @@ function theme_uc_catalog_bestsellers_products(){
                 WHERE op.nid = nd.nid) AS sold
             FROM {node} AS nd
             WHERE nd.type IN ("'. implode('","', $product_types) .'")
-            ORDER BY sold DESC
-              LIMIT '.$gridwidth;
-  $result = db_query($sql);
+              AND nd.status = 1
+            ORDER BY sold DESC';
+  $result = db_query_range($sql, 0, $gridwidth);
   while ($node = db_fetch_object($result)){
     $catalog->products[] = $node->nid;
   }

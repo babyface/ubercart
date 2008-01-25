@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, base_path, li_titles, li_values, tax_weight; -*-
-// $Id: uc_taxes.js,v 1.9.2.1 2008/01/07 20:56:46 rszrama Exp $
+// $Id: uc_taxes.js,v 1.9.2.2 2008/01/25 22:19:34 rszrama Exp $
 
 var pane = '';
 if ($("input[@name*=delivery_]").length){
@@ -61,7 +61,13 @@ function getTax(){
         }
         var j;
         for (j in taxes){
-          set_line_item("tax_" + taxes[j].id, taxes[j].name, taxes[j].amount, tax_weight + taxes[j].weight / 10);
+          if (taxes[j].id == 'subtotal'){
+            summed = 0;
+          }
+          else {
+            summed = 1;
+          }
+          set_line_item("tax_" + taxes[j].id, taxes[j].name, taxes[j].amount, tax_weight + taxes[j].weight / 10, summed);
         }
         if (j == undefined){
           set_line_item("", "", 0.00, 0);

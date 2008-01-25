@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.4.2.2 2008/01/16 21:56:50 rszrama Exp $
+// $Id: uc_payment.module,v 1.4.2.3 2008/01/25 22:19:29 rszrama Exp $
 
 /**
  * @file
@@ -15,7 +15,6 @@
 
 require_once('uc_payment_checkout_pane.inc');
 require_once('uc_payment_order_pane.inc');
-require_once('uc_payment_payment_method.inc');
 require_once('uc_payment_workflow.inc');
 
 /*******************************************************************************
@@ -82,13 +81,6 @@ function uc_payment_menu($may_cache) {
     );
 
     $items[] = array(
-      'path' => 'admin/store/payment_methods',
-      'title' => t('Payment methods autocomplete'),
-      'callback' => '_uc_payment_methods_autocomplete',
-      'access' => user_access('edit orders'),
-      'type' => MENU_CALLBACK,
-    );
-    $items[] = array(
       'path' => 'cart/checkout/line_items',
       'title' => t('Return order totals'),
       'callback' => 'uc_payment_get_totals',
@@ -117,14 +109,7 @@ function uc_payment_menu($may_cache) {
         'access' => user_access('edit orders'),
         'type' => MENU_CALLBACK,
       );
-      $items[] = array(
-        'path' => 'admin/store/orders/'. arg(3) .'/receive_check',
-        'title' => t('Receive Check'),
-        'callback' => 'drupal_get_form',
-        'callback arguments' => array('uc_payment_receive_check_form', arg(3)),
-        'access' => user_access('view all orders'),
-        'type' => MENU_CALLBACK,
-      );
+
       $items[] = array(
         'path' => 'admin/store/orders/'. arg(3) .'/payments/select/'. arg(6),
         'title' => t('Select payment gateway'),
@@ -322,43 +307,6 @@ function uc_payment_order_state() {
   return $states;
 }
 
-/**
- * Implementation of hook_payment_method().
- */
-function uc_payment_payment_method() {
-  $methods[] = array(
-    'id' => 'check',
-    'name' => t('Check'),
-    'title' => t('Check or Money Order'),
-    'desc' => t('Pay by mailing a check or money order.'),
-    'callback' => 'uc_payment_method_check',
-    'weight' => 1,
-    'checkout' => TRUE,
-    'backend' => TRUE,
-  );
-  $methods[] = array(
-    'id' => 'cod',
-    'name' => t('COD'),
-    'title' => t('Cash on delivery'),
-    'desc' => t('Pay cash on delivery on pick-up.'),
-    'callback' => 'uc_payment_method_cod',
-    'weight' => 1,
-    'checkout' => FALSE,
-    'backend' => TRUE,
-  );
-  $methods[] = array(
-    'id' => 'other',
-    'name' => t('Other'),
-    'title' => t('Other'),
-    'desc' => t('A generic payment method type.'),
-    'callback' => 'uc_payment_method_other',
-    'weight' => 10,
-    'checkout' => FALSE,
-    'backend' => TRUE,
-  );
-
-  return $methods;
-}
 
 /*******************************************************************************
  * Callback Functions, Forms, and Tables
@@ -450,10 +398,6 @@ function uc_payment_methods_form() {
         '#type' => 'checkbox',
         '#default_value' => variable_get('uc_payment_method_'. $method['id'] .'_checkout', $method['checkout']),
       );
-      $form['pmtable'][$method['id']]['uc_payment_method_'. $method['id'] .'_backend'] = array(
-        '#type' => 'checkbox',
-        '#default_value' => variable_get('uc_payment_method_'. $method['id'] .'_backend', $method['backend']),
-      );
       $form['pmtable'][$method['id']]['name'] = array(
         '#value' => $method['name'],
       );
@@ -499,12 +443,11 @@ function uc_payment_methods_form() {
 }
 
 function theme_uc_payment_method_table($form) {
-  $header = array(t('Checkout'), t('Admin'), t('Payment method'), t('Weight'), t('Default gateway'));
+  $header = array(t('Enabled'), t('Payment method'), t('Weight'), t('Default gateway'));
 
   foreach (element_children($form) as $method) {
     $rows[] = array(
       array('data' => drupal_render($form[$method]['uc_payment_method_'. $method .'_checkout']), 'align' => 'center'),
-      array('data' => drupal_render($form[$method]['uc_payment_method_'. $method .'_backend']), 'align' => 'center'),
       drupal_render($form[$method]['name']),
       drupal_render($form[$method]['uc_payment_method_'. $method .'_weight']),
       drupal_render($form[$method]['uc_payment_'. $method .'_gateway']),
@@ -601,7 +544,9 @@ function uc_payment_get_totals() {
     if (!empty($line[2])) {
       $output .= '<tr><td align="right"><b>'. $line[2] .':</b></td>'
                 .'<td align="right">'. uc_currency_format($line[1]) .'</td></tr>';
-      $grand_total += round($line[1], 2);
+      if ($line[3]){
+        $grand_total += round($line[1], 2);
+      }
     }
   }
 
@@ -1076,7 +1021,6 @@ function _payment_method_list($action = NULL) {
   $methods = module_invoke_all('payment_method');
   for ($i = 0; $i < count($methods); $i++) {
     $methods[$i]['checkout'] = variable_get('uc_payment_method_'. $methods[$i]['id'] .'_checkout', $methods[$i]['checkout']);
-    $methods[$i]['backend'] = variable_get('uc_payment_method_'. $methods[$i]['id'] .'_backend', $methods[$i]['backend']);
     $methods[$i]['weight'] = variable_get('uc_payment_method_'. $methods[$i]['id'] .'_weight', $methods[$i]['weight']);
   }
   usort($methods, 'uc_weight_sort');
@@ -1129,22 +1073,5 @@ function _payment_gateway_data($method_id, $key) {
       return $gateway[$key];
     }
   }
-}
-
-/**
- * Retrieve a pipe delimited string of autocomplete suggestions for payment methods
- */
-function _uc_payment_methods_autocomplete($string = '') {
-  $matches = array();
-  $methods = _payment_method_list();
-
-  foreach($methods as $method) {
-    if ($method['backend'] == TRUE) {
-      $matches[$method['name']] = check_plain($method['name']);
-    }
-  }
-
-  print drupal_to_js($matches);
-  exit();
 }
 

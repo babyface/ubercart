@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.4.2.2 2008/01/16 21:56:50 rszrama Exp $
+// $Id: uc_quote.module,v 1.4.2.3 2008/01/25 22:19:31 rszrama Exp $
 
 /**
  * @file
@@ -88,9 +88,11 @@ function uc_quote_taxonomy($op, $type, $object = null){
         case 'insert':
         case 'update':
           db_query("DELETE FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $object['tid']);
-          db_query("INSERT INTO {uc_quote_manufacturer_locations} (tid, first_name, last_name, company, street1, street2, city, zone, postal_code, country) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)",
-            $object['tid'], $object['first_name'], $object['last_name'], $object['company'], $object['street1'], $object['street2'], $object['city'], $object['zone'], $object['postal_code'], $object['country']
-          );
+          if ($object['street1']){
+            db_query("INSERT INTO {uc_quote_manufacturer_locations} (tid, first_name, last_name, company, street1, street2, city, zone, postal_code, country) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)",
+              $object['tid'], $object['first_name'], $object['last_name'], $object['company'], $object['street1'], $object['street2'], $object['city'], $object['zone'], $object['postal_code'], $object['country']
+            );
+          }
           uc_quote_set_shipping_type('manufacturer', $object['tid'], $object['shipping_type']);
         break;
         case 'delete':
@@ -118,9 +120,11 @@ function uc_quote_nodeapi(&$node, $op, $arg3 = null, $arg4 = null){
       case 'insert':
       case 'update':
         db_query("DELETE FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid);
-        db_query("INSERT INTO {uc_quote_product_locations} (nid, first_name, last_name, company, street1, street2, city, zone, postal_code, country) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)",
-          $node->nid, $node->first_name, $node->last_name, $node->company, $node->street1, $node->street2, $node->city, $node->zone, $node->postal_code, $node->country
-        );
+        if ($node->street1){
+          db_query("INSERT INTO {uc_quote_product_locations} (nid, first_name, last_name, company, street1, street2, city, zone, postal_code, country) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)",
+            $node->nid, $node->first_name, $node->last_name, $node->company, $node->street1, $node->street2, $node->city, $node->zone, $node->postal_code, $node->country
+          );
+        }
       break;
       case 'load':
         // Can't just use uc_product_get_shipping_type() because $node->manufacturer doesn't necessarily exist yet.
@@ -137,11 +141,11 @@ function uc_quote_nodeapi(&$node, $op, $arg3 = null, $arg4 = null){
           }
         }
         $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid));
-        if (empty($address)){
+        if ($address === false){
           if (module_exists('uc_manufacturer')){
             $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $manufacturer->tid));
           }
-          if (empty($address)){
+          if ($address === false){
             $address = variable_get('uc_quote_store_default_address', new stdClass());
           }
         }
@@ -440,19 +444,22 @@ function uc_quote_order_pane(){
  */
 function uc_quote_order($op, &$arg1, $arg2){
   switch ($op){
+    case 'submit':
+      unset($_SESSION['quote']);
+    break;
     case 'save':
       db_query("DELETE FROM {uc_order_quotes} WHERE oid = %d", $arg1->order_id);
       db_query("INSERT INTO {uc_order_quotes} (oid, method, accessorials, rate, quote_form) VALUES (%d, '%s', '%s', %f, '%s')",
         $arg1->order_id, $arg1->quote['method'], $arg1->quote['accessorials'], $arg1->quote['rate'], $arg1->quote['quote_form']);
-      break;
+    break;
     case 'load':
       $quote = db_fetch_array(db_query("SELECT method, accessorials, rate, quote_form FROM {uc_order_quotes} WHERE oid = %d", $arg1->order_id));
       $arg1->quote = $quote;
       $arg1->quote['accessorials'] = strval($quote['accessorials']);
-      break;
+    break;
     case 'delete':
       db_query("DELETE FROM {uc_order_quotes} WHERE oid = %d", $arg1->order_id);
-      break;
+    break;
   }
 }
 
@@ -638,7 +645,7 @@ function uc_quote_admin_settings_submit($form_id, $form_values){
   variable_set('uc_quote_store_default_address', $address);
   variable_set('uc_quote_log_errors', $form_values['uc_quote_log_errors']);
   variable_set('uc_quote_display_debug', $form_values['uc_quote_display_debug']);
-  variable_set('uc_quote_require_quote', $form_vaules['uc_quote_require_quote']);
+  variable_set('uc_quote_require_quote', $form_values['uc_quote_require_quote']);
   variable_set('uc_quote_err_msg', $form_values['text']);
   variable_set('uc_quote_msg_format', $form_values['format']);
 
@@ -991,7 +998,7 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2){
       drupal_add_js(array(
         'uc_quote' => array(
           'progress_msg' => t('Receiving quotes:'),
-          'err_msg' => check_markup(variable_get('uc_quote_err_msg', t("There were problems getting a shipping quote. Please verify the delivery and product information and try again.\nIf this does not resolve the issue, please call in to complete your order.")), variable_get('uc_quote_msg_format', FILTER_DEFAULT_FORMAT), false),
+          'err_msg' => check_markup(variable_get('uc_quote_err_msg', t("There were problems getting a shipping quote. Please verify the delivery address and product information and try again.\nIf this does not resolve the issue, please call @phone to complete your order.", array('@phone' => variable_get('uc_store_phone', null)))), variable_get('uc_quote_msg_format', FILTER_DEFAULT_FORMAT), false),
         )
       ), 'setting');
       drupal_add_js('misc/progress.js');
@@ -1215,19 +1222,17 @@ function uc_order_pane_quotes($op, $arg1){
 }
 
 function uc_quote_save_choice($form_values){
-  if (form_get_errors()){
-    $quote_option = explode('---', $_POST['quote-option']);
-    $_SESSION['quote'] = array('method' => $quote_option[0],
-      'accessorials' => $quote_option[1],
-      'rate' => $_POST['rate'][$_POST['quote-option']],
-      'quote_form' => $_POST['quote-form'],
-    );
-  }
+  $quote_option = explode('---', $_POST['quote-option']);
+  $_SESSION['quote'] = array('method' => $quote_option[0],
+    'accessorials' => $quote_option[1],
+    'rate' => $_POST['rate'][$_POST['quote-option']],
+    'quote_form' => $_POST['quote-form'],
+  );
 }
 
 function uc_quote_cache_quotes($form_id, &$form){
   if ($form_id == 'uc_cart_checkout_form'){
-    if (form_get_errors()){
+    if (isset($_SESSION['quote'])){
       $quote = $_SESSION['quote'];
       $form['panes']['quotes']['quote'] = array('#type' => 'markup',
         '#value' => '<div id="quote" class="solid-border" style="margin-top: 1em;">'. rawurldecode($_SESSION['quote']['quote_form']) .'</div>',
@@ -1246,7 +1251,6 @@ function uc_quote_cache_quotes($form_id, &$form){
         }
         catch (err) { }
       });', 'inline');
-      unset($_SESSION['quote']);
     }
     else{
       $form['panes']['quotes']['quote'] = array('#type' => 'markup',
