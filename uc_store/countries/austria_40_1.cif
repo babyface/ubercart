@@ -1,5 +1,5 @@
 <?php
-// $Id: austria_40_1.cif,v 1.1 2008/01/07 20:56:46 rszrama Exp $
+// $Id: austria_40_1.cif,v 1.2 2008/01/25 22:19:34 rszrama Exp $
 
 /**
  * First implement hook_install() using the name of the country as the base of
@@ -24,7 +24,7 @@ function austria_install() {
           ."(%d, 040, 'TIR', 'Tirol'),"
           ."(%d, 040, 'VOR', 'Vorarlberg'),"
           ."(%d, 040, 'WIE', 'Wien')",
-           uc_get_zone_ids(8));
+           uc_get_zone_ids(9));
 
   // Use uc_set_address_format() with the country ID as the first argument and
   // an address format string as the second.  Documentation on address formats
