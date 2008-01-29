@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.11.2.2 2008/01/25 22:19:34 rszrama Exp $
+// $Id: uc_taxes.module,v 1.11.2.3 2008/01/29 19:18:36 rszrama Exp $
 
 /**
  * @file
@@ -354,9 +354,15 @@ function uc_line_item_tax_subtotal($op, $order) {
         $amount += $line_item['amount'];
         $different = true;
       }
+      else{
+        $has_taxes = true;
+      }
     }
   }
-  if ($different){
+  if (is_array($order->taxes)){
+    $has_taxes = true;
+  }
+  if ($different && $has_taxes){
     switch ($op){
       case 'cart-preview':
         drupal_add_js("\$(document).ready(function(){set_line_item('tax_subtotal', '". t('Subtotal excluding taxes') ."', ". $amount .", ". variable_get('uc_li_tax_subtotal_weight', 8) .");});", 'inline');

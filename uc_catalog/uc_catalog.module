@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.14.2.3 2008/01/25 22:19:33 rszrama Exp $  // JTR - v.062 - 2007-11-21
+// $Id: uc_catalog.module,v 1.14.2.4 2008/01/29 19:18:37 rszrama Exp $  // JTR - v.062 - 2007-11-21
 
 /**
  * @file
@@ -436,7 +436,7 @@ function uc_catalog_pathauto($op){
       foreach ($patterns as $type => $pattern_set) {
         if ($type != 'global') {
           foreach ($pattern_set as $pattern => $description) {
-            $settings['placeholders'][t('['. $pattern .']')] = t($description);
+            $settings['placeholders']['['. $pattern .']'] = $description;
           }
         }
       }

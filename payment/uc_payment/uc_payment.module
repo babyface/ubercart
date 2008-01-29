@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.4.2.3 2008/01/25 22:19:29 rszrama Exp $
+// $Id: uc_payment.module,v 1.4.2.4 2008/01/29 19:18:36 rszrama Exp $
 
 /**
  * @file
@@ -98,7 +98,7 @@ function uc_payment_menu($may_cache) {
       'access' => user_access('access content'),
       'type' => MENU_CALLBACK,
     );
-   
+
     if (is_numeric(arg(3))) {
       $items[] = array(
         'path' => 'admin/store/orders/'. arg(3) .'/payment_details/'. arg(5),
@@ -117,7 +117,7 @@ function uc_payment_menu($may_cache) {
         'callback arguments' => array(arg(3), arg(6)),
         'access' => user_access('view all orders'),
         'type' => MENU_CALLBACK,
-      );        
+      );
       if (variable_get('uc_payment_tracking', TRUE)) {
         $items[] = array(
           'path' => 'admin/store/orders/'. arg(3) .'/payments',
@@ -207,7 +207,7 @@ function uc_payment_table_settings() {
     'access' => 'view all orders',
     'preview' => FALSE,
   );
-  
+
   return $tables;
 }
 
@@ -388,9 +388,7 @@ function uc_payment_methods_form() {
               . t('The settings forms below are for the payment methods defined by enabled modules. Click a name to expand its options and adjust the settings accordingly. Methods are listed in order of appearance on the checkout screen, determined by the weight setting (current value shown in parentheses).') .'</div><br />',
   );
 
-  $form['pmtable'] = array(
-    '#theme' => 'uc_payment_method_table',
-  );
+  $form['pmtable'] = array('#theme' => 'uc_payment_method_table');
 
   if (is_array($methods) && count($methods) > 0) {
     foreach ($methods as $method) {
@@ -460,7 +458,7 @@ function theme_uc_payment_method_table($form) {
     );
   }
 
-  return theme('table', $header, $rows) .'<br/>';
+  return theme('table', $header, $rows);
 }
 
 function uc_payment_gateways_form() {
@@ -513,7 +511,7 @@ function uc_payment_get_details($method_id, $view = 'cart') {
       $_SESSION['cart_order'] = NULL;
       $order = NULL;
     }
-  
+
     if ($order->order_status != 0 || ($user->uid && $user->uid != $order->uid)) {
       $order = NULL;
     }
@@ -1000,7 +998,7 @@ function uc_payment_load_payments($order_id, $action = NULL) {
   while ($payment = db_fetch_object($result)) {
     $payments[] = $payment;
   }
-  
+
   if (count($payments) == 0) {
     $payments = FALSE;
   }

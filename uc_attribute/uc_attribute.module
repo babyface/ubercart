@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.11.2.2 2008/01/25 22:19:31 rszrama Exp $
+// $Id: uc_attribute.module,v 1.11.2.3 2008/01/29 19:18:36 rszrama Exp $
 
 /**
  * @file
@@ -661,13 +661,13 @@ function uc_object_attributes_form_submit($form_id, $form_values){
     $attr_table = '{uc_product_attributes}';
     $opt_table = '{uc_product_options}';
     $id = 'nid';
-    $type = '%d';
+    $sql_type = '%d';
   }
   else if ($form_values['type'] == 'class'){
     $attr_table = '{uc_class_attributes}';
     $opt_table = '{uc_class_attribute_options}';
     $id = 'pcid';
-    $type = "'%s'";
+    $sql_type = "'%s'";
   }
   $values = array($form_values['id']);
   if (is_array($form_values['chosen_attr'])){
@@ -677,18 +677,18 @@ function uc_object_attributes_form_submit($form_id, $form_values){
         $values[] = $aid;
       }
       else{
-        db_query("UPDATE $attr_table SET ordering = %d, required = %d WHERE aid = %d AND $id = $type", $attr['ordering'], $attr['required'], $aid, $form_values['id']);
+        db_query("UPDATE $attr_table SET ordering = %d, required = %d WHERE aid = %d AND $id = $sql_type", $attr['ordering'], $attr['required'], $aid, $form_values['id']);
       }
     }
   }
   $replace = '('. substr($replace, 2) .')';
   if (count($values) > 1){
     db_query("DELETE po FROM $opt_table AS po LEFT JOIN {uc_attribute_options} AS ao ON po.oid = ao.oid WHERE po.$id = %d AND ao.aid IN ". $replace, $values);
-    db_query("DELETE FROM $attr_table WHERE $id = $type AND aid IN ". $replace, $values);
+    db_query("DELETE FROM $attr_table WHERE $id = $sql_type AND aid IN ". $replace, $values);
   }
   foreach($form_values['attributes'] as $aid){
-    db_query("INSERT INTO $attr_table ($id, aid, default_option) VALUES ($type, %d, %d)",
-      $form_values['id'], $aid, 0);
+    db_query("INSERT INTO $attr_table ($id, aid, ordering, default_option) SELECT $sql_type, aid, ordering, %d FROM {uc_attributes} WHERE aid = %d",
+      $form_values['id'], 0, $aid);
   }
   //return 'node/'. $form_values['id'] .'/edit/attributes';
 }
@@ -722,6 +722,7 @@ function uc_object_options_form($obj_id, $type){
     $chosen_attr = uc_product_get_attributes($obj_id);
     $table = '{uc_product_options}';
     $id = 'nid';
+    $sql_type = '%d';
   }
   else if ($type == 'class'){
     $class = uc_product_class_load($obj_id);
@@ -729,6 +730,7 @@ function uc_object_options_form($obj_id, $type){
     $chosen_attr = uc_class_get_attributes($obj_id);
     $table = '{uc_class_attribute_options}';
     $id = 'pcid';
+    $sql_type = "'%s'";
   }
   $form['prod_attr'] = array('#tree' => true);
   foreach ($chosen_attr as $key => $attribute){
@@ -748,7 +750,7 @@ function uc_object_options_form($obj_id, $type){
     );
     $base_attr = uc_attribute_load($attribute->aid);
     if ($base_attr->options){
-      $result = db_query("SELECT ao.aid, ao.oid, ao.name, ao.cost AS default_cost, ao.price AS default_price, ao.weight AS default_weight, ao.ordering AS default_ordering, po.cost, po.price, po.weight, po.ordering FROM {uc_attribute_options} AS ao LEFT JOIN $table AS po ON ao.oid = po.oid AND po.$id = %d WHERE aid = %d ORDER BY po.ordering, default_ordering, ao.name", $obj_id, $attribute->aid);
+      $result = db_query("SELECT ao.aid, ao.oid, ao.name, ao.cost AS default_cost, ao.price AS default_price, ao.weight AS default_weight, ao.ordering AS default_ordering, po.cost, po.price, po.weight, po.ordering FROM {uc_attribute_options} AS ao LEFT JOIN $table AS po ON ao.oid = po.oid AND po.$id = $sql_type WHERE aid = %d ORDER BY po.ordering, default_ordering, ao.name", $obj_id, $attribute->aid);
       $options = array();
       $n = db_num_rows($result);
       $i = 0;
@@ -875,24 +877,24 @@ function uc_object_options_form_submit($form_id, $form_values){
     $attr_table = '{uc_product_attributes}';
     $opt_table = '{uc_product_options}';
     $id = 'nid';
-    $type = '%d';
+    $sql_type = '%d';
   }
   else if ($form_values['type'] == 'class'){
     $attr_table = '{uc_class_attributes}';
     $opt_table = '{uc_class_attribute_options}';
     $id = 'pcid';
-    $type = "'%s'";
+    $sql_type = "'%s'";
   }
   // Adjustments have no meaning if possible option combinations are changed in any way.
   foreach ($form_values['prod_attr'] as $prod_attr){
-    db_query("DELETE FROM $attr_table WHERE $id = $type AND aid = %d", $form_values['id'], $prod_attr['aid']);
-    db_query("INSERT INTO $attr_table ($id, aid, ordering, required, default_option) VALUES ($type, %d, %d, %d, %d)",
+    db_query("DELETE FROM $attr_table WHERE $id = $sql_type AND aid = %d", $form_values['id'], $prod_attr['aid']);
+    db_query("INSERT INTO $attr_table ($id, aid, ordering, required, default_option) VALUES ($sql_type, %d, %d, %d, %d)",
       $form_values['id'], $prod_attr['aid'], $prod_attr['ordering'], $prod_attr['required'], $prod_attr['default']);
     if (is_array($prod_attr['options'])){
       foreach ($prod_attr['options'] as $oid => $option){
         db_query("DELETE FROM $opt_table WHERE $id = $type AND oid = %d", $form_values['id'], $oid);
         if ($option['select']){
-          db_query("INSERT INTO $opt_table ($id, oid, cost, price, weight, ordering) VALUES ($type, %d, %f, %f, %f, %d)",
+          db_query("INSERT INTO $opt_table ($id, oid, cost, price, weight, ordering) VALUES ($sql_type, %d, %f, %f, %f, %d)",
             $form_values['id'], $oid, $option['cost'], $option['price'], $option['weight'], $option['ordering']);
         }
         else if ($form_values['type'] == 'product'){
@@ -1065,17 +1067,20 @@ function uc_attribute_load($attr_id, $nid = null, $type = ''){
   if ($nid){
     switch ($type){
       case 'product':
-        $attribute = db_fetch_object(db_query("SELECT a.aid, a.name, pa.default_option, pa.required, pa.ordering FROM {uc_attributes} AS a LEFT JOIN {uc_product_attributes} AS pa ON a.aid = pa.aid AND pa.nid = %d WHERE a.aid = %d ORDER BY pa.ordering", $nid, $attr_id));
+        $attribute = db_fetch_object(db_query("SELECT a.aid, a.name, a.ordering AS default_ordering, pa.default_option, pa.required, pa.ordering FROM {uc_attributes} AS a LEFT JOIN {uc_product_attributes} AS pa ON a.aid = pa.aid AND pa.nid = %d WHERE a.aid = %d ORDER BY pa.ordering", $nid, $attr_id));
         $result = db_query("SELECT po.nid, po.oid, po.cost, po.price, po.weight, po.ordering, ao.name, ao.aid FROM {uc_product_options} AS po LEFT JOIN {uc_attribute_options} AS ao ON po.oid = ao.oid AND nid = %d WHERE aid = %d ORDER BY po.ordering, ao.name", $nid, $attr_id);
       break;
       case 'class':
-        $attribute = db_fetch_object(db_query("SELECT a.aid, a.name, ca.default_option, ca.ordering FROM {uc_attributes} AS a LEFT JOIN {uc_class_attributes} AS ca ON a.aid = ca.aid AND ca.pcid = '%s' WHERE a.aid = %d ORDER BY ca.ordering", $nid, $attr_id));
+        $attribute = db_fetch_object(db_query("SELECT a.aid, a.name, a.ordering AS default_ordering, ca.default_option, ca.ordering FROM {uc_attributes} AS a LEFT JOIN {uc_class_attributes} AS ca ON a.aid = ca.aid AND ca.pcid = '%s' WHERE a.aid = %d ORDER BY ca.ordering", $nid, $attr_id));
         $result = db_query("SELECT co.pcid, co.oid, co.cost, co.price, co.weight, co.ordering, ao.name, ao.aid FROM {uc_class_attribute_options} AS co LEFT JOIN {uc_attribute_options} AS ao ON co.oid = ao.oid AND co.pcid = '%s' WHERE ao.aid = %d ORDER BY co.ordering, ao.name", $nid, $attr_id);
       break;
       default:
         $attribute = db_fetch_object(db_query("SELECT * FROM {uc_attributes} WHERE aid = %d", $attr_id));
         $result = db_query("SELECT * FROM {uc_attribute_options} WHERE aid = %d ORDER BY ordering, name", $attr_id);
       break;
+    }
+    if (isset($attribute->default_ordering) && is_null($attribute->ordering)){
+      $attribute->ordering = $attribute->default_ordering;
     }
   }
   else{

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.4.2.3 2008/01/25 22:19:31 rszrama Exp $
+// $Id: uc_paypal.module,v 1.4.2.4 2008/01/29 19:18:36 rszrama Exp $
 
 /**
  * @file
@@ -354,13 +354,6 @@ function uc_paypal_wpp_charge($order_id, $amount, $data){
     'STATE' => uc_get_zone_code($order->billing_zone),
     'ZIP' => $order->billing_postal_code,
     'COUNTRYCODE' => $billing_country[0]['country_iso_code_2'],
-    'SHIPTONAME' => substr($order->delivery_first_name .' '. $order->delivery_last_name, 0, 25),
-    'SHIPTOSTREET' => substr($order->delivery_street1, 0, 100),
-    'SHIPTOSTREET2' => substr($order->delivery_street2, 0, 100),
-    'SHIPTOCITY' => substr($order->delivery_city, 0, 40),
-    'SHIPTOSTATE' => uc_get_zone_code($order->delivery_zone),
-    'SHIPTOZIP' => $order->delivery_postal_code,
-    'SHIPTOCOUNTRYCODE' => $delivery_country[0]['country_iso_code_2'],
     'CURRENCYCODE' => variable_get('uc_paypal_wpp_currency', 'USD'),
     'DESC' => substr($desc, 0, 127),
     'INVNUM' => $order_id .'-'. time(),
@@ -369,6 +362,19 @@ function uc_paypal_wpp_charge($order_id, $amount, $data){
     'EMAIL' => substr($order->primary_email, 0, 127),
     'PHONENUM' => substr($order->billing_phone, 0, 20),
   );
+
+  if (uc_order_is_shippable($order)) {
+    $shipdata = array(
+      'SHIPTONAME' => substr($order->delivery_first_name .' '. $order->delivery_last_name, 0, 25),
+      'SHIPTOSTREET' => substr($order->delivery_street1, 0, 100),
+      'SHIPTOSTREET2' => substr($order->delivery_street2, 0, 100),
+      'SHIPTOCITY' => substr($order->delivery_city, 0, 40),
+      'SHIPTOSTATE' => uc_get_zone_code($order->delivery_zone),
+      'SHIPTOZIP' => $order->delivery_postal_code,
+      'SHIPTOCOUNTRYCODE' => $delivery_country[0]['country_iso_code_2'],
+    );
+    $nvp_request += $shipdata;
+  }
 
   if (variable_get('uc_credit_cvv_enabled', TRUE)) {
     $nvp_request['CVV2'] = $order->payment_details['cc_cvv'];

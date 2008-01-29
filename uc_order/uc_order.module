@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.2 2008/01/25 22:19:33 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.3 2008/01/29 19:18:37 rszrama Exp $
 
 /**
  * @file
@@ -2882,7 +2882,10 @@ function uc_order_get_total($order, $products_only = FALSE) {
 }
 
 function uc_order_is_shippable($order){
-  $results = array();
+  if (!is_array($order->products) || empty($order->products)) {
+    return FALSE;
+  }
+
   foreach ($order->products as $product){
     // Return FALSE if the product form specifies this as not shippable.
     if ($product->data['shippable'] == FALSE) {

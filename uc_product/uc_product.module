@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.13.2.2 2008/01/25 22:19:34 rszrama Exp $
+// $Id: uc_product.module,v 1.13.2.3 2008/01/29 19:18:37 rszrama Exp $
 
 /**
  * @file
@@ -2140,8 +2140,11 @@ function uc_product_class_form_submit($form_id, $form_values){
   
   node_types_rebuild();
   menu_rebuild();
-  if ($is_new){
-    drupal_execute('_content_admin_field_add_existing', array('type_name' => $pcid, 'field_name' => 'field_image_cache'), $pcid);
+  if ($is_new && module_exists('imagefield')){
+    $result = db_query("SELECT field_name FROM {node_field} WHERE field_name = 'field_image_cache' AND type = 'image'");
+    if (db_num_rows($result)){
+      drupal_execute('_content_admin_field_add_existing', array('type_name' => $pcid, 'field_name' => 'field_image_cache'), $pcid);
+    }
   }
   
   return 'admin/store/products/classes';

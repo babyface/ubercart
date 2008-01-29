@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.1.2.3 2008/01/25 22:19:33 rszrama Exp $
+// $Id: uc_file.module,v 1.1.2.4 2008/01/29 19:18:37 rszrama Exp $
 
 /**
  * @file
@@ -436,7 +436,7 @@ function uc_file_feature_settings() {
 	$form['uc_file_base_dir'] = array(
 		'#type' => 'textfield',
 		'#title' => t('Files path'),
-		'#description' => t('The absolute path where files used for file downloads are located. For security reasons, it is reccommended to choose a path outside the web root.'),
+		'#description' => t('The absolute path (or relative to Drupal root) where files used for file downloads are located. For security reasons, it is reccommended to choose a path outside the web root.'),
 		'#default_value' => variable_get('uc_file_base_dir', NULL),
 	);
 	$form['uc_file_file_mask'] = array(

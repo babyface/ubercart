@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.4.2.2 2008/01/25 22:19:29 rszrama Exp $
+// $Id: uc_payment.js,v 1.4.2.3 2008/01/29 19:18:36 rszrama Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
@@ -30,12 +30,6 @@ function set_line_item(key, title, value, weight, summed) {
   }
 
   if (do_update) {
-    // Set the timestamp for this update.
-    var this_update = new Date();
-
-    // Set the global timestamp for the update.
-    line_update = this_update.getTime();
-
     // Set the values passed in, overriding previous values for that key.
     if (key != ""){
       li_titles[key] = title;
@@ -43,28 +37,40 @@ function set_line_item(key, title, value, weight, summed) {
       li_weight[key] = weight;
       li_summed[key] = summed;
     }
-    // Put all the existing line item data into a single array.
-    var li_info = {};
-    $.each(li_titles,
-      function(a, b) {
-        li_info[a] = li_weight[a] + ';' + li_values[a] + ';' + li_titles[a] + ';' + li_summed[a];
-      }
-    );
 
-    // Post the line item data to a URL and get it back formatted for display.
-    $.post(Drupal.settings['base_path'] + 'cart/checkout/line_items', li_info,
-      function(contents) {
-        // Only display the changes if this was the last requested update.
-        if (this_update.getTime() == line_update) {
-          $('#line-items-div').empty().append(contents);
-        }
-      }
-    );
+    render_line_items();
   }
+}
+
+function render_line_items() {
+  // Set the timestamp for this update.
+  var this_update = new Date();
+
+  // Set the global timestamp for the update.
+  line_update = this_update.getTime();
+
+  // Put all the existing line item data into a single array.
+  var li_info = {};
+  $.each(li_titles,
+    function(a, b) {
+      li_info[a] = li_weight[a] + ';' + li_values[a] + ';' + li_titles[a] + ';' + li_summed[a];
+    }
+  );
+
+  // Post the line item data to a URL and get it back formatted for display.
+  $.post(Drupal.settings['base_path'] + 'cart/checkout/line_items', li_info,
+    function(contents) {
+      // Only display the changes if this was the last requested update.
+      if (this_update.getTime() == line_update) {
+        $('#line-items-div').empty().append(contents);
+      }
+    }
+  );
 }
 
 function remove_line_item(key) {
   li_titles[key] = '';
+  render_line_items();
 }
 
 /**
