@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.13.2.3 2008/01/25 22:19:34 rszrama Exp $
+// $Id: uc_store.module,v 1.13.2.4 2008/02/08 22:22:43 rszrama Exp $
 
 /**
  * @file
@@ -446,7 +446,26 @@ function uc_store_cron(){
       }
         
       $vars['currency'] = variable_get('uc_currency_code', 'USD');
-      $result = db_query("SELECT COUNT(DISTINCT o.order_id) AS orders, SUM(o.order_total) AS sales FROM {uc_orders} AS o WHERE o.order_status = 'completed' GROUP BY o.order_status");
+    
+      $count_query = '';
+      switch ($GLOBALS['db_type']) {
+        case 'mysql':
+        case 'mysqli':
+          $count_query = "SELECT COUNT(DISTINCT o.order_id) AS orders, SUM(o.order_total) AS sales "
+          ."FROM {uc_orders} AS o "
+          ."WHERE o.order_status = 'completed' "
+          ."GROUP BY o.order_status";
+          break;
+        case 'pgsql':
+          $count_query = "SELECT DISTINCT o.order_id, COUNT(o.order_id) as orders, SUM(o.order_total) AS sales "
+          ."FROM {uc_orders} AS o "
+          ."WHERE o.order_status = 'completed' "
+          ."GROUP BY o.order_status";
+          break;
+      }
+    
+      $result = db_query($count_query);
+   
       if ($stats = db_fetch_array($result)){
         if (variable_get('uc_store_opt_in_orders', TRUE)){
           $vars['orders'] = $stats['orders'];
@@ -505,71 +524,46 @@ function uc_store_perm() {
   return array('administer store', 'view customers', 'view store reports');
 }
 
-function uc_store_footer($main = 0) {
-  $url = array('!url' => 'http://www.ubercart.org/');
-  $messages = array(
-    1 => t('E-commerce powered by Ubercart, the <a href="!url">free shopping cart software.</a>', $url),
-    2 => t('<a href="!url">E-commerce</a> by Ubercart, powered by Drupal.', $url),
-    3 => t('<a href="!url">Free shopping cart software</a> provided by Ubercart.', $url),
-  );
+/**
+ * Implementation of hook_footer().
+ */
+function uc_store_footer() {
+  // Figure out what page is being viewed.
   $path = drupal_get_normal_path($_GET['q']);
   $parts = explode('/', $path);
+
   switch ($parts[0]){
     case 'admin':
-      if ($parts[1] != 'store'){
+      if ($parts[1] != 'store') {
         break;
       }
-      // else fall through
     case 'node':
-      if (is_numeric($parts[1])){
-        if ($node = node_load($parts[1])){
+      if (intval($parts[1]) > 0) {
+        if ($node = node_load($parts[1])) {
           if (function_exists('uc_product_node_info') && !in_array($node->type, array_keys(uc_product_node_info()))){
             break;
           }
         }
-        // else fall through
       }
-    case variable_get('uc_catalog_url', 'catalog'):
+    case 'catalog':
     case 'cart':
     case 'manufacturer':
-      if ($message = variable_get('uc_footer_message', 0)){
+      $messages = _store_footer_options();
+      if (($message = variable_get('uc_footer_message', 0)) > 0) {
         $message = $messages[$message];
       }
-      else{
-        $result = db_query("SELECT message  FROM {uc_store_footers} WHERE path_hash = '%s'", md5($path));
-        $message = db_result($result);
-        if (!$message){
+      else {
+        $message = db_result(db_query("SELECT message FROM {uc_store_footers} WHERE path_hash = '%s'", md5($path)));
+        if (!$message) {
           $message = $messages[array_rand($messages)];
           db_query("INSERT INTO {uc_store_footers} (path_hash, message) VALUES ('%s', '%s')", md5($path), $message);
         }
       }
+
       return theme('uc_store_footer', $message);
   }
 }
 
-
-/******************************************************************************
- * Übercart Hooks                                                             *
- ******************************************************************************/
-
-/* function uc_store_store_status(){
-  $updates = variable_get('uc_store_updates', array());
-  $list = '';
-  foreach ($updates as $update){
-    $list .= '<li>'. $update['module'] .': '. $update['version'] .'</li>';
-  }
-  if (strlen($list)){
-    $status = 'warning';
-    $message = t('The following modules have newer versions available at <a href="http://www.ubercart.org/">Ubercart.org</a>. Please update your Übercart files.!list', array('!list' => '<ul>'. $list .'</ul>'));
-  }
-  else{
-    $status = 'ok';
-    $message = t('All &Uuml;bercart modules are up to date.');
-  }
-  $statuses[] = array('status' => $status, 'title' => t('Module Versions'), 'desc' => $message);
-  
-  return $statuses;
-} */
 
 /******************************************************************************
  * Callback Functions, Forms, and Tables
@@ -684,32 +678,55 @@ function uc_store_customers($message = NULL, $query = NULL, $count_query = NULL,
   }
 
   if (is_null($query)) {
-    $query = "SELECT DISTINCT o.uid, u.mail, o.billing_first_name,"
+    $query = "SELECT DISTINCT o.uid, u.mail, o.billing_first_name, "
             ."o.billing_last_name, o.billing_city, o.billing_zone, "
             ."o.billing_country FROM {uc_orders} AS o LEFT JOIN "
             ."{users} AS u ON o.uid = u.uid WHERE o.uid > 0 AND "
-            ."o.order_status IN ". uc_order_status_list('general', TRUE)
-            ." ORDER BY billing_last_name ASC";
-    $count_query = "SELECT COUNT(DISTINCT o.uid, o.billing_first_name, "
-                  ."o.billing_last_name, u.mail) FROM {uc_orders} AS o "
-                  ."LEFT JOIN {users} AS u ON o.uid = u.uid WHERE o.uid > 0 "
-                  ."AND o.order_status IN ". uc_order_status_list('general', TRUE)
-                  ." ORDER BY billing_last_name ASC, billing_first_name ASC";
+            ."o.order_status IN ". uc_order_status_list('general', TRUE);
+  
+    $count_query = "";
+    switch ($GLOBALS['db_type']) {
+      case 'mysql':
+      case 'mysqli':
+        $count_query = "SELECT COUNT(DISTINCT o.uid, o.billing_first_name, "
+                      ."o.billing_last_name, u.mail) FROM {uc_orders} AS o "
+                      ."LEFT JOIN {users} AS u ON o.uid = u.uid WHERE o.uid > 0 "
+                      ."AND o.order_status IN ". uc_order_status_list('general', TRUE);
+        break;
+      case 'pgsql':
+        $count_query = "SELECT DISTINCT o.uid, o.billing_last_name, o.billing_first_name, "
+                      ."COUNT(*) "
+                      ."FROM {uc_orders} AS o "
+                      ."LEFT JOIN {users} AS u ON o.uid = u.uid WHERE o.uid > 0 "
+                      ."AND o.order_status IN ". uc_order_status_list('general', TRUE)
+                      ." GROUP BY o.uid, o.billing_last_name, o.billing_first_name ";
+        break;
+    }
+    
     $message = t('The following users on your site have placed orders:');
   }
 
+  $header = array(
+    t('View'),
+    array('data' => t('Name'), 'field' => 'o.billing_last_name', 'sort' => 'asc'),
+    array('data' => t('E-mail'), 'field' => 'u.mail'),
+    array('data' => t('City'), 'field' => 'o.billing_city'),
+    array('data' => t('ID'), 'field' => 'o.uid'),
+  );
+
+  $query .= tablesort_sql($header);
+  $count_query .= tablesort_sql($header);
+
   $address = variable_get('uc_customer_list_address', 'billing');
   if ($address == 'shipping') {
-      $query = str_replace('billing', 'delivery', $query);
-      $count_query = str_replace('billing', 'delivery', $count_query);
+    $query = str_replace('billing', 'delivery', $query);
+    $count_query = str_replace('billing', 'delivery', $count_query);
   }
   else {
     $address = 'billing';
   }
 
   $result = pager_query($query, $page_length, 0, $count_query);
-
-  $header = array(t('View'), t('Name'), t('E-mail'), t('City'), t('ID'));
 
   while ($customer = db_fetch_object($result)) {
     $icons = l(uc_store_get_icon('admin/store/customers', TRUE),
@@ -847,12 +864,31 @@ function uc_store_customer_search() {
             ."o.billing_country FROM {uc_orders} AS o LEFT JOIN "
             ."{users} AS u ON o.uid = u.uid WHERE o.uid > 0 AND "
             ."o.order_status IN ". uc_order_status_list('general', TRUE)
-           . $where ." ORDER BY o.billing_last_name ASC";
-    $count_query = "SELECT COUNT(DISTINCT o.uid, o.billing_first_name, "
-                  ."o.billing_last_name, u.mail) FROM {uc_orders} AS o "
-                  ."LEFT JOIN {users} AS u ON o.uid = u.uid WHERE o.uid > 0 AND "
-                  ."o.order_status IN ". uc_order_status_list('general', TRUE)
-                 . $where ." ORDER BY o.billing_last_name ASC";
+           . $where;// ." ORDER BY o.billing_last_name ASC";
+    
+
+    $count_query = '';  
+    switch ($GLOBALS['db_type']) {
+      case 'mysql':
+      case 'mysqli':
+        $count_query = "SELECT COUNT(DISTINCT o.uid, o.billing_first_name, "
+                       ."o.billing_last_name, u.mail) FROM {uc_orders} AS o "
+                       ."LEFT JOIN {users} AS u ON o.uid = u.uid WHERE o.uid > 0 AND "
+                       ."o.order_status IN ". uc_order_status_list('general', TRUE)
+                       . $where;// ." ORDER BY o.billing_last_name ASC";
+        break;
+      case 'pgsql':
+        $count_query = "SELECT DISTINCT o.uid, o.billing_first_name, "
+                      ."o.billing_last_name, u.mail, COUNT(*) "
+                      ."FROM {uc_orders} AS o "
+                      ."LEFT JOIN {users} AS u ON o.uid = u.uid WHERE o.uid > 0 AND "
+                      ."o.order_status IN ". uc_order_status_list('general', TRUE)
+                      . $where 
+                      ."GROUP BY o.uid, o.billing_first_name, o.billing_last_name, u.mail "; 
+                      //."ORDER BY o.billing_last_name ASC";
+        break;
+    }
+    
     $message = t('Search returned the following results:');
 
     $output .= uc_store_customers($message, $query, $count_query, 100);
@@ -869,7 +905,7 @@ function uc_store_customer_search_form() {
     '#collapsed' => arg(4) == 'results' ? TRUE : FALSE,
   );
 
-  $form['search']['table1'] = array('#value' => '<table><tr><td colspan="4">');
+  $form['search']['table1'] = array('#value' => '<table><tbody style="border: 0px;"><tr><td colspan="4">');
 
   $form['search']['desc'] = array(
     '#value' => '<div>'. t("Search for customers based on any of the following fields.  Use * as a wildcard to match any character.<br/>For example, searching by last name for 's*' will return all customers whose last name starts with an s.<br/>(<em>Leave a field empty to ignore it in the search.</em>)"). '</div>',
@@ -912,7 +948,7 @@ function uc_store_customer_search_form() {
     '#value' => t('Search'),
   );
 
-  $form['search']['table6'] = array('#value' => '</td></tr></table>');
+  $form['search']['table6'] = array('#value' => '</td></tr></tbody></table>');
 
   return $form;
 }
@@ -1349,6 +1385,7 @@ function uc_store_store_settings_overview() {
     'items' => array(
       t('Store admin page display type:<br>!type', array('!type' => $type)),
       t('Customer !type address used in lists.', array('!type' => variable_get('uc_customer_list_address', 'billing') == 'billing' ? t('billing') : t('shipping'))),
+      t('Footer using !type message.', array('!type' => variable_get('uc_footer_message', 0) == 0 ? t('random') : t('specified'))),
     ),
   );
 
@@ -1451,20 +1488,32 @@ function uc_store_display_settings_form() {
     ),
     '#default_value' => variable_get('uc_customer_list_address', 'billing'),
   );
-  
-  $url = array('!url' => 'http://www.ubercart.org/');
-  $messages = array(t('Display a different link on each page.'),
-    t('E-commerce powered by Ubercart, the <a href="!url">free shopping cart software.</a>', $url),
-    t('<a href="!url">E-commerce</a> by Ubercart, powered by Drupal.', $url),
-    t('<a href="!url">Free shopping cart software</a> provided by Ubercart.', $url),
-  );
-  $form['uc_footer_message'] = array('#type' => 'select',
-    '#title' => t('Footer message for Übercart pages.'),
-    '#options' => $messages,
+
+  $options = array(t('Randomly select a message from the list below.'));
+  $form['uc_footer_message'] = array(
+    '#type' => 'radios',
+    '#title' => t('Footer message for store pages'),
+    '#options' => array_merge($options, _store_footer_options()),
     '#default_value' => variable_get('uc_footer_message', 0),
   );
 
   return system_settings_form($form);
+}
+
+// Return the default store footer options.
+function _store_footer_options() {
+  $url = array('!url' => 'http://www.ubercart.org/');
+  return array(
+    1 => t('<a href="!url">Powered by Ubercart</a>', $url),
+    2 => t('<a href="!url">Drupal e-commerce</a> provided by Ubercart.', $url),
+    3 => t('Supported by Ubercart, an <a href="!url">open source e-commerce suite</a>.', $url),
+    4 => t('Powered by Ubercart, the <a href="!url">free shopping cart software</a>.', $url),
+  );
+}
+
+// Wrap the footer in a div so it can be re-styled.
+function theme_uc_store_footer($message) {
+  return '<div id="store-footer">'. $message .'</div>';
 }
 
 function uc_store_format_settings_form() {
@@ -2386,14 +2435,32 @@ function uc_get_addresses($uid, $type = 'billing') {
     $type = 'billing';
   }
 
-  $result = db_query("SELECT DISTINCT ". $type ."_first_name AS first_name, "
+  switch ($GLOBALS['db_type']){
+    case 'mysqli':
+    case 'mysql':
+      $result = db_query("SELECT DISTINCT ". $type ."_first_name AS first_name, "
                    . $type ."_last_name AS last_name, ". $type ."_phone AS phone, "
                    . $type ."_company AS company, ". $type ."_street1 AS street1, "
                    . $type ."_street2 AS street2, ". $type ."_city AS city, "
                    . $type ."_zone AS zone, ". $type ."_postal_code AS postal_code, "
                    . $type ."_country AS country FROM {uc_orders} WHERE uid = %d "
-                    ."AND order_status IN ". uc_order_status_list('general', TRUE)
-                    ." ORDER BY created DESC", $uid);
+                   ."AND order_status IN ". uc_order_status_list('general', TRUE)
+                   ." ORDER BY created DESC", $uid);
+      break;
+    case 'pgsql':
+      // In pgsql, ORDER BY requires the field being sorted by to be in the SELECT list.
+      // But if we have the 'created' column in the SELECT list, the DISTINCT is 
+      // rather useless. So for pgsql we will just sort addresses alphabetically.
+      $result = db_query("SELECT DISTINCT ". $type ."_first_name AS first_name, "
+                   . $type ."_last_name AS last_name, ". $type ."_phone AS phone, "
+                   . $type ."_company AS company, ". $type ."_street1 AS street1, "
+                   . $type ."_street2 AS street2, ". $type ."_city AS city, "
+                   . $type ."_zone AS zone, ". $type ."_postal_code AS postal_code, "
+                   . $type ."_country AS country FROM {uc_orders} WHERE uid = %d "
+                   ."AND order_status IN ". uc_order_status_list('general', TRUE)
+                   ." ORDER BY ". $type ."_street1 DESC", $uid);
+      break;
+  }
 
   $addresses = array();
   while ($address = db_fetch_array($result)) {
@@ -2416,21 +2483,12 @@ function uc_strip_form($html) {
   return $html;
 }
 
-/**
- * Return the initials for a user account.
- */
+// Return the initials for a user account.
 function uc_get_initials($uid) {
   if ($uid == 0 || $uid == NULL) {
     return '-';
   }
   return variable_get('user_initials_'. $uid, $uid);
-}
-
-/**
- * Add the base_path as a global JS variable.
- */
-function uc_add_base_path_js() {
-  drupal_add_js("var base_path = '". base_path() ."';", 'inline');
 }
 
 /**
@@ -2510,40 +2568,7 @@ function uc_get_zone_ids($num) {
   return $ids;
 }
 
-/**
- * Call a function that sometimes needs the first argument to be a reference.
- * This is particularly used for pane and payment method/gateway functions.
- */
-function uc_func_call($func, $op, &$arg1) {
-  $args = func_get_args();
-  $args = array_merge(array($op, &$arg1), array_slice($args, 3));
-
-  return call_user_func_array($func, $args);
-}
-
-/**
- * Invoke a hook in cases where the first argument must be passed by reference.
- */
-function uc_invoke_all($hook, $op, &$arg1) {
-  $args = func_get_args();
-  $args = array_merge(array($op, &$arg1), array_slice($args, 3));
-
-  foreach (module_implements($hook) as $module) {
-    $function = $module .'_'. $hook;
-    call_user_func_array($function, $args);
-  }
-}
-
-/**
- * Remove elements from an array if 'enabled' is FALSE or NULL.
- */
-function uc_enabled_filter($a){
-  return $a['enabled'];
-}
-
-/**
- * Sort an array of arrays having a weight key to determine their order.
- */
+// Sort an array of arrays having a weight key to determine their order.
 function uc_weight_sort($a, $b) {
   if ($a['weight'] == $b['weight']) {
     return 0;
@@ -2680,10 +2705,6 @@ function uc_numeric_validate($form, $sign = 0){
   else{
     form_error($form, $error);
   }
-}
-
-function theme_uc_store_footer($message) {
-  return '<div id="store-footer">'. $message .'</div>';
 }
 
 if (!function_exists('currency_api_get_list')){

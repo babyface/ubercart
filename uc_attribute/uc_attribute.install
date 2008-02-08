@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.install,v 1.9.2.3 2008/01/29 19:18:36 rszrama Exp $
+// $Id: uc_attribute.install,v 1.9.2.4 2008/02/08 22:22:38 rszrama Exp $
 
 function uc_attribute_install(){
   switch($GLOBALS['db_type']){
@@ -64,23 +64,21 @@ function uc_attribute_install(){
     break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_attributes} (
-        aid integer NOT NULL default 0,
-        name varchar(255) NOT NULL default ''.
+        aid serial NOT NULL,
+        name varchar(255) NOT NULL default '',
         ordering smallint NOT NULL default 0,
         PRIMARY KEY (aid)
       );");
-      db_query("CREATE INDEX {uc_attributes}_aid ON {uc_attributes} (aid)");
       db_query("CREATE TABLE {uc_attribute_options} (
         aid integer NOT NULL default 0,
-        oid integer NOT NULL default 0,
+        oid serial NOT NULL,
         name varchar(255) NOT NULL default '',
         cost decimal(10,2) NOT NULL default 0.00,
         price decimal(10,2) NOT NULL default 0.00,
-        weight float NOT NULL default 0,0,
+        weight float NOT NULL default 0.0,
         ordering smallint NOT NULL default 0,
         PRIMARY KEY (oid)
       );");
-      db_query("CREATE INDEX {uc_attribute_options}_oid ON {uc_attributes_options} (oid)");
       db_query("CREATE TABLE {uc_class_attributes} (
         pcid varchar(32) NOT NULL default '',
         aid integer NOT NULL default 0,
@@ -118,7 +116,8 @@ function uc_attribute_install(){
       db_query("CREATE TABLE {uc_product_adjustments} (
         nid integer NOT NULL default 0,
         combination varchar(255) NOT NULL default '',
-        model varchar(255) NOT NULL default ''
+        model varchar(255) NOT NULL default '',
+        PRIMARY KEY (nid, combination)
       );");
     break;
   }

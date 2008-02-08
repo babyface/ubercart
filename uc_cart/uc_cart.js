@@ -1,4 +1,4 @@
-// $Id: uc_cart.js,v 1.7.2.1 2008/01/25 22:19:33 rszrama Exp $
+// $Id: uc_cart.js,v 1.7.2.2 2008/02/08 22:22:38 rszrama Exp $
 
 var copy_box_checked = false;
 
@@ -55,6 +55,7 @@ function uc_cart_copy_address(checked, source, target) {
   // Copy over the zone options manually.
   if ($('#edit-panes-' + target + '-' + target + '-zone').html() != $('#edit-panes-' + source + '-' + source + '-zone').html()) {
     $('#edit-panes-' + target + '-' + target + '-zone').empty().append($('#edit-panes-' + source + '-' + source + '-zone').children().clone());
+    $('#edit-panes-' + target + '-' + target + '-zone').attr('disabled', $('#edit-panes-' + source + '-' + source + '-zone').attr('disabled'));
   }
 
   // Copy over the information and set it to update if delivery info changes.

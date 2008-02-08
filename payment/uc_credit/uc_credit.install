@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.install,v 1.3.2.2 2008/01/25 22:19:29 rszrama Exp $
+// $Id: uc_credit.install,v 1.3.2.3 2008/02/08 22:22:35 rszrama Exp $
 
 /**
  * Implementation of hook_install().
@@ -24,24 +24,24 @@ function uc_credit_install() {
       break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_payment_credit} (
-        credit_id integer NOT NULL,
+        credit_id serial NOT NULL,
         order_id integer NOT NULL,
         cc_type varchar(255) NOT NULL,
         cc_owner varchar(255) NOT NULL,
         cc_number varchar(255) NOT NULL,
-        cc_exp_month smallint NOT NULL,
-        cc_exp_year smallint NOT NULL,
+        cc_exp_month varchar(255) NOT NULL,
+        cc_exp_year varchar(255) NOT NULL,
         cc_cvv varchar(255) NOT NULL,
         cc_bank varchar(255) NOT NULL,
         PRIMARY KEY (credit_id)
       );");
-			db_query("CREATE INDEX {uc_payment_credit}_order_id ON {uc_payment_credit} (order_id)");
+      db_query("CREATE INDEX {uc_payment_credit}_order_id ON {uc_payment_credit} (order_id)");
       break;
   }
 }
 
 function uc_credit_uninstall() {
-  db_query("DROP TABLE IF EXISTS {uc_payment_credit}");
+  db_query("DROP TABLE {uc_payment_credit}");
   variable_del('uc_credit_checkout_process');
   variable_del('uc_credit_checkout_no_store');
   variable_del('uc_credit_fail_message');

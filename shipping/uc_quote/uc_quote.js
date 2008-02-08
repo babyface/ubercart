@@ -1,31 +1,48 @@
 // -*- js-var: set_line_item, getTax; -*-
-// $Id: uc_quote.js,v 1.4.2.2 2008/01/16 21:56:50 rszrama Exp $
+// $Id: uc_quote.js,v 1.4.2.3 2008/02/08 22:22:37 rszrama Exp $
 
 var page;
 var details;
 var methods;
 
 function setQuoteCallbacks(products){
-  $("input[@name*=delivery_postal_code]").change(function(){
+  triggerQuoteCallback = function(){
     quoteCallback(products);
-  });
+  };
+  $("input[@name*=delivery_postal_code]").change(triggerQuoteCallback);
   $("input[@id*=quote-button], input[@name*=quote_method]").click(function(){
+    // returns false to prevent default actions and propogation
     return quoteCallback(products);
   });
   $("select[@name*=delivery_address_select]").change(function(){
     $("input[@name*=delivery_postal_code]").trigger('change');
+  });
+  $("input[@name*=copy_address]").change(function(){
+    if (copy_box_checked == true){
+      $("input[@name*=billing_postal_code]").bind('change', triggerQuoteCallback);
+      $("select[@name*=billing_address_select]").bind('change', triggerQuoteCallback);
+      triggerQuoteCallback();
+    }
+    else{
+      $("input[@name*=billing_postal_code]").unbind('change', triggerQuoteCallback);
+      $("select[@name*=billing_address_select]").unbind('change', triggerQuoteCallback);
+    }
   });
 }
 
 function setTaxCallbacks(){
   $("#quote").find("input:radio").change(function(){
     var i = $(this).val();
-    try {
+    if (window.set_line_item){
       var label = $(this).parent().text();
-      set_line_item("shipping", label.substr(0, label.indexOf(":")), Math.round($(this).parent().prev().val() * 100) / 100, 1);
-      getTax();
+      set_line_item("shipping", label.substr(0, label.indexOf(":")), Math.round($(this).parent().prev().val() * 100) / 100, 1, 1, false);
+      if (window.getTax){
+        getTax();
+      }
+      else if (window.render_line_items){
+        render_line_items();
+      }
     }
-    catch(err) { }
   }).end();
 }
 
@@ -111,7 +128,7 @@ function displayQuote(data){
             + "<input type=\"hidden\" name=\"rate[" + i + "]\" value=\"" + (Math.round(data[i].rate * 100) / 100) + "\" />"
             + "<label class=\"option\">" + label + ": " + data[i].format + "</label>";
           if (page == "checkout"){
-            if (label != "" && set_line_item != undefined){
+            if (label != "" && window.set_line_item){
               set_line_item("shipping", label, Math.round(data[i].rate * 100) / 100, 1);
             }
           }
@@ -127,11 +144,15 @@ function displayQuote(data){
       if (page == "checkout"){
         quoteDiv.find("input:radio[@value=" + i +"]").change(function(){
           var i = $(this).val();
-          try {
-            set_line_item("shipping", data[i].option_label, Math.round(data[i].rate * 100) / 100, 1);
+          if (window.set_line_item){
+            set_line_item("shipping", data[i].option_label, Math.round(data[i].rate * 100) / 100, 1, 1, false);
+          }
+          if (window.getTax){
             getTax();
           }
-          catch(err) { }
+          else if (window.render_line_items){
+            render_line_items();
+          }
         }).end();
       }
     }
@@ -148,10 +169,12 @@ function displayQuote(data){
     quoteDiv.append("<input type=\"hidden\" name=\"quote-form\" value=\"" + encodeURIComponent(quoteForm) + "\" />");
   }
 
-  try {
-    if (page == "checkout"){
+  /* if (page == "checkout"){
+    if (window.getTax){
       getTax();
     }
-  }
-  catch(err) { }
+    else if (window.render_line_items){
+      render_line_items();
+    }
+  } */
 }

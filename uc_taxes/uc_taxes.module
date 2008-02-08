@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.11.2.3 2008/01/29 19:18:36 rszrama Exp $
+// $Id: uc_taxes.module,v 1.11.2.4 2008/02/08 22:22:43 rszrama Exp $
 
 /**
  * @file
@@ -321,10 +321,15 @@ function uc_line_item_tax($op, $order) {
       $taxes = uc_taxes_calculate($order);
       $script = '';
       foreach ($taxes as $tax){
-        $script .= "set_line_item('tax_". $tax['id'] ."', '". $tax['name'] ."', ". $tax['amount'] .", + ". variable_get('uc_li_tax_weight', 9) + ($tax['weight'] / 10) .");\n";
+        $script .= "set_line_item('tax_". $tax['id'] ."', '". $tax['name'] ."', ". $tax['amount'] .", + ". variable_get('uc_li_tax_weight', 9) + ($tax['weight'] / 10) .", 1, false);\n";
       }
       if ($script){
-        drupal_add_js("\$(document).ready( function() { ". $script ." } );", 'inline');
+        drupal_add_js("\$(document).ready(function(){
+          if (window.set_line_item){
+            ". $script .";
+            render_line_items();
+          }
+        });", 'inline');
       }
       break;
     case 'load':
@@ -365,7 +370,11 @@ function uc_line_item_tax_subtotal($op, $order) {
   if ($different && $has_taxes){
     switch ($op){
       case 'cart-preview':
-        drupal_add_js("\$(document).ready(function(){set_line_item('tax_subtotal', '". t('Subtotal excluding taxes') ."', ". $amount .", ". variable_get('uc_li_tax_subtotal_weight', 8) .");});", 'inline');
+        drupal_add_js("\$(document).ready(function(){
+          if (window.set_line_item){
+            set_line_item('tax_subtotal', '". t('Subtotal excluding taxes') ."', ". $amount .", ". variable_get('uc_li_tax_subtotal_weight', 8) .");
+          }
+        });", 'inline');
       break;
       case 'load':
         return array(array(

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.8.2.2 2008/01/16 21:56:51 rszrama Exp $
+// $Id: uc_order.install,v 1.8.2.3 2008/02/08 22:22:39 rszrama Exp $
 
 /**
  * Implementation of hook_install().
@@ -115,9 +115,9 @@ function uc_order_install(){
       break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_orders} (
-        order_id integer NOT NULL default 0,
+        order_id serial NOT NULL,
         uid integer NOT NULL default 0,
-        order_status smallint NOT NULL default 0,
+        order_status varchar(32) NOT NULL default 0,
         order_total decimal(10,2) NOT NULL default 0.00,
         primary_email varchar(96) NOT NULL default '',
         delivery_first_name varchar(32) NOT NULL default '',
@@ -127,7 +127,7 @@ function uc_order_install(){
         delivery_street1 varchar(64) NOT NULL default '',
         delivery_street2 varchar(64) NOT NULL default '',
         delivery_city varchar(32) NOT NULL default '',
-        delivery_zone integer NOT NULL defualt 0,
+        delivery_zone integer NOT NULL default 0,
         delivery_postal_code varchar(10) NOT NULL default '',
         delivery_country integer NOT NULL default 0,
         billing_first_name varchar(32) NOT NULL default '',
@@ -141,6 +141,7 @@ function uc_order_install(){
         billing_postal_code varchar(10) NOT NULL default '',
         billing_country integer NOT NULL default 0,
         payment_method varchar(32) NOT NULL default 0,
+        data text NOT NULL default '',
         created integer NOT NULL default 0,
         modified integer NOT NULL default 0,
         PRIMARY KEY (order_id)
@@ -148,7 +149,7 @@ function uc_order_install(){
       db_query("CREATE INDEX {uc_orders}_uid ON {uc_orders} (uid)");
       db_query("CREATE INDEX {uc_orders}_order_status ON {uc_orders} (order_status)");
       db_query("CREATE TABLE {uc_order_admin_comments} (
-        comment_id integer NOT NULL default 0,
+        comment_id serial NOT NULL,
         order_id integer NOT NULL default 0,
         uid integer NOT NULL default 0,
         message text NOT NULL default '',
@@ -157,10 +158,10 @@ function uc_order_install(){
       );");
       db_query("CREATE INDEX {uc_order_admin_comments}_order_id ON {uc_order_admin_comments} (order_id)");
       db_query("CREATE TABLE {uc_order_comments} (
-        comment_id integer NOT NULL default 0,
+        comment_id serial NOT NULL,
         order_id integer NOT NULL default 0,
         uid integer NOT NULL default 0,
-        order_status smallint NOT NULL default 0,
+        order_status varchar(32) NOT NULL default 0,
         notified smallint NOT NULL default 0,
         message text NOT NULL default '',
         created integer NOT NULL default 0,
@@ -168,7 +169,7 @@ function uc_order_install(){
       );");
       db_query("CREATE INDEX {uc_order_comments}_order_id ON {uc_order_comments} (order_id)");
       db_query("CREATE TABLE {uc_order_line_items} (
-        line_item_id integer NOT NULL default 0,
+        line_item_id serial NOT NULL,
         order_id integer NOT NULL default 0,
         type varchar(32) NOT NULL default '',
         title varchar(128) NOT NULL default '',
@@ -178,7 +179,7 @@ function uc_order_install(){
       );");
       db_query("CREATE INDEX {uc_order_line_items}_order_id ON {uc_order_line_items} (order_id)");
       db_query("CREATE TABLE {uc_order_log} (
-        order_log_id integer NOT NULL default 0,
+        order_log_id serial NOT NULL,
         order_id integer NOT NULL default 0,
         uid integer NOT NULL default 0,
         changes text NOT NULL default '',
@@ -187,7 +188,7 @@ function uc_order_install(){
       );");
       db_query("CREATE INDEX {uc_order_log}_order_id ON {uc_order_log} (order_id)");
       db_query("CREATE TABLE {uc_order_products} (
-        order_product_id integer NOT NULL default 0,
+        order_product_id serial NOT NULL,
         order_id integer NOT NULL default 0,
         nid integer NOT NULL default 0,
         title varchar(128) NOT NULL default '',

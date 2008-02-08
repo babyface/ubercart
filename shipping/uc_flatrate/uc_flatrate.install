@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.install,v 1.4.2.2 2008/01/16 21:56:54 rszrama Exp $
+// $Id: uc_flatrate.install,v 1.4.2.3 2008/02/08 22:22:37 rszrama Exp $
 
 function uc_flatrate_install(){
   switch($GLOBALS['db_type']){
@@ -25,17 +25,17 @@ function uc_flatrate_install(){
       db_query("CREATE TABLE {uc_flatrate_products} (
         vid integer NOT NULL default 0,
         nid integer NOT NULL default 0,
-        mid mediumint(9) unsigned NOT NULL default 0,
+        mid integer NOT NULL default 0,
         rate decimal(10,2) NOT NULL default 0.00,
         PRIMARY KEY (vid, mid)
       );");
       db_query("CREATE TABLE {uc_flatrate_methods} (
-        mid mediumint(9) unsigned NOT NULL default 0,
+        mid serial NOT NULL,
         title varchar(255) NOT NULL default '',
         label varchar(255) NOT NULL default '',
         base_rate decimal(10,2) NOT NULL default 0.00,
         product_rate decimal(10,2) NOT NULL default 0.00,
-        PRIMARY KEY (`mid`)
+        PRIMARY KEY (mid)
       );");
       db_query("CREATE INDEX {uc_flatrate_methods}_mid_idx ON {uc_flatrate_methods}(mid)");
     break;

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_checkout_pane.inc,v 1.4.2.3 2008/01/25 22:19:29 rszrama Exp $
+// $Id: uc_payment_checkout_pane.inc,v 1.4.2.4 2008/02/08 22:22:35 rszrama Exp $
 
 function uc_checkout_pane_payment($op, &$arg1, $arg2) {
   switch ($op) {
@@ -26,17 +26,22 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
       $description = t('Select a payment method from the following options.');
 
       $methods = _payment_method_list();
+
       foreach ($methods as $method) {
         if ($method['checkout']) {
           $options[$method['id']] = $method['title'];
         }
       }
-      if (isset($_POST['panes']) && in_array($_POST['panes']['payment']['payment_method'], array_keys($options))) {
-        $default = $_POST['panes']['payment']['payment_method'];
+
+      if (is_array($options)) {
+        if (isset($_POST['panes']) && in_array($_POST['panes']['payment']['payment_method'], array_keys($options))) {
+          $default = $_POST['panes']['payment']['payment_method'];
+        }
+        else {
+          $default = (count($options) == 1 || !isset($arg1->payment_method)) ? key($options) : $arg1->payment_method;
+        }
       }
-      else {
-        $default = (count($options) == 1 || !isset($arg1->payment_method)) ? key($options) : $arg1->payment_method;
-      }
+
       $contents['payment_method'] = array(
         '#type' => 'radios',
         '#title' => t('Payment method'),
@@ -45,8 +50,8 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
         '#disabled' => count($options) == 1 ? TRUE : FALSE,
         '#required' => TRUE,
         '#attributes' => array('onclick' => "get_payment_details('". base_path() ."?q=cart/checkout/payment_details/' + this.value);"),
+        '#theme' => 'uc_payment_method_select',
       );
-      drupal_add_js("\$(document).ready( function () { get_payment_details('". base_path() ."?q=cart/checkout/payment_details/". $default ."'); } );", 'inline');
       $contents['details'] = array(
         '#value' => '<div id="payment_details" class="solid-border display-none"></div>',
       );
@@ -109,3 +114,18 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
   }
 }
 
+/**
+ * We need a theme function for the radios element in case another module alters
+ * the default or available payment methods... we need the JS to grab the right
+ * default payment details.
+ */
+function theme_uc_payment_method_select($form) {
+  if (empty($form['#options'])) {
+    drupal_set_message(t('Checkout cannot be completed without any payment methods enabled. Please contact an administrator to resolve the issue.'), 'error');
+    return;
+  }
+
+  drupal_add_js("\$(document).ready( function () { get_payment_details('". base_path() ."?q=cart/checkout/payment_details/". $form['#default_value'] ."'); } );", 'inline');
+
+  return drupal_render($form);
+}

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.4.2.4 2008/01/29 19:18:36 rszrama Exp $
+// $Id: uc_paypal.module,v 1.4.2.5 2008/02/08 22:22:37 rszrama Exp $
 
 /**
  * @file
@@ -170,6 +170,7 @@ function uc_paypal_payment_method() {
     'callback' => 'uc_payment_method_paypal_wps',
     'weight' => 1,
     'checkout' => FALSE,
+    'no_gateway' => TRUE,
   );
 
   $methods[] = array(
@@ -181,6 +182,7 @@ function uc_paypal_payment_method() {
     'callback' => 'uc_payment_method_paypal_ec',
     'weight' => 1,
     'checkout' => FALSE,
+    'no_gateway' => TRUE,
   );
 
   return $methods;
@@ -363,7 +365,7 @@ function uc_paypal_wpp_charge($order_id, $amount, $data){
     'PHONENUM' => substr($order->billing_phone, 0, 20),
   );
 
-  if (uc_order_is_shippable($order)) {
+  if (uc_order_is_shippable($order) && !empty($order->delivery_first_name)) {
     $shipdata = array(
       'SHIPTONAME' => substr($order->delivery_first_name .' '. $order->delivery_last_name, 0, 25),
       'SHIPTOSTREET' => substr($order->delivery_street1, 0, 100),
@@ -689,17 +691,11 @@ function uc_paypal_ipn($order_id = 0) {
 
 // Handles a complete Website Payments Standard sale.
 function uc_paypal_complete($order_id = 0) {
-  /*  if (intval($order_id) < 1) {
-    drupal_goto('cart');
-  }*/
-
   if (intval($_SESSION['cart_order']) != $order_id) {
     $_SESSION['cart_order'] = $order_id;
   }
 
-  $order = uc_order_load($order_id);
-
-  if ($order === FALSE || (uc_order_status_data($order->order_status, 'state') != 'in_checkout' && uc_order_status_data($order->order_status, 'state') != 'payment_received')) {
+  if (!($order = uc_order_load($order_id))) {
     drupal_goto('cart');
   }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.4.2.3 2008/01/25 22:19:31 rszrama Exp $
+// $Id: uc_quote.module,v 1.4.2.4 2008/02/08 22:22:37 rszrama Exp $
 
 /**
  * @file
@@ -295,7 +295,7 @@ function uc_quote_condition_info(){
 function uc_quote_condition_product_shipping_type($order, $settings){
   $result = false;
   foreach ($order->products as $product){
-    if ($product->shipping_type == $settings['type']){
+    if ($product->nid && uc_quote_get_shipping_type('product', $product->nid) == $settings['type']){
       $result = true;
       break;
     }
@@ -320,7 +320,7 @@ function uc_quote_condition_product_shipping_type_form($settings = array()){
   }
   $form['type'] = array('#type' => 'select',
     '#title' => t('Shipping type'),
-    '#options' => $option,
+    '#options' => $options,
     '#default_value' => $settings['type'],
   );
   
@@ -907,7 +907,6 @@ function uc_cart_pane_quotes($items){
     '#value' => key($method_choices),
   );
   $form['get_quote'] = array('#type' => 'button',
-    //'#prefix' => '<img class="icon" src="'. base_path() . drupal_get_path('module', 'uc_store') .'/images/calculator.gif' .'" />',
     '#value' => t('Calculate'),
   );
   $form['page'] = array('#type' => 'hidden',
@@ -1026,7 +1025,13 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2){
           var label = quoteButton.parent("label").text().split(":", 2)[0];
           quoteButton.end();
           var rate = $("input:hidden[@name=\'rate[" + quoteButton.val() + "]\']").val();
-          set_line_item("shipping", label, rate, 1);
+          set_line_item("shipping", label, rate, 1, 1, false);
+          if (window.getTax){
+            getTax();
+          }
+          else if (window.render_line_items){
+            render_line_items();
+          }
         }).filter("[@value='. $default .']").click();
         var quoteDiv = $("#quote");
         if (quoteDiv.length && $("#quote input[@name=quote-form]").length == 0){
@@ -1173,10 +1178,12 @@ function uc_order_pane_quotes($op, $arg1){
           }
           $products = array();
           foreach ($order->products as $product){
-            $node = (array)node_load($product->nid);
-            foreach ($node as $key => $value){
-              if (!isset($product->$key)){
-                $product->$key = $value;
+            if ($product->nid){
+              $node = (array)node_load($product->nid);
+              foreach ($node as $key => $value){
+                if (!isset($product->$key)){
+                  $product->$key = $value;
+                }
               }
             }
             $products[] = $product;
@@ -1232,25 +1239,27 @@ function uc_quote_save_choice($form_values){
 
 function uc_quote_cache_quotes($form_id, &$form){
   if ($form_id == 'uc_cart_checkout_form'){
-    if (isset($_SESSION['quote'])){
+    if (isset($_SESSION['quote']) && $_SESSION['quote']['rate']){
       $quote = $_SESSION['quote'];
-      $form['panes']['quotes']['quote'] = array('#type' => 'markup',
-        '#value' => '<div id="quote" class="solid-border" style="margin-top: 1em;">'. rawurldecode($_SESSION['quote']['quote_form']) .'</div>',
-        '#weight' => 1,
-      );
-      $methods = module_invoke_all('shipping_method');
-      $method = $methods[$quote['method']];
-      drupal_add_js('$(document).ready(function(){
-        $("#quote").find("input:radio[@value='. $quote['method'] . '---'. $quote['accessorials'] .']").eq(0).change().attr("checked", "checked");
-        if (set_line_item != undefined){
-          set_line_item("shipping", "'. $method['quote']['accessorials'][$quote['accessorials']] .'", '. $quote['rate'] .', 1);
-        }
-        try {
-          getTax();
-          setTaxCallbacks();
-        }
-        catch (err) { }
-      });', 'inline');
+        $form['panes']['quotes']['quote'] = array('#type' => 'markup',
+          '#value' => '<div id="quote" class="solid-border" style="margin-top: 1em;">'. rawurldecode($_SESSION['quote']['quote_form']) .'</div>',
+          '#weight' => 1,
+        );
+        $methods = module_invoke_all('shipping_method');
+        $method = $methods[$quote['method']];
+        drupal_add_js('$(document).ready(function(){
+          $("#quote").find("input:radio[@value='. $quote['method'] . '---'. $quote['accessorials'] .']").eq(0).change().attr("checked", "checked");
+          if (window.set_line_item){
+            set_line_item("shipping", "'. $method['quote']['accessorials'][$quote['accessorials']] .'", '. $quote['rate'] .', 1, 1, false);
+          }
+          if (window.getTax) {
+            getTax();
+            setTaxCallbacks();
+          }
+          else if (window.render_line_items){
+            render_line_items();
+          }
+        });', 'inline');
     }
     else{
       $form['panes']['quotes']['quote'] = array('#type' => 'markup',
@@ -1289,10 +1298,12 @@ function uc_quote_request_quotes(){
     $product->price = $props[6];
     $product->weight = $props[7];
     $product->data = $props[8];
-    $node = (array)node_load($product->nid);
-    foreach ($node as $key => $value){
-      if (!isset($product->$key)){
-        $product->$key = $value;
+    if ($product->nid){
+      $node = (array)node_load($product->nid);
+      foreach ($node as $key => $value){
+        if (!isset($product->$key)){
+          $product->$key = $value;
+        }
       }
     }
     $products[] = $product;

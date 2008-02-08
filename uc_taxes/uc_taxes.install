@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.install,v 1.9.2.1 2008/01/07 20:56:46 rszrama Exp $
+// $Id: uc_taxes.install,v 1.9.2.2 2008/02/08 22:22:43 rszrama Exp $
 
 function uc_taxes_install(){
   switch($GLOBALS['db_type']){
@@ -17,7 +17,7 @@ function uc_taxes_install(){
     break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_taxes} (
-        id integer NOT NULL default 0,
+        id serial NOT NULL,
         name varchar(255) NOT NULL default '',
         rate float NOT NULL default 0,
         taxed_product_types text NOT NULL default '',

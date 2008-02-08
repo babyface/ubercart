@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.4.2.3 2008/01/25 22:19:33 rszrama Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.4.2.4 2008/02/08 22:22:38 rszrama Exp $
 
 /**
  * @file
@@ -50,19 +50,21 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
 
   switch ($op) {
     case 'view':
+      $email = (is_null($arg1) || empty($arg1->primary_email)) ? $user->mail : $arg1->primary_email;
+
       if ($user->uid) {
-        $description = t('Order information will be sent to your account email listed below.') .'<br />'
-                     . t('You can edit your account information <a href="!url">here</a>.', array('!url' => url('user/'. $user->uid .'/edit', 'destination=cart/checkout')));
+        $description = t('Order information will be sent to your account e-mail listed below.');// .'<br />'
+        $contents['primary_email'] = array('#type' => 'hidden', '#value' => $email);
+        $contents['email_text'] = array(
+          '#value' => '<div>'. t('<b>E-mail address:</b> !email (<a href="!url">edit</a>)', array('!email' => $email, '!url' => url('user/'. $user->uid .'/edit', 'destination=cart/checkout'))) .'</div>',
+        );
       }
       else {
         $description = t('Enter a valid email address for this order or <a href="!url">click here</a> to login with an existing account and return to checkout.', array('!url' => url('user/login')));
+        $contents['primary_email'] = uc_textfield(t('E-mail address'), $email, TRUE, NULL, 64);
       }
 
-      $email = (is_null($arg1) || empty($arg1->primary_email)) ? $user->mail : $arg1->primary_email;
-      $contents['primary_email'] = uc_textfield(t('E-mail address'), $email, TRUE, NULL, 64);
-      $contents['primary_email']['#disabled'] = ($user->uid) ? TRUE : FALSE;
-
-      if (variable_get('uc_cart_email_validation', TRUE) && !$user->uid) {
+      if (variable_get('uc_cart_email_validation', FALSE) && !$user->uid) {
         $contents['primary_email_confirm'] = uc_textfield(t('Confirm e-mail address'), $_SESSION['email_match'] === FALSE ? '' : $email, TRUE, NULL, 64);
         if ($_SESSION['email_match'] === FALSE) {
           $contents['primary_email_confirm']['#attributes'] = array('class' => 'error');
@@ -71,7 +73,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
       }
 
       if ($user->uid == 0) {
-        if (variable_get('uc_cart_new_account_name', TRUE)) {
+        if (variable_get('uc_cart_new_account_name', FALSE)) {
           $contents['new_account']['name'] = array(
             '#type' => 'textfield',
             '#title' => t('Username'),
@@ -79,7 +81,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
             '#size' => 32,
           );
         }
-        if (variable_get('uc_cart_new_account_password', TRUE)) {
+        if (variable_get('uc_cart_new_account_password', FALSE)) {
           $contents['new_account']['pass'] = array(
             '#type' => 'password',
             '#title' => t('Password'),
@@ -118,7 +120,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
 
       $arg1->primary_email = $arg2['primary_email'];
 
-      if (variable_get('uc_cart_email_validation', TRUE) && !$user->uid &&
+      if (variable_get('uc_cart_email_validation', FALSE) && !$user->uid &&
           $arg2['primary_email'] !== $arg2['primary_email_confirm']) {
         drupal_set_message(t('The e-mail address did not match.'), 'error');
         $_SESSION['email_match'] = FALSE;
@@ -127,8 +129,8 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
       unset($_SESSION['email_match']);
 
       // If new users can specify names or passwords then...
-      if ((variable_get('uc_cart_new_account_name', TRUE) ||
-          variable_get('uc_cart_new_account_password', TRUE)) &&
+      if ((variable_get('uc_cart_new_account_name', FALSE) ||
+          variable_get('uc_cart_new_account_password', FALSE)) &&
           $user->uid == 0) {
         // Skip if an account already exists for this e-mail address.
         if (db_num_rows(db_query("SELECT uid FROM {users} WHERE LOWER(mail) = LOWER('%s')", $arg2['primary_email'])) > 0) {
@@ -136,7 +138,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
         }
         else {
           // Validate the username.
-          if (variable_get('uc_cart_new_account_name', TRUE) && !empty($arg2['new_account']['name'])) {
+          if (variable_get('uc_cart_new_account_name', FALSE) && !empty($arg2['new_account']['name'])) {
             $message = user_validate_name($arg2['new_account']['name']);
             if (!empty($message)) {
               drupal_set_message($message, 'error');
@@ -149,7 +151,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
             $arg1->data['new_user']['name'] = $arg2['new_account']['name'];
           }
           // Validate the password.
-          if (variable_get('uc_cart_new_account_pass', TRUE)) {
+          if (variable_get('uc_cart_new_account_pass', FALSE)) {
             if ($arg2['new_account']['pass'] != $arg2['new_account']['pass_confirm']) {
               drupal_set_message(t('The passwords you entered did not match. Please try again.'), 'error');
               return FALSE;

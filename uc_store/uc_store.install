@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.install,v 1.8.2.2 2008/01/25 22:19:34 rszrama Exp $
+// $Id: uc_store.install,v 1.8.2.3 2008/02/08 22:22:43 rszrama Exp $
 
 function uc_store_install(){
   switch($GLOBALS['db_type']){
@@ -38,13 +38,13 @@ function uc_store_install(){
         version integer NOT NULL default '0',
         PRIMARY KEY (country_id)
       );");
-			db_query("CREATE INDEX {uc_countries}_country_name ON {uc_countries} (country_name)");
+      db_query("CREATE INDEX {uc_countries}_country_name ON {uc_countries} (country_name)");
       db_query("CREATE INDEX {uc_countries}_country_id ON {uc_countries} (country_id)");
       db_query("CREATE TABLE {uc_zones} (
-        zone_id integer NOT NULL default 0,
+        zone_id serial NOT NULL,
         zone_country_id integer NOT NULL default 0,
         zone_code varchar(32) NOT NULL default '',
-        zone_name varchar(25) NOT NULL default '',
+        zone_name varchar(255) NOT NULL default '',
         PRIMARY KEY (zone_id)
       );");
       db_query("CREATE INDEX {uc_zones}_zone_code ON {uc_zones} (zone_code)");
@@ -71,7 +71,15 @@ function uc_store_uninstall() {
   db_query("DROP TABLE {uc_store_footers}");
   db_query("DELETE FROM {variable} WHERE name LIKE 'user_initials_%%'");
   db_query("DELETE FROM {variable} WHERE name LIKE 'uc_address_format_%%'");
-  db_query("DELETE FROM {sequences} WHERE name LIKE '{uc_zones}_zone_id'");
+
+  switch ($GLOBALS['db_type'])
+  {
+    case 'mysqli':
+    case 'mysql':
+      db_query("DELETE FROM {sequences} WHERE name LIKE '{uc_zones}_zone_id'");
+      break;
+  }
+ 
   variable_del('uc_store_prev_time');
   variable_del('uc_store_site_id');
   variable_del('uc_store_opt_in');

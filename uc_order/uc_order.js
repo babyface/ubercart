@@ -1,4 +1,4 @@
-// $Id: uc_order.js,v 1.8.2.1 2008/01/07 20:56:44 rszrama Exp $
+// $Id: uc_order.js,v 1.8.2.2 2008/02/08 22:22:39 rszrama Exp $
 
 var customer_select = '';
 var add_product_browser = '';
@@ -14,6 +14,15 @@ $(document).ready(
             window.location = url;
           }
         );
+      }
+    );
+
+    $('#uc-order-edit-form').submit(
+      function() {
+        $('#products-selector').empty().removeClass();
+        $('#delivery_address_select').empty().removeClass();
+        $('#billing_address_select').empty().removeClass();
+        $('#customer-select').empty().removeClass();
       }
     );
   }

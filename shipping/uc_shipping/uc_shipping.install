@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.install,v 1.3.2.1 2008/01/07 20:56:40 rszrama Exp $
+// $Id: uc_shipping.install,v 1.3.2.2 2008/02/08 22:22:38 rszrama Exp $
 
 function uc_shipping_install(){
   switch($GLOBALS['db_type']){
@@ -60,7 +60,7 @@ function uc_shipping_install(){
     break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_shipments} (
-        sid integer NOT NULL default 0,
+        sid serial NOT NULL,
         order_id integer NOT NULL default 0,
         o_first_name varchar(255) NOT NULL default '',
         o_last_name varchar(255) NOT NULL default '',
@@ -79,7 +79,7 @@ function uc_shipping_install(){
         d_city varchar(255) NOT NULL default '',
         d_zone integer NOT NULL default 0,
         d_postal_code varchar(255) NOT NULL default '',
-        d_country integer UNSIGNED NOT NULL default 0,
+        d_country integer NOT NULL default 0,
         shipping_method varchar(255) NOT NULL default '',
         accessorials varchar(255) NOT NULL default '',
         carrier varchar(255) NOT NULL default '',
@@ -91,13 +91,13 @@ function uc_shipping_install(){
         PRIMARY KEY (sid)
       );");
       db_query("CREATE TABLE {uc_packages} (
-        package_id integer NOT NULL default 0,
+        package_id serial NOT NULL,
         order_id integer NOT NULL default 0,
         shipping_type varchar(255) NOT NULL default '',
         pkg_type varchar(255) NOT NULL default '',
         length float NULL,
         width float NULL,
-				height float NULL,
+        height float NULL,
         length_units varchar(255) NULL,
         value decimal(10,2) NULL,
         sid integer NULL,
@@ -108,7 +108,7 @@ function uc_shipping_install(){
       db_query("CREATE TABLE {uc_packaged_products} (
         package_id integer NOT NULL default 0,
         order_product_id integer NOT NULL default 0,
-        qty ionteger NOT NULL default 0,
+        qty integer NOT NULL default 0,
         PRIMARY KEY (package_id, order_product_id)
       );");
     break;

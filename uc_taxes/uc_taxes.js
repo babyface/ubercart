@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, base_path, li_titles, li_values, tax_weight; -*-
-// $Id: uc_taxes.js,v 1.9.2.2 2008/01/25 22:19:34 rszrama Exp $
+// $Id: uc_taxes.js,v 1.9.2.3 2008/02/08 22:22:43 rszrama Exp $
 
 var pane = '';
 if ($("input[@name*=delivery_]").length){
@@ -67,11 +67,9 @@ function getTax(){
           else {
             summed = 1;
           }
-          set_line_item("tax_" + taxes[j].id, taxes[j].name, taxes[j].amount, tax_weight + taxes[j].weight / 10, summed);
+          set_line_item("tax_" + taxes[j].id, taxes[j].name, taxes[j].amount, tax_weight + taxes[j].weight / 10, summed, false);
         }
-        if (j == undefined){
-          set_line_item("", "", 0.00, 0);
-        }
+        render_line_items();
       }
     });
   }

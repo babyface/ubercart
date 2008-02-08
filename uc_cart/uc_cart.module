@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.14.2.5 2008/01/29 19:18:36 rszrama Exp $
+// $Id: uc_cart.module,v 1.14.2.6 2008/02/08 22:22:38 rszrama Exp $
 
 /**
  * @file
@@ -975,12 +975,18 @@ function uc_cart_checkout_settings_form() {
     '#title' => t('Send new customers a separate e-mail with their account details.'),
     '#default_value' => variable_get('uc_new_customer_email', TRUE),
   );
+  $form['completion']['uc_new_customer_login'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Login users when new customer accounts are created at checkout.'),
+    '#default_value' => variable_get('uc_new_customer_login', FALSE),
+  );
   $form['completion']['uc_new_customer_status_active'] = array(
     '#type' => 'checkbox',
     '#title' => t('New customer accounts will be set to active.'),
     '#description' => t('Uncheck to create new accounts but make them blocked.'),
     '#default_value' => variable_get('uc_new_customer_status_active', TRUE),
   );
+
   $form['completion']['uc_cart_checkout_complete_page'] = array(
     '#type' => 'textfield',
     '#title' => t('Alternate checkout completion page'),
@@ -1187,19 +1193,17 @@ function theme_uc_cart_view_form($form) {
 
   if (($page = variable_get('uc_continue_shopping_url', '')) != '<none>') {
     if (variable_get('uc_continue_shopping_type', 'link') == 'link') {
-      $continue_shopping_link = l(variable_get('uc_continue_shopping_text', t('Continue shopping')), $page);
+      $output .= '<div id="cart-form-buttons"><div id="continue-shopping-link">'
+               . l(variable_get('uc_continue_shopping_text', t('Continue shopping')), $page) .'</div>'
+               . drupal_render($form) .'</div>';
     }
     else {
-      $continue_shopping_link = drupal_render($form['continue_shopping']);
+      $button = drupal_render($form['continue_shopping']);
+      $output .= '<div id="cart-form-buttons"><div id="update-checkout-buttons">'
+               . drupal_render($form) .'</div><div id="continue-shopping-button">'
+               . $button .'</div></div>';
     }
   }
-
-  $output .= '<div id="cart-form-buttons"><div id="cart-button-shopping">'
-           . $continue_shopping_link .'</div>'
-           /*. drupal_render($form['order_id']) . drupal_render($form['form_id'])
-           . drupal_render($form['form_token']) . drupal_render($form['update'])
-           . drupal_render($form['checkout']) .'</div>';*/
-           . drupal_render($form) .'</div>';
 
   return $output;
 }
@@ -1451,7 +1455,7 @@ function theme_uc_cart_checkout_form($form) {
   return $output;
 }
 
-function uc_cart_checkout_form_submit($form_id, $form_values) {
+function uc_cart_checkout_form_validate($form_id, $form_values) {
   global $user;
 
   if (empty($_SESSION['cart_order'])) {
@@ -1467,24 +1471,34 @@ function uc_cart_checkout_form_submit($form_id, $form_values) {
 
   $order->products = unserialize($form_values['cart_contents']);
 
-  $valid = TRUE;
+  // Validate/process the cart panes.  A FALSE value results in failed checkout.
+  $_SESSION['checkout_valid'] = TRUE;
   foreach(element_children($form_values['panes']) as $pane_id) {
     $func = _checkout_pane_data($pane_id, 'callback');
     $isvalid = $func('process', $order, $form_values['panes'][$pane_id]);
     if ($isvalid === FALSE) {
       $_SESSION['expanded_panes'][] = $pane_id;
-      $valid = FALSE;
+      $_SESSION['checkout_valid'] = FALSE;
     }
   }
-  $order->line_items = uc_order_load_line_items($order->order_id, true);
-  uc_order_save($order);
 
-  if ($valid === FALSE) {
-    return 'cart/checkout';
+  $order->line_items = uc_order_load_line_items($order->order_id, true);
+
+  uc_order_save($order);
+}
+
+function uc_cart_checkout_form_submit($form_id, $form_values) {
+  if ($_SESSION['checkout_valid'] === FALSE) {
+    $url = 'cart/checkout';
+  }
+  else {
+    $url = 'cart/checkout/review';
+    $_SESSION['do_review'] = TRUE;
   }
 
-  $_SESSION['do_review'] = TRUE;
-  return 'cart/checkout/review';
+  unset($_SESSION['checkout_valid']);
+
+  return $url;
 }
 
 /**
@@ -1638,7 +1652,7 @@ function uc_cart_checkout_complete() {
 
   $order = uc_order_load(intval($_SESSION['cart_order']));
 
-  $output = uc_cart_complete_sale($order);
+  $output = uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
 
   // Add a comment to let sales team know this came in through the site.
   uc_order_comment_save($order->order_id, 0, t('Order created through website.'), 'admin');
@@ -1661,10 +1675,12 @@ function uc_cart_checkout_complete() {
  *
  * @param $order
  *   The order object that has just been completed.
+ * @param $login
+ *   Whether or not to login a new user when this function is called.
  * @return
  *   The HTML text of the default order completion page.
  */
-function uc_cart_complete_sale($order) {
+function uc_cart_complete_sale($order, $login = FALSE) {
   // Logic to create new user if necessary:
   if ($order->uid == 0) {
     $result = db_query("SELECT uid FROM {users} WHERE mail = '%s'", $order->primary_email);
@@ -1690,9 +1706,16 @@ function uc_cart_complete_sale($order) {
         $body = _user_mail_text('welcome_body', $variables);
         drupal_mail('user-register-welcome', $order->primary_email, $subject, $body, $from);
       }
-      $order->uid = $account->uid;
       $_SESSION['new_user'] = array('name' => $fields['name'], 'pass' => $fields['pass']);
+
+      $order->uid = $account->uid;
       db_query("UPDATE {uc_orders} SET uid = %d WHERE order_id = %d", $order->uid, $order->order_id);
+
+      // Login the user if specified.
+      if ($login) {
+        drupal_execute('user_login', $fields);
+      }
+
       $message_type = 'new_user';
     }
   }

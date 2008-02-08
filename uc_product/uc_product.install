@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.install,v 1.11.2.1 2008/01/07 20:56:44 rszrama Exp $
+// $Id: uc_product.install,v 1.11.2.2 2008/02/08 22:22:39 rszrama Exp $
 
 /**
  * @file
@@ -56,13 +56,13 @@ function uc_product_install() {
         PRIMARY KEY  (pcid)
       );");
       db_query("CREATE TABLE {uc_product_features} (
-        pfid integer NOT NULL default 0,
+        pfid serial NOT NULL,
         nid integer NOT NULL default 0,
         fid varchar(32) NOT NULL,
         description text,
-				PRIMARY KEY (pfid)
+        PRIMARY KEY (pfid)
       );");
-			db_query("CREATE INDEX {uc_product_features}_nid ON {uc_product_features} (nid)");
+      db_query("CREATE INDEX {uc_product_features}_nid ON {uc_product_features} (nid)");
       db_query("CREATE TABLE {uc_products} (
         vid integer NOT NULL default 0,
         nid integer NOT NULL default 0,
@@ -80,7 +80,7 @@ function uc_product_install() {
         default_qty smallint NOT NULL default 1,
         unique_hash varchar(32) NOT NULL default '',
         ordering smallint NOT NULL default 0,
-				shippable smallint NOT NULL default 1,
+        shippable smallint NOT NULL default 1,
         PRIMARY KEY (vid)
       );");
     break;

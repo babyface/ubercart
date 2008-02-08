@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.3 2008/01/29 19:18:37 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.4 2008/02/08 22:22:39 rszrama Exp $
 
 /**
  * @file
@@ -331,6 +331,7 @@ function uc_order_token_values($type, $object = NULL) {
         $values['new-password'] = '';
       }
       $values['order-id'] = $order->order_id;
+      $values['order-uid'] = $order->uid;
       $values['order-url'] = url('user/'. $order->uid .'/order/'. $order->order_id, NULL, NULL, TRUE);;
       $values['order-link'] = l($order->order_id, $values['order-url']);
       $values['order-admin-url'] = url('admin/store/orders/'. $order->order_id, NULL, NULL, TRUE);
@@ -367,6 +368,8 @@ function uc_order_token_values($type, $object = NULL) {
       $result = db_result(db_query("SELECT message FROM {uc_order_comments} WHERE order_id = %d AND uid > 0 ORDER BY created DESC LIMIT 1", $order->order_id));
       $values['order-last-comment'] = empty($result) ? t('<i>No comment found.</i>') : check_plain($result);
       $values['order-status'] = uc_order_status_data($order->order_status, 'title');
+      $values['order-date-created'] = format_date($order->created, 'small');
+      $values['order-date-modified'] = format_date($order->modified, 'small');
       break;
   }
 
@@ -381,6 +384,7 @@ function uc_order_token_list($type = 'all') {
     $tokens['order']['new-username'] = t('New username associated with an order if applicable.');
     $tokens['order']['new-password'] = t('New password associated with an order if applicable.');
     $tokens['order']['order-id'] = t('The order ID.');
+    $tokens['order']['order-uid'] = t('The user ID of the order.');
     $tokens['order']['order-url'] = t('The URL to the order');
     $tokens['order']['order-link'] = t('A link to the order using the order ID.');
     $tokens['order']['order-admin-url'] = t('The URL to the admin view page using the order ID.');
@@ -398,6 +402,8 @@ function uc_order_token_list($type = 'all') {
     $tokens['order']['order-comments'] = t('Comments left by the customer.');
     $tokens['order']['order-last-comment'] = t('Last order comment left by an administrator (not counting the order admin comments).');
     $tokens['order']['order-status'] = t('The current order status.');
+    $tokens['order']['order-date-created'] = t('The date and time when the order was created.');
+    $tokens['order']['order-date-modified'] = t('The date and time when the order was last modified.');
   }
 
   return $tokens;
@@ -1537,7 +1543,7 @@ function uc_order_history($uid) {
     array('data' => t('Total'), 'field' => 'o.order_total')
   );
 
-  $result = pager_query("SELECT o.order_id, o.created, os.title, SUM(op.qty) AS products, o.order_total AS total FROM {uc_orders} AS o LEFT JOIN {uc_order_statuses} AS os ON o.order_status = os.order_status_id LEFT JOIN {uc_order_products} AS op ON o.order_id = op.order_id WHERE o.uid = %d AND o.order_status IN ". uc_order_status_list('general', TRUE) ." GROUP BY o.order_id". tablesort_sql($header), 20, 0, "SELECT COUNT(*) FROM {uc_orders} WHERE uid = %d AND order_status NOT IN ". uc_order_status_list('specific', TRUE), $uid);
+  $result = pager_query("SELECT o.order_id, o.created, os.title, SUM(op.qty) AS products, o.order_total AS total FROM {uc_orders} AS o LEFT JOIN {uc_order_statuses} AS os ON o.order_status = os.order_status_id LEFT JOIN {uc_order_products} AS op ON o.order_id = op.order_id WHERE o.uid = %d AND o.order_status IN ". uc_order_status_list('general', TRUE) ." GROUP BY o.order_id, o.created, os.title, o.order_total". tablesort_sql($header), 20, 0, "SELECT COUNT(*) FROM {uc_orders} WHERE uid = %d AND order_status NOT IN ". uc_order_status_list('specific', TRUE), $uid);
 
   // Build a table based on the customer's orders.
   while ($order = db_fetch_object($result)){
@@ -2597,6 +2603,7 @@ function uc_order_load($order_id) {
   $order->data = unserialize($order->data);
 
   $result = db_query("SELECT * FROM {uc_order_products} WHERE order_id = %d ORDER BY order_product_id", $order_id);
+  $order->products = array();
   while ($product = db_fetch_object($result)) {
     $product->data = unserialize($product->data);
     $order->products[] = $product;
@@ -3230,7 +3237,12 @@ function uc_order_actions($order, $icon_html = FALSE) {
       );
     }
   }
-
+  
+  $extra = module_invoke_all('order_actions', $order);
+  if (count($extra)){
+    $actions = array_merge($actions, $extra);
+  }
+  
   if ($icon_html) {
     foreach($actions as $action) {
       $output .= l($action['icon'], $action['url'], array('title' => $action['title']), NULL, NULL, NULL, TRUE);

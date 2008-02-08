@@ -1,4 +1,4 @@
-/* $Id: uc_catalog.css,v 1.5.2.1 2008/01/07 20:56:42 rszrama Exp $ - JTR - catalog grid view additions */
+/* $Id: uc_catalog.css,v 1.5.2.2 2008/02/08 22:22:39 rszrama Exp $ - JTR - catalog grid view additions */
 
 img.category {
   float: right;
@@ -47,7 +47,7 @@ td.category img {
 }
 td.category span {
   font-size: x-small;
-  line-height: 0.2;
+  line-height: 1.3em;
 }
 table.category-products form {
   margin-top: 1em;

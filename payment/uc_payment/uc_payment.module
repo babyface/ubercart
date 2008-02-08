@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.4.2.4 2008/01/29 19:18:36 rszrama Exp $
+// $Id: uc_payment.module,v 1.4.2.5 2008/02/08 22:22:35 rszrama Exp $
 
 /**
  * @file
@@ -157,6 +157,7 @@ function uc_payment_token_values($type, $object = NULL) {
       if (empty($values['order-payment-method'])) {
         $values['order-payment-method'] = _payment_method_data($order->payment_method, 'name');
       }
+      $values['order-payment-balance'] = uc_currency_format(uc_payment_balance($order));
       break;
   }
 
@@ -169,6 +170,7 @@ function uc_payment_token_values($type, $object = NULL) {
 function uc_payment_token_list($type = 'all') {
   if ($type == 'order' || $type == 'ubercart' || $type == 'all') {
     $tokens['order']['order-payment-method'] = t('The payment method of the order.');
+    $tokens['order']['order-payment-balance'] = t('The payment balance of the order');
   }
 
   return $tokens;
@@ -404,25 +406,31 @@ function uc_payment_methods_form() {
         '#default_value' => variable_get('uc_payment_method_'. $method['id'] .'_weight', $method['weight']),
       );
 
-      $gateways = _payment_gateway_list($method['id'], TRUE);
-      $options = array();
-      $default = FALSE;
-      if (is_array($gateways)) {
-        foreach ($gateways as $gateway) {
-          if (!$default) {
-            $default = $gateway['id'];
+      if ($method['no_gateway'] === TRUE) {
+        $form['pmtable'][$method['id']]['uc_payment_'. $method['id'] .'_gateway'] = array(
+          '#value' => '-',
+        );
+      }
+      else {
+        $gateways = _payment_gateway_list($method['id'], TRUE);
+        $default = FALSE;
+        if (is_array($gateways)) {
+          foreach ($gateways as $gateway) {
+            if (!$default) {
+              $default = $gateway['id'];
+            }
+            $options[$gateway['id']] = $gateway['title'];
           }
-          $options[$gateway['id']] = $gateway['title'];
         }
+        if (!$default) {
+          $options = array('none' => t('None available.'));
+        }
+        $form['pmtable'][$method['id']]['uc_payment_'. $method['id'] .'_gateway'] = array(
+          '#type' => 'select',
+          '#options' => $options,
+          '#default_value' => variable_get('uc_payment_'. $method['id'] .'_gateway', 'none'),
+        );
       }
-      if (!$default) {
-        $options = array('none' => t('None available.'));
-      }
-      $form['pmtable'][$method['id']]['uc_payment_'. $method['id'] .'_gateway'] = array(
-        '#type' => 'select',
-        '#options' => $options,
-        '#default_value' => variable_get('uc_payment_'. $method['id'] .'_gateway', 'none'),
-      );
 
       $method_settings = $method['callback']('settings', $null);
       if (is_array($method_settings)) {
@@ -523,6 +531,9 @@ function uc_payment_get_details($method_id, $view = 'cart') {
   $func = _payment_method_data($method_id, 'callback');
   if (function_exists($func)) {
     $output = $func($view .'-details', $order);
+    /*if (is_array($output) && function_exists($output['form_id'])) {
+      $output = uc_strip_form(drupal_get_form($output['form_id'], $order));
+    }*/
   }
 
   print $output;
@@ -889,6 +900,10 @@ function uc_payment_process($method, $order_id, $amount, $data = NULL, $default 
     uc_payment_enter($order_id, $method, $amount, $result['uid'],
                      $result['data'], $result['comment']);
   }
+  else {
+    watchdog('uc_payment', t('Payment failed: !message', array('!message' => $result['message'])), WATCHDOG_WARNING);
+  }
+
   if (!empty($result['message']) && !$default) {
     drupal_set_message($result['message']);
   }

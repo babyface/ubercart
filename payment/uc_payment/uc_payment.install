@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.install,v 1.4.2.1 2008/01/07 20:56:38 rszrama Exp $
+// $Id: uc_payment.install,v 1.4.2.2 2008/02/08 22:22:35 rszrama Exp $
 
 function uc_payment_install(){
   $t = get_t();
@@ -42,25 +42,26 @@ function uc_payment_install(){
       break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_payment_check} (
-        check_id integer NOT NULL,
+        check_id serial NOT NULL,
         order_id integer NOT NULL,
         clear_date integer NOT NULL,
         PRIMARY KEY (check_id)
       );");
-			db_query("CREATE INDEX {uc_payment_check}_order_id ON {uc_payment_check} (order_id)");
+      db_query("CREATE INDEX {uc_payment_check}_order_id ON {uc_payment_check} (order_id)");
       db_query("CREATE TABLE {uc_payment_cod} (
         order_id integer NOT NULL,
         delivery_month smallint NOT NULL,
         delivery_day smallint NOT NULL,
         delivery_year smallint NOT NULL,
+        PRIMARY KEY (order_id)
       );");
       db_query("CREATE TABLE {uc_payment_other} (
-        order_id mediumint(9) NOT NULL,
+        order_id integer NOT NULL,
         description varchar(64) NOT NULL,
-        PRIMARY KEY order_id (order_id)
+        PRIMARY KEY (order_id)
       );");
       db_query("CREATE TABLE {uc_payment_receipts} (
-        receipt_id integer NOT NULL,
+        receipt_id serial NOT NULL,
         order_id integer NOT NULL,
         method varchar(32) NOT NULL,
         amount decimal(10,2) NOT NULL,
@@ -70,21 +71,33 @@ function uc_payment_install(){
         received integer NOT NULL,
         PRIMARY KEY (receipt_id)
       );");
-			db_query("CREATE INDEX {uc_payment_receipts}_order_id ON {uc_payment_receipts} (order_id)");
+      db_query("CREATE INDEX {uc_payment_receipts}_order_id ON {uc_payment_receipts} (order_id)");
       db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('payment_received', '". $t('Payment received') ."', 'payment_received', 10, 1);");
       break;
   }
 }
 
 function uc_payment_uninstall() {
-  db_query("DROP TABLE IF EXISTS {uc_payment_check}");
-  db_query("DROP TABLE IF EXISTS {uc_payment_cod}");
-  db_query("DROP TABLE IF EXISTS {uc_payment_other}");
-  db_query("DROP TABLE IF EXISTS {uc_payment_receipts}");
+  switch($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      db_query("DROP TABLE IF EXISTS {uc_payment_check}");
+      db_query("DROP TABLE IF EXISTS {uc_payment_cod}");
+      db_query("DROP TABLE IF EXISTS {uc_payment_other}");
+      db_query("DROP TABLE IF EXISTS {uc_payment_receipts}");
+      db_query("DELETE FROM {sequences} WHERE name LIKE '{uc_payment_receipts}_receipt_id'");
+      db_query("DELETE FROM {sequences} WHERE name LIKE '{uc_payment_check}_check_id'");
+    break;
+	case 'pgsql':
+      db_query("DROP TABLE {uc_payment_check}");
+      db_query("DROP TABLE {uc_payment_cod}");
+      db_query("DROP TABLE {uc_payment_other}");
+      db_query("DROP TABLE {uc_payment_receipts}");
+    break;
+  }
+  
   db_query("DELETE FROM {variable} WHERE name LIKE 'uc_pg_%%'");
   db_query("DELETE FROM {variable} WHERE name LIKE 'uc_payment_method_%%'");
-  db_query("DELETE FROM {sequences} WHERE name LIKE '{uc_payment_receipts}_receipt_id'");
-  db_query("DELETE FROM {sequences} WHERE name LIKE '{uc_payment_check}_check_id'");
   variable_del('uc_payment_tracking');
   variable_del('uc_payment_deleting');
   variable_del('uc_payment_logging');

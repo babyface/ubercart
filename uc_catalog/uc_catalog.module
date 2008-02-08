@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.14.2.4 2008/01/29 19:18:37 rszrama Exp $  // JTR - v.062 - 2007-11-21
+// $Id: uc_catalog.module,v 1.14.2.5 2008/02/08 22:22:39 rszrama Exp $  // JTR - v.062 - 2007-11-21
 
 /**
  * @file
@@ -384,7 +384,7 @@ function uc_catalog_block($op = 'list', $delta = 0, $edit = array()){
 
         case 2:
           // no title, it takes it from the theme function
-          $block['content'] = theme('uc_catalog_cheapest_products');
+          $block['content'] = theme('uc_catalog_special_products');
           break;
 
         case 3:
@@ -721,7 +721,7 @@ function uc_catalog_set_category_form(){
     'nodepl' => 'products',
     'multi' => 'true',
     'close' => 'false',
-    'select' => 'buffer_products("'. base_path() .'","'. file_create_url('') .'")',
+    'select' => 'buffer_products("'. file_create_url('') .'")',
   );
   $form['selector'] = array('#type' => 'markup',
     '#value' => ubrowser($settings, 'category-selector'),
@@ -908,24 +908,42 @@ function theme_uc_catalog_browse($tid = 0){
   }
   $header = tapir_get_header('uc_product_table', array());
   $order = substr(tablesort_sql($header), 10);
-  if (empty($order)){
+  if (empty($_REQUEST['order'])){
     $order = 'p.ordering, n.title';
   }
   $product_types = array_keys(uc_product_node_info());
+
   $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created, p.model
-          FROM {node} n
-            INNER JOIN {term_node} tn ON n.nid = tn.nid
-            INNER JOIN {uc_products} AS p ON n.vid = p.vid
-          WHERE tn.tid = %d AND n.status = 1
-            AND n.type IN ("'. implode('","', $product_types) .'")
-          ORDER BY '. $order;
-  $sql_count = 'SELECT COUNT(DISTINCT(n.nid))
-          FROM {node} n
-            INNER JOIN {term_node} tn ON n.nid = tn.nid
-            INNER JOIN {uc_products} AS p ON n.nid = p.nid
-          WHERE tn.tid = %d
-            AND n.status = 1
-            AND n.type IN ("'. implode('","', $product_types) .'")';
+    FROM {node} n
+      INNER JOIN {term_node} tn ON n.nid = tn.nid
+      INNER JOIN {uc_products} AS p ON n.vid = p.vid
+    WHERE tn.tid = %d AND n.status = 1
+      AND n.type IN ("'. implode('","', $product_types) .'")
+    ORDER BY '. $order;
+  $sql_count = ''; 
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $sql_count = 'SELECT COUNT(DISTINCT(n.nid))
+        FROM {node} n
+          INNER JOIN {term_node} tn ON n.nid = tn.nid
+          INNER JOIN {uc_products} AS p ON n.nid = p.nid
+        WHERE tn.tid = %d
+          AND n.status = 1
+          AND n.type IN ("'. implode('","', $product_types) .'")';
+      break;
+    case 'pgsql':
+      $sql_count = "SELECT DISTINCT n.nid, COUNT(*)
+        FROM {node} n
+          INNER JOIN {term_node} tn ON n.nid = tn.nid
+          INNER JOIN {uc_products} AS p ON n.nid = p.nid
+        WHERE tn.tid = %d
+          AND n.status = 1
+          AND n.type IN ('". implode("','", $product_types) ."')
+        GROUP BY n.nid";
+      break;
+  }
+  
   $sql = db_rewrite_sql($sql);
   $sql_count = db_rewrite_sql($sql_count);
   $catalog->products = array();
@@ -996,14 +1014,31 @@ function theme_uc_catalog_special_products(){
     $gridwidth = $gridwidth * $gridlines;
   }
 
-  $sql = 'SELECT DISTINCT(n.nid), n.title
-          FROM {node} n
-            INNER JOIN {uc_products} AS p ON n.nid = p.nid
-          WHERE n.status = 1
-            AND n.sticky = 1
-            AND n.type IN ("'. implode('","', $product_types) .'")
-          ORDER BY p.sell_price ASC
-            LIMIT '.$gridwidth;
+  $sql = "";
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $sql = 'SELECT DISTINCT(n.nid), n.title
+        FROM {node} n
+          INNER JOIN {uc_products} AS p ON n.nid = p.nid
+        WHERE n.status = 1
+          AND n.sticky = 1
+          AND n.type IN ("'. implode('","', $product_types) .'")
+        ORDER BY p.sell_price ASC
+          LIMIT '.$gridwidth;
+      break;
+    case 'pgsql':
+      $sql = "SELECT DISTINCT(n.nid), n.title
+        FROM {node} n
+          INNER JOIN {uc_products} AS p ON n.nid = p.nid
+        WHERE n.status = 1
+          AND n.sticky = 1
+          AND n.type IN ('". implode("','", $product_types) ."') 
+        ORDER BY p.sell_price ASC
+          LIMIT ".$gridwidth;
+      break;
+  }
+
   $result = db_query($sql);
   while ($node = db_fetch_object($result)){
     $catalog->products[] = $node->nid;

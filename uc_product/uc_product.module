@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.13.2.3 2008/01/29 19:18:37 rszrama Exp $
+// $Id: uc_product.module,v 1.13.2.4 2008/02/08 22:22:39 rszrama Exp $
 
 /**
  * @file
@@ -39,19 +39,20 @@ function uc_product_menu($may_cache){
     $items[] = array(
       'path' => 'admin/store/products',
       'title' => t('Products'),
-      'description' => t('Administer product attributes, classes, and general settings.'),
+      'description' => t('Administer products, classes, and more.'),
       'access' => user_access('administer products'),
-      'callback' => 'uc_product_overview',
+      //'callback' => 'uc_product_overview',
+      'callback' => 'uc_product_administration',
       'type' => MENU_NORMAL_ITEM,
+      'weight' => -2,
     );
     $items[] = array(
       'path' => 'admin/store/products/view',
       'title' => t('View products'),
-      'description' => t('List all published product nodes.'),
-      'callback' => 'uc_product_administration',
+      'description' => t('Build and view a list of product nodes.'),
       'access' => user_access('administer products'),
       'type' => MENU_NORMAL_ITEM,
-      'weight' => -12,
+      'weight' => -10,
     );
     $items[] = array(
       'path' => 'admin/store/products/classes',
@@ -551,14 +552,13 @@ function uc_product_form(&$node){
     '#maxlength' => 6,
   );
   $form['base']['ordering'] = array('#type' => 'weight',
-    '#title' => t('List order'),
+    '#title' => t('List position'),
+    '#description' => t("Specify a value to set this product's position in product lists.<br />Products in the same position will be sorted alphabetically."),
     '#delta' => 25,
     '#default_value' => $node->ordering,
     '#weight' => 30,
   );
 
-  $form['#validate']['uc_product_form_validate'] = array();
-  //drupal_set_message(print_r($_POST, true));
   return $form;
 }
 
@@ -595,27 +595,26 @@ function theme_uc_product_dimensions_form($form){
   return $output;
 }
 
-function uc_product_form_validate($form_id, $form_values){
-  //drupal_set_message(print_r($form_values, true));
+function uc_product_validate($node){
   $pattern = '/^\d*(\.\d*)?$/';
   $price_error = t('Price must be in a valid number format. No commas and only one decimal point.');
-  if (!empty($form_values['list_price']) && !is_numeric($form_values['list_price']) && !preg_match($pattern, $form_values['list_price'])){
+  if (!empty($node->list_price) && !is_numeric($node->list_price) && !preg_match($pattern, $node->list_price)){
     form_set_error('list_price', $price_error);
   }
-  if (!empty($form_values['cost']) && !is_numeric($form_values['cost']) && !preg_match($pattern, $form_values['cost'])){
+  if (!empty($node->cost) && !is_numeric($node->cost) && !preg_match($pattern, $node->cost)){
     form_set_error('cost', $price_error);
   }
-  if (!is_numeric($form_values['sell_price']) && !preg_match($pattern, $form_values['sell_price'])){
+  if (!is_numeric($node->sell_price) && !preg_match($pattern, $node->sell_price)){
     form_set_error('sell_price', $price_error);
   }
-  if (!empty($form_values['weight']) && !is_numeric($form_values['weight'])){
+  if (!empty($node->weight) && !is_numeric($node->weight)){
     form_set_error('weight', t('Weight must be in a valid number format. No commas and only one decimal point.'));
   }
-  if ($form_values['default_qty']){
-    if (!is_numeric($form_values['default_qty'])){
+  if ($node->default_qty){
+    if (!is_numeric($node->default_qty)){
       form_set_error('default_qty', t('Quantities should be numeric.'));
     }
-    else if ($form_values['default_qty'] < 0){
+    else if ($node->default_qty < 0){
       form_set_error('default_qty', t("Adding negative items to the cart doesn't make sense, so don't make it easy."));
     }
   }
@@ -1302,16 +1301,14 @@ function uc_product_views_default_views(){
  * @see uc_product_image_defaults
  */
 function uc_product_store_status(){
-  $title = t('Images');
-  if (!module_exists('imagefield') || !module_exists('imagecache')){
-    $status = 'error';
-    $description = t('In order to display product images, please <a href="!href">enable</a> the <a href="http://drupal.org/project/cck">Content</a>, <a href="http://drupal.org/project/imagefield">CCK Image field</a>, and the <a href="http://drupal.org/project/imagecache">Imagecache</a> modules.', array('!href' => url('admin/build/modules')));
+  if (!module_exists('imagefield') || !module_exists('imagecache')) {
+    $description = t('To automatically configure core image support, <a href="!url">enable</a> the <a href="http://drupal.org/project/cck">Content</a>, <a href="http://drupal.org/project/imagefield">CCK Image field</a>, and <a href="http://drupal.org/project/imagecache">Imagecache</a> modules. This action is not required.', array('!url' => url('admin/build/modules')));
   }
-  else{
+  else {
     $result = db_query("SELECT field_name, type FROM {node_field} WHERE field_name = 'field_image_cache' AND type = 'image'");
-    $field_check = (bool)db_num_rows($result);
+    $field_check = (bool) db_num_rows($result);
     $result = db_query("SELECT field_name, type_name FROM {node_field_instance} WHERE field_name = 'field_image_cache' AND type_name = 'product'");
-    $product_field_check = (bool)db_num_rows($result);
+    $product_field_check = (bool) db_num_rows($result);
     $presets = array('product', 'product_list', 'thumbnail');
     if (module_exists('uc_catalog')){
       $presets[] = 'category';
@@ -1333,31 +1330,28 @@ function uc_product_store_status(){
     $missing_presets = array_diff($presets, $good_presets);
     $action_check = (count(array_filter($actions)) == count($presets));
     if ($field_check && $product_field_check && $preset_check && $action_check){
-      $status = 'ok';
-      $description = t("Imagefield and Imagecache have been set up to display product images.");
+      $description = t('Product image support has been automatically configured by Ubercart.');
     }
-    else{
-      $status = 'warning';
+    else {
       $checks = ($field_check << 3) + ($product_field_check << 2) + ($preset_check << 1) + $action_check;
-      $description = t('Click <strong><a href="!path">here</a></strong> to create defaults for the following problems:', array('!path' => url('admin/store/settings/products/defaults/'. $checks)));
-      $description .= "\n<br /><ul>\n";
-      if (!$field_check){
-        $description .= "<li>". t("The Image field has not been created for CCK.") ."</li>\n";
+      $description = t('<a href="!url">Click here</a> to automatically configure the following items for core image support:', array('!url' => url('admin/store/settings/products/defaults/'. $checks)));
+      if (!$field_check) {
+        $items[] = t('The Image field has not been created for CCK.');
       }
-      if (!$product_field_check){
-        $description .= "<li>". t("The Image field has not been attached to Product nodes.") ."</li>\n";
+      if (!$product_field_check) {
+        $items[] = t("The Image field has not been attached to Product nodes.");
       }
-      if (!$preset_check){
-        $description .= "<li>". t('The expected Imagecache presets ("!presets") have not been created.', array('!presets' => implode('", "', $missing_presets))) ."</li>\n";
+      if (!$preset_check) {
+        $items[] = t('The expected Imagecache presets ("!presets") have not been created.', array('!presets' => implode('", "', $missing_presets)));
       }
-      if (!$action_check){
-        $description .= "<li>". t('The Imagecache presets do not contain actions to perform on images. Images may be displayed in their original formats.') ."</li>\n";
+      if (!$action_check) {
+        $items[] = t('The Imagecache presets do not contain actions to perform on images. Images may be displayed in their original formats.');
       }
-      $description .= "</ul>";
+      $description .= theme('item_list', $items) . t('(This action is not required and should not be taken if you do not need images or have implemented your own image support.)');
     }
   }
-  
-  return array(array('status' => $status, 'title' => $title, 'desc' => $description));
+
+  return array(array('status' => 'ok', 'title' => t('Images'), 'desc' => $description));
 }
 
 /**
@@ -1590,151 +1584,100 @@ function uc_product_image_defaults($checks){
 }
 
 /**
- * Display a formatted administration menu.
- */
-function uc_product_overview(){
-  drupal_add_css(drupal_get_path('module', 'uc_store') .'/uc_store.css');
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js', 'module');
-  drupal_add_js("var text_show = '". t('- Show links -') ."';\nvar text_hide = '". t('- Hide links -') ."';\n", 'inline');
-
-  $main_menu = menu_get_item(NULL, 'admin/store/products');
-  usort($main_menu['children'], '_menu_sort');
-  foreach ($main_menu['children'] as $mid) {
-    if ($mid > 0) {
-      $submenu[] = menu_get_item($mid);
-    }
-  }
-
-  $output = '<table class="uc-store-admin-table" align="center"><tr valign="top">';
-
-  $panels = 0;
-  if (is_array($submenu)) {
-    if (variable_get('uc_store_display_links', FALSE)) {
-      $disp = '';
-      $title = t('- Hide links -');
-    }
-    else {
-      $disp = 'display: none;';
-      $title = t('- Show links -');
-    }
-    foreach ($submenu as $menu) {
-      $panel++;
-      if ($panel % 4 == 0) {
-        $output .= '</tr><tr valign="top">';
-      }
-      switch ($menu['path']){
-        case 'admin/store/products/view':
-          $file = 'file:search';
-        break;
-        case 'admin/store/products/create_product':
-          $file = 'file:cut-n-measure';
-        break;
-        case 'admin/store/products/categories':
-          $file = 'file:footprints';
-        break;
-        case 'admin/store/products/orphans':
-          $file = 'file:missing';
-        break;
-        case 'admin/store/products/classes':
-          $file = 'file:attachment';
-        break;
-        case 'admin/store/products/attributes':
-          $file = 'file:paint';
-        break;
-        default:
-          $file = $menu['path'];
-        break;
-      }
-      $panel_title = $menu['title'];
-      $panel_links = theme('admin_block_content', system_admin_menu_block($menu));
-      $panel_table = '<table width="100%"><tr>'
-                    .'<td>'. l(uc_store_get_icon($file), $menu['path'],
-                               array(), NULL, NULL, FALSE, TRUE) .'</td>'
-                    .'<td class="panel-title">'. l($menu['title'], $menu['path'])
-                    .'</td></tr>';
-      if (strlen($panel_links) > 0) {
-        $panel_table .= '<tr><td nowrap colspan="2" class="panel-links" style="'. $disp .'">'
-                     . $panel_links .'</td></tr><tr>'
-                      .'<td align="center" colspan="2" class="panel-show-link" '
-                      .'id="show-links-'. $panel .'"><a>'. $title
-                      .'</a></td></tr>';
-      }
-      $panel_table .= '</table>';
-      $output .= '<td class="uc-store-admin-panel" id="panel-'. $panel .'">'
-               . $panel_table .'</td>';
-    }
-  }
-  $output .= '</tr></table>';
-
-  return $output;
-}
-
-/**
  * List the subcategories of product administration.
  */
-function uc_product_administration(){
+function uc_product_administration() {
+  drupal_add_js(drupal_get_path('module', 'uc_product') .'/uc_product.js', 'module');
+
+  // Parse the URL for nodes in the list.
   $nids = array();
-  $args = func_get_args();
-  foreach ($args as $nid){
-    if (is_numeric($nid)){
-      $nids[] = (int)$nid;
+  foreach (func_get_args() as $nid) {
+    if (intval($nid) > 0) {
+      $nids[] = intval($nid);
     }
   }
-  drupal_add_js(drupal_get_path('module', 'uc_product') .'/uc_product.js', 'module');
+
+  // Load all the vocabularies assigned to any product node type.
   $types = array_keys(uc_product_node_info());
   $result = db_query("SELECT v.vid, v.name FROM {vocabulary} AS v LEFT JOIN {vocabulary_node_types} AS vnt ON v.vid = vnt.vid WHERE vnt.type IN ('". implode("','", $types) ."')");
-  $vocab_options = array();
-  while ($option = db_fetch_array($result)){
-    $vocab_options[$option['vid']] = $option['name'];
+  while ($vocab = db_fetch_array($result)) {
+    $options[$vocab['vid']] = $vocab['name'];
   }
-  $form['vocabs'] = array('#type' => 'select',
-    '#id' => 'ubrowser-vocab-select',
-    //'#parents' => array(),
-    '#title' => t('Vocabulary'),
-    '#default_value' => variable_get('uc_catalog_vid', variable_get('uc_manufacturer_vid', 0)),
-    '#options' => $vocab_options,
-  );
-  drupal_add_js('$(document).ready(function(){
-    $("#ubrowser-vocab-select").change(function(){
-      switch_vocabulary("'. base_path() .'");
-    });
-  })', 'inline');
-  drupal_prepare_form('vocab-switcher', $form);
-  $output = drupal_render($form);
-  $settings = array(
-    'div' => '#products-selector',
-    'class' => 'product-ubrowser',
-    'vid' => variable_get('uc_catalog_vid', 0),
-    'filter' => implode(',', array_keys(uc_product_node_info())),
-    'search' => 'true',
-    'nids' => 'true',
-    'nodesg' => 'product',
-    'nodepl' => 'products',
-    'multi' => 'true',
-    'select' => 'buffer_products("'. base_path() .'","'. file_create_url('') .'")',
-  );
 
-  if (module_exists('uc_catalog')) {
-    $output .= ubrowser($settings, 'products-selector');
-    $output .= drupal_get_form('uc_product_buffer_form', $nids);
+  // Set the default vid, defaulting to the catalog if it's enabled.
+  $default_vid = variable_get('uc_catalog_vid', 0);
+  if (!in_array($default_vid, array_keys($options))) {
+    $default_vid = array_shift(array_keys($options));
   }
+
+  // If at least one vocabularies were found, display a uBrowser selector.
+  if (count($options) > 0) {
+    $output = '<div>'. t('Use the uBrowser to select as many products as you like and move them to the product container. When you are finished adding products, click the List button to reload the page showing the selected products. This effect is not cumulative and will not add products onto an existing list.') .'</div>';
+
+    // Set the product filter for the uBrowser.
+    $product_filter = implode(',', array_keys(uc_product_node_info()));
+  
+    // If more than one vocabularies were found, display a select box.
+    if (count($options) > 1) {
+      $form['vocabs'] = array(
+        '#type' => 'select',
+        '#id' => 'ubrowser-vocab-select',
+        '#title' => t('Display vocabulary'),
+        '#default_value' => $default_vid,
+        '#options' => $options,
+        '#attributes' => array('onchange' => 'switch_vocabulary(this.value);'),
+      );
+      $form['product_filter'] = array(
+        '#type' => 'hidden',
+        '#value' => $product_filter,
+      );
+  
+      drupal_prepare_form('vocab-switcher', $form);
+      $output .= drupal_render($form);
+    }
+
+    $settings = array(
+      'div' => '#products-selector',
+      'class' => 'product-ubrowser',
+      'vid' => $default_vid,
+      'filter' => $product_filter,
+      'search' => 'true',
+      'nids' => 'true',
+      'nodesg' => t('product'),
+      'nodepl' => t('products'),
+      'multi' => 'true',
+      'select' => 'buffer_products("'. file_create_url('') .'")',
+    );
+
+    $output .= ubrowser($settings, 'products-selector')
+             . drupal_get_form('uc_product_buffer_form', $nids);
+  }
+
+  // If no nodes have been selected, display products 50 per page.
   if (!count($nids)){
     $header = tapir_get_header('uc_product_table', array());
+
     $order = substr(tablesort_sql($header), 10);
     if (empty($order)){
       $order = 'p.ordering, n.title';
     }
-    $table_nids = array();
-    $result = pager_query(db_rewrite_sql("SELECT n.nid FROM {node} AS n INNER JOIN {uc_products} AS p ON n.vid = p.vid ORDER BY ". $order), variable_get('uc_product_nodes_per_page', 10), 0, null);
-    while ($node = db_fetch_object($result)){
-      $table_nids[] = $node->nid;
+
+    $nids = array();
+    $result = pager_query("SELECT n.nid FROM {node} AS n INNER JOIN {uc_products} AS p ON n.vid = p.vid ORDER BY ". $order, 50, 0, NULL);
+    while ($product = db_fetch_object($result)){
+      $nids[] = $product->nid;
     }
-    $nids = $table_nids;
   }
-  $args = array('nids' => $nids, 'attributes' => array('class' => 'product-list'));
-  $output .= tapir_get_table('uc_product_table', $args);
-  $output .= theme('pager');
-  
+
+  // Setup the arguments to pass to the table builder function.
+  $args = array(
+    'nids' => $nids,
+    'attributes' => array('class' => 'product-list')
+  );
+
+  // Display the product table and pager if necessary.
+  $output .= tapir_get_table('uc_product_table', $args) . theme('pager');
+
   return $output;
 }
 
@@ -1745,38 +1688,43 @@ function uc_product_administration(){
  * @see uc_product_buffer_form_submit
  */
 function uc_product_buffer_form($nids){
-  $buffer = '';
   foreach ($nids as $nid){
     $node = node_load($nid);
     $buffer .= theme('imagecache', 'thumbnail', $node->field_image_cache[0]['filepath'], $node->field_image_cache[0]['alt'], $node->field_image_cache[0]['title']);
   }
+
   $form['#attributes'] = array('class' => 'product-buffer');
-  $form['thumbnails'] = array('#type' => 'markup',
-    '#value' => '<div id="buffer-images"></div>',
+
+  $form['title'] = array(
+    '#value' => '<b>'. t('Selected products:') .'</b>',
   );
-  $form['products'] = array('#type' => 'hidden',
+  $form['thumbnails'] = array(
+    '#value' => '<div id="buffer-images">'. t('Use the uBrowser above to select products.') .'</div>',
   );
-  $form['reset'] = array('#type' => 'submit',
-    '#value' => t('Reset'),
+  $form['products'] = array(
+    '#type' => 'hidden',
   );
-  $form['submit'] = array('#type' => 'submit',
-    '#value' => t('List'),
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Create list'),
+  );
+  $form['reset'] = array(
+    '#type' => 'submit',
+    '#value' => t('Reset list'),
   );
 
   return $form;
 }
 
-/**
- * Submit handler for uc_product_buffer_form.
- */
 function uc_product_buffer_form_submit($form_id, $form_values){
   $item = menu_get_item(menu_get_active_item());
-  //drupal_set_message(print_r($form_values, true));
-  if ($form_values['op'] == t('Reset')){
-    return $item['path'];
-  }
-  else{
-    return $item['path'] . $form_values['products'];
+
+  switch ($form_values['op']) {
+    case t('Reset list'):
+      return $item['path'];
+    default:
+      return $item['path'] . $form_values['products'];
   }
 }
 

@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.4.2.3 2008/01/29 19:18:36 rszrama Exp $
+// $Id: uc_payment.js,v 1.4.2.4 2008/02/08 22:22:35 rszrama Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
@@ -13,7 +13,7 @@ var payment_update = 0;
 /**
  * Sets a line item in the order total preview.
  */
-function set_line_item(key, title, value, weight, summed) {
+function set_line_item(key, title, value, weight, summed, render) {
   var do_update = false;
 
   if (summed === undefined){
@@ -37,8 +37,9 @@ function set_line_item(key, title, value, weight, summed) {
       li_weight[key] = weight;
       li_summed[key] = summed;
     }
-
-    render_line_items();
+    if (render == null || render){
+      render_line_items();
+    }
   }
 }
 

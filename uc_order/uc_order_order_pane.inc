@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_order_pane.inc,v 1.4.2.3 2008/01/25 22:19:33 rszrama Exp $
+// $Id: uc_order_order_pane.inc,v 1.4.2.4 2008/02/08 22:22:39 rszrama Exp $
 
 /**
  * @file
@@ -70,7 +70,6 @@ function uc_order_pane_ship_to($op, $arg1) {
       return $form;
 
     case 'edit-title':
-      uc_add_base_path_js();
       $output .= ' <img src="'. base_path() . drupal_get_path('module', 'uc_store')
                 .'/images/address_book.gif" alt="Select from address book." '
                 .'title="Select from address book." onclick="load_address_select('. $arg1['order_uid']['#value'] .', \'#delivery_address_select\', \'delivery\');" '
@@ -156,7 +155,6 @@ function uc_order_pane_bill_to($op, $arg1) {
       return $form;
 
     case 'edit-title':
-      uc_add_base_path_js();
       $output .= ' <img src="'. base_path() . drupal_get_path('module', 'uc_store')
                 .'/images/address_book.gif" alt="'. t('Select from address book.') .'" '
                 .'title="'. t('Select from address book.') .'" onclick="load_address_select('. $arg1['order_uid']['#value'] .', \'#billing_address_select\', \'billing\');" '
@@ -235,7 +233,6 @@ function uc_order_pane_customer($op, $arg1) {
       return $form;
 
     case 'edit-title':
-      uc_add_base_path_js();
       $output .= ' <img src="'. base_path() . drupal_get_path('module', 'uc_store')
                 .'/images/order_view.gif" alt="'. t('Search for an existing customer.') .'" '
                 .'title="'. t('Search for an existing customer.') .'" onclick="load_customer_search();" '
@@ -269,7 +266,6 @@ function uc_order_pane_customer($op, $arg1) {
  * Handle the "Products" order pane.
  */
 function uc_order_pane_products($op, $arg1) {
-  uc_add_base_path_js();
   switch ($op) {
     case 'view':
       return tapir_get_table('op_products_view_table', $arg1->products);

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.5.2.2 2008/01/25 22:19:31 rszrama Exp $
+// $Id: uc_shipping.module,v 1.5.2.3 2008/02/08 22:22:38 rszrama Exp $
 
 /**
  * @file
@@ -145,6 +145,28 @@ function uc_shipping_order_pane(){
   );
   
   return $panes;
+}
+
+function uc_shipping_order_actions($order){
+  $actions = array();
+  $module_path = base_path() . drupal_get_path('module', 'uc_shipping');
+  if (user_access('fulfill orders')){
+    $title = t('Package order !order_id products.', array('!order_id' => $order->order_id));
+    $actions[] = array(
+      'name' => t('Package'),
+      'url' => 'admin/store/orders/'. $order->order_id .'/packages',
+      'icon' => '<img src="'. $module_path .'/images/package.gif" alt="'. $title .'" />',
+      'title' => $title,
+    );
+    $title = t('Ship order !order_id packages.', array('!order_id' => $order->order_id));
+    $actions[] = array(
+      'name' => t('Ship'),
+      'url' => 'admin/store/orders/'. $order->order_id .'/shipments',
+      'icon' => '<img src="'. $module_path .'/images/ship.gif" alt="'. $title .'" />',
+      'title' => $title,
+    );
+  }
+  return $actions;
 }
 
 /******************************************************************************

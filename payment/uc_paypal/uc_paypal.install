@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.install,v 1.5.2.1 2008/01/07 20:56:38 rszrama Exp $
+// $Id: uc_paypal.install,v 1.5.2.2 2008/02/08 22:22:37 rszrama Exp $
 
 /**
  * Implementation of hook_install().
@@ -44,7 +44,7 @@ function uc_paypal_install() {
  * Implementation of hook_uninstall().
  */
 function uc_paypal_uninstall() {
-  db_query("DROP TABLE IF EXISTS {uc_payment_paypal_ipn}");
+  db_query("DROP TABLE {uc_payment_paypal_ipn}");
 }
 
 function uc_paypal_update_1() {

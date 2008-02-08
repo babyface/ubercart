@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.11.2.3 2008/01/29 19:18:36 rszrama Exp $
+// $Id: uc_attribute.module,v 1.11.2.4 2008/02/08 22:22:38 rszrama Exp $
 
 /**
  * @file
@@ -156,6 +156,7 @@ function uc_attribute_form_alter($form_id, &$form){
       foreach (element_children($form['products']) as $key){
         $form['products'][$key] = _uc_attribute_alter_form($form['products'][$key]);
         if (isset($form['products'][$key]['attributes'])){
+          $form['products'][$key]['attributes']['#tree'] = true;
           $form['products'][$key]['#type'] = 'fieldset';
         }
       }
@@ -175,14 +176,24 @@ function uc_attribute_nodeapi(&$node, $op, $arg3 = null, $arg4 = null){
   if (in_array($node->type, array_keys(uc_product_node_info()))){
     switch($op){
       case 'insert':
-        db_query("INSERT IGNORE INTO {uc_product_attributes} (nid, aid, ordering, required, default_option) SELECT %d, aid, ordering, required, default_option FROM {uc_class_attributes} WHERE pcid = '%s'", $node->nid, $node->type);
-        db_query("INSERT IGNORE INTO {uc_product_options} (nid, oid, cost, price, weight, ordering) SELECT %d, oid, cost, price, weight, ordering FROM {uc_class_attribute_options} WHERE pcid = '%s'", $node->nid, $node->type);
-      break;
+        switch ($GLOBALS['db_type']){
+          case 'mysqli':
+          case 'mysql':
+            db_query("INSERT IGNORE INTO {uc_product_attributes} (nid, aid, ordering, required, default_option) SELECT %d, aid, ordering, required, default_option FROM {uc_class_attributes} WHERE pcid = '%s'", $node->nid, $node->type);
+            db_query("INSERT IGNORE INTO {uc_product_options} (nid, oid, cost, price, weight, ordering) SELECT %d, oid, cost, price, weight, ordering FROM {uc_class_attribute_options} WHERE pcid = '%s'", $node->nid, $node->type);
+            break;
+          case 'pgsql':
+            db_query("INSERT INTO {uc_product_attributes} (nid, aid, ordering, required, default_option) SELECT %d, aid, ordering, required, default_option FROM {uc_class_attributes} WHERE pcid = '%s'", $node->nid, $node->type);
+            db_query("INSERT INTO {uc_product_options} (nid, oid, cost, price, weight, ordering) SELECT %d, oid, cost, price, weight, ordering FROM {uc_class_attribute_options} WHERE pcid = '%s'", $node->nid, $node->type);
+            break;
+        }
+
+        break;
       case 'delete':
         db_query("DELETE FROM {uc_product_options} WHERE nid = %d", $node->nid);
         db_query("DELETE FROM {uc_product_adjustments} WHERE nid = %d", $node->nid);
         db_query("DELETE FROM {uc_product_attributes} WHERE nid = %d", $node->nid);
-      break;
+        break;
       case 'update index':
         $output = '';
         $attributes = uc_product_get_attributes($node->nid);
@@ -197,7 +208,7 @@ function uc_attribute_nodeapi(&$node, $op, $arg3 = null, $arg4 = null){
         while ($adjustment = db_fetch_object($result)){
           $output .= '<h2>'. $adjustment->model ."<h2>\n";
         }
-      return $output;
+        return $output;
     }
   }
 }
@@ -294,7 +305,7 @@ function uc_attribute_admin_settings(){
  * @see uc_attribute_form
  */
 function uc_attribute_default(){
-  $result = db_query("SELECT a.aid, a.name, a.ordering, COUNT(ao.oid) AS options FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid ORDER BY a.ordering, a.name");
+  $result = db_query("SELECT a.aid, a.name, a.ordering, COUNT(ao.oid) AS options FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid, a.name, a.ordering ORDER BY a.ordering, a.name");
   $header = array(t('Name'), t('# of Options'), t('Order'), array('data' => t('Operations'), 'colspan' => '3'));
   $rows = array();
   while($attr = db_fetch_object($result)){
@@ -601,7 +612,7 @@ function uc_object_attributes_form($id, $type){
   }
 
   // Get list of attributes NOT associated with this node.
-  $result = db_query("SELECT a.aid, a.name FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY aid ORDER BY a.name");
+  $result = db_query("SELECT a.aid, a.name FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid, a.name ORDER BY a.name");
   $other_attr = array();
   while ($attr = db_fetch_object($result)){
     if (!in_array($attr->aid, $chosen_aids)){
@@ -892,7 +903,7 @@ function uc_object_options_form_submit($form_id, $form_values){
       $form_values['id'], $prod_attr['aid'], $prod_attr['ordering'], $prod_attr['required'], $prod_attr['default']);
     if (is_array($prod_attr['options'])){
       foreach ($prod_attr['options'] as $oid => $option){
-        db_query("DELETE FROM $opt_table WHERE $id = $type AND oid = %d", $form_values['id'], $oid);
+        db_query("DELETE FROM $opt_table WHERE $id = $sql_type AND oid = %d", $form_values['id'], $oid);
         if ($option['select']){
           db_query("INSERT INTO $opt_table ($id, oid, cost, price, weight, ordering) VALUES ($sql_type, %d, %f, %f, %f, %d)",
             $form_values['id'], $oid, $option['cost'], $option['price'], $option['weight'], $option['ordering']);
@@ -944,7 +955,7 @@ function uc_product_adjustments_form($nid){
   $full_attributes = array();
   $values = array();
   while ($prod_attr = db_fetch_object($result)){
-    $query_select .= " ao$i.aid AS aid$i, ao$i.name AS name$i, ao$i.oid AS oid$i,";
+    $query_select .= " ao$i.aid AS aid$i, ao$i.name AS name$i, ao$i.oid AS oid$i, po$i.ordering,";
     $query_from .= " ({uc_product_options} AS po$i LEFT JOIN {uc_attribute_options} AS ao$i ON po$i.oid = ao$i.oid AND po$i.nid = %d),";
     $values[] = $nid;
     $query_where .= " ao$i.aid = ". $prod_attr->aid ." AND";
@@ -1071,7 +1082,7 @@ function uc_attribute_load($attr_id, $nid = null, $type = ''){
         $result = db_query("SELECT po.nid, po.oid, po.cost, po.price, po.weight, po.ordering, ao.name, ao.aid FROM {uc_product_options} AS po LEFT JOIN {uc_attribute_options} AS ao ON po.oid = ao.oid AND nid = %d WHERE aid = %d ORDER BY po.ordering, ao.name", $nid, $attr_id);
       break;
       case 'class':
-        $attribute = db_fetch_object(db_query("SELECT a.aid, a.name, a.ordering AS default_ordering, ca.default_option, ca.ordering FROM {uc_attributes} AS a LEFT JOIN {uc_class_attributes} AS ca ON a.aid = ca.aid AND ca.pcid = '%s' WHERE a.aid = %d ORDER BY ca.ordering", $nid, $attr_id));
+        $attribute = db_fetch_object(db_query("SELECT a.aid, a.name, a.ordering AS default_ordering, ca.default_option, ca.required ca.ordering FROM {uc_attributes} AS a LEFT JOIN {uc_class_attributes} AS ca ON a.aid = ca.aid AND ca.pcid = '%s' WHERE a.aid = %d ORDER BY ca.ordering", $nid, $attr_id));
         $result = db_query("SELECT co.pcid, co.oid, co.cost, co.price, co.weight, co.ordering, ao.name, ao.aid FROM {uc_class_attribute_options} AS co LEFT JOIN {uc_attribute_options} AS ao ON co.oid = ao.oid AND co.pcid = '%s' WHERE ao.aid = %d ORDER BY co.ordering, ao.name", $nid, $attr_id);
       break;
       default:
@@ -1237,17 +1248,21 @@ function _uc_attribute_alter_form($product){
   $total_attributes = db_num_rows($result);
   if ($node = node_load((int)$product['nid']['#value'])){
     while ($relation = db_fetch_object($result)){
+      $qty = (int)$product['qty']['#value'];
+      if (!$qty){
+        $qty = 1;
+      }
       $attribute = uc_attribute_load($relation->aid, $product['nid']['#value'], 'product');
       $opt_array = array();
       foreach($attribute->options as $option){
         switch (variable_get('uc_attribute_option_price_format', 'adjustment')){
           case 'total':
-            $display_price = ', '. uc_currency_format($node->sell_price + $option->price);
+            $display_price = ', '. uc_currency_format(($node->sell_price + $option->price) * $qty);
             if ($total_attributes == 1){
               break;
             }
           case 'adjustment':
-            $display_price = ($option->price != 0 ? ', '. ($option->price > 0 ? '+' : '') . uc_currency_format($option->price) : '');
+            $display_price = ($option->price != 0 ? ', '. ($option->price > 0 ? '+' : '') . uc_currency_format($option->price * $qty) : '');
           break;
           case 'none':
           default:

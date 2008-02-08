@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.4.2.4 2008/01/29 19:18:37 rszrama Exp $
+// $Id: uc_credit.module,v 1.4.2.5 2008/02/08 22:22:35 rszrama Exp $
 
 /**
  * @file
@@ -92,6 +92,37 @@ function uc_credit_cron() {
  ******************************************************************************/
 
 /**
+ * Implementation of hook_store_status().
+ */
+function uc_credit_store_status() {
+  if ($key = uc_credit_encryption_key()) {
+    $statuses[] = array(
+      'status' => 'ok',
+      'title' => t('Credit card encryption'),
+      'desc' => t('Credit card data in the database is currently being encrypted.'),
+    );
+  }
+  else {
+    if (variable_get('uc_credit_checkout_no_store', FALSE)) {
+      $statuses[] = array(
+        'status' => 'warning',
+        'title' => t('Credit card encryption'),
+        'desc' => t('Some credit card data may be stored in the database while customers are in checkout. For maximum security, you should <a href="http://www.ubercart.org/docs/user/2731/credit_card_settings#security">setup credit card encryption</a> on your site.'),
+      );
+    }
+    else {
+      $statuses[] = array(
+        'status' => 'error',
+        'title' => t('Credit card encryption'),
+        'desc' => t('Ubercart is currently configured to store unencrypted credit card data in the database. You should <a href="http://www.ubercart.org/docs/user/2731/credit_card_settings#security">review your credit card security settings</a> and enable encryption to better protect the data.'),
+      );
+    }
+  }
+
+  return $statuses;
+}
+
+/**
  * Implementation of hook_order().
  */
 function uc_credit_order($op, &$arg1, $arg2) {
@@ -131,7 +162,7 @@ function uc_credit_order($op, &$arg1, $arg2) {
 
         if ($key !== FALSE) {
           $crypt = new uc_encryption_class;
-          $cc_type = $crypt->encrypt($key, $cc_type);
+          $cc_type = $crypt->encrypt($key, $cc_type, 64);
           $cc_owner = $crypt->encrypt($key, $cc_owner);
           $cc_number = $crypt->encrypt($key, $cc_number, 32);
           $cc_exp_month = $crypt->encrypt($key, $cc_exp_month, 32);
@@ -920,7 +951,7 @@ function uc_credit_encrypt_existing() {
       db_query("UPDATE {uc_payment_credit} SET cc_type = '%s', cc_owner = '%s', "
               ."cc_number = '%s', cc_exp_month = '%s', cc_exp_year = '%s', "
               ."cc_cvv = '%s', cc_bank = '%s' WHERE credit_id = %d", 
-               $crypt->encrypt($key, $row['cc_type']),
+               $crypt->encrypt($key, $row['cc_type'], 64),
                $crypt->encrypt($key, $row['cc_owner']),
                $crypt->encrypt($key, $row['cc_number'], 32),
                $crypt->encrypt($key, $row['cc_exp_month'], 32),

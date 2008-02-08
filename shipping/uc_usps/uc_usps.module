@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.5.2.3 2008/01/25 22:19:31 rszrama Exp $
+// $Id: uc_usps.module,v 1.5.2.4 2008/02/08 22:22:38 rszrama Exp $
 
 /**
  * @file
@@ -543,8 +543,8 @@ function _uc_usps_package_products($products, &$addresses){
       $packages[$key][0]->weight += $product->weight * $product->qty * uc_weight_conversion($product->weight_units, 'lb');
     }
     foreach ($packages as $key => $package){
-      $packages[$key][0]->pounds = floor($package->weight);
-      $packages[$key][0]->ounces = 16 * ($package->weight - $packages[$key][0]->pounds);
+      $packages[$key][0]->pounds = floor($package[0]->weight);
+      $packages[$key][0]->ounces = 16 * ($package[0]->weight - $packages[$key][0]->pounds);
       $packages[$key][0]->container = 'RECTANGULAR';
       $packages[$key][0]->size = 'REGULAR';
       // Packages are "machinable" if heavier than 6oz. and less than 35lbs.
@@ -558,7 +558,6 @@ function _uc_usps_package_products($products, &$addresses){
   }
   else{
     foreach ($products as $product){
-      $addr_key = 0;
       if ($product->nid){
         $address = uc_quote_get_default_shipping_address($product->nid);
         $key = array_search($address, $addresses);

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.install,v 1.8.2.2 2008/01/16 21:56:50 rszrama Exp $
+// $Id: uc_catalog.install,v 1.8.2.3 2008/02/08 22:22:39 rszrama Exp $
 
 function uc_catalog_install(){
   $t = get_t();
@@ -31,7 +31,8 @@ function uc_catalog_install(){
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
     break;
     case 'pgsql':
-      db_query("CREATE TABLE IF NOT EXISTS {uc_catalog_images} (
+      // There will be an error if the table already exists, but this should be OK.
+      db_query("CREATE TABLE {uc_catalog_images} (
         fid integer NOT NULL default 0,
         tid integer NOT NULL default 0,
         filename varchar(255) NOT NULL default '',

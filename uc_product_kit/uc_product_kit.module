@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.10.2.1 2008/01/07 20:56:44 rszrama Exp $
+// $Id: uc_product_kit.module,v 1.10.2.2 2008/02/08 22:22:39 rszrama Exp $
 
 /**
  * @file
@@ -442,7 +442,7 @@ function uc_product_kit_add_to_cart_form($node){
  * correct quantities.
  */
 function uc_product_kit_add_to_cart_form_submit($form_id, $form_values){
-  return uc_cart_add_item($form_values['nid'], 1, module_invoke_all('add_to_cart_data', $form_values));
+  return uc_cart_add_item($form_values['nid'], 1, $form_values);
 }
 
 /******************************************************************************
@@ -472,7 +472,7 @@ function uc_product_kit_add_to_cart($nid, $qty, $kit_data){
     $unique = uniqid('', true);
     foreach ($node->products as $product){
       $data = array('kit_id' => $node->nid, 'unique_id' => $unique, 'module' => 'uc_product_kit');
-      uc_cart_add_item($product->nid, $product->qty, $data + $kit_data + module_invoke_all('add_to_cart_data', (array)$product), null, true, false);
+      uc_cart_add_item($product->nid, $product->qty, $data +  module_invoke_all('add_to_cart_data', $kit_data['products'][$product->nid]), null, true, false);
     }
     if ($check_redirect) {
       if (isset($_GET['destination'])) {
@@ -528,16 +528,16 @@ function uc_product_kit_cart_item($op, &$item){
  *   A form element array to be processed by uc_cart_view_form().
  */
 function uc_product_kit_cart_display($item){
-  static $element;
+  static $elements = array();
   static $products;
-  $data = $item->data;
-  $kit = node_load($data['kit_id']);
+  $unique_id = $item->data['unique_id'];
+  $kit = node_load($item->data['kit_id']);
   //print '<pre>'. print_r($kit, true) .'</pre>';
   if ($kit->mutable){
     return uc_product_cart_display($item);
   }
   else{
-    if (!isset($products[$data['unique_id']])){
+    if (!isset($products[$unique_id])){
       // Initialize table row
       $element = array();
       $element['nid'] = array('#type' => 'value', '#value' => $kit->nid);
@@ -552,6 +552,7 @@ function uc_product_kit_cart_display($item){
         '#size' => 3,
         '#maxlength' => 3,
       );
+      $elements[$unique_id] = $element;
     }
     // Add product specific information
     $op_names = '';
@@ -562,23 +563,23 @@ function uc_product_kit_cart_display($item){
     if ($op_names){
       $op_names = '-- '. $op_names;
     }
-    $element['options']['#value'] .= '<li>'. $item->qty .' x '. l($item->title, 'node/'. $item->nid) ." <em>$op_names</em></li>\n";
-    $element['#total'] += $item->price * $item->qty;
-    $element['data'][$item->nid] = $item;
-    $products[$data['unique_id']][] = $item->nid;
+    $elements[$unique_id]['options']['#value'] .= '<li>'. $item->qty .' x '. l($item->title, 'node/'. $item->nid) ." <em>$op_names</em></li>\n";
+    $elements[$unique_id]['#total'] += $item->price * $item->qty;
+    $elements[$unique_id]['data'][$item->nid] = $item;
+    $products[$unique_id][] = $item->nid;
     // Check if all products in this kit have been accounted for.
     $done = true;
     foreach($kit->products as $product){
-      if (!in_array($product->nid, $products[$data['unique_id']])){
+      if (!in_array($product->nid, $products[$unique_id])){
         $done = false;
         break;
       }
     }
     if ($done){
-      $element['data'] = array('#type' => 'value', '#value' => serialize($element['data']));
-      $element['options']['#value'] .= "</ul>\n";
-      unset($products[$data['unique_id']]);
-      return $element;
+      $elements[$unique_id]['data'] = array('#type' => 'value', '#value' => serialize($elements[$unique_id]['data']));
+      $elements[$unique_id]['options']['#value'] .= "</ul>\n";
+      //unset($products[$data['unique_id']]);
+      return $elements[$unique_id];
     }
   }
   return array();

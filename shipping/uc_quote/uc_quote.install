@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.install,v 1.4.2.2 2008/01/25 22:19:31 rszrama Exp $
+// $Id: uc_quote.install,v 1.4.2.3 2008/02/08 22:22:37 rszrama Exp $
 
 function uc_quote_install(){
   switch($GLOBALS['db_type']){
@@ -63,7 +63,7 @@ function uc_quote_install(){
         city varchar(255) NOT NULL default '',
         zone integer NOT NULL default 0,
         postal_code varchar(255) NOT NULL default '',
-        country integer NOT NULL default '',
+        country integer NOT NULL default 0,
         PRIMARY KEY (tid)
       );");
       db_query("CREATE TABLE {uc_quote_product_locations} (
@@ -76,7 +76,7 @@ function uc_quote_install(){
         city varchar(255) NOT NULL default '',
         zone integer NOT NULL default 0,
         postal_code varchar(255) NOT NULL default '',
-        country integer NOT NULL default '',
+        country integer NOT NULL default 0,
         PRIMARY KEY (nid)
       );");
       db_query("CREATE TABLE {uc_order_quotes} (
@@ -85,7 +85,7 @@ function uc_quote_install(){
         accessorials varchar(255) NOT NULL default '',
         rate decimal(10,2) NOT NULL default 0.00,
         quote_form text NOT NULL default '',
-        UNIQUE KEY oid_quote_method (oid,method)
+        PRIMARY KEY (oid,method)
       );");
     break;
   }

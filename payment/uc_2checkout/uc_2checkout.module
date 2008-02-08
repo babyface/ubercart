@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_2checkout.module,v 1.5.2.1 2008/01/25 22:19:29 rszrama Exp $
+// $Id: uc_2checkout.module,v 1.5.2.2 2008/02/08 22:22:34 rszrama Exp $
 
 /**
  * @file
@@ -66,6 +66,7 @@ function uc_2checkout_payment_method() {
     'callback' => 'uc_payment_method_2checkout',
     'weight' => 3,
     'checkout' => TRUE,
+    'no_gateway' => TRUE,
   );
 
   return $methods;

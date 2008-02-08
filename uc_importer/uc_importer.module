@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_importer.module,v 1.6.2.2 2008/01/16 21:56:55 rszrama Exp $
+// $Id: uc_importer.module,v 1.6.2.3 2008/02/08 22:22:39 rszrama Exp $
 
 /**
  * @file
@@ -47,13 +47,13 @@ function uc_importer_menu($may_cache){
   if ($may_cache){
     $items[] = array('path' => 'admin/store/products/export',
       'access' => user_access('export'),
-      'title' => t('Export'),
+      'title' => t('Export products'),
       'callback' => 'uc_importer_export_page',
       'type' => MENU_NORMAL_ITEM,
     );
     $items[] = array('path' => 'admin/store/products/import',
       'access' => user_access('import'),
-      'title' => t('Import'),
+      'title' => t('Import products'),
       'callback' => 'uc_importer_import_page',
       'type' => MENU_NORMAL_ITEM,
     );
@@ -195,7 +195,7 @@ function uc_importer_export_page(){
     'nodesg' => 'product',
     'nodepl' => 'products',
     'multi' => 'true',
-    'select' => 'buffer_products("'. base_path() .'","'. file_create_url('') .'")',
+    'select' => 'buffer_products("'. file_create_url('') .'")',
   );
 
   if (module_exists('uc_catalog')) {
@@ -844,8 +844,18 @@ function uc_importer_import($xml){
               if (isset($category_data->parent)){
                 $parent = (string)$category_data->parent[0]->data();
               }
-              db_query("INSERT IGNORE INTO {term_hierarchy} (tid, parent) VALUES (%d, %d)", $id_map['categories'][(string)$category_data->id[0]->data()], $id_map['categories'][$parent]);
+              
+              switch ($GLOBALS['db_type']){
+                case 'mysqli':
+                case 'mysql':
+                  db_query("INSERT IGNORE INTO {term_hierarchy} (tid, parent) VALUES (%d, %d)", $id_map['categories'][(string)$category_data->id[0]->data()], $id_map['categories'][$parent]);
+                  break;
+                case 'pgsql':
+                  db_query("INSERT INTO {term_hierarchy} (tid, parent) VALUES (%d, %d)", $id_map['categories'][(string)$category_data->id[0]->data()], $id_map['categories'][$parent]);
+                  break;
+              }
             }
+            
             module_invoke_all('xml_importer', 'category', taxonomy_get_term($id_map['categories'][(string)$category_data->id[0]->data()]), $category_data, $store, $id_map);
           }
         }
@@ -918,7 +928,7 @@ function uc_importer_import($xml){
                       case UC_IMPORTER_INCREMENT:
                         $option->name .= '_'. db_num_rows($result);
                         drupal_execute('uc_attribute_option_form', (array)$option, $aid);
-                        $id_map['options'][(string)$option_data->id[0]->data()] = mysql_insert_id($active_db);
+                        $id_map['options'][(string)$option_data->id[0]->data()] = db_result(db_query("SELECT MAX(oid) FROM {uc_attribute_options}"));
                       break;
                       case UC_IMPORTER_REPLACE:
                         drupal_execute('uc_attribute_option_form', (array)$option, $aid, $oid);
@@ -929,7 +939,7 @@ function uc_importer_import($xml){
                   }
                   else{
                     drupal_execute('uc_attribute_option_form', (array)$option, $aid);
-                    $id_map['options'][(string)$option_data->id[0]->data()] = mysql_insert_id($active_db);
+                    $id_map['options'][(string)$option_data->id[0]->data()] = db_result(db_query("SELECT MAX(oid) FROM {uc_attribute_options}"));
                   }
                   module_invoke_all('xml_importer', 'option', uc_attribute_option_load($id_map['options'][(string)$option_data->id[0]->data()]), $option_data, $store, $id_map);
                 }
@@ -981,7 +991,7 @@ function uc_importer_import($xml){
   
           if ($nid){
             switch (variable_get('uc_importer_product_duplicates', UC_IMPORTER_DO_NOTHING)){
-              case UC_IMPORTER_REPLACE;
+              case UC_IMPORTER_REPLACE:
                 $product->nid = $nid;
                 $product->revision = true;
                 $id_map['products'][(string)$product_data->id[0]->data()] = $nid;
@@ -1123,7 +1133,7 @@ function uc_importer_import($xml){
                       $option->weight = (float)$option_data->weight[0]->data();
                       $option->ordering = isset($option_data->ordering) ? (int)$option_data->ordering[0]->data() : 0;
                       drupal_execute('uc_attribute_option_form', (array)$option, $id_map['attributes'][(string)$attribute_data->id[0]->data()]);
-                      $id_map['options'][(string)$option_data->id[0]->data()] = mysql_insert_id($active_db);
+                      $id_map['options'][(string)$option_data->id[0]->data()] = db_result(db_query("SELECT MAX(oid) FROM {uc_attribute_options}"));
                     }
                     $opt_replace[] = '%d,%d,%f,%f,%d';
                     $opt_values[] = $product->nid;
@@ -1166,7 +1176,7 @@ function uc_importer_import($xml){
               }
             }
             if (count($adjustments['body'])){
-              drupal_execute('uc_product_adjustments_form', $adjustments, $product->nid);
+              uc_product_adjustments_form_submit('uc_product_adjustments_form', $adjustments);
             }
           }
           
