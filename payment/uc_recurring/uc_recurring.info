@@ -1,0 +1,5 @@
+; $Id: uc_recurring.info,v 1.1 2008/02/08 22:22:37 rszrama Exp $
+name = Recurring Payments
+description = Assign recurring fees to products and manage them.
+dependencies = uc_payment workflow_ng
+package = Ubercart - payment

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_pack.module,v 1.1 2008/01/25 22:19:30 rszrama Exp $
+// $Id: uc_payment_pack.module,v 1.2 2008/02/08 22:22:35 rszrama Exp $
 
 /**
  * @file Provides the check/money order, COD, and "other" payment methods.
@@ -36,6 +36,7 @@ function uc_payment_pack_payment_method() {
     'callback' => 'uc_payment_method_check',
     'weight' => 1,
     'checkout' => TRUE,
+    'no_gateway' => TRUE,
   );
   $methods[] = array(
     'id' => 'cod',
@@ -45,6 +46,7 @@ function uc_payment_pack_payment_method() {
     'callback' => 'uc_payment_method_cod',
     'weight' => 1,
     'checkout' => FALSE,
+    'no_gateway' => TRUE,
   );
   $methods[] = array(
     'id' => 'other',
@@ -54,6 +56,7 @@ function uc_payment_pack_payment_method() {
     'callback' => 'uc_payment_method_other',
     'weight' => 10,
     'checkout' => FALSE,
+    'no_gateway' => TRUE,
   );
 
   return $methods;
