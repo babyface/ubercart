@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.4.2.4 2008/02/08 22:22:38 rszrama Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.4.2.5 2008/02/25 21:11:36 rszrama Exp $
 
 /**
  * @file
@@ -73,6 +73,8 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
       }
 
       if ($user->uid == 0) {
+        $contents['new_account'] = array();
+
         if (variable_get('uc_cart_new_account_name', FALSE)) {
           $contents['new_account']['name'] = array(
             '#type' => 'textfield',
@@ -108,6 +110,15 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
           );
           $contents['new_account'] = array_merge($array, $contents['new_account']);
         }
+
+        /**
+         * This code adds profile fields required for registration to the
+         * customer checkout pane.  However, I don't have the time to fool with
+         * validation/submission stuff, so I'm postponing this feature. -RS
+        $extra = _user_forms($null, NULL, NULL, 'register');
+        if (!empty($extra)) {
+          $contents = array_merge($contents, $extra);
+        }*/
       }
 
       return array('description' => $description, 'contents' => $contents);
@@ -397,7 +408,7 @@ function uc_checkout_pane_comments($op, &$arg1, $arg2) {
     case 'process':
       if (strlen($arg2['comments']) > 0) {
         db_query("DELETE FROM {uc_order_comments} WHERE order_id = %d", $arg1->order_id);
-        uc_order_comment_save($arg1->order_id, 0, $arg2['comments'], 'order', 1, TRUE);
+        uc_order_comment_save($arg1->order_id, 0, $arg2['comments'], 'order', uc_order_state_default('in_checkout'), TRUE);
       }
       return TRUE;
 

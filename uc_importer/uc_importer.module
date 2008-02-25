@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_importer.module,v 1.6.2.3 2008/02/08 22:22:39 rszrama Exp $
+// $Id: uc_importer.module,v 1.6.2.4 2008/02/25 21:11:39 rszrama Exp $
 
 /**
  * @file
@@ -189,7 +189,7 @@ function uc_importer_export_page(){
     'div' => '#products-selector',
     'class' => 'product-ubrowser',
     'vid' => variable_get('uc_catalog_vid', 0),
-    'filter' => implode(',', array_keys(uc_product_node_info())),
+    'filter' => implode(',', module_invoke_all('product_types')),
     'search' => 'true',
     'nids' => 'true',
     'nodesg' => 'product',
@@ -951,7 +951,7 @@ function uc_importer_import($xml){
       }
       $class = 'class'; // keyword workaround
       if (isset($store->document->classes)){
-        $types = uc_product_node_info();
+        $types = module_invoke_all('node_info');
         foreach ($store->document->classes[0]->$class as $class_data){
           $class = new stdClass();
           $class->pcid = (string)$class_data->id[0]->data();

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_repeater.module,v 1.4.2.1 2008/01/16 21:56:54 rszrama Exp $
+// $Id: uc_repeater.module,v 1.4.2.2 2008/02/25 21:11:39 rszrama Exp $
 
 /**
  * @file
@@ -45,8 +45,7 @@ function uc_repeater_perm(){
 
 function uc_repeater_form_alter($form_id, &$form){
   $node = $form['#node'];
-  $product_types = uc_product_node_info();
-  if (is_object($node) && $form_id == $node->type .'_node_form' && isset($product_types[$node->type])){
+  if (is_object($node) && $form_id == $node->type .'_node_form' && in_array($node->type, module_invoke_all('product_types'))){
     $form['uc_repeater_export'] = array('#type' => 'checkbox',
       '#title' => t('Export to other sites'),
       '#default_value' => 0,
@@ -55,7 +54,7 @@ function uc_repeater_form_alter($form_id, &$form){
 }
 
 function uc_repeater_nodeapi(&$node, $op, $arg3 = null, $arg4 = null){
-  if (in_array($node->type, array_keys(uc_product_node_info()))){
+  if (in_array($node->type, module_invoke_all('product_types'))){
     switch ($op){
       case 'insert':
       case 'update':

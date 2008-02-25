@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, getTax; -*-
-// $Id: uc_quote.js,v 1.4.2.3 2008/02/08 22:22:37 rszrama Exp $
+// $Id: uc_quote.js,v 1.4.2.4 2008/02/25 21:11:36 rszrama Exp $
 
 var page;
 var details;
@@ -139,6 +139,9 @@ function displayQuote(data){
       }
       if (data[i].notes) {
         item += '<div class="quote-notes">' + data[i].notes + "</div>";
+      }
+      if (data[i].rate == undefined && item.length){
+        item = label + ': ' + item; 
       }
       quoteDiv.append('<div class="form-item">' + item + "</div>\n");
       if (page == "checkout"){

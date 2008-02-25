@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.8.2.3 2008/02/08 22:22:39 rszrama Exp $
+// $Id: uc_order.install,v 1.8.2.4 2008/02/25 21:11:38 rszrama Exp $
 
 /**
  * Implementation of hook_install().
@@ -359,3 +359,10 @@ function uc_order_update_5() {
   return $ret;
 }
 
+function uc_order_update_6(){
+  $ret = array();
+  $max_opid = db_result(db_query("SELECT MAX(order_product_id) AS max_opid FROM {uc_order_products}"));
+  $ret[] = update_sql("INSERT INTO {sequences} (name, id) VALUES ('{uc_order_products}_order_product_id', $max_opid)");
+  
+  return $ret;
+}

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.4.2.5 2008/02/08 22:22:35 rszrama Exp $
+// $Id: uc_payment.module,v 1.4.2.6 2008/02/25 21:11:36 rszrama Exp $
 
 /**
  * @file
@@ -531,9 +531,6 @@ function uc_payment_get_details($method_id, $view = 'cart') {
   $func = _payment_method_data($method_id, 'callback');
   if (function_exists($func)) {
     $output = $func($view .'-details', $order);
-    /*if (is_array($output) && function_exists($output['form_id'])) {
-      $output = uc_strip_form(drupal_get_form($output['form_id'], $order));
-    }*/
   }
 
   print $output;
@@ -546,7 +543,8 @@ function uc_payment_get_totals() {
   }
   usort($totals, '_total_sort');
 
-  $output = t('Order total preview:') .'<table>';
+  $output = t('Order total preview:')
+           .' <span id="order-total-throbber"></span><table>';
   $grand_total = 0;
 
   foreach($totals as $line) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.install,v 1.9.2.4 2008/02/08 22:22:38 rszrama Exp $
+// $Id: uc_attribute.install,v 1.9.2.5 2008/02/25 21:11:36 rszrama Exp $
 
 function uc_attribute_install(){
   switch($GLOBALS['db_type']){
@@ -78,7 +78,7 @@ function uc_attribute_install(){
         weight float NOT NULL default 0.0,
         ordering smallint NOT NULL default 0,
         PRIMARY KEY (oid)
-      );");
+      ) WITHOUT OIDS;");
       db_query("CREATE TABLE {uc_class_attributes} (
         pcid varchar(32) NOT NULL default '',
         aid integer NOT NULL default 0,
@@ -95,7 +95,7 @@ function uc_attribute_install(){
         weight float NOT NULL default 0.0,
         ordering smallint NOT NULL default 0,
         PRIMARY KEY (pcid,oid)
-      );");
+      ) WITHOUT OIDS;");
       db_query("CREATE TABLE {uc_product_attributes} (
         nid integer NOT NULL default 0,
         aid integer NOT NULL default 0,
@@ -112,7 +112,7 @@ function uc_attribute_install(){
         weight float NOT NULL default 0,
         ordering smallint NOT NULL default 0,
         PRIMARY KEY  (nid,oid)
-      );");
+      ) WITHOUT OIDS;");
       db_query("CREATE TABLE {uc_product_adjustments} (
         nid integer NOT NULL default 0,
         combination varchar(255) NOT NULL default '',
@@ -276,6 +276,18 @@ function uc_attribute_update_7(){
     break;
     case 'pgsql':
       db_add_column($ret, 'uc_class_attributes', 'required', 'smallint', array('not null' => true, 'default' => 0));
+    break;
+  }
+  return $ret;
+}
+
+function uc_attribute_update_8(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'pgsql':
+      $ret[] = update_sql("ALTER TABLE {uc_attribute_options} SET WITHOUT OIDS");
+      $ret[] = update_sql("ALTER TABLE {uc_class_attribute_options} SET WITHOUT OIDS");
+      $ret[] = update_sql("ALTER TABLE {uc_product_options} SET WITHOUT OIDS");
     break;
   }
   return $ret;

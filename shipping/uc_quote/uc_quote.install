@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.install,v 1.4.2.3 2008/02/08 22:22:37 rszrama Exp $
+// $Id: uc_quote.install,v 1.4.2.4 2008/02/25 21:11:36 rszrama Exp $
 
 function uc_quote_install(){
   switch($GLOBALS['db_type']){
@@ -22,6 +22,7 @@ function uc_quote_install(){
         `zone` mediumint(11) UNSIGNED NOT NULL,
         `postal_code` varchar(255) NOT NULL,
         `country` mediumint(11) UNSIGNED NOT NULL,
+        `phone` varchar(255) NOT NULL,
         PRIMARY KEY (tid)
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
       db_query("CREATE TABLE {uc_quote_product_locations} (
@@ -35,6 +36,7 @@ function uc_quote_install(){
         `zone` mediumint(11) UNSIGNED NOT NULL,
         `postal_code` varchar(255) NOT NULL,
         `country` mediumint(11) UNSIGNED NOT NULL,
+        `phone` varchar(255) NOT NULL,
         PRIMARY KEY (nid)
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
       db_query("CREATE TABLE {uc_order_quotes} (
@@ -64,6 +66,7 @@ function uc_quote_install(){
         zone integer NOT NULL default 0,
         postal_code varchar(255) NOT NULL default '',
         country integer NOT NULL default 0,
+        phone varchar(255) NOT NULL default '',
         PRIMARY KEY (tid)
       );");
       db_query("CREATE TABLE {uc_quote_product_locations} (
@@ -77,16 +80,17 @@ function uc_quote_install(){
         zone integer NOT NULL default 0,
         postal_code varchar(255) NOT NULL default '',
         country integer NOT NULL default 0,
+        phone varchar(255) NOT NULL default '',
         PRIMARY KEY (nid)
       );");
       db_query("CREATE TABLE {uc_order_quotes} (
-        oid integer NOT NULL default 0,
+        oid int_unsigned NOT NULL default 0,
         method varchar(25) NOT NULL default '',
         accessorials varchar(255) NOT NULL default '',
         rate decimal(10,2) NOT NULL default 0.00,
         quote_form text NOT NULL default '',
         PRIMARY KEY (oid,method)
-      );");
+      ) WITHOUT OIDS;");
     break;
   }
 }
@@ -211,5 +215,46 @@ function uc_quote_update_4(){
   $ret = array();
   $ret[] = update_sql("DELETE FROM {uc_quote_product_locations} WHERE street1 = ''");
   $ret[] = update_sql("DELETE FROM {uc_quote_manufacturer_locations} WHERE street1 = ''");
+  return $ret;
+}
+
+function uc_quote_update_5(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'pgsql':
+      db_change_column($ret, 'uc_order_quotes', 'oid', 'oid', 'int_unsigned', array('not null' => true, 'default' => 0));
+    break;
+  }
+  return $ret;
+}
+
+function uc_quote_update_6(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_quote_manufacturer_locations} ADD COLUMN phone varchar(255) NOT NULL");
+      $ret[] = update_sql("ALTER TABLE {uc_quote_product_locations} ADD COLUMN phone varchar(255) NOT NULL");
+    break;
+    case 'pgsql':
+      db_add_column($ret, 'uc_quote_manufacturer_locations', 'phone', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_add_column($ret, 'uc_quote_product_locations', 'phone', 'varchar(255)', array('not null' => true, 'default' => ''));
+    break;
+  }
+  $address = variable_get('uc_quote_store_default_address', new stdClass());
+  $result = db_query("UPDATE {uc_quote_manufacturer_locations} SET phone = '%s'", $address->phone);
+  $ret[] = array('success' => $result !== FALSE, 'query' => check_plain("UPDATE {uc_quote_manufacturer_locations} SET phone = '". $address->phone ."'"));
+  $result = db_query("UPDATE {uc_quote_product_locations} SET phone = '%s'", $address->phone);
+  $ret[] = array('success' => $result !== FALSE, 'query' => check_plain("UPDATE {uc_quote_product_locations} SET phone = '". $address->phone ."'"));
+  return $ret;
+}
+
+function uc_quote_update_7(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'pgsql':
+      $ret[] = update_sql("ALTER TABLE {uc_order_quotes} SET WITHOUT OIDS");
+    break;
+  }
   return $ret;
 }

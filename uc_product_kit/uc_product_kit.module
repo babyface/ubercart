@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.10.2.2 2008/02/08 22:22:39 rszrama Exp $
+// $Id: uc_product_kit.module,v 1.10.2.3 2008/02/25 21:11:37 rszrama Exp $
 
 /**
  * @file
@@ -32,6 +32,23 @@ function uc_product_kit_access($op, $node){
         return user_access('edit products');
       }
   }
+}
+
+/**
+ * Implementation of hook_node_info().
+ *
+ * @return Node type information for product kits.
+ */
+function uc_product_kit_node_info(){
+  return array(
+    'product_kit' => array(
+      'name' => t('Product kit'),
+      'module' => 'uc_product_kit',
+      'description' => t('This node represents two or more products that have been listed together. This presents a logical and convenient grouping of items to the customer.'),
+      'title_label' => t('Name'),
+      'body_label' => t('Description'),
+    ),
+  );
 }
 
 /**
@@ -257,9 +274,9 @@ function uc_product_kit_form(&$node){
     '#description' => t('Explain these whatchamacallits.'),
   );
   
-  $product_types = uc_product_node_info();
-  unset($product_types['product_kit']);
-  $result = db_query("SELECT nid, title FROM {node} WHERE type IN ('". implode("','", array_keys($product_types)) ."')");
+  $product_types = module_invoke_all('product_types');
+  unset($product_types[array_search('product_kit', $product_types)]);
+  $result = db_query("SELECT nid, title FROM {node} WHERE type IN ('". implode("','", $product_types) ."')");
   $products = array();
   while ($product = db_fetch_object($result)){
     $products[$product->nid] = $product->title;
@@ -449,21 +466,8 @@ function uc_product_kit_add_to_cart_form_submit($form_id, $form_values){
  * Übercart Hooks                                                             *
  ******************************************************************************/
 
-/**
- * Implementation of Übercart's hook_product_info().
- *
- * @return Node type information for product kits.
- */
-function uc_product_kit_product_info(){
-  return array(
-    'product_kit' => array(
-      'name' => t('Product kit'),
-      'module' => 'uc_product_kit',
-      'description' => t('This node represents two or more products that have been listed together. This presents a logical and convenient grouping of items to the customer.'),
-      'title_label' => t('Name'),
-      'body_label' => t('Description'),
-    ),
-  );
+function uc_product_kit_product_types(){
+  return array('product_kit');
 }
 
 function uc_product_kit_add_to_cart($nid, $qty, $kit_data){

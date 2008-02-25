@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.install,v 1.1.2.2 2008/02/08 22:22:40 rszrama Exp $
+// $Id: uc_roles.install,v 1.1.2.3 2008/02/25 21:11:39 rszrama Exp $
 
 function uc_roles_install(){
   switch($GLOBALS['db_type']){
@@ -13,6 +13,7 @@ function uc_roles_install(){
         duration smallint(4) default NULL,
         granularity varchar(32) default NULL,
         shippable BOOL NOT NULL,
+        by_quantity BOOL NOT NULL,
         KEY pfid (pfid),
         KEY nid (nid),
         KEY model (model),
@@ -35,7 +36,8 @@ function uc_roles_install(){
         rid integer NOT NULL,
         duration smallint default NULL,
         granularity varchar(32) default NULL,
-        shippable boolean NOT NULL
+        shippable boolean NOT NULL,
+        by_quantity boolean NOT NULL
         );");
       db_query("CREATE INDEX {uc_roles_products}_pfid ON {uc_roles_products} (pfid)");
       db_query("CREATE INDEX {uc_roles_products}_nid ON {uc_roles_products} (nid)");
@@ -92,6 +94,23 @@ function uc_roles_update_2() {
       $ret[] = update_sql("ALTER TABLE {uc_roles_products} ADD shippable BOOL NOT NULL");
       break;
     case 'pgsql':
+      break;
+  }
+  
+  return $ret;
+}
+
+ 
+function uc_roles_update_3() {
+  $ret = array();
+  
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_roles_products} ADD by_quantity BOOL NOT NULL");
+      break;
+    case 'pgsql':
+      $ret[] = update_sql("ALTER TABLE {uc_roles_products} ADD by_quantity boolean NOT NULL");
       break;
   }
   

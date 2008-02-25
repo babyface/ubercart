@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.module,v 1.4.2.2 2008/01/16 21:56:54 rszrama Exp $
+// $Id: uc_flatrate.module,v 1.4.2.3 2008/02/25 21:11:37 rszrama Exp $
 
 /**
  * @file
@@ -53,29 +53,31 @@ function uc_flatrate_menu($may_cache){
  */
 function uc_flatrate_form_alter($form_id, &$form){
   $node = $form['#node'];
-  $product_types = uc_product_node_info();
-  if (is_object($node) && $form_id == $node->type .'_node_form' && isset($product_types[$node->type])){
-    $sign_flag = variable_get('uc_sign_after_amount', FALSE);
-    $currency_sign = variable_get('uc_currency_sign', '$');
-    $enabled = variable_get('uc_quote_enabled', array());
-    $form['shipping']['flatrate'] = array('#type' => 'fieldset',
-      '#title' => t('Flat shipping rates'),
-      '#description' => t('Override the default shipping rate per product for each flat rate shipping method here. Enter -1 to revert to the default value.'),
-      '#tree' => true,
-      '#collapsible' => true,
-      '#collapsed' => false,
-      '#weight' => 2,
-    );
+  $product_types = module_invoke_all('product_types');
+  if (is_object($node) && $form_id == $node->type .'_node_form' && in_array($node->type, $product_types)){
     $result = db_query("SELECT mid, title, product_rate FROM {uc_flatrate_methods}");
-    while ($method = db_fetch_object($result)){
-      $form['shipping']['flatrate'][$method->mid] = array('#type' => 'textfield',
-        '#title' => $method->title,
-        '#default_value' => $form['#node']->flatrate[$method->mid],
-        '#description' => t('Default rate: %price', array('%price' => uc_currency_format($method->product_rate))),
-        '#size' => 16,
-        '#field_prefix' => $sign_flag ? '' : $currency_sign,
-        '#field_suffix' => $sign_flag ? $currency_sign : '',
+    if (db_num_rows($result)){
+      $sign_flag = variable_get('uc_sign_after_amount', FALSE);
+      $currency_sign = variable_get('uc_currency_sign', '$');
+      $enabled = variable_get('uc_quote_enabled', array());
+      $form['shipping']['flatrate'] = array('#type' => 'fieldset',
+        '#title' => t('Flat shipping rates'),
+        '#description' => t('Override the default shipping rate per product for each flat rate shipping method here. Enter -1 to revert to the default value.'),
+        '#tree' => true,
+        '#collapsible' => true,
+        '#collapsed' => false,
+        '#weight' => 2,
       );
+      while ($method = db_fetch_object($result)){
+        $form['shipping']['flatrate'][$method->mid] = array('#type' => 'textfield',
+          '#title' => $method->title,
+          '#default_value' => $form['#node']->flatrate[$method->mid],
+          '#description' => t('Default rate: %price', array('%price' => uc_currency_format($method->product_rate))),
+          '#size' => 16,
+          '#field_prefix' => $sign_flag ? '' : $currency_sign,
+          '#field_suffix' => $sign_flag ? $currency_sign : '',
+        );
+      }
     }
   }
 }
@@ -84,7 +86,7 @@ function uc_flatrate_form_alter($form_id, &$form){
  * Implementation of hook_nodeapi().
  */
 function uc_flatrate_nodeapi(&$node, $op){
-  if (in_array($node->type, array_keys(uc_product_node_info()))){
+  if (in_array($node->type, module_invoke_all('product_types'))){
     switch($op){
       case 'insert':
       case 'update':
@@ -286,7 +288,13 @@ function uc_flatrate_admin_method_edit_form_submit($form_id, $form_values){
     $mid = db_next_id("{uc_flatrate_methods}_mid");
     db_query("INSERT INTO {uc_flatrate_methods} (mid, title, label, base_rate, product_rate) VALUES (%d, '%s', '%s', %f, %f)",
       $mid, $form_values['title'], $form_values['label'], $form_values['base_rate'], $form_values['product_rate']);
-    drupal_set_message("Created new flat rate shipping method.");
+    $enabled = variable_get('uc_quote_enabled', array());
+    $enabled['flatrate_'. $mid] = true;
+    variable_set('uc_quote_enabled', $enabled);
+    $weight = variable_get('uc_quote_method_weight', array());
+    $weight['flatrate_'. $mid] = 0;
+    variable_set('uc_quote_method_weight', $weight);
+    drupal_set_message("Created and enabled new flat rate shipping method.");
   }
   return 'admin/store/settings/quotes/methods/flatrate';
 }
@@ -307,6 +315,12 @@ function uc_flatrate_admin_method_confirm_delete_submit($form_id, $form_values){
   db_query("DELETE FROM {uc_flatrate_products} WHERE mid = %d", $form_values['mid']);
   db_query("DELETE FROM {workflow_ng_cfgs} WHERE name = '%s'", 'uc_flatrate_get_quote_by_'. $form_values['type'] .'_rate_'. $form_values['mid']);
   workflow_ng_clear_cache();
+  $enabled = variable_get('uc_quote_enabled', array());
+  unset($enabled['flatrate_'. $form_values['mid']]);
+  variable_set('uc_quote_enabled', $enabled);
+  $weight = variable_get('uc_quote_method_weight', array());
+  unset($weight['flatrate_'. $form_values['mid']]);
+  variable_set('uc_quote_method_weight', $weight);
   drupal_set_message('Flat rate shipping method deleted.');
   return 'admin/store/settings/quotes/methods/flatrate';
 }

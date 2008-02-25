@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cybersource.module,v 1.3.2.1 2008/01/07 20:56:38 rszrama Exp $
+// $Id: uc_cybersource.module,v 1.3.2.2 2008/02/25 21:11:40 rszrama Exp $
 
 /**
  * @file
@@ -75,10 +75,11 @@ function uc_cybersource_settings_form() {
   $form['cybersource']['uc_cybersource_method'] = array(
     '#type' => 'select',
     '#title' => t('Payment method'),
-    '#description' => t('The Simple Order API offers extended functionality but requires the CyberSource PHP extension.'),
+    // '#description' => t('The Simple Order API offers extended functionality but requires the CyberSource PHP extension.'),
+    '#description' => t('Currently, only the Silent Order POST method is supported.'),
     '#options' => array(
       'post' => t('Silent Order POST'),
-      'api' => t('Simple Order API'),
+      // 'api' => t('Simple Order API'),
     ),
     '#default_value' => variable_get('uc_cybersource_method', 'post'),
   );

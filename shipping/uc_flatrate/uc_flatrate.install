@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.install,v 1.4.2.3 2008/02/08 22:22:37 rszrama Exp $
+// $Id: uc_flatrate.install,v 1.4.2.4 2008/02/25 21:11:37 rszrama Exp $
 
 function uc_flatrate_install(){
   switch($GLOBALS['db_type']){
@@ -23,9 +23,9 @@ function uc_flatrate_install(){
     break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_flatrate_products} (
-        vid integer NOT NULL default 0,
-        nid integer NOT NULL default 0,
-        mid integer NOT NULL default 0,
+        vid int_unsigned NOT NULL default 0,
+        nid int_unsigned NOT NULL default 0,
+        mid int_unsigned NOT NULL default 0,
         rate decimal(10,2) NOT NULL default 0.00,
         PRIMARY KEY (vid, mid)
       );");
@@ -168,6 +168,18 @@ function uc_flatrate_update_3(){
     break;
     case 'pgsql':
       $ret[] = update_sql("ALTER TABLE {uc_flatrate_products} DROP CONSTRAINT {uc_flatrate_products}_pkey, ADD PRIMARY KEY (vid, mid)");
+    break;
+  }
+  return $ret;
+}
+
+function uc_flatrate_update_4(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'pgsql':
+      db_change_column($ret, 'uc_flatrate_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_flatrate_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_flatrate_prodcts', 'mid', 'mid', 'int_unsigned', array('not null' => true, 'default' => 0));
     break;
   }
   return $ret;

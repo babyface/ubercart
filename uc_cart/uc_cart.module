@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.14.2.6 2008/02/08 22:22:38 rszrama Exp $
+// $Id: uc_cart.module,v 1.14.2.7 2008/02/25 21:11:36 rszrama Exp $
 
 /**
  * @file
@@ -407,7 +407,7 @@ function uc_cart_exit() {
 }
 
 function uc_cart_nodeapi(&$node, $op, $arg3, $arg4){
-  if (in_array($node->type, array_keys(uc_product_node_info()))){
+  if (in_array($node->type, module_invoke_all('product_types'))){
     switch ($op){
       case 'delete':
         db_query("DELETE FROM {uc_cart_products} WHERE nid = %d", $node->nid);
@@ -1204,6 +1204,9 @@ function theme_uc_cart_view_form($form) {
                . $button .'</div></div>';
     }
   }
+  else {
+    $output .= '<div id="cart-form-buttons">'. drupal_render($form) .'</div>';
+  }
 
   return $output;
 }
@@ -1833,7 +1836,7 @@ function uc_cart_add_item($nid, $qty = 1, $data = NULL, $cid = NULL, $msg = TRUE
     $data = array('module' => 'uc_product');
   }
 
-  if (!in_array($node->type, array_keys(uc_product_node_info()))) {
+  if (!in_array($node->type, module_invoke_all('product_types'))) {
     drupal_set_message(t('!title is not a product. Unable to add to cart.', array('!title' => $node->title)), 'error');
     return;
   }

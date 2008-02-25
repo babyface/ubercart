@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.1.2.5 2008/02/08 22:22:39 rszrama Exp $
+// $Id: uc_file.module,v 1.1.2.6 2008/02/25 21:11:39 rszrama Exp $
 
 /**
  * @file
@@ -324,6 +324,9 @@ function uc_file_feature_delete($feature) {
  * Form builder for hook_product_feature
  */ 
 function uc_file_feature_form($node, $feature) {
+  if (!is_dir(variable_get('uc_file_base_dir', NULL))) {
+    drupal_set_message(t('A file directory needs to be configured in <a href="!url">product feature settings</a> before a file can be selected.',array('!url' => url('admin/store/settings/products/edit/features'))),'error');
+  }
   _file_table_action('insert');
   $models = (!_get_adjustment_models($node->nid)) ? array(NULL => t('Any'), $node->model => $node->model) : array(NULL => t('Any'), $node->model => $node->model) + _get_adjustment_models($node->nid);
   
@@ -864,8 +867,8 @@ function uc_file_user_downloads($uid) {
   while ($file = db_fetch_object($files)) {
     $row = count($rows);
     $expiration = _file_expiration_date($file->granted);
-    $onclick = array('onclick' => "uc_file_update_download($row,$file->accessed,".((is_null($download_limit)) ? -1 : $download_limit).");",'id' => "link-$row");
-    $file_link = (($file->accessed < $download_limit) ? ((!$expiration) ? l(basename($file->filename),'download/'.$file->fid.'/'.$file->key,$onclick) : ((time() > $expiration) ? basename($file->filename) : l(basename($file->filename),'download/'.$file->fid.'/'.$file->key,$onclick).' ('.t('expires on ').format_date($expiration,'custom','m/d/Y').')')) : basename($file->filename));
+    $onclick = array('onclick' => "uc_file_update_download($row,$file->accessed,".((empty($download_limit)) ? -1 : $download_limit).");",'id' => "link-$row");
+    $file_link = (!$expiration) ? l(basename($file->filename),'download/'.$file->fid.'/'.$file->key,$onclick) : ((time() > $expiration) ? basename($file->filename) : l(basename($file->filename),'download/'.$file->fid.'/'.$file->key,$onclick).' ('.t('expires on ').format_date($expiration,'custom','m/d/Y').')');
     
     $rows[] = array(
       array('data' => format_date($file->granted,'custom', 'm/d/Y'), 'class' => 'date-row', 'id' => "date-$row"),

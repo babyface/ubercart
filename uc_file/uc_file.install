@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.install,v 1.1.2.2 2008/02/08 22:22:39 rszrama Exp $
+// $Id: uc_file.install,v 1.1.2.3 2008/02/25 21:11:39 rszrama Exp $
 
 function uc_file_install(){
   switch($GLOBALS['db_type']){
@@ -53,7 +53,7 @@ function uc_file_install(){
         pfid integer default NULL,
         key varchar(32) NOT NULL,
         granted integer NOT NULL,
-        accessed smallint NOT NULL default 0,
+        accessed smallint_unsigned NOT NULL default 0,
         addresses text
         );");
       db_query("CREATE INDEX {uc_file_users}_pfid ON {uc_file_users} (pfid)");
@@ -93,5 +93,15 @@ function uc_file_update_1() {
       break;
   }
   
+  return $ret;
+}
+
+function uc_file_update_2(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'pgsql':
+      db_change_column($ret, 'uc_file_users', 'accessed', 'accessed', 'smallint_unsigned', array('not null' => true, 'default' => 0));
+    break;
+  }
   return $ret;
 }

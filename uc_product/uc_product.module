@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.13.2.4 2008/02/08 22:22:39 rszrama Exp $
+// $Id: uc_product.module,v 1.13.2.5 2008/02/25 21:11:39 rszrama Exp $
 
 /**
  * @file
@@ -116,7 +116,7 @@ function uc_product_menu($may_cache){
     // Insert subitems into the edit node page for product types.
     if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'edit'){
       $node = node_load(arg(1));
-      if ($node->nid && in_array($node->type, array_keys(uc_product_node_info()))){
+      if ($node->nid && in_array($node->type, module_invoke_all('product_types'))){
         $items[] = array('path' => 'node/'. arg(1) .'/edit/product',
           'title' => t('Product'),
           'weight' => -10,
@@ -254,7 +254,7 @@ function uc_product_enable(){
         'format' => 'hidden',
       ),
     );
-    foreach (array_keys(uc_product_node_info()) as $type){
+    foreach (module_invoke_all('product_types') as $type){
       $result = db_query("SELECT * FROM {node_field_instance} WHERE field_name = 'field_imagecache' and type_name = '%s'", $type);
       if (!db_num_rows($result)){
         db_query("INSERT INTO {node_field_instance} VALUES ('field_image_cache', '%s', -2, 'Image', 'image', '%s', '%s', '')", $type, serialize($widget_settings), serialize($display_settings));
@@ -276,10 +276,10 @@ function uc_product_enable(){
           $result = db_query("SELECT relname FROM pg_class WHERE relname = '{content_field_image_cache}'");
           if (!db_num_rows($result)){
             db_query('CREATE TABLE {content_field_image_cache} (
-              "vid" int(10) unsigned NOT NULL default \'0\',
-              "delta" int(10) unsigned NOT NULL default \'0\',
-              "nid" int(10) unsigned NOT NULL default \'0\',
-              "field_image_cache_fid" int(11) NOT NULL default \'0\',
+              "vid" int_unsigned NOT NULL default \'0\',
+              "delta" int_unsigned NOT NULL default \'0\',
+              "nid" int_unsigned NOT NULL default \'0\',
+              "field_image_cache_fid" integer NOT NULL default \'0\',
               "field_image_cache_title" varchar(255) NOT NULL,
               "field_image_cache_alt" varchar(255) NOT NULL,
               PRIMARY KEY  ("vid","delta")
@@ -360,7 +360,6 @@ function uc_product_node_info($reset = false){
         'body_label' => $body_label,
       );
     }
-    $types = array_merge($types, module_invoke_all('product_info'));
   }
   return $types;
 }
@@ -800,9 +799,10 @@ function uc_product_form_alter($form_id, &$form){
 
     // Node types:
     $types = array();
-    $node_types = uc_product_node_info();
-    foreach ($node_types as $id => $type){
-      $types[$id] = $type['name'];
+    $product_types = module_invoke_all('product_types');
+    $node_types = module_invoke_all('node_info');
+    foreach ($product_types as $id){
+      $types[$id] = $node_types[$id]['name'];
     }
     $form['advanced']['type'] = array(
       '#type' => 'checkboxes',
@@ -1169,7 +1169,7 @@ function uc_views_handler_weight($fieldinfo, $fielddata, $value, $data) {
  * Return a formatted add to cart form to display in the View.
  */
 function uc_product_views_handler_add_to_cart_link($fieldinfo, $fielddata, $value, $data) {
-  $types = uc_product_node_info();
+  $types = module_invoke_all('node_info');
   $product = node_load($data->nid);
   $module = $types[$product->type]['module'];
   if (theme_get_function($module .'_add_to_cart')){
@@ -1184,7 +1184,7 @@ function uc_product_views_handler_add_to_cart_link($fieldinfo, $fielddata, $valu
  * Filter out nodes that are not products.
  */
 function uc_product_views_handler_filter_product($op, $filter, $filterinfo, &$query) {
-  $types = array_keys(uc_product_node_info());
+  $types = module_invoke_all('product_types');
 
   switch ($op){
     case 'handler':
@@ -1294,6 +1294,10 @@ function uc_product_views_default_views(){
 /******************************************************************************
  * Übercart Hooks                                                             *
  ******************************************************************************/
+
+function uc_product_product_types(){
+  return array_keys(uc_product_node_info());
+}
 
 /**
  * Display the status of the product image handlers.
@@ -1503,7 +1507,7 @@ function uc_product_image_defaults($checks){
         'format' => 'hidden',
       ),
     );
-    foreach (array_keys(uc_product_node_info()) as $type){
+    foreach (module_invoke_all('product_types') as $type){
       db_query("INSERT INTO {node_field_instance} VALUES ('field_image_cache', '%s', -2, 'Image', 'image', '%s', '%s', '')", $type, serialize($widget_settings), serialize($display_settings));
     }
     switch ($GLOBALS['db_type']){
@@ -1521,9 +1525,9 @@ function uc_product_image_defaults($checks){
       break;
       case 'pgsql':
         db_query("CREATE TABLE content_field_image_cache (
-          vid integer NOT NULL default '0',
-          delta integer NOT NULL default '0',
-          nid integer NOT NULL default '0',
+          vid int_unsigned NOT NULL default '0',
+          delta int_unsigned NOT NULL default '0',
+          nid int_unsigned NOT NULL default '0',
           field_image_cache_fid integer NOT NULL default '0',
           field_image_cache_title varchar(255) NOT NULL default '',
           field_image_cache_alt varchar(255) NOT NULL,
@@ -1598,7 +1602,8 @@ function uc_product_administration() {
   }
 
   // Load all the vocabularies assigned to any product node type.
-  $types = array_keys(uc_product_node_info());
+  $options = array();
+  $types = module_invoke_all('product_types');
   $result = db_query("SELECT v.vid, v.name FROM {vocabulary} AS v LEFT JOIN {vocabulary_node_types} AS vnt ON v.vid = vnt.vid WHERE vnt.type IN ('". implode("','", $types) ."')");
   while ($vocab = db_fetch_array($result)) {
     $options[$vocab['vid']] = $vocab['name'];
@@ -1606,16 +1611,16 @@ function uc_product_administration() {
 
   // Set the default vid, defaulting to the catalog if it's enabled.
   $default_vid = variable_get('uc_catalog_vid', 0);
-  if (!in_array($default_vid, array_keys($options))) {
-    $default_vid = array_shift(array_keys($options));
-  }
 
   // If at least one vocabularies were found, display a uBrowser selector.
   if (count($options) > 0) {
+    if (!in_array($default_vid, array_keys($options))) {
+      $default_vid = array_shift(array_keys($options));
+    }
     $output = '<div>'. t('Use the uBrowser to select as many products as you like and move them to the product container. When you are finished adding products, click the List button to reload the page showing the selected products. This effect is not cumulative and will not add products onto an existing list.') .'</div>';
 
     // Set the product filter for the uBrowser.
-    $product_filter = implode(',', array_keys(uc_product_node_info()));
+    $product_filter = implode(',', $types);
   
     // If more than one vocabularies were found, display a select box.
     if (count($options) > 1) {
@@ -2166,8 +2171,8 @@ function uc_product_is_product($node){
     return false;
   }
   
-  $types = uc_product_node_info();
-  return isset($types[$type]);
+  $types = module_invoke_all('product_types');
+  return in_array($type, $types);
 }
 
 /**

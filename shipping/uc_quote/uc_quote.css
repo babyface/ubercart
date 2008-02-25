@@ -20,6 +20,10 @@ img.icon {
   cursor: pointer;
 }
 
+.quote-error {
+  display: inline;
+}
+
 .quote-notes {
   margin-left: 25px;
 }

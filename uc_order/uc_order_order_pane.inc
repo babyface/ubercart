@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_order_pane.inc,v 1.4.2.4 2008/02/08 22:22:39 rszrama Exp $
+// $Id: uc_order_order_pane.inc,v 1.4.2.5 2008/02/25 21:11:38 rszrama Exp $
 
 /**
  * @file
@@ -285,7 +285,7 @@ function uc_order_pane_products($op, $arg1) {
         'div' => '#products-selector',
         'class' => 'product-select-box',
         'vid' => variable_get('uc_catalog_vid', 0),
-        'filter' => implode(',', array_keys(uc_product_node_info())),
+        'filter' => implode(',', module_invoke_all('product_types')),
         'search' => 'true',
         'nids' => 'true',
         'close' => 'true',

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.11.2.4 2008/02/08 22:22:38 rszrama Exp $
+// $Id: uc_attribute.module,v 1.11.2.5 2008/02/25 21:11:36 rszrama Exp $
 
 /**
  * @file
@@ -114,8 +114,7 @@ function uc_attribute_menu($may_cache){
     // Insert subitems into the edit node page for product types.
     if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'edit'){
       $node = node_load(arg(1));
-      $types = uc_product_node_info();
-      if ($node->nid && in_array($node->type, array_keys($types))){
+      if ($node->nid && in_array($node->type, module_invoke_all('product_types'))){
         $items[] = array('path' => 'node/'. arg(1) .'/edit/attributes',
           'title' => t('Attributes'),
           'callback' => 'drupal_get_form',
@@ -173,7 +172,7 @@ function uc_attribute_form_alter($form_id, &$form){
  * Implementation of hook_nodeapi().
  */
 function uc_attribute_nodeapi(&$node, $op, $arg3 = null, $arg4 = null){
-  if (in_array($node->type, array_keys(uc_product_node_info()))){
+  if (in_array($node->type, module_invoke_all('product_types'))){
     switch($op){
       case 'insert':
         switch ($GLOBALS['db_type']){
@@ -1082,7 +1081,7 @@ function uc_attribute_load($attr_id, $nid = null, $type = ''){
         $result = db_query("SELECT po.nid, po.oid, po.cost, po.price, po.weight, po.ordering, ao.name, ao.aid FROM {uc_product_options} AS po LEFT JOIN {uc_attribute_options} AS ao ON po.oid = ao.oid AND nid = %d WHERE aid = %d ORDER BY po.ordering, ao.name", $nid, $attr_id);
       break;
       case 'class':
-        $attribute = db_fetch_object(db_query("SELECT a.aid, a.name, a.ordering AS default_ordering, ca.default_option, ca.required ca.ordering FROM {uc_attributes} AS a LEFT JOIN {uc_class_attributes} AS ca ON a.aid = ca.aid AND ca.pcid = '%s' WHERE a.aid = %d ORDER BY ca.ordering", $nid, $attr_id));
+        $attribute = db_fetch_object(db_query("SELECT a.aid, a.name, a.ordering AS default_ordering, ca.default_option, ca.required, ca.ordering FROM {uc_attributes} AS a LEFT JOIN {uc_class_attributes} AS ca ON a.aid = ca.aid AND ca.pcid = '%s' WHERE a.aid = %d ORDER BY ca.ordering", $nid, $attr_id));
         $result = db_query("SELECT co.pcid, co.oid, co.cost, co.price, co.weight, co.ordering, ao.name, ao.aid FROM {uc_class_attribute_options} AS co LEFT JOIN {uc_attribute_options} AS ao ON co.oid = ao.oid AND co.pcid = '%s' WHERE ao.aid = %d ORDER BY co.ordering, ao.name", $nid, $attr_id);
       break;
       default:

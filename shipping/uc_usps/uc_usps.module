@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.5.2.4 2008/02/08 22:22:38 rszrama Exp $
+// $Id: uc_usps.module,v 1.5.2.5 2008/02/25 21:11:38 rszrama Exp $
 
 /**
  * @file
@@ -41,8 +41,7 @@ function uc_usps_menu($may_cache){
  */
 function uc_usps_form_alter($form_id, &$form){
   $node = $form['#node'];
-  $product_types = uc_product_node_info();
-  if (is_object($node) && $form_id == $node->type .'_node_form' && isset($product_types[$node->type])){
+  if (is_object($node) && $form_id == $node->type .'_node_form' && in_array($node->type, module_invoke_all('product_types'))){
     $enabled = variable_get('uc_quote_enabled', array());
     $form['shipping']['usps'] = array('#type' => 'fieldset',
       '#title' => t('USPS product description'),
@@ -63,7 +62,7 @@ function uc_usps_form_alter($form_id, &$form){
  * Implementation of hook_nodeapi().
  */
 function uc_usps_nodeapi(&$node, $op){
-  if (in_array($node->type, array_keys(uc_product_node_info()))){
+  if (in_array($node->type, module_invoke_all('product_types'))){
     switch ($op){
       case 'insert':
       case 'update':
@@ -303,7 +302,12 @@ function uc_usps_quote($products, $details){
           foreach ($package->postage as $postage){
             $attr = $postage->attributes();
             if ($attr['classid'] === 0 || $attr['classid'] === '0'){
-              $attr['classid'] = 'zero';
+              if ($postage->mailservice[0]->data() == "First-Class Mail Parcel"){
+                $attr['classid'] = 'zeroParcel';
+              }
+              if ($postage->mailservice[0]->data() == "First-Class Mail Flat"){
+                $attr['classid'] = 'zeroFlat';
+              }
             }
             $services[$attr['classid']]['label'] = t('U.S.P.S. @service', array('@service' => $postage->mailservice[0]->data()));
             $services[$attr['classid']]['rate'] += uc_usps_markup($postage->rate[0]->data());
@@ -694,7 +698,8 @@ function _uc_usps_pkg_types(){
  */
 function _uc_usps_services(){
   return array(
-    'zero' => t('U.S.P.S. First-Class'),
+    'zeroFlat' => t('U.S.P.S. First-Class Flat'),
+    'zeroParcel' => t('U.S.P.S. First-Class Parcel'),
     1 => t('U.S.P.S. Priority Mail'),
     2 => t('U.S.P.S. Express Mail PO to PO'),
     3 => t('U.S.P.S. Express Mail PO to Addressee'),

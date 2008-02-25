@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.4.2.5 2008/02/08 22:22:35 rszrama Exp $
+// $Id: uc_credit.module,v 1.4.2.6 2008/02/25 21:11:36 rszrama Exp $
 
 /**
  * @file
@@ -169,6 +169,7 @@ function uc_credit_order($op, &$arg1, $arg2) {
           $cc_exp_year = $crypt->encrypt($key, $cc_exp_year, 32);
           $cc_cvv = $crypt->encrypt($key, $cc_cvv, 32);
           $cc_bank = $crypt->encrypt($key, $cc_bank);
+          uc_store_encryption_errors($crypt, 'uc_credit');
         }
 
         db_query("UPDATE {uc_payment_credit} SET cc_type = '%s', cc_owner = '%s', "
@@ -200,6 +201,7 @@ function uc_credit_order($op, &$arg1, $arg2) {
             $arg1->payment_details['cc_exp_year'] = $crypt->decrypt($key, $data->cc_exp_year);
             $arg1->payment_details['cc_cvv'] = $crypt->decrypt($key, $data->cc_cvv);
             $arg1->payment_details['cc_bank'] = $crypt->decrypt($key, $data->cc_bank);
+            uc_store_encryption_errors($crypt, 'uc_credit');
           }
           else {
             $arg1->payment_details['cc_type'] = $data->cc_type;
@@ -959,6 +961,7 @@ function uc_credit_encrypt_existing() {
                $crypt->encrypt($key, $row['cc_cvv'], 32),
                $crypt->encrypt($key, $row['cc_bank']),
                $row['credit_id']);
+      uc_store_encryption_errors($crypt, 'uc_credit');
     }
     variable_set('uc_credit_existing_cc_encrypted', TRUE);
     drupal_set_message(t('Your existing credit card data has been encrypted.'));

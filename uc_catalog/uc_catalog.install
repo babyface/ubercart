@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.install,v 1.8.2.3 2008/02/08 22:22:39 rszrama Exp $
+// $Id: uc_catalog.install,v 1.8.2.4 2008/02/25 21:11:36 rszrama Exp $
 
 function uc_catalog_install(){
   $t = get_t();
@@ -16,10 +16,13 @@ function uc_catalog_install(){
   }
   variable_set('uc_catalog_vid', $vid);
   variable_set('uc_catalog_name', t('Catalog'));
+  
 
   switch ($GLOBALS['db_type']){
     case 'mysql':
     case 'mysqli':
+      // Initially allow everyone to view the catalog.
+      db_query("UPDATE {permission} SET perm = CONCAT_WS(', ', perm, 'view catalog')");
       db_query("CREATE TABLE IF NOT EXISTS {uc_catalog_images} (
         `fid` int(10) unsigned NOT NULL default '0',
         `tid` int(10) unsigned NOT NULL default '0',
@@ -31,14 +34,16 @@ function uc_catalog_install(){
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
     break;
     case 'pgsql':
+      // Initially allow everyone to view the catalog.
+      db_query("UPDATE {permission} SET perm = perm || ', view catalog'");
       // There will be an error if the table already exists, but this should be OK.
       db_query("CREATE TABLE {uc_catalog_images} (
-        fid integer NOT NULL default 0,
-        tid integer NOT NULL default 0,
+        fid int_unsigned NOT NULL default 0,
+        tid int_unsigned NOT NULL default 0,
         filename varchar(255) NOT NULL default '',
         filepath varchar(255) NOT NULL default '',
         filemime varchar(255) NOT NULL default '',
-        filesize integer NOT NULL default 0,
+        filesize int_unsigned NOT NULL default 0,
         PRIMARY KEY  (fid)
       );");
     break;
@@ -94,4 +99,26 @@ function uc_catalog_update_1(){
 function uc_catalog_update_2(){
   variable_del('uc_catalog_url');
   return array(array('success' => TRUE, 'query' => "variable_del('uc_catalog_url')"));
+}
+
+function uc_catalog_update_3(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'pgsql':
+      db_change_column($ret, 'uc_catalog_images', 'fid', 'fid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_catalog_images', 'tid', 'tid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_catalog_images', 'filesize', 'filesize', 'int_unsigned', array('not null' => true, 'default' => 0));
+    break;
+  }
+  return $ret;
+}
+
+function uc_catalog_update_4(){
+  $ret = array();
+  $result = db_query("SELECT rid FROM {permission} WHERE perm NOT LIKE '%%%s%%'", 'view catalog');
+  while ($role = db_fetch_object($result)){
+    $sql_result = db_query("UPDATE {permission} SET perm = CONCAT_WS(', ', perm, 'view catalog') WHERE rid = %d", $role->rid);
+    $ret[] = array('success' => $sql_result !== FALSE, 'query' => "UPDATE {permission} SET perm = CONCAT_WS(', ', perm, 'view catalog') WHERE rid = ". $role->rid);
+  }
+  return $ret;
 }

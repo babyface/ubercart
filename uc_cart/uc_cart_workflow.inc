@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_workflow.inc,v 1.1.2.1 2008/01/07 20:56:42 rszrama Exp $
+// $Id: uc_cart_workflow.inc,v 1.1.2.2 2008/02/25 21:11:36 rszrama Exp $
 
 /**
  * @file
@@ -60,9 +60,10 @@ function uc_cart_condition_product_class($order, $settings) {
 
 function uc_cart_condition_product_class_form($settings = array()) {
   $options = array();
-  $types = uc_product_node_info();
-  foreach ($types as $id => $info){
-    $options[$id] = $info['name'];
+  $types = module_invoke_all('node_info');
+  $product_types = module_invoke_all('product_types');
+  foreach ($product_types as $id){
+    $options[$id] = $types[$id]['name'];
   }
   $form['class'] = array('#type' => 'select',
     '#title' => t('Product class'),

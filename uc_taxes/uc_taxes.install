@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.install,v 1.9.2.2 2008/02/08 22:22:43 rszrama Exp $
+// $Id: uc_taxes.install,v 1.9.2.3 2008/02/25 21:11:37 rszrama Exp $
 
 function uc_taxes_install(){
   switch($GLOBALS['db_type']){
@@ -123,7 +123,7 @@ function uc_taxes_update_5(){
   }
   
   $types = array();
-  foreach (array_keys(uc_product_node_info()) as $type){
+  foreach (module_invoke_all('product_types') as $type){
     $types[$type] = $type;
   }
   db_query("UPDATE {uc_taxes} SET taxed_product_types = '%s'", serialize($types));

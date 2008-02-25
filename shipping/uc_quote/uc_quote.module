@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.4.2.4 2008/02/08 22:22:37 rszrama Exp $
+// $Id: uc_quote.module,v 1.4.2.5 2008/02/25 21:11:36 rszrama Exp $
 
 /**
  * @file
@@ -89,8 +89,8 @@ function uc_quote_taxonomy($op, $type, $object = null){
         case 'update':
           db_query("DELETE FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $object['tid']);
           if ($object['street1']){
-            db_query("INSERT INTO {uc_quote_manufacturer_locations} (tid, first_name, last_name, company, street1, street2, city, zone, postal_code, country) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)",
-              $object['tid'], $object['first_name'], $object['last_name'], $object['company'], $object['street1'], $object['street2'], $object['city'], $object['zone'], $object['postal_code'], $object['country']
+            db_query("INSERT INTO {uc_quote_manufacturer_locations} (tid, first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, '%s')",
+              $object['tid'], $object['first_name'], $object['last_name'], $object['company'], $object['street1'], $object['street2'], $object['city'], $object['zone'], $object['postal_code'], $object['country'], $object['phone']
             );
           }
           uc_quote_set_shipping_type('manufacturer', $object['tid'], $object['shipping_type']);
@@ -110,7 +110,7 @@ function uc_quote_taxonomy($op, $type, $object = null){
  * Load, save, and delete the shipping type and default shipping address of products.
  */
 function uc_quote_nodeapi(&$node, $op, $arg3 = null, $arg4 = null){
-  if (in_array($node->type, array_keys(uc_product_node_info()))){
+  if (in_array($node->type, module_invoke_all('product_types'))){
     switch($op){
       case 'submit':
         if (isset($node->shipping_type)){
@@ -121,8 +121,8 @@ function uc_quote_nodeapi(&$node, $op, $arg3 = null, $arg4 = null){
       case 'update':
         db_query("DELETE FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid);
         if ($node->street1){
-          db_query("INSERT INTO {uc_quote_product_locations} (nid, first_name, last_name, company, street1, street2, city, zone, postal_code, country) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d)",
-            $node->nid, $node->first_name, $node->last_name, $node->company, $node->street1, $node->street2, $node->city, $node->zone, $node->postal_code, $node->country
+          db_query("INSERT INTO {uc_quote_product_locations} (nid, first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, '%s')",
+            $node->nid, $node->first_name, $node->last_name, $node->company, $node->street1, $node->street2, $node->city, $node->zone, $node->postal_code, $node->country, $node->phone
           );
         }
       break;
@@ -140,10 +140,10 @@ function uc_quote_nodeapi(&$node, $op, $arg3 = null, $arg4 = null){
             $shipping_type = variable_get('uc_store_shipping_type', 'small_package');
           }
         }
-        $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid));
+        $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid));
         if ($address === false){
           if (module_exists('uc_manufacturer')){
-            $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $manufacturer->tid));
+            $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $manufacturer->tid));
           }
           if ($address === false){
             $address = variable_get('uc_quote_store_default_address', new stdClass());
@@ -168,7 +168,7 @@ function uc_quote_nodeapi(&$node, $op, $arg3 = null, $arg4 = null){
 function uc_quote_form_alter($form_id, &$form){
   $node = $form['#node'];
   $product_types = uc_product_node_info();
-  if (($form_id == 'taxonomy_form_term' && $form['vid']['#value'] == variable_get('uc_manufacturer_vid', 0)) || $form_id == 'uc_manufacturer_form' || ($form_id == $node->type .'_node_form' && isset($product_types[$node->type]))){
+  if (($form_id == 'taxonomy_form_term' && $form['vid']['#value'] == variable_get('uc_manufacturer_vid', 0)) || $form_id == 'uc_manufacturer_form' || ($form_id == $node->type .'_node_form' && in_array($node->type, module_invoke_all('product_types')))){
     if (strpos($form_id, 'node_form')){
       $type = 'product';
       $id = $form['nid']['#value'];
@@ -398,7 +398,7 @@ function uc_quote_action_get_quote($order, $method){
 function uc_quote_cart_pane($items){
   $panes[] = array('id' => 'quotes',
     'title' => t('Shipping quotes'),
-    'enabled' => variable_get('uc_quote_cart_pane_enabled', FALSE),
+    'enabled' => FALSE,
     'weight' => 5,
     'body' => is_null($items) ? '' : drupal_get_form('uc_cart_pane_quotes', $items),
   );
@@ -858,11 +858,11 @@ function uc_product_get_shipping_type($product){
  *   An address object.
  */
 function uc_quote_get_default_shipping_address($nid){
-  $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country FROM {uc_quote_product_locations} WHERE nid = %d", $nid));
+  $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone FROM {uc_quote_product_locations} WHERE nid = %d", $nid));
   if (empty($address)){
     if (module_exists('uc_manufacturer')){
       $manufacturer = uc_product_get_manufacturer($nid);
-      $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $manufacturer->tid));
+      $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $manufacturer->tid));
     }
     if (empty($address)){
       $address = variable_get('uc_quote_store_default_address', new stdClass());
@@ -878,6 +878,9 @@ function uc_quote_get_default_shipping_address($nid){
  * @see theme_uc_cart_pane_quotes
  */
 function uc_cart_pane_quotes($items){
+  if (!variable_get('uc_cap_quotes_enabled', false)){
+    return null;
+  }
   global $user;
   // Get all quote types neccessary to fulfill order.
   $shipping_types = array();

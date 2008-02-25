@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.14.2.5 2008/02/08 22:22:39 rszrama Exp $  // JTR - v.062 - 2007-11-21
+// $Id: uc_catalog.module,v 1.14.2.6 2008/02/25 21:11:36 rszrama Exp $  // JTR - v.062 - 2007-11-21
 
 /**
  * @file
@@ -64,9 +64,8 @@ function uc_catalog_menu($may_cache){
   $items = array();
 
   if ($may_cache){
-    $items[] = array(
-      'path' => 'catalog',
-      'access' => TRUE,
+    $items[] = array('path' => 'catalog',
+      'access' => user_access('view catalog'),
       'title' => variable_get('uc_catalog_name', t('Catalog')),
       'callback' => 'theme',
       'callback arguments' => array('uc_catalog_browse'),
@@ -165,14 +164,17 @@ function uc_catalog_enable(){
 function uc_catalog_nodeapi(&$node, $op, $a3 = null, $a4 = null){
   static $parents = array();
   
-  if (in_array($node->type, array_keys(uc_product_node_info()))){
+  if (in_array($node->type, module_invoke_all('product_types'))){
     switch($op){
       case 'view':
         if ($a4 == true && variable_get('uc_catalog_breadcrumb', true)){
           $crumbs = array();
+          if (variable_get('site_frontpage', 'node') != 'catalog'){
+            $crumbs[] = l(t('Home'), '');
+          }
           $terms = taxonomy_node_get_terms_by_vocabulary($node->nid, variable_get('uc_catalog_vid', 0));
           if (count($terms)){
-            $crumbs = array(l(variable_get('uc_catalog_name', t('Catalog')), variable_get('uc_catalog_url','catalog')));
+            $crumbs[] = l(variable_get('uc_catalog_name', t('Catalog')), variable_get('uc_catalog_url','catalog'));
             $used_tids = array();
             foreach ($terms as $term){
               if (!isset($parents[$term->tid])){
@@ -346,53 +348,55 @@ function uc_catalog_block($op = 'list', $delta = 0, $edit = array()){
       return $blocks;
 
     case 'view':
-      switch ($delta) {
-        case 0:
-          // Get the vocabulary tree information.
-          $vid = variable_get('uc_catalog_vid', 0);
-          $tree = taxonomy_get_tree($vid);
-          // Then convert it into an actual tree structure.
-          $seq = 0;
-          $menu_tree = new uc_treeNode();
-          $level = array();
-          $curr_depth = -1;
-          foreach ($tree as $knot){
-            $seq++;
-            $knot->sequence = $seq;
-            $knothole = new uc_treeNode($knot);
-            // Begin at the root of the tree and find the proper place.
-            $menu_tree->add_child($knothole);
-          }
-          // Now, create a structured menu, separate from Drupal's menu.
-          $content .= theme("uc_catalog_block_start");
-          foreach ($menu_tree->children as $branch){
-            list($inpath, $html) = _uc_catalog_navigation($branch);
-            $content .= $html;
-          }
-          $content .= theme("uc_catalog_block_end");
-          $subject = variable_get('uc_catalog_name', t('Catalog'));
-          if (variable_get('uc_catalog_block_title', true)){
-            $subject = l($subject, 'catalog');
-          }
-          $block = array('subject' => $subject, 'content' => $content);
-          break;
-
-        case 1:
-          // no title, it takes it from the theme function
-          $block['content'] = theme('uc_catalog_browse');
-          break;
-
-        case 2:
-          // no title, it takes it from the theme function
-          $block['content'] = theme('uc_catalog_special_products');
-          break;
-
-        case 3:
-          // no title, it takes it from the theme function
-          $block['content'] = theme('uc_catalog_bestsellers_products');
-          break;
+      $block = array();
+      if (user_access('view catalog')){
+        switch ($delta) {
+          case 0:
+            // Get the vocabulary tree information.
+            $vid = variable_get('uc_catalog_vid', 0);
+            $tree = taxonomy_get_tree($vid);
+            // Then convert it into an actual tree structure.
+            $seq = 0;
+            $menu_tree = new uc_treeNode();
+            $level = array();
+            $curr_depth = -1;
+            foreach ($tree as $knot){
+              $seq++;
+              $knot->sequence = $seq;
+              $knothole = new uc_treeNode($knot);
+              // Begin at the root of the tree and find the proper place.
+              $menu_tree->add_child($knothole);
+            }
+            // Now, create a structured menu, separate from Drupal's menu.
+            $content .= theme("uc_catalog_block_start");
+            foreach ($menu_tree->children as $branch){
+              list($inpath, $html) = _uc_catalog_navigation($branch);
+              $content .= $html;
+            }
+            $content .= theme("uc_catalog_block_end");
+            $subject = variable_get('uc_catalog_name', t('Catalog'));
+            if (variable_get('uc_catalog_block_title', true)){
+              $subject = l($subject, 'catalog');
+            }
+            $block = array('subject' => $subject, 'content' => $content);
+            break;
+  
+          case 1:
+            // no title, it takes it from the theme function
+            $block['content'] = theme('uc_catalog_browse');
+            break;
+  
+          case 2:
+            // no title, it takes it from the theme function
+            $block['content'] = theme('uc_catalog_special_products');
+            break;
+  
+          case 3:
+            // no title, it takes it from the theme function
+            $block['content'] = theme('uc_catalog_bestsellers_products');
+            break;
+        }
       }
-
       return $block;
   }
 }
@@ -714,7 +718,7 @@ function uc_catalog_set_category_form(){
   $settings = array(
     'div' => '#category-selector',
     'vid' => variable_get('uc_catalog_vid', 0),
-    'filter' => implode(',', array_keys(uc_product_node_info())),
+    'filter' => implode(',', module_invoke_all('product_types')),
     'search' => 'true',
     'nids' => 'true',
     'nodesg' => 'product',
@@ -806,7 +810,7 @@ function uc_catalog_get_page($tid){
     $catalog->image = $info;
     $catalog->image['filepath'] = $file->filepath;
   }
-  $types = array_keys(uc_product_node_info());
+  $types = module_invoke_all('product_types');
   $links = array();
   $child_list = array();
   $children = taxonomy_get_children($tid, $vid);
@@ -858,7 +862,7 @@ function theme_uc_catalog_browse($tid = 0){
     drupal_set_title($catalog->name);
   }
   drupal_set_breadcrumb(uc_catalog_set_breadcrumb($catalog->tid));
-  $types = array_keys(uc_product_node_info());
+  $types = module_invoke_all('product_types');
   $links = array();
   $child_list = array();
   foreach ($catalog->children as $child){
@@ -911,15 +915,15 @@ function theme_uc_catalog_browse($tid = 0){
   if (empty($_REQUEST['order'])){
     $order = 'p.ordering, n.title';
   }
-  $product_types = array_keys(uc_product_node_info());
+  $product_types = module_invoke_all('product_types');
 
-  $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created, p.model
+  $sql = "SELECT DISTINCT(n.nid), n.sticky, n.title, n.created, p.model, p.ordering
     FROM {node} n
       INNER JOIN {term_node} tn ON n.nid = tn.nid
       INNER JOIN {uc_products} AS p ON n.vid = p.vid
     WHERE tn.tid = %d AND n.status = 1
-      AND n.type IN ("'. implode('","', $product_types) .'")
-    ORDER BY '. $order;
+      AND n.type IN ('". implode("','", $product_types) ."')
+    ORDER BY ". $order;
   $sql_count = ''; 
   switch ($GLOBALS['db_type']){
     case 'mysql':
@@ -1007,46 +1011,30 @@ function theme_uc_catalog_browse($tid = 0){
  * JTR
  */
 function theme_uc_catalog_special_products(){
-  $product_types = array_keys(uc_product_node_info());
+  $product_types = module_invoke_all('product_types');
   $gridwidth = variable_get('uc_catalog_grid_display_width', 3);
   if(variable_get('uc_catalog_grid_display', false)) {
     $gridlines = variable_get('uc_catalog_special_block_lines', 1);
     $gridwidth = $gridwidth * $gridlines;
   }
 
-  $sql = "";
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $sql = 'SELECT DISTINCT(n.nid), n.title
-        FROM {node} n
-          INNER JOIN {uc_products} AS p ON n.nid = p.nid
-        WHERE n.status = 1
-          AND n.sticky = 1
-          AND n.type IN ("'. implode('","', $product_types) .'")
-        ORDER BY p.sell_price ASC
-          LIMIT '.$gridwidth;
-      break;
-    case 'pgsql':
-      $sql = "SELECT DISTINCT(n.nid), n.title
-        FROM {node} n
-          INNER JOIN {uc_products} AS p ON n.nid = p.nid
-        WHERE n.status = 1
-          AND n.sticky = 1
-          AND n.type IN ('". implode("','", $product_types) ."') 
-        ORDER BY p.sell_price ASC
-          LIMIT ".$gridwidth;
-      break;
-  }
+  $products = array();
+  $sql = "SELECT DISTINCT(n.nid), n.title, p.sell_price
+    FROM {node} n
+      INNER JOIN {uc_products} AS p ON n.nid = p.nid
+    WHERE n.status = 1
+      AND n.sticky = 1
+      AND n.type IN ('". implode("','", $product_types) ."') 
+    ORDER BY p.sell_price ASC";
 
-  $result = db_query($sql);
+  $result = db_query_range($sql, 0, $gridwidth);
   while ($node = db_fetch_object($result)){
-    $catalog->products[] = $node->nid;
+    $products[] = $node->nid;
   }
 
-  if (count($catalog->products)){
+  if (count($products)){
     $output .= '<h2 class="title special">' . variable_get('uc_catalog_special_block_title', t('Special Offers')) . '</h2>';
-    $output .= theme('uc_catalog_products', $catalog->products);
+    $output .= theme('uc_catalog_products', $products);
     if(variable_get('uc_catalog_special_block_help_allowed', true)) {
       $output .= '<p class="special description">' . variable_get('uc_catalog_special_block_help', t("We're always looking for new ways to bring our products to the broadest audience. Here are our special offers for this month.")) . '</p>';
     }
@@ -1059,29 +1047,30 @@ function theme_uc_catalog_special_products(){
  * JTR
  */
 function theme_uc_catalog_bestsellers_products(){
-  $product_types = array_keys(uc_product_node_info());
+  $product_types = module_invoke_all('product_types');
   $gridwidth = variable_get('uc_catalog_grid_display_width', 3);
   if(variable_get('uc_catalog_grid_display', false)) {
     $gridlines = variable_get('uc_catalog_bestsellers_block_lines', 1);
     $gridwidth = $gridwidth * $gridlines;
   }
 
-  $sql = 'SELECT nd.nid, nd.title,
-              (SELECT SUM(op.qty)
-                FROM {uc_order_products} AS op
-                WHERE op.nid = nd.nid) AS sold
-            FROM {node} AS nd
-            WHERE nd.type IN ("'. implode('","', $product_types) .'")
-              AND nd.status = 1
-            ORDER BY sold DESC';
+  $products = array();
+  $sql = "SELECT nd.nid, nd.title,
+      (SELECT SUM(op.qty)
+        FROM {uc_order_products} AS op
+        WHERE op.nid = nd.nid) AS sold
+    FROM {node} AS nd
+    WHERE nd.type IN ('". implode("','", $product_types) ."')
+      AND nd.status = 1
+    ORDER BY sold DESC";
   $result = db_query_range($sql, 0, $gridwidth);
   while ($node = db_fetch_object($result)){
-    $catalog->products[] = $node->nid;
+    $products[] = $node->nid;
   }
 
-  if (count($catalog->products)){
+  if (count($products)){
     $output .= '<h2 class="title best-sellers">' . variable_get('uc_catalog_bestsellers_block_title', t('Best Sellers')) . '</h2>';
-    $output .= theme('uc_catalog_products', $catalog->products);
+    $output .= theme('uc_catalog_products', $products);
     if(variable_get('uc_catalog_bestsellers_block_help_allowed', true)) {
       $output .= '<p class="best-sellers description">' . variable_get('uc_catalog_bestsellers_block_help', t("So many people can't be wrong. These products have been ordered the most.")) . '</p>';
     }
@@ -1106,59 +1095,61 @@ function theme_uc_catalog_products($products){
   }
   else {
     if(variable_get('uc_catalog_grid_display', false)) {
-      $product_table = '<div class="category-grid-products"><table>';
-      $count = 0;
-      foreach($products as $nid) {
-        $product = node_load($nid);
-
-        if($count == 0) {
-          $product_table .= "<tr>";
-        }
-        else if ($count % variable_get('uc_catalog_grid_display_width', 3) == 0) {
-          $product_table .= "</tr><tr>";
-        }
-
-        $titlelink = l($product->title, "node/$nid", array(), null, null, false, true);
-        if (module_exists('imagecache') && isset($product->field_image_cache) && file_exists($product->field_image_cache[0]['filepath'])) {
-          $imagelink = l(theme('imagecache', 'product_list', $product->field_image_cache[0]['filepath']), "node/$nid", array(), null, null, false, true);
-        }
-        else {
-          $imagelink = '';
-        }
-
-        $product_table .= '<td>';
-        if (variable_get('uc_catalog_grid_display_title', TRUE)) {
-          $product_table .= '<span class="catalog_grid_title">'. $titlelink .'</span>';
-        }
-        if (variable_get('uc_catalog_grid_display_model', TRUE)) {
-          $product_table .= '<span class="catalog_grid_ref">'. $product->model .'</span>';
-        }
-        $product_table .= '<span class="catalog_grid_image">'. $imagelink .'</span>';
-        if (variable_get('uc_catalog_grid_display_sell_price', TRUE)) {
-          $product_table .= '<span class="catalog_grid_sell_price">'. uc_currency_format($product->sell_price) .'</span>';
-        }
-        if (variable_get('uc_catalog_grid_display_add_to_cart', TRUE)) {
-          if (variable_get('uc_catalog_grid_display_attributes', TRUE)) {
-            $product_table .= theme('uc_product_add_to_cart', $product);
-          }
-          else {
-            $product_table .= drupal_get_form('uc_catalog_buy_it_now_form_'. $product->nid, $product);
-          }
-          $product_table .= '</td>';
-        }
-
-        $count++;
-      }
-      $product_table .= "</tr></table></div>";
-
-      return $product_table;
+      return theme('uc_catalog_product_grid', $products);
     }
     else {
       $table_args = array('nids' => $products, 'attributes' => array('class' => 'category-products'));
-      $product_table = tapir_get_table('uc_product_table', $table_args);
-      return $product_table;
+      return tapir_get_table('uc_product_table', $table_args);
     }
   }
+}
+
+function theme_uc_catalog_product_grid($products){
+  $product_table = '<div class="category-grid-products"><table>';
+  $count = 0;
+  foreach($products as $nid) {
+    $product = node_load($nid);
+
+    if($count == 0) {
+      $product_table .= "<tr>";
+    }
+    else if ($count % variable_get('uc_catalog_grid_display_width', 3) == 0) {
+      $product_table .= "</tr><tr>";
+    }
+
+    $titlelink = l($product->title, "node/$nid", array(), null, null, false, true);
+    if (module_exists('imagecache') && isset($product->field_image_cache) && file_exists($product->field_image_cache[0]['filepath'])) {
+      $imagelink = l(theme('imagecache', 'product_list', $product->field_image_cache[0]['filepath']), "node/$nid", array(), null, null, false, true);
+    }
+    else {
+      $imagelink = '';
+    }
+
+    $product_table .= '<td>';
+    if (variable_get('uc_catalog_grid_display_title', TRUE)) {
+      $product_table .= '<span class="catalog_grid_title">'. $titlelink .'</span>';
+    }
+    if (variable_get('uc_catalog_grid_display_model', TRUE)) {
+      $product_table .= '<span class="catalog_grid_ref">'. $product->model .'</span>';
+    }
+    $product_table .= '<span class="catalog_grid_image">'. $imagelink .'</span>';
+    if (variable_get('uc_catalog_grid_display_sell_price', TRUE)) {
+      $product_table .= '<span class="catalog_grid_sell_price">'. uc_currency_format($product->sell_price) .'</span>';
+    }
+    if (variable_get('uc_catalog_grid_display_add_to_cart', TRUE)) {
+      if (variable_get('uc_catalog_grid_display_attributes', TRUE)) {
+        $product_table .= theme('uc_product_add_to_cart', $product);
+      }
+      else {
+        $product_table .= drupal_get_form('uc_catalog_buy_it_now_form_'. $product->nid, $product);
+      }
+      $product_table .= '</td>';
+    }
+
+    $count++;
+  }
+  $product_table .= "</tr></table></div>";
+  return $product_table;
 }
 
 /******************************************************************************
@@ -1468,7 +1459,7 @@ function uc_catalog_set_breadcrumb($tid){
     $parents = taxonomy_get_parents_all($tid);
     // Remove current term from the breadcrumb.
     array_shift($parents);
-    $types = array_keys(uc_product_node_info());
+    $types = module_invoke_all('product_types');
     while (count($parents)){
       $current = array_pop($parents);
       if (!in_array($current->tid, $terms)){
@@ -1557,7 +1548,7 @@ function _uc_catalog_navigation($branch){
   if ((arg(0) == 'node' && array_key_exists($branch->tid, $terms))){
     $inpath = false;
     foreach ($breadcrumb as $link){
-      if (strpos($link, $branch_path) !== false){
+      if (strpos($link, drupal_get_path_alias($branch_path)) !== false){
         $inpath = true;
       }
     }

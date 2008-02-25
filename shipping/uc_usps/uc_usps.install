@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.install,v 1.4.2.1 2008/01/07 20:56:40 rszrama Exp $
+// $Id: uc_usps.install,v 1.4.2.2 2008/02/25 21:11:38 rszrama Exp $
 
 function uc_usps_install(){
   switch ($GLOBALS['db_type']){
@@ -14,8 +14,8 @@ function uc_usps_install(){
     break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_usps_products} (
-        vid integer NOT NULL default 0,
-        nid integer NOT NULL default 0,
+        vid int_unsigned NOT NULL default 0,
+        nid int_unsigned NOT NULL default 0,
         container varchar(255) NOT NULL default '',
         PRIMARY KEY (vid)
       );");
@@ -100,6 +100,17 @@ function uc_usps_update_4(){
     break;
     case 'pgsql':
       db_change_column($ret, 'uc_usps_products', 'container', 'container', 'varchar(255)', array('not null' => true, 'default' => ''));
+    break;
+  }
+  return $ret;
+}
+
+function uc_usps_update_5(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'pgsql':
+      db_change_column($ret, 'uc_usps_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_usps_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));
     break;
   }
   return $ret;

@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.4.2.4 2008/02/08 22:22:35 rszrama Exp $
+// $Id: uc_payment.js,v 1.4.2.5 2008/02/25 21:11:36 rszrama Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
@@ -57,6 +57,8 @@ function render_line_items() {
       li_info[a] = li_weight[a] + ';' + li_values[a] + ';' + li_titles[a] + ';' + li_summed[a];
     }
   );
+
+  $('#order-total-throbber').attr('style', 'background-image: url(' + Drupal.settings['base_path'] + 'misc/throbber.gif); background-repeat: no-repeat; background-position: 100% -20px;').html('&nbsp;&nbsp;&nbsp;&nbsp;');
 
   // Post the line item data to a URL and get it back formatted for display.
   $.post(Drupal.settings['base_path'] + 'cart/checkout/line_items', li_info,

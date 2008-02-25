@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.module,v 1.4.2.2 2008/01/16 21:56:56 rszrama Exp $
+// $Id: uc_weightquote.module,v 1.4.2.3 2008/02/25 21:11:37 rszrama Exp $
 
 /**
  * @file
@@ -40,8 +40,7 @@ function uc_weightquote_menu($may_cache){
  */
 function uc_weightquote_form_alter($form_id, &$form){
   $node = $form['#node'];
-  $product_types = uc_product_node_info();
-  if (is_object($node) && $form_id == $node->type .'_node_form' && isset($product_types[$node->type])){
+  if (is_object($node) && $form_id == $node->type .'_node_form' && in_array($node->type, module_invoke_all('product_types'))){
     $enabled = variable_get('uc_quote_enabled', array());
     $form['shipping']['weightquote'] = array('#type' => 'fieldset',
       '#title' => t('Shipping rate by weight'),
@@ -66,7 +65,7 @@ function uc_weightquote_form_alter($form_id, &$form){
  * Implementation of hook_nodeapi().
  */
 function uc_weightquote_nodeapi(&$node, $op){
-  if (in_array($node->type, array_keys(uc_product_node_info()))){
+  if (in_array($node->type, module_invoke_all('product_types'))){
     switch($op){
       case 'insert':
       case 'update':

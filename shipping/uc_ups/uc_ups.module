@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.4.2.3 2008/01/25 22:19:31 rszrama Exp $
+// $Id: uc_ups.module,v 1.4.2.4 2008/02/25 21:11:38 rszrama Exp $
 
 /**
  * @file
@@ -58,8 +58,7 @@ function uc_ups_menu($may_cache){
  */
 function uc_ups_form_alter($form_id, &$form){
   $node = $form['#node'];
-  $product_types = uc_product_node_info();
-  if (is_object($node) && $form_id == $node->type .'_node_form' && isset($product_types[$node->type])){
+  if (is_object($node) && $form_id == $node->type .'_node_form' && in_array($node->type, module_invoke_all('product_types'))){
     $enabled = variable_get('uc_quote_enabled', array());
     $ups = array('#type' => 'fieldset',
       '#title' => t('UPS product description'),
@@ -96,7 +95,7 @@ function uc_ups_product_alter_validate($form_id, $form_values){
  * Implementation of hook_nodeapi().
  */
 function uc_ups_nodeapi(&$node, $op){
-  if (in_array($node->type, array_keys(uc_product_node_info()))){
+  if (in_array($node->type, module_invoke_all('product_types'))){
     switch ($op){
       case 'insert':
       case 'update':
@@ -1162,37 +1161,37 @@ function theme_uc_ups_confirm_shipment($form){
   
   $output .= '<div class="shipping_address"><b>'. t('Ship from:') .'</b><br />';
   $output .= uc_address_format(
-    $_SESSION['ups']['origin']->first_name,
-    $_SESSION['ups']['origin']->last_name,
-    $_SESSION['ups']['origin']->company,
-    $_SESSION['ups']['origin']->street1,
-    $_SESSION['ups']['origin']->street2,
-    $_SESSION['ups']['origin']->city,
-    $_SESSION['ups']['origin']->zone,
-    $_SESSION['ups']['origin']->postal_code,
-    $_SESSION['ups']['origin']->country
+    check_plain($_SESSION['ups']['origin']->first_name),
+    check_plain($_SESSION['ups']['origin']->last_name),
+    check_plain($_SESSION['ups']['origin']->company),
+    check_plain($_SESSION['ups']['origin']->street1),
+    check_plain($_SESSION['ups']['origin']->street2),
+    check_plain($_SESSION['ups']['origin']->city),
+    check_plain($_SESSION['ups']['origin']->zone),
+    check_plain($_SESSION['ups']['origin']->postal_code),
+    check_plain($_SESSION['ups']['origin']->country)
   );
-  $output .= '<br />'. $_SESSION['ups']['origin']->email;
+  $output .= '<br />'. check_plain($_SESSION['ups']['origin']->email);
   $output .= '</div>';
   
   $output .= '<div class="shipping_address"><b>'. t('Ship to:') .'</b><br />';
   $output .= uc_address_format(
-    $_SESSION['ups']['destination']->first_name,
-    $_SESSION['ups']['destination']->last_name,
-    $_SESSION['ups']['destination']->company,
-    $_SESSION['ups']['destination']->street1,
-    $_SESSION['ups']['destination']->street2,
-    $_SESSION['ups']['destination']->city,
-    $_SESSION['ups']['destination']->zone,
-    $_SESSION['ups']['destination']->postal_code,
-    $_SESSION['ups']['destination']->country
+    check_plain($_SESSION['ups']['destination']->first_name),
+    check_plain($_SESSION['ups']['destination']->last_name),
+    check_plain($_SESSION['ups']['destination']->company),
+    check_plain($_SESSION['ups']['destination']->street1),
+    check_plain($_SESSION['ups']['destination']->street2),
+    check_plain($_SESSION['ups']['destination']->city),
+    check_plain($_SESSION['ups']['destination']->zone),
+    check_plain($_SESSION['ups']['destination']->postal_code),
+    check_plain($_SESSION['ups']['destination']->country)
   );
-  $output .= '<br />'. $_SESSION['ups']['destination']->email;
+  $output .= '<br />'. check_plain($_SESSION['ups']['destination']->email);
   $output .= '</div>';
   $output .= '<div class="shipment_data">';
   $method = uc_ups_shipping_method();
   $output .= '<b>'. $method['ups']['quote']['accessorials'][$_SESSION['ups']['service']] .'</b><br />';
-  $output .= '<i>'. $_SESSION['ups']['rate']['type'] .'</i>: '. uc_currency_format($_SESSION['ups']['rate']['amount']) .' ('. $_SESSION['ups']['rate']['currency'] .')<br />';
+  $output .= '<i>'. check_plain($_SESSION['ups']['rate']['type']) .'</i>: '. uc_currency_format($_SESSION['ups']['rate']['amount']) .' ('. check_plain($_SESSION['ups']['rate']['currency']) .')<br />';
   $ship_date = $_SESSION['ups']['ship_date'];
   $output .= 'Ship date: '. format_date(gmmktime(12, 0, 0, $ship_date['month'], $ship_date['day'], $ship_date['year']), 'custom', 'Y/m/d');
   $exp_delivery = $_SESSION['ups']['expected_delivery'];

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.install,v 1.4.2.1 2008/01/07 20:56:40 rszrama Exp $
+// $Id: uc_ups.install,v 1.4.2.2 2008/02/25 21:11:38 rszrama Exp $
 
 function uc_ups_install(){
   switch ($GLOBALS['db_type']){
@@ -14,8 +14,8 @@ function uc_ups_install(){
     break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_ups_products} (
-        vid integer NOT NULL default 0,
-        nid integer NOT NULL default 0,
+        vid int_unsigned NOT NULL default 0,
+        nid int_unsigned NOT NULL default 0,
         pkg_type varchar(2) NOT NULL default '',
         PRIMARY KEY (vid)
       );");
@@ -125,5 +125,16 @@ function uc_ups_update_5(){
     variable_set('uc_ups_markup', floatval($markup));
   }
   $ret[] = array('success' => true, 'query' => 'Added UPS markup type.');
+  return $ret;
+}
+
+function uc_ups_update_6(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'pgsql':
+      db_change_column($ret, 'uc_ups_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_ups_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));
+    break;
+  }
   return $ret;
 }

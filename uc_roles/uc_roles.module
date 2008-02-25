@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.1.2.4 2008/02/08 22:22:40 rszrama Exp $
+// $Id: uc_roles.module,v 1.1.2.5 2008/02/25 21:11:39 rszrama Exp $
 
 /**
 * @file
@@ -37,7 +37,10 @@ function uc_roles_cron() {
   
   while ($expiration = db_fetch_object($expirations)) {
     $user = user_load(array('uid' => $expiration->uid));
-    if ($expiration->expiration <= time()) {
+    if (!in_array($expiration->rid,$user->roles)) {
+      _role_action('delete', $user, $expiration->rid);
+    }
+    elseif ($expiration->expiration <= time()) {
       _role_action('revoke', $user, $expiration->rid);
       _email_user('revoke', $user, $expiration);
     }
@@ -108,7 +111,7 @@ function uc_roles_perm() {
 function uc_roles_nodeapi(&$node, $op, $arg3 = null, $arg4 = NULL) {
   switch($op) {
     case 'delete':
-      if (in_array($node->type, array_keys(uc_product_node_info()))) {
+      if (in_array($node->type, module_invoke_all('product_types'))) {
         db_query("DELETE FROM {uc_roles_products} WHERE nid = %d",$node->nid);
       }
       break;
@@ -300,7 +303,8 @@ function uc_roles_order($op, $order, $status) {
                 $existing_role = db_fetch_object(db_query("SELECT * FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d",$order_user->uid,$role->rid));
                 $op = (!is_null($existing_role->expiration)) ? 'renew' : 'grant';
                 $comment = (!is_null($existing_role->expiration)) ? 'User has had the %role_name role renewed.' : 'User has been granted the %role_name role.';                
-                _role_action($op, $order_user, $role->rid, _get_expiration_date(($role->duration * $product->qty), $role->granularity, $existing_role->expiration));
+                $quantity = ($role->by_quantity) ? $product->qty : 1;
+                _role_action($op, $order_user, $role->rid, _get_expiration_date(($role->duration * $quantity), $role->granularity, $existing_role->expiration));
                 
                 $new_expiration = db_fetch_object(db_query("SELECT * FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d",$order_user->uid,$role->rid));
                 uc_order_comment_save($order->order_id, $user->uid, t($comment, array('%role_name' => _get_role_name($role->rid))));
@@ -523,6 +527,7 @@ function uc_roles_feature_form($node, $feature) {
     $default_qty = $product_role->duration;
     $default_granularity = $product_role->granularity;
     $default_shippable = $product_role->shippable;
+    $default_by_quantity = $product_role->by_quantity;
     $form['pfid'] = array(
       '#type' => 'value',
       '#value' => $feature['pfid'],
@@ -534,6 +539,7 @@ function uc_roles_feature_form($node, $feature) {
     $default_qty = (variable_get('uc_roles_default_granularity','never') == 'never') ? NULL : variable_get('uc_roles_default_length',NULL);
     $default_granularity = variable_get('uc_roles_default_granularity','never');
     $default_shippable = $node->shippable;
+    $default_by_quantity = 1;
   }
   
   $form['title'] = array(
@@ -590,6 +596,12 @@ function uc_roles_feature_form($node, $feature) {
     '#default_value' => $default_shippable,
     '#description' => t('Check if this product model/SKU that uses role assignment is associated with a shippable product.'),
   );
+  $form['uc_roles_by_quantity'] = array (
+    '#type' => 'checkbox',
+    '#title' => t('Multiply by quantity'),
+    '#default_value' => $default_by_quantity,
+    '#description' => t('Check if the role duration should be multiplied by the quantity purchased.'),
+  );
   
   return uc_product_feature_form($form);
 }
@@ -628,8 +640,10 @@ function uc_roles_feature_form_submit($form_id, $form_values) {
     default:
       break;
   }
-  $description .= ($form_values['uc_roles_shippable']) ? t('<strong>Shippable:</strong> Yes') : t('<strong>Shippable:</strong> No');
+  $description .= ($form_values['uc_roles_shippable']) ? t('<strong>Shippable:</strong> Yes<br/>') : t('<strong>Shippable:</strong> No<br/>');
   $shippable = ($form_values['uc_roles_shippable']) ? 1 : 0;
+  $description .= ($form_values['uc_roles_by_quantity']) ? t('<strong>Multiply by Quantity:</strong> Yes') : t('<strong>Multiply by Quantity:</strong> No');
+  $by_quantity = ($form_values['uc_roles_by_quantity']) ? 1 : 0;
   $granularity = ($form_values['uc_roles_granularity'] != 'never') ? $form_values['uc_roles_granularity'] : NULL;
   $duration = ($form_values['uc_roles_granularity'] != 'never') ? $form_values['uc_roles_qty'] : NULL;
   $model = (!is_null($form_values['uc_roles_model'])) ? $form_values['uc_roles_model'] : NULL;
@@ -646,10 +660,10 @@ function uc_roles_feature_form_submit($form_id, $form_values) {
   switch ($GLOBALS['db_type']){
     case 'mysqli':
     case 'mysql':
-      db_query("INSERT INTO {uc_roles_products} (pfid, nid, model, rid, duration, granularity, shippable) VALUES (%d, %d, '%s', %d, %d, '%s', %d)",$pfid,$form_values['nid'],$model,$form_values['uc_roles_role'],$duration,$granularity,$shippable);
+      db_query("INSERT INTO {uc_roles_products} (pfid, nid, model, rid, duration, granularity, by_quantity, shippable) VALUES (%d, %d, '%s', %d, %d, '%s', %d, %d)",$pfid,$form_values['nid'],$model,$form_values['uc_roles_role'],$duration,$granularity,$by_quantity,$shippable);
       break;
     case 'pgsql':
-      db_query("INSERT INTO {uc_roles_products} (pfid, nid, model, rid, duration, granularity, shippable) VALUES (%d, %d, '%s', %d, %d, '%s', '%d')",$pfid,$form_values['nid'],$model,$form_values['uc_roles_role'],$duration,$granularity,($shippable ? 't' : 'f'));
+      db_query("INSERT INTO {uc_roles_products} (pfid, nid, model, rid, duration, granularity, by_quantity, shippable) VALUES (%d, %d, '%s', %d, %d, '%s', '%d', '%d')",$pfid,$form_values['nid'],$model,$form_values['uc_roles_role'],$duration,$granularity,($by_quantity ? 't' : 'f'),($shippable ? 't' : 'f'));
       break;
   }
 
@@ -795,7 +809,7 @@ function uc_roles_notify_settings() {
   $form['revoke']['uc_roles_revocation_notification'] = array(
     '#type' => 'checkbox',
     '#default_value' => variable_get('uc_roles_revocation_notification',FALSE),
-    '#title' => t('Send email after customer looses role'),
+    '#title' => t('Send email after customer loses role'),
   );
   $form['revoke']['uc_roles_revocation_notification_subject'] = array(
     '#type' => 'textfield',
@@ -1018,6 +1032,7 @@ function _get_role_choices($exclude = array()) {
 * Function will perform actions on a role toward a user
 * @param $op
 *   The action to take 
+*     delete: remove a role expiration
 *     grant: add new role
 *     revoke: remove role
 *     renew: update role's expiration date
@@ -1030,6 +1045,9 @@ function _get_role_choices($exclude = array()) {
 */
 function _role_action($op, $user, $rid, $timestamp = NULL) {
   switch ($op) {
+    case 'delete':
+      db_query("DELETE FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d",$user->uid, $rid);
+      break;
     case 'grant': 
       if (!in_array($rid,array_keys($user->roles))) {
         $roles_list = $user->roles + array($rid => _get_role_name($rid));

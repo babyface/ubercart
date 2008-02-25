@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.4 2008/02/08 22:22:39 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.5 2008/02/25 21:11:38 rszrama Exp $
 
 /**
  * @file
@@ -1958,8 +1958,7 @@ function op_products_edit_table($op, $form) {
  * When the Catalog module or uBrowser aren't enabled, use this product select.
  */
 function uc_order_load_product_select($order_id) {
-  $types = uc_product_node_info();
-  foreach (array_keys($types) as $type) {
+  foreach (module_invoke_all('product_types') as $type) {
     $typestr .= "'$type', ";
   }
   $typestr = substr($typestr, 0, strlen($typestr) - 2);
@@ -2580,9 +2579,16 @@ function uc_order_save($order) {
  * Function to save a product to an order.
  */
 function uc_order_product_save($order_id, $product) {
-  db_query("INSERT INTO {uc_order_products} (order_id, nid, qty, cost, price, title, manufacturer, model, weight, data) "
-          ."VALUES (%d, %d, %d, %f, %f, '%s', '%s', '%s', %f, '%s')", $order_id, $product->nid, $product->qty,
-           $product->cost, $product->price, $product->title, $product->manufacturer, $product->model, $product->weight, serialize($product->data));
+  if (!$product->order_product_id){
+    $product->order_product_id = db_next_id('{uc_order_products}_order_product_id');
+  }
+  db_query("UPDATE {uc_order_products} SET order_id = %d, nid = %d, qty = %d, cost = %f, price = %f, title = '%s', manufacturer = '%s', model = '%s', model = '%s', weight = %f, data = '%s' WHERE order_product_id = %d",
+    $order_id, $product->nid, $product->qty, $product->cost, $product->price, $product->title, $product->manufacturer, $product->model, $product->weight, serialize($product->data), $product->order_product_id);
+  if (!db_affected_rows()){
+    db_query("INSERT INTO {uc_order_products} (order_product_id, order_id, nid, qty, cost, price, title, manufacturer, model, weight, data) "
+      ."VALUES (%d, %d, %d, %d, %f, %f, '%s', '%s', '%s', %f, '%s')", $product->order_product_id, $order_id, $product->nid, $product->qty,
+       $product->cost, $product->price, $product->title, $product->manufacturer, $product->model, $product->weight, serialize($product->data));
+  }
 }
 
 /**
