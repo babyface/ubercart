@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_pack.module,v 1.2 2008/02/08 22:22:35 rszrama Exp $
+// $Id: uc_payment_pack.module,v 1.3 2008/02/25 21:11:38 rszrama Exp $
 
 /**
  * @file Provides the check/money order, COD, and "other" payment methods.
@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 function uc_payment_pack_menu($may_cache) {
-  if ($may_cache) {
+  if (!$may_cache) {
     $items[] = array(
       'path' => 'admin/store/orders/'. arg(3) .'/receive_check',
       'title' => t('Receive Check'),

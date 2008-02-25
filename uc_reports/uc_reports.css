@@ -1,4 +1,4 @@
-/* $Id: uc_reports.css,v 1.3 2008/02/08 22:22:40 rszrama Exp $ */
+/* $Id: uc_reports.css,v 1.4 2008/02/25 21:11:39 rszrama Exp $ */
 
 .sales-year  {
   display:inline;
@@ -6,6 +6,14 @@
 
 .sales-year .form-item {
   display:inline;
+}
+
+.sales-year .form-item label {
+  display:inline;
+}
+
+.sales-year .form-submit {
+  margin:0px;
 }
 
 .uc-sales-table tr.odd:hover, .uc-sales-table tr.even:hover {
