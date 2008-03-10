@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.install,v 1.1.2.3 2008/02/25 21:11:39 rszrama Exp $
+// $Id: uc_roles.install,v 1.1.2.4 2008/03/10 21:01:13 rszrama Exp $
 
 function uc_roles_install(){
   switch($GLOBALS['db_type']){
@@ -18,7 +18,7 @@ function uc_roles_install(){
         KEY nid (nid),
         KEY model (model),
         KEY rid (rid)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 COLLATE utf8_unicode_ci */ ");
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
       db_query("CREATE TABLE {uc_roles_expirations} (
         uid mediumint(11) NOT NULL,
         rid mediumint(11) NOT NULL,
@@ -26,7 +26,7 @@ function uc_roles_install(){
         notified tinyint(2) default NULL,
         KEY uid (uid),
         KEY rid (rid)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 COLLATE utf8_unicode_ci */ ");
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
     break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_roles_products} (
@@ -76,7 +76,7 @@ function uc_roles_update_1() {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_roles_products} CHANGE expiration duration SMALLINT( 4 ) NULL DEFAULT NULL");
-      $ret[] = update_sql("ALTER TABLE {uc_roles_products} CHANGE model model VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL");
+      $ret[] = update_sql("ALTER TABLE {uc_roles_products} CHANGE model model VARCHAR( 255 ) CHARACTER SET utf8 NULL");
       break;
     case 'pgsql':
       break;
@@ -100,7 +100,6 @@ function uc_roles_update_2() {
   return $ret;
 }
 
- 
 function uc_roles_update_3() {
   $ret = array();
   

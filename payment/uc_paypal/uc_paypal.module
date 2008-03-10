@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.4.2.5 2008/02/08 22:22:37 rszrama Exp $
+// $Id: uc_paypal.module,v 1.4.2.6 2008/03/10 21:01:10 rszrama Exp $
 
 /**
  * @file
@@ -806,7 +806,7 @@ function uc_paypal_ec_submit() {
   }
 
   drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart.css');
-  $output = '<div style="border: solid 1px #bbb;">'. theme('cart_review_table', FALSE) .'</div>';
+  $output = '<div>'. theme('cart_review_table', FALSE) .'</div>';
   $output .= uc_order_pane_line_items('customer', $order);
   $output .= '<p>'. t("Your order is not complete until you click the 'Submit order' button below. Your PayPal account will be charged for the amount shown above once your order is placed. You will receive confirmation once your payment is complete.") .'</p>';
   $output .= drupal_get_form('uc_paypal_ec_submit_form');
@@ -958,14 +958,20 @@ function uc_paypal_ec_form_submit($form_id, $form_values) {
 // Returns the form for the custom Review Payment screen for Express Checkout.
 function uc_paypal_ec_review_form($order) {
   if (module_exists('uc_quote') && variable_get('uc_paypal_ec_review_shipping', TRUE) && uc_order_is_shippable($order)) {
-    // Remove once line items are out of checkout. -RS
-    drupal_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
-
     $result = uc_checkout_pane_quotes('view', $order, NULL);
-    $form['panes']['quotes'] = $result['contents'];
-    $form['panes']['quotes']['#type'] = 'fieldset';
-    $form['panes']['quotes']['#collapsible'] = FALSE;
-    $form['panes']['quotes']['#title'] = t('Calculate shipping');
+    $form['panes']['quotes'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Calculate shipping'),
+      '#collapsible' => FALSE,
+    );
+    $form['panes']['quotes'] += $result['contents'];
+    $form['panes']['quotes']['quote_button']['#value'] = t('Click to refresh shipping options');
+
+    $form['panes']['quotes']['quote_div'] = array(
+      '#value' => '<div id="quote"></div>',
+    );
+
+    drupal_add_js("\$(document).ready(function() { \$(' #edit-quote-button').click(); });", 'inline');
 
     // Fake the checkout form delivery information.
     $form['delivery_first_name'] = array('#type' => 'hidden', '#value' => $order->delivery_first_name);

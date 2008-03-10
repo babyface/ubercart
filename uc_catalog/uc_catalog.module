@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.14.2.6 2008/02/25 21:11:36 rszrama Exp $  // JTR - v.062 - 2007-11-21
+// $Id: uc_catalog.module,v 1.14.2.7 2008/03/10 21:01:12 rszrama Exp $  // JTR - v.062 - 2007-11-21
 
 /**
  * @file
@@ -301,13 +301,15 @@ function uc_catalog_form_alter($form_id, &$form){
     if ($image){
       if (module_exists('imagecache')){
         $image_display = theme('imagecache', 'category', $image->filepath);
+        $help = t();
       }
       else{
         $image_display = theme('image', $image->filename, t('Term image'));
+        $form['image']['image']['#description'] = t('The image will not be resized. Consider installing <a href="@url">Image cache</a>.', array('@url' => url('http://drupal.org/project/imagecache')));
       }
       $form['image']['remove'] = array('#type' => 'checkbox',
         '#title' => t('Remove category image: !image', array('!image' => $image_display)),
-        '#weigt' => 1,
+        '#weight' => 1,
       );
     }
 
@@ -468,7 +470,7 @@ function uc_catalog_pathauto_bulkupdate(){
   }
   
   drupal_set_message(format_plural($count,
-    "Bulk generation of terms completed, one alias generated.",
+    "Bulk generation of terms completed, @count alias generated.",
     "Bulk generation of terms completed, @count aliases generated."));
 }
 
@@ -519,7 +521,7 @@ function uc_catalog_store_status(){
     $excluded = db_num_rows($result);
     if ($excluded){
       $statuses[] = array('status' => 'warning', 'title' => t('Unlisted products'),
-        'desc' => format_plural($excluded, 'There is 1 product not listed in the catalog.', 'There are @count products not listed in the catalog.')
+        'desc' => format_plural($excluded, 'There is @count product not listed in the catalog.', 'There are @count products not listed in the catalog.')
           . t(' Products are listed by assigning a category from the Product Catalog vocabulary to them. ')
           . l(t('Find orphaned products here.'), 'admin/store/products/orphans'),
       );
@@ -858,9 +860,7 @@ function theme_uc_catalog_browse($tid = 0){
   //drupal_set_message('<pre>'. print_r($args, true) .'</pre>');
   $output = '';
   $catalog = uc_catalog_get_page((int)$tid);
-  if ($catalog->name != variable_get('uc_catalog_name', t('Catalog'))) {
-    drupal_set_title($catalog->name);
-  }
+  drupal_set_title($catalog->name);
   drupal_set_breadcrumb(uc_catalog_set_breadcrumb($catalog->tid));
   $types = module_invoke_all('product_types');
   $links = array();
@@ -873,7 +873,12 @@ function theme_uc_catalog_browse($tid = 0){
     }
     if ($child->image){
       $image = '<div>';
-      $image .= l(theme('imagecache', 'category', $child->image['filepath']), uc_catalog_path($child), array(), null, null, false, true);
+      if (module_exists('imagecache')){
+        $image .= l(theme('imagecache', 'category', $child->image['filepath']), uc_catalog_path($child), array(), null, null, false, true);
+      }
+      else{
+        $image.= l(theme('image', $child->image['filepath']), uc_catalog_path($child), array(), null, null, false, true);
+      }
       $image .= '</div>';
     }
     else{

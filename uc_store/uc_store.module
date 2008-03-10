@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.13.2.5 2008/02/25 21:11:38 rszrama Exp $
+// $Id: uc_store.module,v 1.13.2.6 2008/03/10 21:01:13 rszrama Exp $
 
 /**
  * @file
@@ -1178,22 +1178,12 @@ function uc_country_enable($country_id) {
   drupal_goto('admin/store/settings/countries/edit');
 }
 
-/**
- * Completely remove a country!
- */
+// Form to completely remove a country.
 function uc_country_remove_form($country_id) {
-  if ($_POST['op'] == t('Cancel')) {
-    drupal_goto('admin/store/settings/countries/edit');
-  }
-
   if ($_POST['op'] != t('Remove') && module_exists('uc_order')) {
-    $result = db_query("SELECT COUNT(order_id) AS orders FROM {uc_orders} WHERE "
-                      ."delivery_country = %d OR billing_country = %d",
-                       $country_id, $country_id);
-    if (($data = db_fetch_object($result))) {
-      if ($data->orders > 0) {
-        drupal_set_message(t('Warning: !number orders were found with addresses in this country. Removing this country now will cause errors to show on those order pages. You might consider simply disabling this country instead.', array('!number' => $data->orders)), 'error');
-      }
+    $count = db_result(db_query("SELECT COUNT(order_id) FROM {uc_orders} WHERE delivery_country = %d OR billing_country = %d", $country_id, $country_id));
+    if ($count > 0) {
+      drupal_set_message(t('Warning: !count orders were found with addresses in this country. Removing this country now will cause errors to show on those order pages. You might consider simply disabling this country instead.', array('!count' => $count)), 'error');
     }
   }
 
@@ -1205,13 +1195,10 @@ function uc_country_remove_form($country_id) {
     '#value' => $country_id,
   );
 
-  $form['cancel'] = array(
-    '#type' => 'submit',
-    '#value' => t('Cancel'),
-  );
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Remove'),
+    '#suffix' => l(t('Cancel'), 'admin/store/settings/countries/edit'),
   );
 
   return $form;
@@ -2281,15 +2268,17 @@ function uc_zone_select($title, $default = NULL, $description = NULL, $country_i
   if (empty($country_id)) {
     $country_id = variable_get('uc_store_country', 840);
   }
+
   $result = db_query("SELECT * FROM {uc_zones} WHERE zone_country_id = %d ORDER BY %s", $country_id, ($display == 'code') ? 'zone_code' : 'zone_name');
+
   if (db_num_rows($result) == 0) {
     $options[-1] = t('Not applicable');
   }
   else {
     $options[''] = t('Please select');
-  }
-  while ($zone = db_fetch_object($result)) {
-    $options[$zone->zone_id] = ($display == 'code') ? $zone->zone_code : $zone->zone_name;
+    while ($zone = db_fetch_object($result)) {
+      $options[$zone->zone_id] = ($display == 'code') ? $zone->zone_code : $zone->zone_name;
+    }
   }
 
   $select = array(
@@ -2381,7 +2370,7 @@ function uc_select_month($title = NULL, $default = NULL) {
  */
 function uc_select_year($title = NULL, $default = NULL, $min = NULL, $max = NULL) {
   $min = is_null($min) ? intval(date('Y')) : $min;
-  $max = is_null($max) ? intval(date('Y')) + 8 : $max;
+  $max = is_null($max) ? intval(date('Y')) + 10 : $max;
 
   $select = array(
     '#type' => 'select',

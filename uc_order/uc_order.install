@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.8.2.4 2008/02/25 21:11:38 rszrama Exp $
+// $Id: uc_order.install,v 1.8.2.5 2008/03/10 21:01:12 rszrama Exp $
 
 /**
  * Implementation of hook_install().
@@ -241,12 +241,12 @@ function uc_order_update_1(){
   switch ($GLOBALS['db_type']){
     case 'mysql':
     case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {uc_orders} CHANGE delivery_zip delivery_postal_code VARCHAR(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL");
-      $ret[] = update_sql("ALTER TABLE {uc_orders} CHANGE billing_zip billing_postal_code VARCHAR(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL");
+      $ret[] = update_sql("ALTER TABLE {uc_orders} CHANGE delivery_zip delivery_postal_code VARCHAR(10) CHARACTER SET utf8 NOT NULL");
+      $ret[] = update_sql("ALTER TABLE {uc_orders} CHANGE billing_zip billing_postal_code VARCHAR(10) CHARACTER SET utf8 NOT NULL");
       break;
     case 'pgsql':
-      db_change_column($ret, 'uc_orders', 'delivery_zip', 'delivery_postal_code', 'varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci', array('not null' => true, 'default' => ''));
-      db_change_column($ret, 'uc_orders', 'billing_zip', 'billing_postal_code', 'varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_orders', 'delivery_zip', 'delivery_postal_code', 'varchar(10) CHARACTER SET utf8', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_orders', 'billing_zip', 'billing_postal_code', 'varchar(10) CHARACTER SET utf8', array('not null' => true, 'default' => ''));
       break;
   }
   $result = db_query("SELECT order_id FROM {uc_orders} ORDER BY order_id DESC LIMIT 1");
@@ -299,16 +299,16 @@ function uc_order_update_3() {
     switch ($GLOBALS['db_type']){
       case 'mysql':
       case 'mysqli':
-        $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE order_status_id order_status_id VARCHAR(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default ''");
-        $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE title title VARCHAR(48) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default ''");
-        $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE notify state VARCHAR(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL default ''");
+        $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE order_status_id order_status_id VARCHAR(32) CHARACTER SET utf8 NOT NULL default ''");
+        $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE title title VARCHAR(48) CHARACTER SET utf8 NOT NULL default ''");
+        $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE notify state VARCHAR(32) CHARACTER SET utf8 NOT NULL default ''");
         $ret[] = update_sql("ALTER TABLE {uc_order_statuses} ADD weight MEDIUMINT(9) NOT NULL");
         $ret[] = update_sql("ALTER TABLE {uc_order_statuses} ADD locked TINYINT NOT NULL DEFAULT '0'");
       break;
       case 'pgsql':
-        db_change_column($ret, 'uc_order_statuses', 'order_status_id', 'order_status_id', 'varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci', array('not null' => true, 'default' => ''));
-        db_change_column($ret, 'uc_order_statuses', 'title', 'title', 'varchar(48) CHARACTER SET utf8 COLLATE utf8_general_ci', array('not null' => true, 'default' => ''));
-        db_change_column($ret, 'uc_order_statuses', 'notify', 'state', 'varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci', array('not null' => true, 'default' => ''));
+        db_change_column($ret, 'uc_order_statuses', 'order_status_id', 'order_status_id', 'varchar(32) CHARACTER SET utf8', array('not null' => true, 'default' => ''));
+        db_change_column($ret, 'uc_order_statuses', 'title', 'title', 'varchar(48) CHARACTER SET utf8', array('not null' => true, 'default' => ''));
+        db_change_column($ret, 'uc_order_statuses', 'notify', 'state', 'varchar(32) CHARACTER SET utf8', array('not null' => true, 'default' => ''));
         db_add_column($ret, 'uc_order_statuses', 'weight', 'integer', array('not null' => true, 'default' => 0));
         db_add_column($ret, 'uc_order_statuses', 'locked', 'smallint', array('not null' => true, 'default' => 0));
       break;
@@ -362,7 +362,8 @@ function uc_order_update_5() {
 function uc_order_update_6(){
   $ret = array();
   $max_opid = db_result(db_query("SELECT MAX(order_product_id) AS max_opid FROM {uc_order_products}"));
-  $ret[] = update_sql("INSERT INTO {sequences} (name, id) VALUES ('{uc_order_products}_order_product_id', $max_opid)");
-  
+  if ($max_opid){
+    $ret[] = update_sql("INSERT INTO {sequences} (name, id) VALUES ('{uc_order_products}_order_product_id', $max_opid)");
+  }
   return $ret;
 }

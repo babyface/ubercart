@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.14.2.7 2008/02/25 21:11:36 rszrama Exp $
+// $Id: uc_cart.module,v 1.14.2.8 2008/03/10 21:01:12 rszrama Exp $
 
 /**
  * @file
@@ -352,12 +352,14 @@ function theme_uc_cart_block_content() {
     $output .= '<table class="cart-block-table">'
               .'<tbody class="cart-block-tbody">';
     foreach ($items as $item) {
-      $output .= '<tr class="cart-block-item"><td class="cart-block-item-qty">'. $item->qty .'x</td>'
-               . '<td class="cart-block-item-title">'. l($item->title, 'node/'. $item->nid) .'</td>'
-               . '<td class="cart-block-item-price">'. uc_currency_format($item->price) .'</td></tr>';
-      if (is_array($item->data['attributes']) && !empty($item->data['attributes'])) {
-        $display_item = module_invoke($item->module, 'cart_display', $item);
-        $output .= '<tr><td colspan="3">'. $display_item['options']['#value'] .'</td></tr>';
+      $display_item = module_invoke($item->module, 'cart_display', $item);
+      if (!empty($display_item)){
+        $output .= '<tr class="cart-block-item"><td class="cart-block-item-qty">'. $display_item['qty']['#default_value'] .'x</td>'
+                . '<td class="cart-block-item-title">'. $display_item['title']['#value'] .'</td>'
+                . '<td class="cart-block-item-price">'. uc_currency_format($display_item['#total']) .'</td></tr>';
+        if ($display_item['options']['#value']){
+          $output .= '<tr><td colspan="3">'. $display_item['options']['#value'] .'</td></tr>';
+        }
       }
       $total += ($item->price) * $item->qty;
       $item_count += $item->qty;
@@ -371,7 +373,7 @@ function theme_uc_cart_block_content() {
 
   $output .= '</div>';
 
-  $item_text = format_plural($item_count, '1 Item', '@count Items');
+  $item_text = format_plural($item_count, '@count Item', '@count Items');
   $view = '('. l(t('View cart'), 'cart', array('rel' => 'nofollow')) .')';
   if (variable_get('uc_checkout_enabled', TRUE)) {
     $checkout = ' ('. l(t('Checkout'), 'cart/checkout', array('rel' => 'nofollow')) .')';
@@ -1473,7 +1475,7 @@ function uc_cart_checkout_form_validate($form_id, $form_values) {
   }
 
   $order->products = unserialize($form_values['cart_contents']);
-
+  $order->order_total = uc_order_get_total($order, true);
   // Validate/process the cart panes.  A FALSE value results in failed checkout.
   $_SESSION['checkout_valid'] = TRUE;
   foreach(element_children($form_values['panes']) as $pane_id) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.install,v 1.9.2.5 2008/02/25 21:11:36 rszrama Exp $
+// $Id: uc_attribute.install,v 1.9.2.6 2008/03/10 21:01:11 rszrama Exp $
 
 function uc_attribute_install(){
   switch($GLOBALS['db_type']){
@@ -9,6 +9,9 @@ function uc_attribute_install(){
         `aid` mediumint(9) NOT NULL auto_increment,
         `name` varchar(255) NOT NULL,
         `ordering` tinyint(2) NOT NULL default 0,
+        `required` tinyint(2) NOT NULL default 0,
+        `display` tinyint(2) NOT NULL default 1,
+        `description` varchar(255) NOT NULL,
         PRIMARY KEY (`aid`)
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
       db_query("CREATE TABLE {uc_attribute_options} (
@@ -27,6 +30,7 @@ function uc_attribute_install(){
         `ordering` tinyint(2) NOT NULL default 0,
         `default_option` mediumint(9) NOT NULL default '0',
         `required` tinyint(2) NOT NULL default 0,
+        `display` tinyint(2) NOT NULL default 1,
         PRIMARY KEY (`pcid`, `aid`)
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
       db_query("CREATE TABLE {uc_class_attribute_options} (
@@ -44,6 +48,7 @@ function uc_attribute_install(){
         `ordering` tinyint(2) NOT NULL default 0,
         `default_option` mediumint(9) NOT NULL default '0',
         `required` tinyint(2) NOT NULL default 0,
+        `display` tinyint(2) NOT NULL default 1,
         PRIMARY KEY (`nid`, `aid`)
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
       db_query("CREATE TABLE {uc_product_options} (
@@ -67,6 +72,8 @@ function uc_attribute_install(){
         aid serial NOT NULL,
         name varchar(255) NOT NULL default '',
         ordering smallint NOT NULL default 0,
+        requried smallint NOT NULL default 0,
+        display smallint NOT NULL default 1,
         PRIMARY KEY (aid)
       );");
       db_query("CREATE TABLE {uc_attribute_options} (
@@ -85,6 +92,7 @@ function uc_attribute_install(){
         ordering smallint NOT NULL default 0,
         default_option integer NOT NULL default '0',
         required smallint NOT NULL default 0,
+        display smallint NOT NULL default 1,
         PRIMARY KEY (pcid, aid)
       );");
       db_query("CREATE TABLE {uc_class_attribute_options} (
@@ -102,6 +110,7 @@ function uc_attribute_install(){
         ordering smallint NOT NULL default 0,
         default_option integer NOT NULL default 0,
         required smallint NOT NULL default 0,
+        display smallint NOT NULL default 1,
         PRIMARY KEY (nid, aid)
       );");
       db_query("CREATE TABLE {uc_product_options} (
@@ -288,6 +297,40 @@ function uc_attribute_update_8(){
       $ret[] = update_sql("ALTER TABLE {uc_attribute_options} SET WITHOUT OIDS");
       $ret[] = update_sql("ALTER TABLE {uc_class_attribute_options} SET WITHOUT OIDS");
       $ret[] = update_sql("ALTER TABLE {uc_product_options} SET WITHOUT OIDS");
+    break;
+  }
+  return $ret;
+}
+
+function uc_attribute_update_9(){
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_attributes} ADD COLUMN required tinyint(2) NOT NULL default 1");
+      $ret[] = update_sql("ALTER TABLE {uc_attributes} ADD COLUMN display tinyint(2) NOT NULL default 1");
+      $ret[] = update_sql("ALTER TABLE {uc_class_attributes} ADD COLUMN display tinyint(2) NOT NULL default 1");
+      $ret[] = update_sql("ALTER TABLE {uc_product_attributes} ADD COLUMN display tinyint(2) NOT NULL default 1");
+    break;
+    case 'pgsql':
+      db_add_column($ret, 'uc_attributes', 'required', 'smallint', array('not null' => true, 'default' => 1));
+      db_add_column($ret, 'uc_attributes', 'display', 'smallint', array('not null' => true, 'default' => 1));
+      db_add_column($ret, 'uc_class_attributes', 'display', 'smallint', array('not null' => true, 'default' => 1));
+      db_add_column($ret, 'uc_product_attributes', 'display', 'smallint', array('not null' => true, 'default' => 1));
+    break;
+  }
+  return $ret;
+}
+
+function uc_attribute_update_10() {
+  $ret = array();
+  switch ($GLOBALS['db_type']){
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_attributes} ADD COLUMN description varchar(255) NOT NULL");
+    break;
+    case 'pgsql':
+      db_add_column($ret, 'uc_attributes', 'description', 'varchar(255)', array('not null' => true, 'default' => ''));
     break;
   }
   return $ret;

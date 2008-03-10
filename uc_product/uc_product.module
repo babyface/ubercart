@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.13.2.5 2008/02/25 21:11:39 rszrama Exp $
+// $Id: uc_product.module,v 1.13.2.6 2008/03/10 21:01:12 rszrama Exp $
 
 /**
  * @file
@@ -144,24 +144,18 @@ function uc_product_menu($may_cache){
       'callback arguments' => array(arg(5)),
       'type' => MENU_CALLBACK,
     );
-    $items[] = array('path' => 'admin/store/products/classes/'. arg(4),
+    $items[] = array(
+      'path' => 'admin/store/products/classes/'. arg(4),
       'title' => t('Product class'),
-      'access' => user_access('administer product classes'),
-      'callback' => 'uc_product_class_view',
-      'callback arguments' => array(arg(4)),
-      'type' => MENU_CALLBACK,
-    );
-    /* $items[] = array('path' => 'admin/store/products/classes/'. arg(4) .'/view',
-      'title' => t('View'),
-      'type' => MENU_DEFAULT_LOCAL_TASK,
-      'weight' => -10
-    ); */
-    $items[] = array('path' => 'admin/store/products/classes/'. arg(4) .'/edit',
-      'title' => t('Edit class'),
       'access' => user_access('administer product classes'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('uc_product_class_form', arg(4)),
-      'type' => MENU_LOCAL_TASK,
+      'type' => MENU_CALLBACK,
+    );
+    $items[] = array(
+      'path' => 'admin/store/products/classes/'. arg(4) .'/edit',
+      'title' => t('Edit'),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
       'weight' => -5,
     );
     $items[] = array('path' => 'admin/store/products/classes/'. arg(4) .'/delete',
@@ -517,7 +511,9 @@ function uc_product_form(&$node){
     '#title' => t('Units of measurement'),
     '#options' => array(
       'in' => t('Inches'),
+      'ft' => t('Feet'),
       'cm' => t('Centimeters'),
+      'mm' => t('Millimeters'),
     ),
     '#default_value' => $node->length_units ? $node->length_units : variable_get('uc_length_unit', 'in'),
   );
@@ -863,6 +859,7 @@ function uc_product_table($op, $args = array()){
       $fields = array();
       $fields[] = array('name' => 'image', 'title' => t('Image'), 'weight' => -5, 'enabled' => module_exists('imagecache'));
       $fields[] = array('name' => 'name', 'title' => t('Name'), 'weight' => 0, 'enabled' => true, 'attributes' => array('field' => 'n.title'));
+      $fields[] = array('name' => 'list_price', 'title' => t('List price'), 'weight' => 3, 'enabled' => false, 'attributes' => array('field' => 'p.list_price'));
       $fields[] = array('name' => 'price', 'title' => t('Price'), 'weight' => 5, 'enabled' => true, 'attributes' => array('field' => 'p.sell_price'));
       if (module_exists('uc_cart') && (arg(0) != 'admin' || $_GET['q'] == 'admin/store/settings/tables/uc_product_table')){
         $fields[] = array(
@@ -886,6 +883,7 @@ function uc_product_table($op, $args = array()){
             $data['image'][] = t('n/a');
           }
           $data['name'][] = array('data' => l($node->title, 'node/'. $node->nid), 'width' => '100%');
+          $data['list_price'][] = array('data' => theme('uc_product_price', $node->list_price, 'list_price'), 'nowrap' => 'nowrap');
           $data['price'][] = array('data' => theme('uc_product_sell_price', $node->sell_price, true), 'nowrap' => 'nowrap');
           if (module_exists('uc_cart') && arg(0) != 'admin'){
             $data['add_to_cart'][] = drupal_get_form('uc_catalog_buy_it_now_form_'. $node->nid, $node);
@@ -1524,7 +1522,7 @@ function uc_product_image_defaults($checks){
         ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
       break;
       case 'pgsql':
-        db_query("CREATE TABLE content_field_image_cache (
+        db_query("CREATE TABLE {content_field_image_cache} (
           vid int_unsigned NOT NULL default '0',
           delta int_unsigned NOT NULL default '0',
           nid int_unsigned NOT NULL default '0',
@@ -2001,15 +1999,18 @@ function uc_product_field_settings_form_submit($form_id, $form_values){
  */
 function uc_product_class_default(){
   $result = db_query("SELECT * FROM {uc_product_classes}");
-  $header = array(t('Class ID'), t('Name'), t('Description'), array('data' => t('Operations'), 'colspan' => '2'));
+  $header = array(t('Class ID'), t('Name'), t('Description'), t('Operations'));
   $rows = array();
-  while($class = db_fetch_object($result)){
+  while($class = db_fetch_object($result)) {
+    $ops = array(
+      l(t('edit'), 'admin/store/products/classes/'. $class->pcid .'/edit'),
+      l(t('delete'), 'admin/store/products/classes/'. $class->pcid .'/delete'),
+    );
     $rows[] = array(
       $class->pcid,
       $class->name,
       $class->description,
-      l(t('Edit'), 'admin/store/products/classes/'. $class->pcid .'/edit'),
-      l(t('Delete'), 'admin/store/products/classes/'. $class->pcid .'/delete'),
+      implode(' ', $ops),
     );
   }
   if (count($rows) == 0){
@@ -2029,33 +2030,34 @@ function uc_product_class_default(){
  * @ingroup forms
  * @see uc_product_class_form_submit
  */
-function uc_product_class_form($pcid = null){
-  if ($pcid){
+function uc_product_class_form($pcid = null) {
+  if ($pcid) {
     $class = uc_product_class_load($pcid);
+    drupal_set_title($class->name);
     $form['pcid'] = array('#type' => 'hidden', '#value' => $pcid);
-    
-    $crumbs = drupal_get_breadcrumb();
-    $crumbs[] = l(t('Classes'), 'admin/store/products/classes');
-    drupal_set_breadcrumb($crumbs);
   }
-  else{
+  else {
     $form['pcid'] = array('#type' => 'textfield',
       '#title' => t('Class ID'),
       '#required' => true,
       '#max_length' => 32,
-      '#description' => t('The machine-readable name of this content type. This text will be used for constructing the URL of the <em>create content</em> page for this content type. This name may consist of only of lowercase letters, numbers, and underscores. Dashes are not allowed. Underscores will be converted into dashes when constructing the URL of the <em>create content</em> page. This name must be unique to this content type.'),
+      '#description' => t('The machine-readable name of this content type. This text will be used for constructing the URL of the <em>create content</em> page for this content type. This name may consist only of lowercase letters, numbers, and underscores. Dashes are not allowed. Underscores will be converted into dashes when constructing the URL of the <em>create content</em> page. This name must be unique to this content type.'),
     );
   }
-  $form['name'] = array('#type' => 'textfield',
+  $form['name'] = array(
+    '#type' => 'textfield',
     '#title' => t('Class name'),
     '#default_value' => $class->name,
     '#required' => true,
   );
-  $form['description'] = array('#type' => 'textarea',
+  $form['description'] = array(
+    '#type' => 'textarea',
     '#title' => t('Description'),
+    '#description' => t('This text describes the content type created for this product class to administrators.'),
     '#default_value' => $class->description,
   );
-  $form['op'] = array('#type' => 'submit',
+  $form['op'] = array(
+    '#type' => 'submit',
     '#value' => t('Submit'),
   );
   

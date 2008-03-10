@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.4.2.4 2008/02/25 21:11:38 rszrama Exp $
+// $Id: uc_ups.module,v 1.4.2.5 2008/03/10 21:01:11 rszrama Exp $
 
 /**
  * @file
@@ -801,13 +801,13 @@ function uc_ups_quote($products, $details){
   
   $method = uc_ups_shipping_method();
   
-  $addresses = array(variable_get('uc_quote_store_default_address', new stdClass()));
+  $addresses = array((array)variable_get('uc_quote_store_default_address', new stdClass()));
   $last_key = 0;
   $packages = array();
   if (variable_get('uc_ups_all_in_one', true)){
     foreach ($products as $product){
       if ($product->nid){
-        $address = uc_quote_get_default_shipping_address($product->nid);
+        $address = (array)uc_quote_get_default_shipping_address($product->nid);
         $key = array_search($address, $addresses);
         if ($key === false){
           $addresses[++$last_key] = $address;
@@ -837,7 +837,7 @@ function uc_ups_quote($products, $details){
     foreach ($products as $product){
       $addr_key = 0;
       if ($product->nid){
-        $address = uc_quote_get_default_shipping_address($product->nid);
+        $address = (array)uc_quote_get_default_shipping_address($product->nid);
         $key = array_search($address, $addresses);
         if ($key === false){
           $addresses[++$last_key] = $address;
@@ -879,7 +879,7 @@ function uc_ups_quote($products, $details){
   $dest = (object)$details;
   
   foreach ($packages as $key => $ship_packages){
-    $orig = $addresses[$key];
+    $orig = (object)$addresses[$key];
     $orig->email = variable_get('uc_store_email', '');
     foreach (array_keys(array_filter(variable_get('uc_ups_services', array()))) as $ups_service){
       $request = uc_ups_shipping_quote($ship_packages, $orig, $dest, $ups_service);
@@ -1011,7 +1011,9 @@ function uc_ups_fulfill_order($order_id, $package_ids){
           '#title' => t('Units of measurement'),
           '#options' => array(
             'in' => t('Inches'),
+            'ft' => t('Feet'),
             'cm' => t('Centimeters'),
+            'mm' => t('Millimeters'),
           ),
           '#default_value' => $product->length_units ? $product->length_units : variable_get('uc_length_unit', 'in'),
         );

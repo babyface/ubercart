@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.1.2.5 2008/02/25 21:11:39 rszrama Exp $
+// $Id: uc_roles.module,v 1.1.2.6 2008/03/10 21:01:13 rszrama Exp $
 
 /**
 * @file
@@ -31,13 +31,14 @@ function uc_roles_help($section) {
 * Implementation of hook_cron().
 */
 function uc_roles_cron() {
-  $reminder_granularity = variable_get('uc_roles_reminder_granularity','never');
-  $reminder_qty = variable_get('uc_roles_reminder_length',NULL);
-  $expirations = db_query("SELECT * FROM {uc_roles_expirations}");
-  
-  while ($expiration = db_fetch_object($expirations)) {
+  $reminder_granularity = variable_get('uc_roles_reminder_granularity', 'never');
+  $reminder_qty = variable_get('uc_roles_reminder_length', NULL);
+
+  $result = db_query("SELECT * FROM {uc_roles_expirations}");
+  while ($expiration = db_fetch_object($result)) {
     $user = user_load(array('uid' => $expiration->uid));
-    if (!in_array($expiration->rid,$user->roles)) {
+
+    if (!in_array($expiration->rid, array_keys($user->roles))) {
       _role_action('delete', $user, $expiration->rid);
     }
     elseif ($expiration->expiration <= time()) {
@@ -48,7 +49,7 @@ function uc_roles_cron() {
       $threshold = _get_expiration_date(-$reminder_qty, $reminder_granularity, $expiration->expiration);
       if ($threshold <= time() && intval($expiration->notified) < 1) {
         _email_user('reminder', $user, $expiration);
-        db_query("UPDATE {uc_roles_expirations} SET notified = 1 WHERE uid = %d AND rid = %d",$user->uid,$expiration->rid);
+        db_query("UPDATE {uc_roles_expirations} SET notified = 1 WHERE uid = %d AND rid = %d", $user->uid, $expiration->rid);
       }
     }
   }

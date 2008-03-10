@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_notify.module,v 1.10.2.2 2008/01/16 21:56:53 rszrama Exp $
+// $Id: uc_notify.module,v 1.10.2.3 2008/03/10 21:01:12 rszrama Exp $
 
 /**
  * @file
@@ -352,7 +352,7 @@ function uc_notify_checkout($order) {
     $subject = variable_get('uc_notify_admin_checkout_subject', t('New Order at [store-name]'));
     $subject = token_replace_multiple($subject, array('global' => NULL, 'order' => $order));
 
-    $email_from = variable_get('uc_store_email_from', ini_get('sendmail_from'));
+    $email_from = uc_store_email_from();
     $headers = uc_notify_headers();
 
     $emails = preg_split('/\s+/', variable_get('uc_notify_admin_checkout_emails', variable_get('uc_store_email', '')));

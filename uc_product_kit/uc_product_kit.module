@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.10.2.3 2008/02/25 21:11:37 rszrama Exp $
+// $Id: uc_product_kit.module,v 1.10.2.4 2008/03/10 21:01:13 rszrama Exp $
 
 /**
  * @file
@@ -69,6 +69,7 @@ function uc_product_kit_insert(&$node){
   $obj->sell_price = 0;
   $obj->weight = 0;
   $obj->weight_units = variable_get('uc_weight_unit', 'lb');
+  
   $obj->ordering = $node->ordering;
   $obj->shippable = false;
 
@@ -94,9 +95,9 @@ function uc_product_kit_insert(&$node){
   }
   db_query("INSERT INTO {uc_product_kits} (vid, nid, product_id, mutable, qty) VALUES ". implode(',', $placeholders), $values);
   $obj->model = rtrim($obj->model, ' / ');
-  db_query("INSERT INTO {uc_products} (vid, nid, model, list_price, cost, sell_price, weight, weight_units, unique_hash, ordering, shippable) VALUES (%d, %d, '%s', %f, %f, %f, %f, '%s', '%s', %d, %d)",
-    $obj->vid, $obj->nid, $obj->model, $obj->list_price, $obj->cost, $obj->sell_price, $obj->weight, $obj->weight_units,
-    md5($obj->vid . $obj->nid . $obj->model . $obj->list_price . $obj->cost . $obj->sell_price . $obj->weight . $obj->weight_units . $obj->ordering . time()),
+  db_query("INSERT INTO {uc_products} (vid, nid, model, list_price, cost, sell_price, weight, weight_units, default_qty, unique_hash, ordering, shippable) VALUES (%d, %d, '%s', %f, %f, %f, %f, '%s', %d, '%s', %d, %d)",
+    $obj->vid, $obj->nid, $obj->model, $obj->list_price, $obj->cost, $obj->sell_price, $obj->weight, $obj->weight_units, $obj->default_qty,
+    md5($obj->vid . $obj->nid . $obj->model . $obj->list_price . $obj->cost . $obj->sell_price . $obj->weight . $obj->weight_units . $obj->default_qty . $obj->ordering . $obj->shippable . time()),
     $obj->ordering, $obj->shippable
   );
 }
@@ -120,6 +121,7 @@ function uc_product_kit_update(&$node){
   $obj->sell_price = 0;
   $obj->weight = 0;
   $obj->weight_units = variable_get('uc_weight_unit', 'lb');
+  $obj->default_qty = $node->default_qty;
   $obj->ordering = $node->ordering;
   $obj->shippable = false;
   
@@ -165,20 +167,20 @@ function uc_product_kit_update(&$node){
   }
   db_query("INSERT INTO {uc_product_kits} (vid, nid, product_id, mutable, qty, discount, ordering) VALUES ". implode(',', $placeholders), $values);
   if ($node->revision){
-    db_query("INSERT INTO {uc_products} (vid, nid, model, list_price, cost, sell_price, weight, weight_units, unique_hash, ordering, shippable) VALUES (%d, %d, '%s', %f, %f, %f, %f, '%s', '%s', %d, %d)",
-      $obj->vid, $obj->nid, $obj->model, $obj->list_price, $obj->cost, $obj->sell_price, $obj->weight, $obj->weight_units,
-      md5($obj->vid . $obj->nid . $obj->model . $obj->list_price . $obj->cost . $obj->sell_price . $obj->weight . $obj->weight_units . $obj->ordering . time()),
+    db_query("INSERT INTO {uc_products} (vid, nid, model, list_price, cost, sell_price, weight, weight_units, default_qty, unique_hash, ordering, shippable) VALUES (%d, %d, '%s', %f, %f, %f, %f, '%s', %d, '%s', %d, %d)",
+      $obj->vid, $obj->nid, $obj->model, $obj->list_price, $obj->cost, $obj->sell_price, $obj->weight, $obj->weight_units, $obj->default_qty,
+      md5($obj->vid . $obj->nid . $obj->model . $obj->list_price . $obj->cost . $obj->sell_price . $obj->weight . $obj->weight_units . $obj->default_qty . $obj->ordering . time()),
       $obj->ordering, $obj->shippable
     );
   }
   else{
-    db_query("UPDATE {uc_products} SET model = '%s', list_price = %f, cost = %f, sell_price = %f, weight = %f, weight_units = '%s', ordering = %d WHERE vid = %d",
-      $obj->model, $obj->list_price, $obj->cost, $obj->sell_price, $obj->weight, $obj->weight_units, $obj->ordering, $obj->vid);
+    db_query("UPDATE {uc_products} SET model = '%s', list_price = %f, cost = %f, sell_price = %f, weight = %f, weight_units = '%s', default_qty = %d, ordering = %d, shippable = %d WHERE vid = %d",
+      $obj->model, $obj->list_price, $obj->cost, $obj->sell_price, $obj->weight, $obj->weight_units, $obj->default_qty, $obj->ordering, $obj->shippable, $obj->vid);
     if (!db_affected_rows()){
-      db_query("INSERT INTO {uc_products} (vid, nid, model, list_price, cost, sell_price, weight, weight_units, unique_hash, ordering) VALUES (%d, %d, '%s', %f, %f, %f, %f, '%s', '%s', %d)",
-        $obj->vid, $obj->nid, $obj->model, $obj->list_price, $obj->cost, $obj->sell_price, $obj->weight, $obj->weight_units,
-        md5($obj->vid . $obj->nid . $obj->model . $obj->list_price . $obj->cost . $obj->sell_price . $obj->weight . $obj->weight_units . $obj->ordering . time()),
-        $obj->ordering
+      db_query("INSERT INTO {uc_products} (vid, nid, model, list_price, cost, sell_price, weight, weight_units, default_qty, unique_hash, ordering, shippable) VALUES (%d, %d, '%s', %f, %f, %f, %f, '%s', %d, '%s', %d, %d)",
+        $obj->vid, $obj->nid, $obj->model, $obj->list_price, $obj->cost, $obj->sell_price, $obj->weight, $obj->weight_units, $obj->default_qty,
+        md5($obj->vid . $obj->nid . $obj->model . $obj->list_price . $obj->cost . $obj->sell_price . $obj->weight . $obj->weight_units . $obj->default_qty . $obj->ordering . $obj->shippable . time()),
+        $obj->ordering, $boj->shippable
       );
     }
   }
@@ -327,6 +329,14 @@ function uc_product_kit_form(&$node){
       );
     }
   }
+  $form['base']['default_qty'] = array('#type' => 'textfield',
+    '#title' => t('Default quantity to add to cart'),
+    '#default_value' => !is_null($node->default_qty) ? $node->default_qty : 1,
+    '#description' => t('Leave blank or zero to disable the quantity field in the add to cart form.'),
+    '#weight' => 27,
+    '#size' => 5,
+    '#maxlength' => 6,
+  );
   $form['base']['ordering'] = array('#type' => 'weight',
     '#title' => t('List order'),
     '#delta' => 25,
@@ -448,6 +458,17 @@ function uc_product_kit_add_to_cart_form($node){
     $form['products'][$i]['nid'] = array('#type' => 'hidden', '#value' => $product->nid);
     $form['products'][$i]['qty'] = array('#type' => 'hidden', '#value' => $product->qty);
   }
+  if ($node->default_qty > 0 && variable_get('uc_product_add_to_cart_qty', false)){
+    $form['qty'] = array('#type' => 'textfield',
+      '#title' => t('Quantity'),
+      '#default_value' => $node->default_qty,
+      '#size' => 5,
+      '#maxlength' => 6,
+    );
+  }
+  else{
+    $form['qty'] = array('#type' => 'hidden', '#value' => 1);
+  }
   $form['submit'] = array('#type' => 'submit', '#value' => variable_get('uc_product_add_to_cart_text', t('Add to cart')), );
   return $form;
 }
@@ -459,7 +480,7 @@ function uc_product_kit_add_to_cart_form($node){
  * correct quantities.
  */
 function uc_product_kit_add_to_cart_form_submit($form_id, $form_values){
-  return uc_cart_add_item($form_values['nid'], 1, $form_values);
+  return uc_cart_add_item($form_values['nid'], $form_values['qty'], $form_values);
 }
 
 /******************************************************************************
@@ -476,7 +497,7 @@ function uc_product_kit_add_to_cart($nid, $qty, $kit_data){
     $unique = uniqid('', true);
     foreach ($node->products as $product){
       $data = array('kit_id' => $node->nid, 'unique_id' => $unique, 'module' => 'uc_product_kit');
-      uc_cart_add_item($product->nid, $product->qty, $data +  module_invoke_all('add_to_cart_data', $kit_data['products'][$product->nid]), null, true, false);
+      uc_cart_add_item($product->nid, $product->qty * $qty, $data +  module_invoke_all('add_to_cart_data', $kit_data['products'][$product->nid]), null, true, false);
     }
     if ($check_redirect) {
       if (isset($_GET['destination'])) {
@@ -547,7 +568,7 @@ function uc_product_kit_cart_display($item){
       $element['nid'] = array('#type' => 'value', '#value' => $kit->nid);
       $element['module'] = array('#type' => 'value', '#value' => 'uc_product_kit');
       $element['remove'] = array('#type' => 'checkbox');
-      $element['options'] = array('#value' => "<ul class=\"cart_options\">\n");
+      $element['options'] = array('#value' => '<div class="item-list"><ul class="cart-options">'. "\n");
       $element['title'] = array('#value' => l($kit->title, 'node/'. $kit->nid));
       $element['#total'] = 0;
       $element['qty'] = array(
@@ -581,9 +602,11 @@ function uc_product_kit_cart_display($item){
     }
     if ($done){
       $elements[$unique_id]['data'] = array('#type' => 'value', '#value' => serialize($elements[$unique_id]['data']));
-      $elements[$unique_id]['options']['#value'] .= "</ul>\n";
-      //unset($products[$data['unique_id']]);
-      return $elements[$unique_id];
+      $elements[$unique_id]['options']['#value'] .= "</ul></div>\n";
+      $element = $elements[$unique_id];
+      unset($products[$unique_id]);
+      unset($elements[$unique_id]);
+      return $element;
     }
   }
   return array();

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.install,v 1.1.2.3 2008/02/25 21:11:39 rszrama Exp $
+// $Id: uc_file.install,v 1.1.2.4 2008/03/10 21:01:12 rszrama Exp $
 
 function uc_file_install(){
   switch($GLOBALS['db_type']){
@@ -9,7 +9,7 @@ function uc_file_install(){
         `fid` mediumint(9) NOT NULL,
         `filename` varchar(255) NOT NULL,
         KEY fid (fid)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 COLLATE utf8_unicode_ci */ ");
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
       db_query("CREATE TABLE {uc_file_products} (
         `pfid` mediumint(9) NOT NULL,
         `fid` mediumint(9) NOT NULL,
@@ -18,7 +18,7 @@ function uc_file_install(){
         `shippable` BOOL NOT NULL,
         KEY pfid (pfid),
         KEY fid (fid)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 COLLATE utf8_unicode_ci */ ");
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
       db_query("CREATE TABLE {uc_file_users} (
         `fid` mediumint(9) NOT NULL,
         `uid` mediumint(9) NOT NULL,
@@ -29,7 +29,7 @@ function uc_file_install(){
         `addresses` text,
         KEY fid (fid),
         KEY uid (uid)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 COLLATE utf8_unicode_ci */ ");
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
       break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_files} (

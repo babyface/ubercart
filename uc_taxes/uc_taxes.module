@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.11.2.5 2008/02/25 21:11:37 rszrama Exp $
+// $Id: uc_taxes.module,v 1.11.2.6 2008/03/10 21:01:13 rszrama Exp $
 
 /**
  * @file
@@ -163,24 +163,13 @@ function uc_taxes_order($op, $arg1, $arg2){
  * Display a list of tax rates.
  */
 function uc_taxes_admin_settings(){
-  $header = array(t('Name'), t('Area'), t('Rate'), t('Taxed product types'), t('Taxed line items'), t('Weight'), array('data' => t('Actions'), 'colspan' => 3));
+  $header = array(t('Name'), t('Rate'), t('Taxed product types'), t('Taxed line items'), t('Weight'), array('data' => t('Actions'), 'colspan' => 3));
   $rows = array();
   $result = db_query("SELECT * FROM {uc_taxes} ORDER BY weight");
   while ($rule = db_fetch_object($result)){
-    switch ($rule->type){
-      case 'code':
-        $area = $rule->area;
-      break;
-      case 'zone':
-        $area = uc_get_zone_code($rule->area);
-      break;
-      case 'country':
-        $country = uc_get_country_data(array('country_id' => $rule->area));
-        $area = $country[0]['country_iso_code_3'];
-    }
     $rule->taxed_product_types = (array)unserialize($rule->taxed_product_types);
     $rule->taxed_line_items = (array)unserialize($rule->taxed_line_items);
-    $rows[] = array($rule->name, $area, $rule->rate * 100 .'%', implode(', ', $rule->taxed_product_types), implode(', ', $rule->taxed_line_items), $rule->weight, l(t('edit'), 'admin/store/settings/taxes/edit/'. $rule->id), l(t('copy'), 'admin/store/settings/taxes/copy/'. $rule->id), l(t('delete'), 'admin/store/settings/taxes/delete/'. $rule->id));
+    $rows[] = array($rule->name, $rule->rate * 100 .'%', implode(', ', $rule->taxed_product_types), implode(', ', $rule->taxed_line_items), $rule->weight, l(t('edit'), 'admin/store/settings/taxes/edit/'. $rule->id), l(t('copy'), 'admin/store/settings/taxes/copy/'. $rule->id), l(t('delete'), 'admin/store/settings/taxes/delete/'. $rule->id));
   }
   $output = theme('table', $header, $rows);
   $output .= l('Make a new tax rule.', 'admin/store/settings/taxes/edit');

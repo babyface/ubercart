@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.4.2.5 2008/02/25 21:11:36 rszrama Exp $
+// $Id: uc_quote.module,v 1.4.2.6 2008/03/10 21:01:11 rszrama Exp $
 
 /**
  * @file
@@ -1061,14 +1061,14 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2){
         }
       }
       $products = array();
-      foreach ($arg1->products as $product){
+      foreach ($arg1->products as $id => $product){
         $node = (array)node_load($product->nid);
         foreach ($node as $key => $value){
           if (!isset($product->$key)){
             $product->$key = $value;
           }
         }
-        $products[] = $product;
+        $arg1->products[$id] = $product;
       }
       $quote_option = explode('---', $_POST['quote-option']);
       $arg1->quote['method'] = $quote_option[0];
@@ -1281,7 +1281,6 @@ function uc_quote_request_quotes(){
   /* print '<pre>';
   print_r($_POST);
   print '</pre>'; */
-  ob_start();
   
   $user = user_load(array('uid' => $_POST['uid']));
   $details = $_POST['details'];
@@ -1322,6 +1321,22 @@ function uc_quote_request_quotes(){
   // mostly non-existent at this point.
   $fake_order->order_total = uc_order_get_total($fake_order, true);
   // Get all quote types neccessary to fulfill order.
+  $quote_data = _uc_quote_assemble_quotes($fake_order);
+  //drupal_set_message('<pre>'. print_r($methods, true) .'</pre>');
+  //drupal_set_message('<pre>'. print_r($quote_data, true) .'</pre>');
+  $return_quotes = array();
+  foreach ($quote_data as $method_id => $options){
+    foreach ($options as $accsrl => $data){
+      $return_quotes[$method_id .'---'. $accsrl] = $data;
+    }
+  }
+  drupal_set_header("Content-Type: text/javascript; charset=utf-8");
+  print drupal_to_js($return_quotes);
+  exit();
+}
+
+function _uc_quote_assemble_quotes($order){
+  $products = $order->products;
   $shipping_types = array();
   foreach ($products as $product){
     $shipping_types[] =  uc_product_get_shipping_type($product);
@@ -1345,10 +1360,11 @@ function uc_quote_request_quotes(){
     }
   }
   
+  ob_start();
   //drupal_set_message('<pre>'. print_r($products, true) .'</pre>');
   $quote_data = array();
   foreach ($methods as $method){
-    workflow_ng_invoke_event('get_quote_from_'. $method['id'], $fake_order, $method, $user);
+    workflow_ng_invoke_event('get_quote_from_'. $method['id'], $order, $method, $user);
     $data = ob_get_contents();
     if ($data = unserialize($data)){
       $quote_data[$method['id']] = $data;
@@ -1356,17 +1372,7 @@ function uc_quote_request_quotes(){
     ob_clean();
   }
   ob_end_clean();
-  //drupal_set_message('<pre>'. print_r($methods, true) .'</pre>');
-  //drupal_set_message('<pre>'. print_r($quote_data, true) .'</pre>');
-  $return_quotes = array();
-  foreach ($quote_data as $method_id => $options){
-    foreach ($options as $accsrl => $data){
-      $return_quotes[$method_id .'---'. $accsrl] = $data;
-    }
-  }
-  drupal_set_header("Content-Type: text/javascript; charset=utf-8");
-  print drupal_to_js($return_quotes);
-  exit();
+  return $quote_data;
 }
 
 /**

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.5.2.5 2008/02/25 21:11:38 rszrama Exp $
+// $Id: uc_usps.module,v 1.5.2.6 2008/03/10 21:01:11 rszrama Exp $
 
 /**
  * @file
@@ -269,7 +269,7 @@ function uc_usps_quote($products, $details){
   //drupal_set_message('<pre>'. print_r($products, true) .'</pre>');
   //drupal_set_message('<pre>'. print_r($details, true) .'</pre>');
   $services = array();
-  $addresses = array(variable_get('uc_quote_store_default_address', new stdClass()));
+  $addresses = array((array)variable_get('uc_quote_store_default_address', new stdClass()));
   $packages = _uc_usps_package_products($products, $addresses);
   if (!count($packages)){
     return array();
@@ -282,7 +282,7 @@ function uc_usps_quote($products, $details){
   $connection_url = 'http://'. $usps_server .'/'. $api_dll;
   
   foreach ($packages as $key => $ship_packages){
-    $orig = $addresses[$key];
+    $orig = (object)$addresses[$key];
     $orig->email = variable_get('uc_store_email', '');
     $request = uc_usps_rate_request($ship_packages, $orig, $dest);
   
@@ -305,8 +305,11 @@ function uc_usps_quote($products, $details){
               if ($postage->mailservice[0]->data() == "First-Class Mail Parcel"){
                 $attr['classid'] = 'zeroParcel';
               }
-              if ($postage->mailservice[0]->data() == "First-Class Mail Flat"){
+              else if ($postage->mailservice[0]->data() == "First-Class Mail Flat"){
                 $attr['classid'] = 'zeroFlat';
+              }
+              else{
+                $attr['classid'] = 'zero';
               }
             }
             $services[$attr['classid']]['label'] = t('U.S.P.S. @service', array('@service' => $postage->mailservice[0]->data()));
@@ -350,7 +353,7 @@ function uc_usps_quote($products, $details){
         }
         else if (isset($transresp->document->days)){
           $services[$key]['transit'] = $transresp->document->days[0]->data();
-          $services[$key]['option_label'] .= format_plural($services[$key]['transit'], ', 1 day in transit', ', @count days in transit');
+          $services[$key]['option_label'] .= format_plural($services[$key]['transit'], ', @count day in transit', ', @count days in transit');
         }
         else if (isset($transresp->document->commitment)){
           $services[$key]['commitment'] = $transresp->document->commitment[0]->commitmentname[0]->data() .' -- '. $transresp->document->commitment[0]->commitmenttime[0]->data();
@@ -495,7 +498,7 @@ function uc_usps_intl_rate_request($packages, $origin, $destination){
   foreach($packages as $package){
     $request .= '<Package ID="' . $services_count . '">' .
       '<Pounds>' . intval($package->pounds) . '</Pounds>' .
-      '<Ounces>' . number_format($package->ounces, 1, '.', '') . '</Ounces>' .
+      '<Ounces>' . ceil($package->ounces) . '</Ounces>' .
       '<MailType>Package</MailType>' .
       '<Country>'.$shipto_country[0]['country_name'].'</Country>' .    
       '</Package>';
@@ -535,7 +538,7 @@ function _uc_usps_package_products($products, &$addresses){
   if (variable_get('uc_usps_all_in_one', true)){
     foreach ($products as $product){
       if ($product->nid){
-        $address = uc_quote_get_default_shipping_address($product->nid);
+        $address = (array)uc_quote_get_default_shipping_address($product->nid);
         $key = array_search($address, $addresses);
         if ($key === false){
           $addresses[++$last_key] = $address;
@@ -563,7 +566,7 @@ function _uc_usps_package_products($products, &$addresses){
   else{
     foreach ($products as $product){
       if ($product->nid){
-        $address = uc_quote_get_default_shipping_address($product->nid);
+        $address = (array)uc_quote_get_default_shipping_address($product->nid);
         $key = array_search($address, $addresses);
         if ($key === false){
           $addresses[++$last_key] = $address;
@@ -698,6 +701,7 @@ function _uc_usps_pkg_types(){
  */
 function _uc_usps_services(){
   return array(
+    'zero' => t('U.S.P.S. First-Class Mail'),
     'zeroFlat' => t('U.S.P.S. First-Class Flat'),
     'zeroParcel' => t('U.S.P.S. First-Class Parcel'),
     1 => t('U.S.P.S. Priority Mail'),

@@ -1,4 +1,4 @@
-/* $Id: uc_cart_block.css,v 1.6.2.1 2008/01/07 20:56:42 rszrama Exp $ */
+/* $Id: uc_cart_block.css,v 1.6.2.2 2008/03/10 21:01:12 rszrama Exp $ */
 
 #block-cart-icon {
   padding-right: 1em;
@@ -72,7 +72,13 @@
   text-align: right;
 }
 
+#block-cart-contents ul.cart-options {
+  margin: 0pt;
+  padding: 0pt 0pt 0.25em 1em;
+}
 #block-cart-contents .cart-options li {
-  margin-left: 0em;
+  margin: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
   font-size: .7em;
 }

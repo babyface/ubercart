@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes_workflow.inc,v 1.1.2.2 2008/01/25 22:19:35 rszrama Exp $
+// $Id: uc_taxes_workflow.inc,v 1.1.2.3 2008/03/10 21:01:13 rszrama Exp $
 
 /**
  * @file
@@ -93,9 +93,18 @@ function uc_taxes_action_apply_tax($order, $tax){
   $taxed_line_items = $tax->taxed_line_items;
   if (is_array($order->line_items) && is_array($taxed_line_items)){
     foreach ($order->line_items as $key => $line_item){
+      if ($line_item['type'] == 'tax' && $line_item['title'] == $tax->name){
+        // Don't tax yourself.
+        continue;
+      }
       if (in_array($line_item['type'], $taxed_line_items)){
         $amount += $line_item['amount'] * $tax->rate;
       }
+    }
+  }
+  if (isset($taxed_line_items['tax'])){
+    foreach ($_SESSION['taxes'] as $other_tax){
+      $amount += $other_tax['amount'] * $tax->rate;
     }
   }
   if ($amount){

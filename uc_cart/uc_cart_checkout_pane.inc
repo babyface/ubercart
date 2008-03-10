@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.4.2.5 2008/02/25 21:11:36 rszrama Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.4.2.6 2008/03/10 21:01:12 rszrama Exp $
 
 /**
  * @file
@@ -79,6 +79,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
           $contents['new_account']['name'] = array(
             '#type' => 'textfield',
             '#title' => t('Username'),
+            '#default_value' => $arg1->data['new_user']['name'],
             '#maxlength' => 60,
             '#size' => 32,
           );
@@ -87,7 +88,6 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
           $contents['new_account']['pass'] = array(
             '#type' => 'password',
             '#title' => t('Password'),
-            '#default_value' => $arg1->data['new_user']['pass'],
             '#maxlength' => 32,
             '#size' => 32,
           );
@@ -95,7 +95,6 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
             '#type' => 'password',
             '#title' => t('Confirm password'),
             '#description' => t('Passwords must match to proceed.'),
-            '#default_value' => $arg1->data['new_user']['pass_confirm'],
             '#maxlength' => 32,
             '#size' => 32,
           );
@@ -162,7 +161,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
             $arg1->data['new_user']['name'] = $arg2['new_account']['name'];
           }
           // Validate the password.
-          if (variable_get('uc_cart_new_account_pass', FALSE)) {
+          if (variable_get('uc_cart_new_account_password', FALSE)) {
             if ($arg2['new_account']['pass'] != $arg2['new_account']['pass_confirm']) {
               drupal_set_message(t('The passwords you entered did not match. Please try again.'), 'error');
               return FALSE;
