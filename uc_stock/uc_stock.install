@@ -1,8 +1,8 @@
 <?php
-// $Id: uc_stock.install,v 1.3 2008/03/10 21:01:13 rszrama Exp $
+// $Id: uc_stock.install,v 1.4 2008/03/31 20:45:13 rszrama Exp $
 
 function uc_stock_install() {
-  switch($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysqli':
     case 'mysql':
       db_query("CREATE TABLE {uc_product_stock} (
@@ -30,13 +30,13 @@ function uc_stock_install() {
 }
 
 function uc_stock_uninstall() {
-  switch($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysqli':
     case 'mysql':
-	    db_query("DROP TABLE IF EXISTS {uc_product_stock}");
-	    break;
-	case 'pgsql':
-	    db_query("DROP TABLE {uc_product_stock}");
-	    break;
+      db_query("DROP TABLE IF EXISTS {uc_product_stock}");
+      break;
+  case 'pgsql':
+      db_query("DROP TABLE {uc_product_stock}");
+      break;
   }
 }
