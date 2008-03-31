@@ -1,14 +1,14 @@
 <?php
-// $Id: uc_catalog.install,v 1.8.2.4 2008/02/25 21:11:36 rszrama Exp $
+// $Id: uc_catalog.install,v 1.8.2.5 2008/03/31 20:45:12 rszrama Exp $
 
-function uc_catalog_install(){
+function uc_catalog_install() {
   $t = get_t();
   //Find possible Product Catalog vocabulary.
   $result = db_query("SELECT vid FROM {vocabulary} WHERE name = 'Product Catalog'");
-  if ($vocab = db_fetch_object($result)){
+  if ($vocab = db_fetch_object($result)) {
     $vid = $vocab->vid;
   }
-  else{ //If none, create one.
+  else { //If none, create one.
     $vid = db_next_id('{vocabulary}_vid');
     db_query("INSERT INTO {vocabulary} (vid, name, description, help, relations, hierarchy, multiple, required, tags, module, weight)
       VALUES (%d, '%s', '', '%s', 0, 2, 1, 0, 0, 'uc_catalog', 0)", $vid, $t('Catalog'), $t('Hold Ctrl while clicking to select multiple categories.'));
@@ -18,7 +18,7 @@ function uc_catalog_install(){
   variable_set('uc_catalog_name', t('Catalog'));
   
 
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       // Initially allow everyone to view the catalog.
@@ -50,9 +50,9 @@ function uc_catalog_install(){
   }
 }
 
-function uc_catalog_uninstall(){
+function uc_catalog_uninstall() {
   db_query("DROP TABLE {uc_catalog_images}");
-  if ($vid = variable_get('uc_catalog_vid', 0)){
+  if ($vid = variable_get('uc_catalog_vid', 0)) {
     taxonomy_del_vocabulary($vid);
   }
   variable_del('uc_catalog_vid');
@@ -66,9 +66,9 @@ function uc_catalog_uninstall(){
   variable_del('uc_catalog_category_columns');
 }
 
-function uc_catalog_update_1(){
+function uc_catalog_update_1() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("CREATE TABLE IF NOT EXISTS {uc_catalog_images} (
@@ -96,14 +96,14 @@ function uc_catalog_update_1(){
   return $ret;
 }
 
-function uc_catalog_update_2(){
+function uc_catalog_update_2() {
   variable_del('uc_catalog_url');
   return array(array('success' => TRUE, 'query' => "variable_del('uc_catalog_url')"));
 }
 
-function uc_catalog_update_3(){
+function uc_catalog_update_3() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'pgsql':
       db_change_column($ret, 'uc_catalog_images', 'fid', 'fid', 'int_unsigned', array('not null' => true, 'default' => 0));
       db_change_column($ret, 'uc_catalog_images', 'tid', 'tid', 'int_unsigned', array('not null' => true, 'default' => 0));
@@ -113,12 +113,29 @@ function uc_catalog_update_3(){
   return $ret;
 }
 
-function uc_catalog_update_4(){
+function uc_catalog_update_4() {
   $ret = array();
   $result = db_query("SELECT rid FROM {permission} WHERE perm NOT LIKE '%%%s%%'", 'view catalog');
-  while ($role = db_fetch_object($result)){
+  while ($role = db_fetch_object($result)) {
     $sql_result = db_query("UPDATE {permission} SET perm = CONCAT_WS(', ', perm, 'view catalog') WHERE rid = %d", $role->rid);
     $ret[] = array('success' => $sql_result !== FALSE, 'query' => "UPDATE {permission} SET perm = CONCAT_WS(', ', perm, 'view catalog') WHERE rid = ". $role->rid);
   }
   return $ret;
+}
+
+function uc_catalog_update_5() {
+  variable_del('uc_catalog_special_block');
+  variable_del('uc_catalog_special_block_lines');
+  variable_del('uc_catalog_special_block_help');
+  variable_del('uc_catalog_special_block_help_allowed');
+  variable_del('uc_catalog_special_block_title');
+  variable_del('uc_catalog_bestsellers_block');
+  variable_del('uc_catalog_bestsellers_block_lines');
+  variable_del('uc_catalog_bestsellers_block_help');
+  variable_del('uc_catalog_bestsellers_block_help_allowed');
+  variable_del('uc_catlaog_bestsellers_block_title');
+  variable_del('uc_catalog_contact_url');
+  variable_del('uc_catalog_consult_block');
+  
+  return array(array('success' => TRUE, 'query' => "DELETE unused variables"));
 }

@@ -1,10 +1,10 @@
 <?php
-// $Id: uc_order.install,v 1.8.2.5 2008/03/10 21:01:12 rszrama Exp $
+// $Id: uc_order.install,v 1.8.2.6 2008/03/31 20:45:12 rszrama Exp $
 
 /**
  * Implementation of hook_install().
  */
-function uc_order_install(){
+function uc_order_install() {
   $t = get_t();
 
   switch ($GLOBALS['db_type']) {
@@ -237,8 +237,8 @@ function uc_order_uninstall() {
   variable_del('uc_cust_order_invoice_template');
 }
 
-function uc_order_update_1(){
-  switch ($GLOBALS['db_type']){
+function uc_order_update_1() {
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_orders} CHANGE delivery_zip delivery_postal_code VARCHAR(10) CHARACTER SET utf8 NOT NULL");
@@ -258,7 +258,7 @@ function uc_order_update_1(){
 }
 
 function uc_order_update_2() {
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_order_products} CHANGE weight weight FLOAT NOT NULL DEFAULT 0.0");
@@ -273,7 +273,7 @@ function uc_order_update_2() {
 function uc_order_update_3() {
   $ret = array();
   // Update orders and comments to hold string values for order statuses.
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_orders} CHANGE order_status order_status VARCHAR(32) NOT NULL");
@@ -296,7 +296,7 @@ function uc_order_update_3() {
 
   // Clean out the old order status table and redefine its structure.
   if ($_SESSION['statuses'] !== TRUE) {
-    switch ($GLOBALS['db_type']){
+    switch ($GLOBALS['db_type']) {
       case 'mysql':
       case 'mysqli':
         $ret[] = update_sql("ALTER TABLE {uc_order_statuses} CHANGE order_status_id order_status_id VARCHAR(32) CHARACTER SET utf8 NOT NULL default ''");
@@ -332,7 +332,7 @@ function uc_order_update_3() {
 function uc_order_update_4() {
   $ret = array();
   // Because I forgot to change the CREATE statement...
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_order_comments} CHANGE order_status order_status VARCHAR(32) NOT NULL");
@@ -346,7 +346,7 @@ function uc_order_update_4() {
 }
 
 function uc_order_update_5() {
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_orders} ADD data text");
@@ -359,10 +359,10 @@ function uc_order_update_5() {
   return $ret;
 }
 
-function uc_order_update_6(){
+function uc_order_update_6() {
   $ret = array();
   $max_opid = db_result(db_query("SELECT MAX(order_product_id) AS max_opid FROM {uc_order_products}"));
-  if ($max_opid){
+  if ($max_opid) {
     $ret[] = update_sql("INSERT INTO {sequences} (name, id) VALUES ('{uc_order_products}_order_product_id', $max_opid)");
   }
   return $ret;

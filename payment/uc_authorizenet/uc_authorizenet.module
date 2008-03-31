@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_authorizenet.module,v 1.3.2.3 2008/02/25 21:11:39 rszrama Exp $
+// $Id: uc_authorizenet.module,v 1.3.2.4 2008/03/31 20:45:09 rszrama Exp $
 
 /**
  * @file
@@ -186,9 +186,9 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
     $submit_data['x_test_request'] = 'TRUE';
     $url = 'https://test.authorize.net/gateway/transact.dll';
   }
-  elseif ($transaction_mode == 'live_test'){
+  elseif ($transaction_mode == 'live_test') {
     $submit_data['x_test_request'] = 'TRUE';
-    $url = 'https://certification.authorize.net/gateway/transact.dll';
+    $url = 'https://secure.authorize.net/gateway/transact.dll';
   }
   else {
     $submit_data['x_test_request'] = 'FALSE';
@@ -225,8 +225,8 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
     $message = t('Credit card declined: !amount', array('!amount' => uc_currency_format($amount)));
     $result = array(
       'success' => FALSE,
-      'comment' => t('Credit card payment declined: !text', array('!text' => $x_response_text)),
-      'message' => t('Credit card payment declined: !text', array('!text' => $x_response_text)),
+      'comment' => t('Credit card payment declined: @text', array('@text' => $x_response_text)),
+      'message' => t('Credit card payment declined: @text', array('@text' => $x_response_text)),
       'uid' => $user->uid,
     );
   }
@@ -234,12 +234,12 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
     $message = t('Credit card charged: !amount', array('!amount' => uc_currency_format($amount)));
     $result = array(
       'success' => TRUE,
-      'comment' => t('Credit card payment processed successfully.<br/>Approval code: !code', array('!code' => $x_approval_code)),
-      'message' => t('Credit card payment processed successfully.<br/>Approval code: !code', array('!code' => $x_approval_code)),
+      'comment' => t('Credit card payment processed successfully.<br/>Approval code: @code', array('@code' => $x_approval_code)),
+      'message' => t('Credit card payment processed successfully.<br/>Approval code: @code', array('@code' => $x_approval_code)),
       'uid' => $user->uid,
     );
   }
-  uc_order_comment_save($order_id, $user->uid, $message . t('<br />Response code: !code - !text', array('!code' => $x_response_code, '!text' => $x_response_text)), 'admin');
+  uc_order_comment_save($order_id, $user->uid, $message . t('<br />Response code: @code - @text', array('@code' => $x_response_code, '@text' => $x_response_text)), 'admin');
 
   return $result;
 }

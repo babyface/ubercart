@@ -1,10 +1,10 @@
 <?php
-// $Id: uc_payment.install,v 1.4.2.3 2008/03/10 21:01:10 rszrama Exp $
+// $Id: uc_payment.install,v 1.4.2.4 2008/03/31 20:45:09 rszrama Exp $
 
-function uc_payment_install(){
+function uc_payment_install() {
   $t = get_t();
 
-  switch($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       db_query("CREATE TABLE {uc_payment_check} (
@@ -78,7 +78,7 @@ function uc_payment_install(){
 }
 
 function uc_payment_uninstall() {
-  switch($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       db_query("DROP TABLE IF EXISTS {uc_payment_check}");
@@ -88,7 +88,7 @@ function uc_payment_uninstall() {
       db_query("DELETE FROM {sequences} WHERE name LIKE '{uc_payment_receipts}_receipt_id'");
       db_query("DELETE FROM {sequences} WHERE name LIKE '{uc_payment_check}_check_id'");
     break;
-	case 'pgsql':
+  case 'pgsql':
       db_query("DROP TABLE {uc_payment_check}");
       db_query("DROP TABLE {uc_payment_cod}");
       db_query("DROP TABLE {uc_payment_other}");
@@ -115,7 +115,7 @@ function uc_payment_uninstall() {
 
 function uc_payment_update_1() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("CREATE TABLE {uc_payment_cod} (

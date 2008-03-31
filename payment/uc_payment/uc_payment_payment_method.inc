@@ -1,20 +1,19 @@
 <?php
-// $Id: uc_payment_payment_method.inc,v 1.3.2.1 2008/01/07 20:56:38 rszrama Exp $
+// $Id: uc_payment_payment_method.inc,v 1.3.2.2 2008/03/31 20:45:09 rszrama Exp $
 
 /**
  * Handle the generic payment method "Other."
  */
 function uc_payment_method_other($op, &$arg1) {
-  switch($op) {
+  switch ($op) {
     case 'order-view':
     case 'customer-view':
-      $result = db_query("SELECT description FROM {uc_payment_other} WHERE "
-                        ."order_id = %d", $arg1->order_id);
+      $result = db_query("SELECT description FROM {uc_payment_other} WHERE order_id = %d", $arg1->order_id);
       if ($row = db_fetch_object($result)) {
-        $output = t('Type:') .' '. $row->description;
+        $output = t('Type: @description', array('@description' => $row->description));
       }
       else {
-        $output = t('Type:') .' '. t('Unknown');
+        $output = t('Type: Unknown');
       }
       return $output;
 
@@ -27,8 +26,7 @@ function uc_payment_method_other($op, &$arg1) {
       return $changes;
 
     case 'order-load':
-      $result = db_query("SELECT description FROM {uc_payment_other} WHERE "
-                        ."order_id = %d", $arg1->order_id);
+      $result = db_query("SELECT description FROM {uc_payment_other} WHERE order_id = %d", $arg1->order_id);
       if ($row = db_fetch_object($result)) {
         $arg1->payment_details['description'] = $row->description;
       }

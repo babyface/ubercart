@@ -1,8 +1,8 @@
 <?php
-// $Id: uc_attribute.install,v 1.9.2.6 2008/03/10 21:01:11 rszrama Exp $
+// $Id: uc_attribute.install,v 1.9.2.7 2008/03/31 20:45:11 rszrama Exp $
 
-function uc_attribute_install(){
-  switch($GLOBALS['db_type']){
+function uc_attribute_install() {
+  switch ($GLOBALS['db_type']) {
     case 'mysqli':
     case 'mysql':
       db_query("CREATE TABLE {uc_attributes} (
@@ -72,8 +72,9 @@ function uc_attribute_install(){
         aid serial NOT NULL,
         name varchar(255) NOT NULL default '',
         ordering smallint NOT NULL default 0,
-        requried smallint NOT NULL default 0,
+        required smallint NOT NULL default 0,
         display smallint NOT NULL default 1,
+        description varchar(255) NOT NULL default '',
         PRIMARY KEY (aid)
       );");
       db_query("CREATE TABLE {uc_attribute_options} (
@@ -132,7 +133,7 @@ function uc_attribute_install(){
   }
 }
 
-function uc_attribute_uninstall(){
+function uc_attribute_uninstall() {
   db_query("DROP TABLE {uc_attributes}");
   db_query("DROP TABLE {uc_attribute_options}");
   db_query("DROP TABLE {uc_class_attributes}");
@@ -143,9 +144,9 @@ function uc_attribute_uninstall(){
   variable_del('uc_attribute_option_price_format');
 }
 
-function uc_attribute_update_1(){
+function uc_attribute_update_1() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_attributes} CHANGE name name varchar(255) NOT NULL");
@@ -186,13 +187,13 @@ function uc_attribute_update_1(){
       );");
     break;
   }
-  
+
   return $ret;
 }
 
-function uc_attribute_update_2(){
+function uc_attribute_update_2() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_attributes} ADD COLUMN ordering tinyint(2) NOT NULL default 0 AFTER name");
@@ -213,9 +214,9 @@ function uc_attribute_update_2(){
   return $ret;
 }
 
-function uc_attribute_update_3(){
+function uc_attribute_update_3() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_class_attributes} CHANGE pcid pcid varchar(32) NOT NULL");
@@ -229,9 +230,9 @@ function uc_attribute_update_3(){
   return $ret;
 }
 
-function uc_attribute_update_4(){
+function uc_attribute_update_4() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_product_adjustments} CHANGE combination combination varchar(255) NOT NULL");
@@ -244,9 +245,9 @@ function uc_attribute_update_4(){
   return $ret;
 }
 
-function uc_attribute_update_5(){
+function uc_attribute_update_5() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_attribute_options} ADD COLUMN cost decimal(10,2) NOT NULL AFTER name");
@@ -262,9 +263,9 @@ function uc_attribute_update_5(){
   return $ret;
 }
 
-function uc_attribute_update_6(){
+function uc_attribute_update_6() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_product_attributes} ADD COLUMN required tinyint(2) NOT NULL default 0 AFTER default_option");
@@ -276,9 +277,9 @@ function uc_attribute_update_6(){
   return $ret;
 }
 
-function uc_attribute_update_7(){
+function uc_attribute_update_7() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_class_attributes} ADD COLUMN required tinyint(2) NOT NULL default 0 AFTER default_option");
@@ -290,9 +291,9 @@ function uc_attribute_update_7(){
   return $ret;
 }
 
-function uc_attribute_update_8(){
+function uc_attribute_update_8() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'pgsql':
       $ret[] = update_sql("ALTER TABLE {uc_attribute_options} SET WITHOUT OIDS");
       $ret[] = update_sql("ALTER TABLE {uc_class_attribute_options} SET WITHOUT OIDS");
@@ -302,9 +303,9 @@ function uc_attribute_update_8(){
   return $ret;
 }
 
-function uc_attribute_update_9(){
+function uc_attribute_update_9() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_attributes} ADD COLUMN required tinyint(2) NOT NULL default 1");
@@ -324,7 +325,7 @@ function uc_attribute_update_9(){
 
 function uc_attribute_update_10() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_attributes} ADD COLUMN description varchar(255) NOT NULL");

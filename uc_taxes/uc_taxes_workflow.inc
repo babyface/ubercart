@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes_workflow.inc,v 1.1.2.3 2008/03/10 21:01:13 rszrama Exp $
+// $Id: uc_taxes_workflow.inc,v 1.1.2.4 2008/03/31 20:45:14 rszrama Exp $
 
 /**
  * @file
@@ -14,7 +14,7 @@
 /**
  * Implementation of hook_entity_info().
  */
-function uc_taxes_entity_info(){
+function uc_taxes_entity_info() {
   $entities['tax_line_item'] = array(
     '#save' => 'uc_taxes_save_line_item',
   );
@@ -26,10 +26,10 @@ function uc_taxes_entity_info(){
  *
  * Register an event for each tax rule in {uc_taxes}.
  */
-function uc_taxes_event_info(){
+function uc_taxes_event_info() {
   $events = array();
   $taxes = uc_taxes_get_rates();
-  foreach ($taxes as $tax){
+  foreach ($taxes as $tax) {
     $events['calculate_tax_'. $tax->id] = array(
       '#label' => t('Calculate @name', array('@name' => $tax->name)),
       '#module' => 'uc_taxes',
@@ -47,7 +47,7 @@ function uc_taxes_event_info(){
 /**
  * Implementation of hook_action_info().
  */
-function uc_taxes_action_info(){
+function uc_taxes_action_info() {
   $actions = array();
   $actions['uc_taxes_action_apply_tax'] = array(
     '#label' => t('Charge a tax'),
@@ -80,34 +80,34 @@ function uc_taxes_action_info(){
  * @return
  *   The line item array representing the amount of tax.
  */
-function uc_taxes_action_apply_tax($order, $tax){
+function uc_taxes_action_apply_tax($order, $tax) {
   $amount = 0;
   if (is_array($order->products)) {
-    foreach($order->products as $item){
+    foreach ($order->products as $item) {
       $node = node_load($item->nid);
-      if (in_array($node->type, $tax->taxed_product_types)){
+      if (in_array($node->type, $tax->taxed_product_types)) {
         $amount += $item->price * $item->qty * $tax->rate;
       }
     }
   }
   $taxed_line_items = $tax->taxed_line_items;
-  if (is_array($order->line_items) && is_array($taxed_line_items)){
-    foreach ($order->line_items as $key => $line_item){
-      if ($line_item['type'] == 'tax' && $line_item['title'] == $tax->name){
+  if (is_array($order->line_items) && is_array($taxed_line_items)) {
+    foreach ($order->line_items as $key => $line_item) {
+      if ($line_item['type'] == 'tax' && $line_item['title'] == $tax->name) {
         // Don't tax yourself.
         continue;
       }
-      if (in_array($line_item['type'], $taxed_line_items)){
+      if (in_array($line_item['type'], $taxed_line_items)) {
         $amount += $line_item['amount'] * $tax->rate;
       }
     }
   }
-  if (isset($taxed_line_items['tax'])){
-    foreach ($_SESSION['taxes'] as $other_tax){
+  if (isset($taxed_line_items['tax'])) {
+    foreach ($_SESSION['taxes'] as $other_tax) {
       $amount += $other_tax['amount'] * $tax->rate;
     }
   }
-  if ($amount){
+  if ($amount) {
     $line_item = (object)array('id' => $tax->id, 'name' => $tax->name, 'amount' => $amount, 'weight' => $tax->weight);
     return array('tax_line_item' => $line_item);
   }
@@ -123,7 +123,7 @@ function uc_taxes_action_apply_tax($order, $tax){
  * @return
  *   The line item array representing the amount of tax.
  */
-function uc_taxes_action_apply_tax_subtotal($order, $tax){
+function uc_taxes_action_apply_tax_subtotal($order, $tax) {
     $line_item = (object)array('id' => 'subtotal_'. $tax->id, 'name' => t('Subtotal excluding taxes'), 'amount' => 2, 'weight' => 8);
     return array('tax_line_item' => $line_item);
 }
@@ -134,11 +134,11 @@ function uc_taxes_action_apply_tax_subtotal($order, $tax){
  *
  * Create a configuration for each event corresponding to a tax rule.
  */
-function uc_taxes_configuration(){
+function uc_taxes_configuration() {
   $configurations = array();
   
   $taxes = uc_taxes_get_rates();
-  foreach ($taxes as $tax){
+  foreach ($taxes as $tax) {
     $configurations['uc_taxes_'. $tax->id] = array(
       '#label' => $tax->name,
       '#event' => 'calculate_tax_'. $tax->id,
@@ -157,6 +157,6 @@ function uc_taxes_configuration(){
 /**
  * Preserve each tax line item for future use.
  */
-function uc_taxes_save_line_item($line_item){
+function uc_taxes_save_line_item($line_item) {
   $_SESSION['taxes'][$line_item->id] = array('id' => $line_item->id, 'name' => $line_item->name, 'amount' => $line_item->amount, 'weight' => $line_item->weight);
 }

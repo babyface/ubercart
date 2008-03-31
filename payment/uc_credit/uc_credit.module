@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.4.2.6 2008/02/25 21:11:36 rszrama Exp $
+// $Id: uc_credit.module,v 1.4.2.7 2008/03/31 20:45:09 rszrama Exp $
 
 /**
  * @file
@@ -36,9 +36,9 @@ function uc_credit_menu($may_cache) {
     if (is_numeric(arg(3))) {
       $items[] = array(
         'path' => 'admin/store/orders/'. arg(3) .'/credit',
-        'title' => t('Credit card terminal: Order !order_id', array('!order_id' => arg(3))),
-        'description' => t('Process a credit card payment for order !order_id.',
-                           array('!order_id' => arg(3))),
+        'title' => t('Credit card terminal: Order @order_id', array('@order_id' => arg(3))),
+        'description' => t('Process a credit card payment for order @order_id.',
+                           array('@order_id' => arg(3))),
         'callback' => 'uc_credit_terminal',
         'callback arguments' => array(arg(3)),
         'access' => user_access('process credit cards'),
@@ -323,9 +323,15 @@ function uc_payment_method_credit($op, &$arg1) {
         drupal_set_message(t('You must enter the issuing bank for that card.'), 'error');
         $return = FALSE;
       }
-      if (variable_get('uc_credit_validate_numbers', TRUE) && !_valid_card_number($arg1->payment_details['cc_number'])) {
-        drupal_set_message(t('You have entered an invalid credit card number.'), 'error');
-        $return = FALSE;
+      if (variable_get('uc_credit_validate_numbers', TRUE) || intval($arg->payment_details['cc_number']) == 0) {
+        if (!_valid_card_number($arg1->payment_details['cc_number'])) {
+          drupal_set_message(t('You have entered an invalid credit card number.'), 'error');
+          $return = FALSE;
+        }
+        if (!_valid_card_expiration($arg1->payment_details['cc_exp_month'], $arg1->payment_details['cc_exp_year'])) {
+          drupal_set_message(t('The credit card you entered has expired.'), 'error');
+          $return = FALSE;
+        }
       }
       return $return;
 
@@ -334,15 +340,15 @@ function uc_payment_method_credit($op, &$arg1) {
         $review[] = array('title' => t('Card Type'), 'data' => $arg1->payment_details['cc_type']);
       }
       if (variable_get('uc_credit_owner_enabled', FALSE)) {
-        $review[] = array('title' => t('Card Owner'), 'data' => $arg1->payment_details['cc_owner']);
+        $review[] = array('title' => t('Card Owner'), 'data' => check_plain($arg1->payment_details['cc_owner']));
       }
       $review[] = array('title' => t('Card Number'), 'data' => uc_credit_display_number($arg1->payment_details['cc_number']));
       $review[] = array('title' => t('Expiration'), 'data' => $arg1->payment_details['cc_exp_month'] .'/'. $arg1->payment_details['cc_exp_year']);
       if (variable_get('uc_credit_cvv_enabled', TRUE)) {
-        $review[] = array('title' => t('CVV'), 'data' => $arg1->payment_details['cc_cvv']);
+        $review[] = array('title' => t('CVV'), 'data' => check_plain($arg1->payment_details['cc_cvv']));
       }
       if (variable_get('uc_credit_bank_enabled', FALSE)) {
-        $review[] = array('title' => t('Issuing Bank'), 'data' => $arg1->payment_details['cc_bank']);
+        $review[] = array('title' => t('Issuing Bank'), 'data' => check_plain($arg1->payment_details['cc_bank']));
       }
       return $review;
 
@@ -358,7 +364,7 @@ function uc_payment_method_credit($op, &$arg1) {
       }
       if (variable_get('uc_credit_owner_enabled', FALSE)) {
         $output .= '<tr><td>'. t('Card Owner:') .' </td><td>'
-                 . $arg1->payment_details['cc_owner'] .'</td></tr>';
+                 . check_plain($arg1->payment_details['cc_owner']) .'</td></tr>';
       }
       $output .= '<tr><td>'. t('Card Number:') .' </td><td>'
                . uc_credit_display_number($arg1->payment_details['cc_number']) .'</td></tr>';
@@ -371,11 +377,11 @@ function uc_payment_method_credit($op, &$arg1) {
       }
       if (variable_get('uc_credit_bank_enabled', TRUE)) {
         $output .= '<tr><td>'. t('Issuing Bank:') .' </td><td>'
-                 . $arg1->payment_details['cc_bank'] .'</td></tr>';
+                 . check_plain($arg1->payment_details['cc_bank']) .'</td></tr>';
       }
       $output .= '</table></span></span>';
       if (user_access('process credit cards') &&
-          is_numeric($arg1->payment_details['cc_number']) &&
+          intval($arg1->payment_details['cc_number']) > 0 &&
           strlen($arg1->payment_details['cc_number']) > 10) {
         $output .= drupal_get_form('uc_credit_order_view_form', $arg1->order_id);
       }
@@ -712,8 +718,10 @@ function uc_payment_method_credit_form($order) {
     '#size' => 20,
     '#maxlength' => 16,
   );
+
   $form['cc_exp_month'] = uc_select_month(t('Expiration Month'), $order->payment_details['cc_exp_month']);
   $form['cc_exp_year'] = uc_select_year(t('Expiration Year'), $order->payment_details['cc_exp_year']);
+
   if (variable_get('uc_credit_cvv_enabled', TRUE)) {
     $cvv_length = variable_get('uc_credit_amex', TRUE) ? 4 : 3;
     $form['cc_cvv'] = array(
@@ -839,7 +847,7 @@ function uc_credit_terminal($order_id) {
   $order = uc_order_load($order_id);
 
   if ($order === FALSE) {
-    drupal_set_message(t('Order !order_id does not exist.', array('!order_id' => $order_id)));
+    drupal_set_message(t('Order @order_id does not exist.', array('@order_id' => $order_id)));
     drupal_goto('admin/store/orders');
   }
 
@@ -1016,6 +1024,29 @@ function _valid_card_number($number) {
 
   if ($total % 10 != 0) {
     return FALSE;
+  }
+
+  return TRUE;
+}
+
+/**
+ * Validates an expiration date on a card.
+ *
+ * @param $month
+ *   The 1 or 2-digit numeric representation of the month, i.e. 1, 6, 12.
+ * @param $year
+ *   The 4-digit numeric representation of the year, i.e. 2008.
+ * @return
+ *   TRUE for non-expired cards, FALSE for expired.
+ */
+function _valid_card_expiration($month, $year) {
+  if ($year < date('Y')) {
+    return FALSE;
+  }
+  else if ($year == date('Y')) {
+    if ($month < date('n')) {
+      return FALSE;
+    }
   }
 
   return TRUE;

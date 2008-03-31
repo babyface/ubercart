@@ -1,8 +1,8 @@
 <?php
-// $Id: uc_usps.install,v 1.4.2.2 2008/02/25 21:11:38 rszrama Exp $
+// $Id: uc_usps.install,v 1.4.2.3 2008/03/31 20:45:10 rszrama Exp $
 
-function uc_usps_install(){
-  switch ($GLOBALS['db_type']){
+function uc_usps_install() {
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       db_query("CREATE TABLE {uc_usps_products} (
@@ -23,16 +23,16 @@ function uc_usps_install(){
   }
 }
 
-function uc_usps_uninstall(){
+function uc_usps_uninstall() {
   db_query("DROP TABLE {uc_usps_products}");
   variable_del('uc_usps_user_id');
   variable_del('uc_usps_services');
   variable_del('uc_usps_markup');
 }
 
-function uc_usps_update_1(){
+function uc_usps_update_1() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
     case 'pgsql':
@@ -46,15 +46,15 @@ function uc_usps_update_1(){
   return $ret;
 }
 
-function uc_usps_update_2(){
+function uc_usps_update_2() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_usps_products} ADD COLUMN vid mediumint(9) unsigned NOT NULL default 0 FIRST");
       $ret[] = update_sql("ALTER TABLE {uc_usps_products} DROP INDEX nid");
       $result = db_query("SELECT nid, vid FROM {node}");
-      while ($product = db_fetch_object($result)){
+      while ($product = db_fetch_object($result)) {
         db_query("UPDATE {uc_usps_products} SET vid = %d WHERE nid = %d", $product->vid, $product->nid);
       }
       $ret[] = update_sql("ALTER TABLE {uc_usps_products} ADD PRIMARY KEY (vid)");
@@ -63,7 +63,7 @@ function uc_usps_update_2(){
       db_add_column($ret, 'uc_usps_products', 'vid', 'integer unsigned', array('not null' => true, 'default' => 0));
       $ret[] = update_sql("ALTER TABLE {uc_usps_products} DROP CONSTRAINT {uc_usps_products}_nid_key");
       $result = db_query("SELECT nid, vid FROM {node}");
-      while ($product = db_fetch_object($result)){
+      while ($product = db_fetch_object($result)) {
         db_query("UPDATE {uc_usps_products} SET vid = %d WHERE nid = %d", $product->vid, $product->nid);
       }
       $ret[] = update_sql("ALTER TABLE {uc_usps_products} ADD PRIMARY KEY (vid)");
@@ -72,18 +72,18 @@ function uc_usps_update_2(){
   return $ret;
 }
 
-function uc_usps_update_3(){
+function uc_usps_update_3() {
   $ret = array();
   $markup = variable_get('uc_usps_markup', '0%');
-  if (strpos($markup, '%') !== false){
+  if (strpos($markup, '%') !== false) {
     variable_set('uc_usps_markup_type', 'percentage');
     variable_set('uc_usps_markup', floatval(rtrim($markup, '%')));
   }
-  else if (strpos($markup, '$') !== false){
+  else if (strpos($markup, '$') !== false) {
     variable_set('uc_usps_markup_type', 'currency');
     variable_set('uc_usps_markup', floatval(ltrim($markup, '$')));
   }
-  else if (floatval($markup)){
+  else if (floatval($markup)) {
     variable_set('uc_usps_markup_type', 'multiplier');
     variable_set('uc_usps_markup', floatval($markup));
   }
@@ -91,9 +91,9 @@ function uc_usps_update_3(){
   return $ret;
 }
 
-function uc_usps_update_4(){
+function uc_usps_update_4() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_usps_products} CHANGE container container varchar(255) NOT NULL");
@@ -105,9 +105,9 @@ function uc_usps_update_4(){
   return $ret;
 }
 
-function uc_usps_update_5(){
+function uc_usps_update_5() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'pgsql':
       db_change_column($ret, 'uc_usps_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => true, 'default' => 0));
       db_change_column($ret, 'uc_usps_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));

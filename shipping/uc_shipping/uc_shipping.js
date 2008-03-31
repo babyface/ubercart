@@ -1,5 +1,5 @@
-function apply_address(type, json_address){
-  //if (json_address != "0"){
+function apply_address(type, json_address) {
+  //if (json_address != "0") {
     eval("var address = " + json_address +";");
     $('input[@name=' + type + '_first_name]').val(address.first_name);
     $('input[@name=' + type + '_last_name]').val(address.last_name);

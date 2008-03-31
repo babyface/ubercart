@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_order_pane.inc,v 1.4.2.5 2008/02/25 21:11:38 rszrama Exp $
+// $Id: uc_order_order_pane.inc,v 1.4.2.6 2008/03/31 20:45:13 rszrama Exp $
 
 /**
  * @file
@@ -21,7 +21,7 @@ function uc_order_pane_ship_to($op, $arg1) {
         return;
       }
     case 'view':
-      $output = uc_order_address($arg1, 'delivery') .'<br />'. $arg1->delivery_phone;
+      $output = uc_order_address($arg1, 'delivery') .'<br />'. check_plain($arg1->delivery_phone);
       return $output;
 
     case 'edit-form':
@@ -106,7 +106,7 @@ function uc_order_pane_bill_to($op, $arg1) {
   switch ($op) {
     case 'view':
     case 'customer':
-      $output = uc_order_address($arg1, 'billing') .'<br />'. $arg1->billing_phone;
+      $output = uc_order_address($arg1, 'billing') .'<br />'. check_plain($arg1->billing_phone);
       return $output;
 
     case 'edit-form':
@@ -336,7 +336,7 @@ function uc_order_pane_line_items($op, $arg1) {
 
       $output = '<table class="line-item-table">';
       foreach ($line_items as $item) {
-        $output .= '<tr><td class="li-title">'. $item['title'] .':</td>'
+        $output .= '<tr><td class="li-title">'. check_plain($item['title']) .':</td>'
                   .'<td class="li-amount" nowrap="nowrap">'
                  . uc_currency_format($item['amount']) .'</td></tr>';
       }
@@ -352,7 +352,7 @@ function uc_order_pane_line_items($op, $arg1) {
       $line_items = $arg1->line_items;
       foreach ($items as $item) {
         if ($item['add_list'] === TRUE) {
-          $options[$item['id']] = $item['title'];
+          $options[$item['id']] = check_plain($item['title']);
         }
         if (isset($item['display_only']) && $item['display_only'] == TRUE) {
           $result = $item['callback']('display', $arg1);
@@ -384,6 +384,8 @@ function uc_order_pane_line_items($op, $arg1) {
       $form['add_line_item']['submit'] = array(
         '#type' => 'submit',
         '#value' => t('Add line'),
+        '#attributes' => array('class' => 'save-button'),
+        '#disabled' => TRUE,
       );
       $form['li_delete_id'] = array(
         '#type' => 'hidden',
@@ -427,7 +429,7 @@ function uc_order_pane_line_items($op, $arg1) {
         }
         else {
           $form['line_items'][$item['line_item_id']]['title'] = array(
-            '#value' => $item['title'],
+            '#value' => check_plain($item['title']),
           );
           $form['line_items'][$item['line_item_id']]['amount'] = array(
             '#value' => uc_currency_format($item['amount']),
@@ -504,7 +506,7 @@ function uc_order_pane_order_comments($op, $arg1) {
             'data' => array(
               array('data' => format_date($comment->created, 'custom', 'm/d/Y'), 'align' => 'center'),
               array('data' => $comment->title, 'align' => 'center', 'nowrap' => 'nowrap'),
-              $comment->message
+              check_plain($comment->message),
             ),
             'valign' => 'top'
           );
@@ -542,7 +544,7 @@ function uc_order_pane_admin_comments($op, $arg1) {
       $comments = uc_order_comments_load($arg1['order_id']['#value'], TRUE);
       if (is_array($comments) && count($comments) > 0) {
         foreach ($comments as $comment) {
-          $items[] = '['. uc_get_initials($comment->uid) .'] '. $comment->message;
+          $items[] = '['. uc_get_initials($comment->uid) .'] '. filter_xss_admin($comment->message);
         }
       }
       else {
@@ -683,13 +685,13 @@ function op_products_view_table($op, $products) {
           $data['qty'][] = array('data' => $product->qty .'x', 'align' => 'right');
           $options = $product->data['attributes'];
           $option_rows = array();
-          if (module_exists('uc_attribute') && is_array($options)){
-            foreach($options as $attribute => $option){
-              $option_rows[] = $attribute .': '. $option;
+          if (module_exists('uc_attribute') && is_array($options)) {
+            foreach ($options as $attribute => $option) {
+              $option_rows[] = t('@attribute: @option', array('@attribute' => $attribute, '@option' => $option));
             }
           }
-          $data['product'][] = $product->title . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-options'));
-          $data['model'][] = array('data' => $product->model, 'align' => 'center', 'nowrap' => 'nowrap');
+          $data['product'][] = check_plain($product->title) . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-options'));
+          $data['model'][] = array('data' => check_plain($product->model), 'align' => 'center', 'nowrap' => 'nowrap');
           $data['cost'][] = array('data' => uc_currency_format($product->cost), 'align' => 'right', 'nowrap' => 'nowrap');
           $data['price'][] = array('data' => uc_currency_format($product->price), 'align' => 'right', 'nowrap' => 'nowrap');
           $data['total'][] = array('data' => uc_currency_format($product->qty * $product->price), 'align' => 'right', 'nowrap' => 'nowrap');
@@ -730,13 +732,13 @@ function op_products_customer_table($op, $products) {
           $data['qty'][] = array('data' => $product->qty .'x', 'align' => 'right');
           $options = $product->data['attributes'];
           $option_rows = array();
-          if (is_array($options)){
-            foreach($options as $attribute => $option){
-              $option_rows[] = $attribute .': '. $option;
+          if (is_array($options)) {
+            foreach ($options as $attribute => $option) {
+              $option_rows[] = t('@attribute: @option', array('@attribute' => $attribute, '@option' => $option));
             }
           }
-          $data['product'][] = $product->title . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-options'));
-          $data['model'][] = array('data' => $product->model, 'align' => 'center', 'nowrap' => 'nowrap');
+          $data['product'][] = check_plain($product->title) . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-options'));
+          $data['model'][] = array('data' => check_plain($product->model), 'align' => 'center', 'nowrap' => 'nowrap');
           $data['cost'][] = array('data' => uc_currency_format($product->cost), 'align' => 'right', 'nowrap' => 'nowrap');
           $data['price'][] = array('data' => uc_currency_format($product->price), 'align' => 'right', 'nowrap' => 'nowrap');
           $data['total'][] = array('data' => uc_currency_format($product->qty * $product->price), 'align' => 'right', 'nowrap' => 'nowrap');
@@ -776,7 +778,7 @@ function op_order_comments_view_table($op, $comments) {
           $data['user'][] = array('data' => uc_get_initials($comment->uid), 'align' => 'center');
           $data['notified'][] = array('data' => (($comment->notified == 1) ? '<img src="'. base_path() . drupal_get_path('module', 'uc_order') .'/images/true-icon.gif" />': '<img src="'. base_path() . drupal_get_path('module', 'uc_order') .'/images/false-icon.gif" />'), 'align' => 'center');
           $data['status'][] = array('data' => $comment->title, 'align' => 'center');
-          $data['comment'][] = array('data' => $comment->message);
+          $data['comment'][] = array('data' => filter_xss_admin($comment->message));
         }
       }
       else {
@@ -806,7 +808,7 @@ function op_admin_comments_view_table($op, $comments) {
         foreach ($comments as $comment) {
           $data['date'][] = array('data' => format_date($comment->created, 'custom', 'm/d/Y<\b\r />g:i:s A'), 'align' => 'center', 'nowrap' => 'true', 'valign' => 'top');
           $data['user'][] = array('data' => uc_get_initials($comment->uid), 'align' => 'center', 'valign' => 'top');
-          $data['comment'][] = array('data' => $comment->message, 'valign' => 'top');
+          $data['comment'][] = array('data' => filter_xss_admin($comment->message), 'valign' => 'top');
         }
       }
       else {
@@ -831,7 +833,7 @@ function _order_pane_list($view = 'view') {
   }
 
   $panes = module_invoke_all('order_pane', NULL);
-  for ($i = 0; $i < count($panes); $i++) {
+  foreach ($panes as $i => $value) {
     $panes[$i]['enabled'] = variable_get('uc_order_pane_'. $panes[$i]['id'] .'_enabled', (!isset($panes[$i]['enabled']) ? TRUE : $panes[$i]['enabled']));
     $panes[$i]['weight'] = variable_get('uc_order_pane_'. $panes[$i]['id'] .'_weight_'. $view, (!isset($panes[$i]['weight']) ? 0 : $panes[$i]['weight']));
   }
@@ -858,3 +860,4 @@ function _order_pane_data($pane_id, $key) {
 function _call_order_pane_byref($func, $op, &$form) {
   return $func($op, $form);
 }
+

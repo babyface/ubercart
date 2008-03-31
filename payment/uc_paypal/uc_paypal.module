@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.4.2.6 2008/03/10 21:01:10 rszrama Exp $
+// $Id: uc_paypal.module,v 1.4.2.7 2008/03/31 20:45:10 rszrama Exp $
 
 /**
  * @file
@@ -281,7 +281,7 @@ function uc_paypal_wpp_settings_form() {
 }
 
 // Process a credit card payment through Website Payments Pro.
-function uc_paypal_wpp_charge($order_id, $amount, $data){
+function uc_paypal_wpp_charge($order_id, $amount, $data) {
   global $user, $response;
 
   if (!function_exists('curl_init')) {
@@ -293,7 +293,7 @@ function uc_paypal_wpp_charge($order_id, $amount, $data){
 
   list($desc, $subtotal) = _uc_paypal_product_details($order->products);
 
-  if (intval($order->payment_details['cc_exp_month']) < 10){
+  if (intval($order->payment_details['cc_exp_month']) < 10) {
     $expdate = '0'. $order->payment_details['cc_exp_month']
              . $order->payment_details['cc_exp_year'];
   }
@@ -547,7 +547,7 @@ function uc_paypal_ipn($order_id = 0) {
   }
   watchdog('uc_paypal', t('Receiving IPN at URL for order !order_id.', array('!order_id' => check_plain($order_id))) . $debug);
 
-  if(!isset($_POST['invoice'])) {
+  if (!isset($_POST['invoice'])) {
     watchdog('uc_paypal', t('IPN attempted with invalid order ID.'), WATCHDOG_ERROR);
     return;
   }
@@ -636,7 +636,7 @@ function uc_paypal_ipn($order_id = 0) {
           break;
 
         case 'Completed':
-          $comment = t('PayPal transaction ID: !txn_id', array('!txn_id' => $txn_id));
+          $comment = t('PayPal transaction ID: @txn_id', array('@txn_id' => $txn_id));
           uc_payment_enter($order_id, 'paypal_wps', $payment_amount, $order->uid, NULL, $comment);
           uc_cart_complete_sale($order);
           uc_order_comment_save($order_id, 0, t('Payment of !amount !currency submitted through PayPal.', array('!amount' => uc_currency_format($payment_amount, FALSE), '!currency' => $payment_currency)), 'customer', 'payment_received');
@@ -662,7 +662,7 @@ function uc_paypal_ipn($order_id = 0) {
 
         // You, the merchant, refunded the payment.
         case 'Refunded':
-          $comment = t('PayPal transaction ID: !txn_id', array('!txn_id' => $txn_id));
+          $comment = t('PayPal transaction ID: @txn_id', array('@txn_id' => $txn_id));
           uc_payment_enter($order_id, 'paypal_wps', $payment_amount, $order->uid, NULL, $comment);
           break;
 
@@ -1337,7 +1337,7 @@ function _uc_paypal_product_details($items) {
 
 // Returns the PayPal approved credit card type for a card number.
 function _uc_paypal_card_type($cc_number) {
-  switch(substr(strval($cc_number), 0, 1)) {
+  switch (substr(strval($cc_number), 0, 1)) {
     case '3':
       return 'Amex';
     case '4':

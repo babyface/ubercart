@@ -1,8 +1,8 @@
 <?php
-// $Id: uc_quote.install,v 1.4.2.4 2008/02/25 21:11:36 rszrama Exp $
+// $Id: uc_quote.install,v 1.4.2.5 2008/03/31 20:45:10 rszrama Exp $
 
-function uc_quote_install(){
-  switch($GLOBALS['db_type']){
+function uc_quote_install() {
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       db_query("CREATE TABLE {uc_quote_shipping_types} (
@@ -95,7 +95,7 @@ function uc_quote_install(){
   }
 }
 
-function uc_quote_uninstall(){
+function uc_quote_uninstall() {
   db_query("DROP TABLE {uc_quote_shipping_types}");
   db_query("DROP TABLE {uc_quote_manufacturer_locations}");
   db_query("DROP TABLE {uc_quote_product_locations}");
@@ -110,12 +110,12 @@ function uc_quote_uninstall(){
   variable_del('uc_store_shipping_type');
 }
 
-function uc_quote_update_1(){
+function uc_quote_update_1() {
   variable_del('uc_store_shipping_quote_type');
   $ret = array();
   $ret[] = update_sql("DROP TABLE {uc_quote_types}");
   $ret[] = update_sql("DROP TABLE {uc_order_fulfillments}");
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_order_quotes} CHANGE COLUMN accessorials accessorials varchar(255) NOT NULL");
@@ -127,9 +127,9 @@ function uc_quote_update_1(){
   return $ret;
 }
 
-function uc_quote_update_2(){
+function uc_quote_update_2() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("CREATE TABLE {uc_quote_manufacturer_locations} (
@@ -191,9 +191,9 @@ function uc_quote_update_2(){
   return $ret;
 }
 
-function uc_quote_update_3(){
+function uc_quote_update_3() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_quote_manufacturer_locations} CHANGE COLUMN address1 street1 varchar(255) NOT NULL default ''");
@@ -211,16 +211,16 @@ function uc_quote_update_3(){
   return $ret;
 }
 
-function uc_quote_update_4(){
+function uc_quote_update_4() {
   $ret = array();
   $ret[] = update_sql("DELETE FROM {uc_quote_product_locations} WHERE street1 = ''");
   $ret[] = update_sql("DELETE FROM {uc_quote_manufacturer_locations} WHERE street1 = ''");
   return $ret;
 }
 
-function uc_quote_update_5(){
+function uc_quote_update_5() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'pgsql':
       db_change_column($ret, 'uc_order_quotes', 'oid', 'oid', 'int_unsigned', array('not null' => true, 'default' => 0));
     break;
@@ -228,9 +228,9 @@ function uc_quote_update_5(){
   return $ret;
 }
 
-function uc_quote_update_6(){
+function uc_quote_update_6() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_quote_manufacturer_locations} ADD COLUMN phone varchar(255) NOT NULL");
@@ -249,9 +249,9 @@ function uc_quote_update_6(){
   return $ret;
 }
 
-function uc_quote_update_7(){
+function uc_quote_update_7() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'pgsql':
       $ret[] = update_sql("ALTER TABLE {uc_order_quotes} SET WITHOUT OIDS");
     break;

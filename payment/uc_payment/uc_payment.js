@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.4.2.5 2008/02/25 21:11:36 rszrama Exp $
+// $Id: uc_payment.js,v 1.4.2.6 2008/03/31 20:45:09 rszrama Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
@@ -10,13 +10,19 @@ var li_summed = {};
 var line_update = 0;
 var payment_update = 0;
 
+function show_progressBar(id) {
+  var progress = new Drupal.progressBar('paymentProgress');
+  progress.setProgress(-1, '');
+  $(id).empty().append(progress.element);
+}
+
 /**
  * Sets a line item in the order total preview.
  */
 function set_line_item(key, title, value, weight, summed, render) {
   var do_update = false;
 
-  if (summed === undefined){
+  if (summed === undefined) {
     summed = 1;
   }
   // Check to see if we're actually changing anything and need to update.
@@ -31,13 +37,13 @@ function set_line_item(key, title, value, weight, summed, render) {
 
   if (do_update) {
     // Set the values passed in, overriding previous values for that key.
-    if (key != ""){
+    if (key != "") {
       li_titles[key] = title;
       li_values[key] = value;
       li_weight[key] = weight;
       li_summed[key] = summed;
     }
-    if (render == null || render){
+    if (render == null || render) {
       render_line_items();
     }
   }
@@ -52,11 +58,18 @@ function render_line_items() {
 
   // Put all the existing line item data into a single array.
   var li_info = {};
+  var cur_total = 0;
   $.each(li_titles,
     function(a, b) {
       li_info[a] = li_weight[a] + ';' + li_values[a] + ';' + li_titles[a] + ';' + li_summed[a];
+
+      // Tally up the current order total for storage in a hidden item.
+      if (li_titles[a] != '') {
+        cur_total += li_values[a];
+      }
     }
   );
+  $('#edit-panes-payment-current-total').val(cur_total).click();
 
   $('#order-total-throbber').attr('style', 'background-image: url(' + Drupal.settings['base_path'] + 'misc/throbber.gif); background-repeat: no-repeat; background-position: 100% -20px;').html('&nbsp;&nbsp;&nbsp;&nbsp;');
 
@@ -91,7 +104,7 @@ function get_payment_details(path) {
   payment_update = this_update.getTime();
 
   // Make the post to get the details for the chosen payment method.
-  $.post(path, { },
+  $.post(Drupal.settings['base_path'] + path, { },
     function(details) {
       if (this_update.getTime() == payment_update) {
         // If the response was empty, throw up the default message.
@@ -103,6 +116,12 @@ function get_payment_details(path) {
           $('#payment_details').empty().append(details);
         }
       }
+
+      // If on the order edit screen, clear out the order save hold.
+      try {
+        remove_order_save_hold();
+      }
+      catch (err) {}
     }
   );
 }

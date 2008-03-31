@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cybersource.module,v 1.3.2.2 2008/02/25 21:11:40 rszrama Exp $
+// $Id: uc_cybersource.module,v 1.3.2.3 2008/03/31 20:45:09 rszrama Exp $
 
 /**
  * @file
@@ -225,15 +225,15 @@ function uc_cybersource_charge($order_id, $amount, $data) {
       }
 
       // Create the order and payment ledger comments.
-      $o_comment = t('<b>Credit card !type:</b> !amount<br /><b>Decision: !decision</b><br /><b>Reason:</b> !reason', array('!type' => variable_get('uc_cybersource_transaction_type', 'sale'), '!amount' => uc_currency_format($nvp['orderAmount']), '!decision' => $nvp['decision'], '!reason' => _parse_cs_reason_code($nvp['reasonCode'])));
+      $o_comment = t('<b>Credit card !type:</b> !amount<br /><b>Decision: @decision</b><br /><b>Reason:</b> !reason', array('!type' => variable_get('uc_cybersource_transaction_type', 'sale'), '!amount' => uc_currency_format($nvp['orderAmount']), '@decision' => $nvp['decision'], '!reason' => _parse_cs_reason_code($nvp['reasonCode'])));
       $p_comment = t('!id<br />!decision, Reason: !reason', array('!id' => $nvp['orderPage_serialNumber'], '!decision' => $nvp['decision'], '!reason' => $nvp['reasonCode']));
       if (!empty($nvp['ccAuthReply_avsCode'])) {
         $o_comment .= t('<br /><b>AVS:</b> !avs', array('!avs' => _parse_cs_avs_code($nvp['ccAuthReply_avsCode'])));
-        $p_comment .= t(', AVS: !avs', array('!avs' => $nvp['ccAuthReply_avsCode']));
+        $p_comment .= t(', AVS: @avs', array('@avs' => $nvp['ccAuthReply_avsCode']));
       }
       if (!empty($nvp['ccAuthReply_cvCode'])) {
         $o_comment .= t('<br /><b>CVV:</b> !cvv', array('!cvv' => _parse_cs_cvv_code($nvp['ccAuthReply_cvCode'])));
-        $p_comment .= t(', CVV: !cvv', array('!cvv' => $nvp['ccAuthReply_cvCode']));
+        $p_comment .= t(', CVV: @cvv', array('@cvv' => $nvp['ccAuthReply_cvCode']));
       }
       uc_order_comment_save($order_id, $user->uid, $o_comment, 'admin');
 
@@ -283,7 +283,7 @@ function uc_cybersource_charge($order_id, $amount, $data) {
 }
 
 function _uc_cybersource_card_type($cc_number) {
-  switch(substr(strval($cc_number), 0, 1)) {
+  switch (substr(strval($cc_number), 0, 1)) {
     case '3':
       if (strlen($cc_number) == 14) {
         return '005';  // Diners Club

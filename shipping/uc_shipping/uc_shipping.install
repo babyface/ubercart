@@ -1,8 +1,8 @@
 <?php
-// $Id: uc_shipping.install,v 1.3.2.3 2008/02/25 21:11:37 rszrama Exp $
+// $Id: uc_shipping.install,v 1.3.2.4 2008/03/31 20:45:10 rszrama Exp $
 
-function uc_shipping_install(){
-  switch($GLOBALS['db_type']){
+function uc_shipping_install() {
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       db_query("CREATE TABLE {uc_shipments} (
@@ -115,15 +115,15 @@ function uc_shipping_install(){
   }
 }
 
-function uc_shipping_uninstall(){
+function uc_shipping_uninstall() {
   db_query("DROP TABLE {uc_shipments}");
   db_query("DROP TABLE {uc_packages}");
   db_query("DROP TABLE {uc_packaged_products}");
 }
 
-function uc_shipping_update_1(){
+function uc_shipping_update_1() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_packages} CHANGE units length_units varchar(255) NULL");
@@ -135,7 +135,7 @@ function uc_shipping_update_1(){
   return $ret;
 }
 
-//function uc_shipping_update_2(){
+//function uc_shipping_update_2() {
   // Abortive attempt at rearranging package_ids and order_product_ids.
   // Leaving this here as a reminder to start the next update at "3". 
 //}

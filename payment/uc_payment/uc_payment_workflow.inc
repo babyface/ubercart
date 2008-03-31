@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_workflow.inc,v 1.1.2.1 2008/01/07 20:56:38 rszrama Exp $
+// $Id: uc_payment_workflow.inc,v 1.1.2.2 2008/03/31 20:45:09 rszrama Exp $
 
 /**
  * @file
@@ -46,7 +46,7 @@ function uc_payment_configuration() {
 }
 
 // Tell Workflow about the various payment events.
-function uc_payment_event_info(){
+function uc_payment_event_info() {
   $events['payment_entered'] = array(
     '#label' => t('A payment gets entered for an order'),
     '#module' => t('Payment'),
@@ -116,7 +116,7 @@ function uc_payment_condition_balance_form($settings = array()) {
   return $form;
 }
 
-function uc_payment_condition_balance_submit($form_id, $form_values){
+function uc_payment_condition_balance_submit($form_id, $form_values) {
   return array('balance_comparison' => $form_values['balance_comparison']);
 }
 
@@ -140,6 +140,6 @@ function uc_payment_condition_method_form($settings = array()) {
   return $form;
 }
 
-function uc_payment_condition_method_submit($form_id, $form_values){
+function uc_payment_condition_method_submit($form_id, $form_values) {
   return array('payment_method' => $form_values['payment_method']);
 }

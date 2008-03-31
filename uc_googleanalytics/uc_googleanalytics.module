@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_googleanalytics.module,v 1.5.2.1 2008/01/25 22:19:33 rszrama Exp $
+// $Id: uc_googleanalytics.module,v 1.5.2.2 2008/03/31 20:45:12 rszrama Exp $
 
 /**
  * @file
@@ -29,9 +29,9 @@ function uc_googleanalytics_footer($main = 0) {
   $checkout_page = variable_get('uc_cart_checkout_complete_page', '');
 
   // check to see if we are at the order complete page
-  if((arg(0) == 'cart' && arg(1) == 'checkout' && arg(2) == 'complete') ||
-      !empty($checkout_page) && $checkout_page == $_GET['q']){
-    if($order = uc_order_load($_SESSION['uc_googleanalytics_order_id'])) {
+  if ((arg(0) == 'cart' && arg(1) == 'checkout' && arg(2) == 'complete') ||
+      !empty($checkout_page) && $checkout_page == $_GET['q']) {
+    if ($order = uc_order_load($_SESSION['uc_googleanalytics_order_id'])) {
       $script .= _uc_googleanalytics_ecommerce_form($order);
       $_SESSION['uc_googleanalytics_order_id'] = NULL;
       unset($_SESSION['uc_googleanalytics_order_id']);
@@ -70,17 +70,17 @@ function _uc_googleanalytics_ecommerce_form(&$order) {
   $shipping_cost = 0;
   
   // Finding name of country, if not use the country code from ubercart
-  if($country_data = uc_get_country_data(array("country_id" => $order->billing_country))) {
+  if ($country_data = uc_get_country_data(array("country_id" => $order->billing_country))) {
     $country = $country_data[0]['country_name'];
   } else {
     $country = $order->billing_country;
   }
 
-  foreach($order->products as $product) {
+  foreach ($order->products as $product) {
     // Try to find a category (term) for the product
     // Since products most often only have one category, the first one returned (based on tid) is chosen
     $terms = taxonomy_node_get_terms($product->nid);
-    if(count($terms)) {
+    if (count($terms)) {
       $term = array_shift($terms);
       $category = $term->name;
     }
@@ -96,23 +96,22 @@ function _uc_googleanalytics_ecommerce_form(&$order) {
              .'|' . $product->qty . " \n";
   }
   
-  foreach ($order->line_items as $line_item){
-    if ($line_item['type'] == 'tax'){
+  foreach ($order->line_items as $line_item) {
+    if ($line_item['type'] == 'tax') {
       $tax += $lite_item['amount'];
     }
-    if ($line_item['type'] == 'shipping'){
+    if ($line_item['type'] == 'shipping') {
       $shipping_cost += $line_item['amount'];
     }
   }
 
-  // postal code is more interesting than state/region (at least in Norway)
   $UTM_T = 'UTM:T|' . $order->order_id
           .'|' . variable_get('uc_store_name', 'Ubercart')
           .'|' . $order->order_total
           .'|' . $tax
           .'|' . $shipping_cost
-          .'|' . $order->billing_city
-          .'|' . $order->billing_postal_code
+          .'|' . check_plain($order->billing_city)
+          .'|' . check_plain($order->billing_postal_code)
           .'|' . $country . " \n";
   
   $script .= "<form style=\"display:none;\" name=\"utmform\">\n";

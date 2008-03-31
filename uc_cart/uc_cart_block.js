@@ -1,9 +1,9 @@
-// $Id: uc_cart_block.js,v 1.7.2.1 2008/01/07 20:56:42 rszrama Exp $
+// $Id: uc_cart_block.js,v 1.7.2.2 2008/03/31 20:45:11 rszrama Exp $
 
 /**
  * Collapse the shopping cart block at page load.
  */
-$(document).ready(function(){
+$(document).ready(function() {
   if (collapsed_block == true) {
     $('#block-cart-contents').hide(0);
   }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.6 2008/03/10 21:01:12 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.7 2008/03/31 20:45:12 rszrama Exp $
 
 /**
  * @file
@@ -9,8 +9,6 @@
  * Hooks allow for third party module integration, automated fulfillment, and
  * more.  This module also governs the order review options and invoices
  * displayed to customers.
- *
- * Development sponsored by the Ubercart project.  http://www.ubercart.org
  */
 
 require_once('uc_order_order_pane.inc');
@@ -162,8 +160,8 @@ function uc_order_menu($may_cache) {
       );
       $items[] = array(
         'path' => 'user/'. arg(1) .'/order/'. arg(3),
-        'title' => t('Order !order_id', array('!order_id' => arg(3))),
-        'description' => t('View order !order_id.', array('!order_id' => arg(3))),
+        'title' => t('Order @order_id', array('@order_id' => arg(3))),
+        'description' => t('View order @order_id.', array('@order_id' => arg(3))),
         'callback' => 'uc_order_view',
         'callback arguments' => array(arg(3), 'customer'),
         'access' => user_access('view all orders') || $user->uid == arg(1),
@@ -172,7 +170,7 @@ function uc_order_menu($may_cache) {
       $items[] = array(
         'path' => 'user/'. arg(1) .'/order/'. arg(3) .'/invoice',
         'title' => t('View invoice'),
-        'description' => t('View order !order_id invoice.', array('!order_id' => arg(3))),
+        'description' => t('View order @order_id invoice.', array('@order_id' => arg(3))),
         'callback' => 'uc_order_view',
         'callback arguments' => array(arg(3), 'invoice'),
         'access' => user_access('view all orders') || $user->uid == arg(1),
@@ -199,7 +197,7 @@ function uc_order_menu($may_cache) {
 
       $items[] = array(
         'path' => 'admin/store/orders/'. arg(3),
-        'title' => t('Order !order_id', array('!order_id' => arg(3))),
+        'title' => t('Order @order_id', array('@order_id' => arg(3))),
         'description' => t('View order') . arg(3),
         'callback' => 'uc_order_view',
         'callback arguments' => array(arg(3), 'view'),
@@ -301,8 +299,8 @@ function uc_order_menu($may_cache) {
       }
       $items[] = array(
         'path' => 'admin/store/orders/'. arg(3) .'/delete',
-        'title' => t('Delete order !order_id?', array('!order_id' => arg(3))),
-        'description' => t('Delete order !order_id.', array('!order_id' => arg(3))),
+        'title' => t('Delete order @order_id?', array('@order_id' => arg(3))),
+        'description' => t('Delete order @order_id.', array('@order_id' => arg(3))),
         'callback' => 'uc_order_delete_confirm',
         'callback arguments' => array(arg(3)),
         'access' => user_access('delete orders') || user_access('delete any order'),
@@ -419,9 +417,9 @@ function uc_order_perm() {
 /**
  * Implementation of hook_user().
  */
-function uc_order_user($op, &$edit, &$account, $category = NULL){
+function uc_order_user($op, &$edit, &$account, $category = NULL) {
   global $user;
-  switch ($op){
+  switch ($op) {
     case 'view':
       if ($user->uid && ($user->uid == $account->uid || user_access('view all orders'))) {
         $items['orders'] = array(
@@ -633,7 +631,7 @@ function uc_order_line_item() {
   $items[] = array(
     'id' => 'total',
     'title' => t('Total'),
-    'weight' => 10,
+    'weight' => 15,
     'stored' => FALSE,
     'calculated' => FALSE,
     'display_only' => TRUE,
@@ -1131,10 +1129,10 @@ function uc_order_admin($sql = NULL, $search = FALSE) {
       'data' => array(
         array('data' => uc_order_actions($order, TRUE), 'nowrap' => 'nowrap'),
         array('data' => $order->order_id),
-        array('data' => $order_name, 'nowrap' => 'nowrap'),
+        array('data' => check_plain($order_name), 'nowrap' => 'nowrap'),
         array('data' => uc_currency_format($order->order_total, TRUE), 'align' => 'right', 'nowrap' => 'true'),
         array('data' => format_date($order->created, 'custom', 'm/d/Y'), 'align' => 'center'),
-        array('data' => $order->title)
+        array('data' => $order->title),
       ),
       'id' => 'order-'. $order->order_id,
     );
@@ -1360,7 +1358,7 @@ function uc_order_search_form() {
     '#collapsed' => arg(4) == 'results' ? TRUE : FALSE,
   );
 
-  $form['search']['table1'] = array('#value' => '<table><tr><td colspan="4">');
+  $form['search']['table1'] = array('#value' => '<table><tbody style="border: 0em;"><tr><td colspan="4">');
 
   $form['search']['desc'] = array(
     '#value' => '<div>'. t("Search for customers based on any of the following fields.  Use * as a wildcard to match any character.<br/>For example, searching by last name for 's*' will return all customers whose last name starts with an s.<br/>(<em>Leave a field empty to ignore it in the search.</em>)") .'</div>',
@@ -1459,67 +1457,40 @@ function uc_order_search_form() {
     '#value' => t('Search'),
   );
 
-  $form['search']['table12'] = array('#value' => '</td></tr></table>');
+  $form['search']['table12'] = array('#value' => '</td></tr></tbody></table>');
 
   return $form;
 }
 
 function uc_order_search_form_submit($form_id, $form_values) {
-  if (strlen(trim($form_values['billing_first_name'])) == 0) {
-    $billing_first_name = '0';
-  }
-  else {
-    $billing_first_name = strtolower(trim($form_values['billing_first_name']));
-  }
+  $keys = array(
+    'billing_first_name',
+    'billing_last_name',
+    'billing_company',
+    'shipping_first_name',
+    'shipping_last_name',
+    'shipping_company',
+  );
 
-  if (strlen(trim($form_values['billing_last_name'])) == 0) {
-    $billing_last_name = '0';
-  }
-  else {
-    $billing_last_name = strtolower(trim($form_values['billing_last_name']));
-  }
-
-  if (strlen(trim($form_values['billing_company'])) == 0) {
-    $billing_company = '0';
-  }
-  else {
-    $billing_company = strtolower(trim($form_values['billing_company']));
-  }
-
-  if (strlen(trim($form_values['shipping_first_name'])) == 0) {
-    $shipping_first_name = '0';
-  }
-  else {
-    $shipping_first_name = strtolower(trim($form_values['shipping_first_name']));
-  }
-
-  if (strlen(trim($form_values['shipping_last_name'])) == 0) {
-    $shipping_last_name = '0';
-  }
-  else {
-    $shipping_last_name = strtolower(trim($form_values['shipping_last_name']));
-  }
-
-  if (strlen(trim($form_values['shipping_company'])) == 0) {
-    $shipping_company = '0';
-  }
-  else {
-    $shipping_company = strtolower(trim($form_values['shipping_company']));
+  foreach ($keys as $key) {
+    if (strlen(trim($form_values[$key])) == 0) {
+      $args[] = '0';
+    }
+    else {
+      $args[] = strtolower(trim($form_values[$key]));
+    }
   }
 
   if ($form_values['use_dates']) {
-    $start_date = mktime(0, 0, 0, $form_values['start_date']['month'], $form_values['start_date']['day'], $form_values['start_date']['year']);
-    $end_date = mktime(23, 59, 59, $form_values['end_date']['month'], $form_values['end_date']['day'], $form_values['end_date']['year']);
+    $args[] = mktime(0, 0, 0, $form_values['start_date']['month'], $form_values['start_date']['day'], $form_values['start_date']['year']);
+    $args[] = mktime(23, 59, 59, $form_values['end_date']['month'], $form_values['end_date']['day'], $form_values['end_date']['year']);
   }
   else {
-    $start_date = '0';
-    $end_date = '0';
+    $args[] = '0';
+    $args[] = '0';
   }
 
-  drupal_goto('admin/store/orders/search/results/'. $billing_first_name .'/'
-            . $billing_last_name .'/'. $billing_company .'/'. $shipping_first_name .'/'
-            . $shipping_last_name .'/'. $shipping_company .'/'. $start_date .'/'
-            . $end_date);
+  drupal_goto('admin/store/orders/search/results/'. implode('/', $args));
 }
 
 /**
@@ -1546,9 +1517,9 @@ function uc_order_history($uid) {
   $result = pager_query("SELECT o.order_id, o.created, os.title, SUM(op.qty) AS products, o.order_total AS total FROM {uc_orders} AS o LEFT JOIN {uc_order_statuses} AS os ON o.order_status = os.order_status_id LEFT JOIN {uc_order_products} AS op ON o.order_id = op.order_id WHERE o.uid = %d AND o.order_status IN ". uc_order_status_list('general', TRUE) ." GROUP BY o.order_id, o.created, os.title, o.order_total". tablesort_sql($header), 20, 0, "SELECT COUNT(*) FROM {uc_orders} WHERE uid = %d AND order_status NOT IN ". uc_order_status_list('specific', TRUE), $uid);
 
   // Build a table based on the customer's orders.
-  while ($order = db_fetch_object($result)){
+  while ($order = db_fetch_object($result)) {
     $link = l($order->order_id, 'user/'. $uid .'/order/'. $order->order_id);
-    if (user_access('view all orders')){
+    if (user_access('view all orders')) {
       $link .= '<span class="order-admin-icons">'. uc_order_actions($order, TRUE) .'</span>';
     }
     $rows[] = array(
@@ -1592,7 +1563,7 @@ function uc_order_view($order_id, $view = 'view') {
   }
 
   if ($order === FALSE) {
-    drupal_set_message(t('Order !order_id does not exist.', array('!order_id' => $order_id)));
+    drupal_set_message(t('Order @order_id does not exist.', array('@order_id' => $order_id)));
     drupal_goto('admin/store/orders');
   }
 
@@ -1630,7 +1601,7 @@ function uc_order_edit($order_id) {
   $order = uc_order_load($order_id);
 
   if ($order === FALSE) {
-    drupal_set_message(t('Order !order_id does not exist.', array('order_id' => $order_id)));
+    drupal_set_message(t('Order @order_id does not exist.', array('@order_id' => $order_id)));
     drupal_goto('admin/store/orders');
   }
 
@@ -1657,6 +1628,8 @@ function uc_order_edit_form($order) {
   $form['submit-changes'] = array(
     '#type' => 'submit',
     '#value' => t('Submit changes'),
+    '#attributes' => array('class' => 'save-button'),
+    '#disabled' => TRUE,
   );
 
   if (uc_order_can_delete($order) || user_access('delete any order')) {
@@ -1750,7 +1723,7 @@ function uc_order_edit_form_submit($form_id, $form_values) {
   uc_order_save($order);
 
   if (is_array($perform)) {
-    foreach($perform as $func => $ops) {
+    foreach ($perform as $func => $ops) {
       if (in_array($form_values['op'], $ops)) {
         $func($form_values['op'], $form_values);
       }
@@ -1783,7 +1756,7 @@ function uc_order_edit_products($order_id) {
         $product->manufacturer = uc_product_get_manufacturer($product->nid);
         $product->manufacturer = $product->manufacturer->name;
       }
-      if (module_exists('uc_attribute')){
+      if (module_exists('uc_attribute')) {
         $form_values = array(
           'nid' => intval($_POST['nid']),
           'attributes' => $_POST['attributes'],
@@ -1791,7 +1764,7 @@ function uc_order_edit_products($order_id) {
         $product->data = module_invoke_all('add_to_cart_data', $form_values);
         $attributes = array();
         $product->options = _uc_cart_product_get_options($product);
-        foreach ($product->options as $option){
+        foreach ($product->options as $option) {
           $product->cost += $option['cost'];
           $product->price += $option['price'];
           $product->weight += $option['weight'];
@@ -1799,7 +1772,7 @@ function uc_order_edit_products($order_id) {
         }
         $product->data['attributes'] = $attributes;
         $product->module = $product->data['module'];
-        if ($product->data['model']){
+        if ($product->data['model']) {
           $product->model = $product->data['model'];
         }
       }
@@ -2057,7 +2030,7 @@ function uc_order_invoice($order_id, $op = 'view') {
   $order = uc_order_load($order_id);
 
   if ($order === FALSE) {
-    drupal_set_message(t('Order !order_id does not exist.', array('!order_id' => $order_id)));
+    drupal_set_message(t('Order @order_id does not exist.', array('@order_id' => $order_id)));
     drupal_goto('admin/store/orders');
   }
 
@@ -2075,7 +2048,7 @@ function uc_order_mail_invoice_form($order_id) {
   $order = uc_order_load($order_id);
 
   if ($order === FALSE) {
-    drupal_set_message(t('Order !order_id does not exist.', array('!order_id' => $order_id)));
+    drupal_set_message(t('Order @order_id does not exist.', array('@order_id' => $order_id)));
     drupal_goto('admin/store/orders');
   }
 
@@ -2107,7 +2080,7 @@ function uc_order_mail_invoice_form_submit($form_id, $form_values) {
   $order = uc_order_load($form_values['order_id']);
 
   if ($order === FALSE) {
-    drupal_set_message(t('Order !order_id does not exist.', array('!order_id' => $order_id)));
+    drupal_set_message(t('Order @order_id does not exist.', array('@order_id' => $order_id)));
     drupal_goto('admin/store/orders');
   }
 
@@ -2135,7 +2108,7 @@ function uc_order_log($order_id) {
   $order = uc_order_load($order_id);
 
   if ($order === FALSE) {
-    drupal_set_message(t('Order !order_id does not exist.', array('order_id' => $order_id)));
+    drupal_set_message(t('Order @order_id does not exist.', array('@order_id' => $order_id)));
     drupal_goto('admin/store/orders');
   }
 
@@ -2161,7 +2134,7 @@ function uc_order_delete_confirm($order_id) {
   $order = uc_order_load($order_id);
 
   if ($order === FALSE) {
-    drupal_set_message(t('Order !order_id does not exist.', array('order_id' => $order_id)));
+    drupal_set_message(t('Order @order_id does not exist.', array('@order_id' => $order_id)));
     drupal_goto('admin/store/orders');
   }
 
@@ -2170,7 +2143,7 @@ function uc_order_delete_confirm($order_id) {
     drupal_goto('admin/store/orders');
   }
 
-  $output = t('Are you sure you want to delete order !order_id?', array('!order_id' => $order_id))
+  $output = t('Are you sure you want to delete order @order_id?', array('@order_id' => $order_id))
            .'<p>' . drupal_get_form('uc_order_delete_confirm_form', $order_id) .'</p>';
 
   return $output;
@@ -2201,7 +2174,7 @@ function uc_order_delete_confirm_form_submit($form_id, $form_values) {
       drupal_goto('admin/store/orders');
     case t('Delete'):
       uc_order_delete($form_values['order_id']);
-      drupal_set_message(t('Order !order_id completely removed from the database.', array('!order_id' => $form_values['order_id'])));
+      drupal_set_message(t('Order @order_id completely removed from the database.', array('@order_id' => $form_values['order_id'])));
       drupal_goto('admin/store/orders');
   }
 }
@@ -2553,13 +2526,14 @@ function uc_order_save($order) {
            ((is_null($order->billing_country) || $order->billing_country == 0) ? variable_get('uc_store_country', 840) : $order->billing_country),
            $order->payment_method, serialize($order->data), time(), $order->order_id);
 
+  // Review this query for removal in the future. -RS
   db_query("DELETE FROM {uc_order_products} WHERE order_id = %d", $order->order_id);
   if (is_array($order->products)) {
     foreach ($order->products as $product) {
-      if (module_exists('uc_attribute') && empty($order->modified)){
+      if (module_exists('uc_attribute') && empty($order->modified)) {
         $attributes = array();
         $options = _uc_cart_product_get_options($product);
-        foreach ($options as $aid => $option){
+        foreach ($options as $aid => $option) {
           $attributes[$option['attribute']] = $option['name'];
         }
         $product->data['attributes'] = $attributes;
@@ -2571,6 +2545,7 @@ function uc_order_save($order) {
   // Invoke hook_order() in enabled modules.
   foreach (module_implements('order') as $module) {
     $func = $module .'_order';
+    $null = NULL;
     $func('save', $order, $null);
   }
 }
@@ -2579,12 +2554,12 @@ function uc_order_save($order) {
  * Function to save a product to an order.
  */
 function uc_order_product_save($order_id, $product) {
-  if (!$product->order_product_id){
+  if (!$product->order_product_id) {
     $product->order_product_id = db_next_id('{uc_order_products}_order_product_id');
   }
   db_query("UPDATE {uc_order_products} SET order_id = %d, nid = %d, qty = %d, cost = %f, price = %f, title = '%s', manufacturer = '%s', model = '%s', weight = %f, data = '%s' WHERE order_product_id = %d",
     $order_id, $product->nid, $product->qty, $product->cost, $product->price, $product->title, $product->manufacturer, $product->model, $product->weight, serialize($product->data), $product->order_product_id);
-  if (!db_affected_rows()){
+  if (!db_affected_rows()) {
     db_query("INSERT INTO {uc_order_products} (order_product_id, order_id, nid, qty, cost, price, title, manufacturer, model, weight, data) "
       ."VALUES (%d, %d, %d, %d, %f, %f, '%s', '%s', '%s', %f, '%s')", $product->order_product_id, $order_id, $product->nid, $product->qty,
        $product->cost, $product->price, $product->title, $product->manufacturer, $product->model, $product->weight, serialize($product->data));
@@ -2618,6 +2593,7 @@ function uc_order_load($order_id) {
   // Invoke hook_order() in enabled modules.
   foreach (module_implements('order') as $module) {
     $func = $module .'_order';
+    $null = NULL;
     $func('load', $order, $null);
   }
 
@@ -2651,6 +2627,7 @@ function uc_order_delete($order_id) {
     // Invoke hook_order() in enabled modules.
     foreach (module_implements('order') as $module) {
       $func = $module .'_order';
+      $null = NULL;
       $func('delete', $order, $null, NULL);
     }
 
@@ -2660,6 +2637,9 @@ function uc_order_delete($order_id) {
     db_query("DELETE FROM {uc_order_comments} WHERE order_id = %d", $order_id);
     db_query("DELETE FROM {uc_order_admin_comments} WHERE order_id = %d", $order_id);
     db_query("DELETE FROM {uc_order_log} WHERE order_id = %d", $order_id);
+
+    // Delete line items for the order.
+    uc_order_delete_line_item($order_id, TRUE);
   }
 }
 
@@ -2875,7 +2855,7 @@ function uc_order_get_total($order, $products_only = FALSE) {
   $total = 0;
 
   if (is_array($order->products)) {
-    foreach($order->products as $product) {
+    foreach ($order->products as $product) {
       $total += $product->price * $product->qty;
     }
   }
@@ -2894,12 +2874,12 @@ function uc_order_get_total($order, $products_only = FALSE) {
   return $total;
 }
 
-function uc_order_is_shippable($order){
+function uc_order_is_shippable($order) {
   if (!is_array($order->products) || empty($order->products)) {
     return FALSE;
   }
 
-  foreach ($order->products as $product){
+  foreach ($order->products as $product) {
     // Return FALSE if the product form specifies this as not shippable.
     if ($product->data['shippable'] == FALSE) {
       $results[] = FALSE;
@@ -3047,7 +3027,7 @@ function uc_order_template_options($custom = FALSE) {
  */
 function uc_order_state_list($scope = 'all', $sql = FALSE) {
   $states = module_invoke_all('order_state');
-  for ($i = 0; $i < count($states); $i++) {
+  foreach ($states as $i => $value) {
     if ($scope != 'all' && $states[$i]['scope'] != $scope) {
       unset($states[$i]);
     }
@@ -3201,10 +3181,10 @@ function uc_order_status_data($status_id, $key) {
  */
 function uc_order_actions($order, $icon_html = FALSE) {
   $state = uc_order_status_data($order->order_status, 'state');
-  $order_id = array('!order_id' => $order->order_id);
+  $order_id = array('@order_id' => $order->order_id);
 
   if (user_access('view all orders')) {
-    $alt = t('View order !order_id.', $order_id);
+    $alt = t('View order @order_id.', $order_id);
     $actions[] = array(
       'name' => t('View'),
       'url' => 'admin/store/orders/'. $order->order_id,
@@ -3214,7 +3194,7 @@ function uc_order_actions($order, $icon_html = FALSE) {
   }
 
   if (user_access('edit orders')) {
-    $alt = t('Edit order !order_id.', $order_id);
+    $alt = t('Edit order @order_id.', $order_id);
     $actions[] = array(
       'name' => t('Edit'),
       'url' => 'admin/store/orders/'. $order->order_id .'/edit',
@@ -3234,7 +3214,7 @@ function uc_order_actions($order, $icon_html = FALSE) {
       }
     }
     if (user_access('delete any order') || ($state != 'completed' && $can_delete)) {
-      $alt = t('Delete order !order_id.', $order_id);
+      $alt = t('Delete order @order_id.', $order_id);
       $actions[] = array(
         'name' => t('Delete'),
         'url' => 'admin/store/orders/'. $order->order_id .'/delete',
@@ -3245,12 +3225,12 @@ function uc_order_actions($order, $icon_html = FALSE) {
   }
   
   $extra = module_invoke_all('order_actions', $order);
-  if (count($extra)){
+  if (count($extra)) {
     $actions = array_merge($actions, $extra);
   }
   
   if ($icon_html) {
-    foreach($actions as $action) {
+    foreach ($actions as $action) {
       $output .= l($action['icon'], $action['url'], array('title' => $action['title']), NULL, NULL, NULL, TRUE);
     }
     return $output;

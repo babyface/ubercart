@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_order_pane.inc,v 1.4.2.2 2008/01/25 22:19:29 rszrama Exp $
+// $Id: uc_payment_order_pane.inc,v 1.4.2.3 2008/03/31 20:45:09 rszrama Exp $
 
 /**
  * @file
@@ -18,14 +18,14 @@ function uc_order_pane_payment($op, $arg1) {
   switch ($op) {
     case 'view':
       if (variable_get('uc_payment_tracking', TRUE)) {
-        $output = t('Balance:') .' '. uc_currency_format(uc_payment_balance($arg1));
+        $output = t('Balance: @balance', array('@balance' => uc_currency_format(uc_payment_balance($arg1))));
         $output .= ' ('. l(t('View'), 'admin/store/orders/'. $arg1->order_id .'/payments') .')<br />';
       }
       $method_name = _payment_method_data($arg1->payment_method, 'review');
       if (empty($method_name)) {
         $method_name = _payment_method_data($arg1->payment_method, 'name');
       }
-      $output .= t('Method:') .' '. $method_name;
+      $output .= t('Method: @payment_method', array('@payment_method' => $method_name));
       $func = _payment_method_data($arg1->payment_method, 'callback');
       if (function_exists($func)) {
         $method_output = $func('order-view', $arg1);
@@ -40,7 +40,7 @@ function uc_order_pane_payment($op, $arg1) {
       if (empty($method_name)) {
         $method_name = _payment_method_data($arg1->payment_method, 'name');
       }
-      $output = t('Method:') .' '. $method_name;
+      $output .= t('Method: @payment_method', array('@payment_method' => $method_name));
       $func = _payment_method_data($arg1->payment_method, 'callback');
       if (function_exists($func)) {
         $method_output = $func('customer-view', $arg1);
@@ -69,7 +69,7 @@ function uc_order_pane_payment($op, $arg1) {
         '#title' => t('Payment method'),
         '#default_value' => $arg1->payment_method,
         '#options' => (is_array($options)) ? $options : array(t('None available')),
-        '#attributes' => array('onchange' => "get_payment_details('". base_path() ."?q=admin/store/orders/". $arg1->order_id ."/payment_details/' + this.value);"),
+        '#attributes' => array('onchange' => "add_order_save_hold(); get_payment_details('admin/store/orders/". $arg1->order_id ."/payment_details/' + this.value);"),
         '#disabled' => (is_array($options)) ? FALSE : TRUE,
       );
       return $form;
@@ -83,7 +83,7 @@ function uc_order_pane_payment($op, $arg1) {
       }
       $js = rtrim($js, ' ,') .'};';
       drupal_add_js($js, 'inline');
-      drupal_add_js("\$(document).ready( function () { get_payment_details('". base_path() ."?q=admin/store/orders/' + \$('#edit-order-id').val() + '/payment_details/' + \$('#edit-payment-method').val()); } );", 'inline');
+      drupal_add_js("\$(document).ready( function () { add_order_save_hold(); get_payment_details('admin/store/orders/' + \$('#edit-order-id').val() + '/payment_details/' + \$('#edit-payment-method').val()); } );", 'inline');
       $output = '<table class="order-edit-table">';
       foreach (element_children($arg1['payment']) as $field) {
         $title = $arg1['payment'][$field]['#title'];

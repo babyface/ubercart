@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_workflow.inc,v 1.1.2.2 2008/01/16 21:56:51 rszrama Exp $
+// $Id: uc_order_workflow.inc,v 1.1.2.3 2008/03/31 20:45:13 rszrama Exp $
 
 /**
  * @file
@@ -50,22 +50,40 @@ function uc_order_condition_info() {
     '#module' => t('Order'),
   );
   $conditions['uc_order_condition_delivery_postal_code'] = array(
-    '#label' => t("Check an order's delivery postal code"),
+    '#label' => t("Check an order's shipping postal code"),
     '#arguments' => array('order' => $order_arg),
-    '#description' => t('Returns TRUE if the delivery address is in the specified area.'),
-    '#module' => t('Order: Delivery address'),
+    '#description' => t('Returns TRUE if the shipping postal code is in the specified area.'),
+    '#module' => t('Order: Shipping address'),
   );
   $conditions['uc_order_condition_delivery_zone'] = array(
-    '#label' => t("Check an order's delivery zone"),
+    '#label' => t("Check an order's shipping zone"),
     '#arguments' => array('order' => $order_arg),
-    '#description' => t('Returns TRUE if the delivery zone is in the specified list.'),
-    '#module' => t('Order: Delivery address'),
+    '#description' => t('Returns TRUE if the shipping zone is in the specified list.'),
+    '#module' => t('Order: Shipping address'),
   );
   $conditions['uc_order_condition_delivery_country'] = array(
-    '#label' => t("Check an order's delivery country"),
+    '#label' => t("Check an order's shipping country"),
     '#arguments' => array('order' => $order_arg),
-    '#description' => t('Returns TRUE if the delivery country is in the specified list.'),
-    '#module' => t('Order: Delivery address'),
+    '#description' => t('Returns TRUE if the shipping country is in the specified list.'),
+    '#module' => t('Order: Shipping address'),
+  );
+  $conditions['uc_order_condition_billing_postal_code'] = array(
+    '#label' => t("Check an order's billing postal code"),
+    '#arguments' => array('order' => $order_arg),
+    '#description' => t('Returns TRUE if the billing postal code is in the specified area.'),
+    '#module' => t('Order: Billing address'),
+  );
+  $conditions['uc_order_condition_billing_zone'] = array(
+    '#label' => t("Check an order's billing zone"),
+    '#arguments' => array('order' => $order_arg),
+    '#description' => t('Returns TRUE if the billing zone is in the specified list.'),
+    '#module' => t('Order: Billing address'),
+  );
+  $conditions['uc_order_condition_billing_country'] = array(
+    '#label' => t("Check an order's billing country"),
+    '#arguments' => array('order' => $order_arg),
+    '#description' => t('Returns TRUE if the billing country is in the specified list.'),
+    '#module' => t('Order: Billing address'),
   );
   $conditions['uc_order_condition_has_products'] = array(
     '#label' => t("Check an order's products"),
@@ -145,7 +163,7 @@ function uc_order_condition_order_status_form($settings = array()) {
   return $form;
 }
 
-function uc_order_condition_order_status_submit($form_id, $form_values){
+function uc_order_condition_order_status_submit($form_id, $form_values) {
   return array('order_status' => $form_values['order_status']);
 }
 
@@ -193,7 +211,7 @@ function uc_order_condition_order_total_form($settings = array()) {
   return $form;
 }
 
-function uc_order_condition_order_total_submit($form_id, $form_values){
+function uc_order_condition_order_total_submit($form_id, $form_values) {
   $array = array(
     'order_total_comparison' => $form_values['order_total_comparison'],
     'order_total_value' => $form_values['order_total_value'],
@@ -207,11 +225,10 @@ function uc_order_condition_delivery_postal_code($order, $settings) {
   $pattern = rtrim($settings['pattern'], '*');
 
   // Return TRUE if the delivery postal code begins with the pattern.
-  $return = strpos($order->delivery_postal_code, $pattern) === 0;
-  return $return;
+  return strpos($order->delivery_postal_code, $pattern) === 0;
 }
 
-function uc_order_condition_delivery_postal_code_form($settings = array()){
+function uc_order_condition_delivery_postal_code_form($settings = array()) {
   $form['pattern'] = array(
     '#type' => 'textfield',
     '#title' => uc_get_field_name('postal_code'),
@@ -224,16 +241,16 @@ function uc_order_condition_delivery_postal_code_form($settings = array()){
   return $form;
 }
 
-function uc_order_condition_delivery_postal_code_submit($form_id, $form_values){
+function uc_order_condition_delivery_postal_code_submit($form_id, $form_values) {
   return array('pattern' => $form_values['pattern']);
 }
 
 // Check an order's delivery zone.
-function uc_order_condition_delivery_zone($order, $settings){
+function uc_order_condition_delivery_zone($order, $settings) {
   return in_array($order->delivery_zone, $settings['zones']);
 }
 
-function uc_order_condition_delivery_zone_form($settings = array()){
+function uc_order_condition_delivery_zone_form($settings = array()) {
   $result = db_query("SELECT z.*, c.country_name FROM {uc_zones} AS z LEFT JOIN {uc_countries} AS c ON z.zone_country_id = c.country_id ORDER BY c.country_name, z.zone_name");
   while ($zone = db_fetch_object($result)) {
     $options[$zone->country_name][$zone->zone_id] = $zone->zone_name;
@@ -247,56 +264,127 @@ function uc_order_condition_delivery_zone_form($settings = array()){
     '#multiple' => TRUE,
     '#required' => TRUE,
   );
-  
+
   return $form;
 }
 
-function uc_order_condition_delivery_zone_submit($form_id, $form_values){
+function uc_order_condition_delivery_zone_submit($form_id, $form_values) {
   return array('zones' => $form_values['zones']);
 }
 
 // Check an order's delivery country.
-function uc_order_condition_delivery_country($order, $settings){
+function uc_order_condition_delivery_country($order, $settings) {
   return in_array($order->delivery_country, $settings['countries']);
 }
 
-function uc_order_condition_delivery_country_form($settings = array()){
-  $form['countries'] = uc_country_select(uc_get_field_name('country'), $settings['countries']);
+function uc_order_condition_delivery_country_form($settings = array()) {
+  $form['countries'] = uc_country_select(uc_get_field_name('country'));
+  $form['countries']['#default_value'] = $settings['countries'];
   $form['countries']['#multiple'] = TRUE;
   $form['countries']['#required'] = TRUE;
-  
+
   return $form;
 }
 
-function uc_order_condition_delivery_country_submit($form_id, $form_values){
+function uc_order_condition_delivery_country_submit($form_id, $form_values) {
   return array('countries' => $form_values['countries']);
 }
 
-function uc_order_condition_has_products($order, $settings){
+// Check an order's billing postal code.
+function uc_order_condition_billing_postal_code($order, $settings) {
+  // Trim the wildcard off the pattern.
+  $pattern = rtrim($settings['pattern'], '*');
+
+  // Return TRUE if the delivery postal code begins with the pattern.
+  return strpos($order->billing_postal_code, $pattern) === 0;
+}
+
+function uc_order_condition_billing_postal_code_form($settings = array()) {
+  $form['pattern'] = array(
+    '#type' => 'textfield',
+    '#title' => uc_get_field_name('postal_code'),
+    '#default_value' => $settings['pattern'],
+    '#description' => t('Specify a postal code or postal code pattern. Use "*" as a wild card to specify a range of postal codes.<br /><b>Example:</b> In the US, 402* represents all areas from 40200 to 40299.'),
+    '#size' => 15,
+    '#required' => TRUE,
+  );
+
+  return $form;
+}
+
+function uc_order_condition_billing_postal_code_submit($form_id, $form_values) {
+  return array('pattern' => $form_values['pattern']);
+}
+
+// Check an order's billing zone.
+function uc_order_condition_billing_zone($order, $settings) {
+  return in_array($order->billing_zone, $settings['zones']);
+}
+
+function uc_order_condition_billing_zone_form($settings = array()) {
+  $result = db_query("SELECT z.*, c.country_name FROM {uc_zones} AS z LEFT JOIN {uc_countries} AS c ON z.zone_country_id = c.country_id ORDER BY c.country_name, z.zone_name");
+  while ($zone = db_fetch_object($result)) {
+    $options[$zone->country_name][$zone->zone_id] = $zone->zone_name;
+  }
+
+  $form['zones'] = array(
+    '#type' => 'select',
+    '#title' => uc_get_field_name('zone'),
+    '#options' => $options,
+    '#default_value' => $settings['zones'],
+    '#multiple' => TRUE,
+    '#required' => TRUE,
+  );
+
+  return $form;
+}
+
+function uc_order_condition_billing_zone_submit($form_id, $form_values) {
+  return array('zones' => $form_values['zones']);
+}
+
+// Check an order's billing country.
+function uc_order_condition_billing_country($order, $settings) {
+  return in_array($order->billing_country, $settings['countries']);
+}
+
+function uc_order_condition_billing_country_form($settings = array()) {
+  $form['countries'] = uc_country_select(uc_get_field_name('country'), $settings['countries']);
+  $form['countries']['#multiple'] = TRUE;
+  $form['countries']['#required'] = TRUE;
+
+  return $form;
+}
+
+function uc_order_condition_billing_country_submit($form_id, $form_values) {
+  return array('countries' => $form_values['countries']);
+}
+
+function uc_order_condition_has_products($order, $settings) {
   $products = array();
-  foreach ($order->products as $product){
+  foreach ($order->products as $product) {
     $products[] = $product->nid;
   }
   $required = array_intersect($settings['products'], $products);
-  if ($settings['required']){
+  if ($settings['required']) {
     $required_check = $required == $settings['products'];
   }
-  else{
-    $required = (bool)count($required);
+  else {
+    $required_check = (bool)count($required);
   }
-  if ($settings['forbidden']){
+  if ($settings['forbidden']) {
     $forbidden = array_diff($settings['products'], $products);
     $forbidden_check = (bool)count($forbidden);
   }
-  else{
+  else {
     $forbidden_check = false;
   }
   return $required_check && !$forbidden_check;
 }
 
-function uc_order_condition_has_products_form($settings = array()){
+function uc_order_condition_has_products_form($settings = array('required' => 0, 'forbidden' => 0)) {
   $form['required'] = array('#type' => 'radios',
-    '#title' => t('Inclusive mode'),
+    '#title' => t('Require selected products'),
     '#options' => array(
       0 => t('Order has any of these products.'),
       1 => t('Order has all of these products.'),
@@ -304,7 +392,7 @@ function uc_order_condition_has_products_form($settings = array()){
     '#default_value' => $settings['required'],
   );
   $form['forbidden'] = array('#type' => 'radios',
-    '#title' => t('Exclusive mode'),
+    '#title' => t('Forbid other products'),
     '#options' => array(
       0 => t('Order may have other products.'),
       1 => t('Order has only these products.'),
@@ -313,7 +401,7 @@ function uc_order_condition_has_products_form($settings = array()){
   );
   $options = array();
   $result = db_query("SELECT nid, model FROM {uc_products}");
-  while ($product = db_fetch_object($result)){
+  while ($product = db_fetch_object($result)) {
     $options[$product->nid] = $product->model;
   }
   $form['products'] = array('#type' => 'select',
@@ -325,7 +413,7 @@ function uc_order_condition_has_products_form($settings = array()){
   return $form;
 }
 
-function uc_order_condition_has_products_submit($form_id, $form_values){
+function uc_order_condition_has_products_submit($form_id, $form_values) {
   return array(
     'required' => $form_values['required'],
     'forbidden' => $form_values['forbidden'],
@@ -333,18 +421,18 @@ function uc_order_condition_has_products_submit($form_id, $form_values){
   );
 }
 
-function uc_order_condition_count_products($order, $settings){
+function uc_order_condition_count_products($order, $settings) {
   $totals = array('all' => 0);
   $total = 0;
-  foreach ($order->products as $product){
+  foreach ($order->products as $product) {
     $totals['all'] += $product->qty;
     $totals[$product->model] = $product->qty;
   }
-  if (in_array('all', $settings['products'])){
+  if (in_array('all', $settings['products'])) {
     $total = $totals['all'];
   }
-  else{
-    foreach ($settings['products'] as $product){
+  else {
+    foreach ($settings['products'] as $product) {
       $total += $totals[$product];
     }
   }
@@ -362,10 +450,10 @@ function uc_order_condition_count_products($order, $settings){
   }
 }
 
-function uc_order_condition_count_products_form($settings = array()){
+function uc_order_condition_count_products_form($settings = array()) {
   $options = array('all' => t('<All products>'));
   $result = db_query("SELECT nid, model FROM {uc_products}");
-  while ($product = db_fetch_object($result)){
+  while ($product = db_fetch_object($result)) {
     $options[$product->nid] = $product->model;
   }
   $form['products'] = array('#type' => 'select',
@@ -400,7 +488,7 @@ function uc_order_condition_count_products_form($settings = array()){
   return $form;
 }
 
-function uc_order_condition_count_products_submit($form_id, $form_values){
+function uc_order_condition_count_products_submit($form_id, $form_values) {
   return array(
     'products' => $form_values['products'],
     'product_count_value' => $form_values['product_count_value'],
@@ -408,19 +496,19 @@ function uc_order_condition_count_products_submit($form_id, $form_values){
   );
 }
 
-function uc_order_condition_products_weight($order, $settings){
+function uc_order_condition_products_weight($order, $settings) {
   $totals = array('all' => 0);
   $total = 0;
-  foreach ($order->products as $product){
+  foreach ($order->products as $product) {
     $unit_conversion = uc_weight_conversion($product->weight_units, $settings['weight_units']);
     $totals['all'] += $product->qty * $product->weight * $unit_conversion;
     $totals[$product->model] = $product->qty * $product->weight * $unit_conversion;
   }
-  if (in_array('all', $settings['products'])){
+  if (in_array('all', $settings['products'])) {
     $total = $totals['all'];
   }
-  else{
-    foreach ($settings['products'] as $product){
+  else {
+    foreach ($settings['products'] as $product) {
       $total += $totals[$product];
     }
   }
@@ -438,10 +526,10 @@ function uc_order_condition_products_weight($order, $settings){
   }
 }
 
-function uc_order_condition_products_weight_form($settings = array()){
+function uc_order_condition_products_weight_form($settings = array()) {
   $options = array('all' => t('<All products>'));
   $result = db_query("SELECT nid, model FROM {uc_products}");
-  while ($product = db_fetch_object($result)){
+  while ($product = db_fetch_object($result)) {
     $options[$product->nid] = $product->model;
   }
   $form['products'] = array('#type' => 'select',
@@ -486,7 +574,7 @@ function uc_order_condition_products_weight_form($settings = array()){
   return $form;
 }
 
-function uc_order_condition_products_weight_submit($form_id, $form_values){
+function uc_order_condition_products_weight_submit($form_id, $form_values) {
   return array(
     'products' => $form_values['products'],
     'product_weight_value' => $form_values['product_weight_value'],
@@ -494,7 +582,7 @@ function uc_order_condition_products_weight_submit($form_id, $form_values){
   );
 }
 
-function uc_order_condition_is_shippable($order){
+function uc_order_condition_is_shippable($order) {
   return uc_order_is_shippable($order);
 }
 
@@ -524,7 +612,7 @@ function uc_order_action_update_status_form($settings = array()) {
   return $form;
 }
 
-function uc_order_action_update_status_submit($form_id, $form_values){
+function uc_order_action_update_status_submit($form_id, $form_values) {
   return array('order_status' => $form_values['order_status']);
 }
 
@@ -557,7 +645,7 @@ function uc_order_action_add_comment_form($settings = array()) {
   return $form;
 }
 
-function uc_order_action_add_comment_submit($form_id, $form_values){
+function uc_order_action_add_comment_submit($form_id, $form_values) {
   return array('comment_type' => $form_values['comment_type'], 'comment' => $form_values['comment']);
 }
 

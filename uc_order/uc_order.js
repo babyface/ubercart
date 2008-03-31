@@ -1,11 +1,16 @@
-// $Id: uc_order.js,v 1.8.2.2 2008/02/08 22:22:39 rszrama Exp $
+// $Id: uc_order.js,v 1.8.2.3 2008/03/31 20:45:12 rszrama Exp $
 
 var customer_select = '';
 var add_product_browser = '';
+var order_save_holds = 0;
 
 // Add the double click to the order table at admin/store/orders.
 $(document).ready(
   function() {
+    if (order_save_holds == 0) {
+      release_held_buttons();
+    }
+
     $('.uc-orders-table tr.odd, .uc-orders-table tr.even').each(
       function() {
         $(this).dblclick(
@@ -198,12 +203,14 @@ function close_customer_select() {
 function uc_order_load_product_edit_div(order_id) {
   $(document).ready(
     function() {
+      add_order_save_hold();
       $.post(Drupal.settings['base_path'] + 'admin/store/orders/' + order_id + '/products',
              { action: 'view' },
              function(contents) {
                if (contents != '') {
                  $('#products-container').empty().append(contents);
                }
+               remove_order_save_hold();
              });
     }
   );
@@ -301,4 +308,24 @@ function confirm_line_item_delete(message, img_id) {
     $('#edit-li-delete-id').val(li_id);
     $('#uc-order-edit-form #edit-submit-changes').click();
   }
+}
+
+// Disable order submit button while parts of the page are still loading.
+function add_order_save_hold() {
+  order_save_holds++;
+  $('#uc-order-edit-form input.save-button').attr('disabled', 'disabled');
+}
+
+// Remove a hold and enable the save buttons when all holds are gone!
+function remove_order_save_hold() {
+  order_save_holds--;
+
+  if (order_save_holds == 0) {
+    release_held_buttons();
+  }
+}
+
+// Removes the disable attribute on any input item with the save-button class.
+function release_held_buttons() {
+  $('#uc-order-edit-form input.save-button').removeAttr('disabled');
 }

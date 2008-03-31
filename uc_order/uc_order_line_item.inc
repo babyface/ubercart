@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_line_item.inc,v 1.3.2.2 2008/01/25 22:19:33 rszrama Exp $
+// $Id: uc_order_line_item.inc,v 1.3.2.3 2008/03/31 20:45:13 rszrama Exp $
 
 /**
  * @file
@@ -96,9 +96,7 @@ function uc_order_line_item_add($order_id, $type, $title, $amount, $weight = NUL
     $weight = _line_item_data($type, 'weight');
   }
 
-  db_query("INSERT INTO {uc_order_line_items} (order_id, type, title, "
-        ."amount, weight) VALUES (%d, '%s', '%s', %f, %d)",
-         $order_id, $type, $title, $amount, $weight);
+  db_query("INSERT INTO {uc_order_line_items} (order_id, type, title, amount, weight) VALUES (%d, '%s', '%s', %f, %d)", $order_id, $type, $title, $amount, $weight);
 
   return TRUE;
 }
@@ -114,7 +112,7 @@ function _line_item_list($action = NULL) {
   }
 
   $items = module_invoke_all('line_item', NULL);
-  for ($i = 0; $i < count($items); $i++) {
+  foreach ($items as $i => $value) {
     $items[$i]['enabled'] = variable_get('uc_li_'. $items[$i]['id'] .'_enabled', (!isset($items[$i]['enabled']) ? TRUE : $items[$i]['enabled']));
     $items[$i]['weight'] = variable_get('uc_li_'. $items[$i]['id'] .'_weight', (!isset($items[$i]['weight']) ? 1 : $items[$i]['weight']));
   }

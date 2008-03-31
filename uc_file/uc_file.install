@@ -1,10 +1,10 @@
 <?php
-// $Id: uc_file.install,v 1.1.2.4 2008/03/10 21:01:12 rszrama Exp $
+// $Id: uc_file.install,v 1.1.2.5 2008/03/31 20:45:12 rszrama Exp $
 
-function uc_file_install(){
-  switch($GLOBALS['db_type']){
+function uc_file_install() {
+  switch ($GLOBALS['db_type']) {
     case 'mysqli':
-    case 'mysql': 
+    case 'mysql':
       db_query("CREATE TABLE {uc_files} (
         `fid` mediumint(9) NOT NULL,
         `filename` varchar(255) NOT NULL,
@@ -63,9 +63,9 @@ function uc_file_install(){
 }
 
 function uc_file_uninstall() {
-  switch($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysqli':
-    case 'mysql': 
+    case 'mysql':
       db_query("DROP TABLE IF EXISTS {uc_files}");
       db_query("DROP TABLE IF EXISTS {uc_file_products}");
       db_query("DROP TABLE IF EXISTS {uc_file_users}");
@@ -83,7 +83,7 @@ function uc_file_uninstall() {
 function uc_file_update_1() {
   $ret = array();
   
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_file_products} ADD `description` VARCHAR( 255 ) NULL AFTER `model`");
@@ -96,9 +96,9 @@ function uc_file_update_1() {
   return $ret;
 }
 
-function uc_file_update_2(){
+function uc_file_update_2() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'pgsql':
       db_change_column($ret, 'uc_file_users', 'accessed', 'accessed', 'smallint_unsigned', array('not null' => true, 'default' => 0));
     break;

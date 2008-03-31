@@ -1,8 +1,8 @@
 <?php
-// $Id: uc_store.install,v 1.8.2.4 2008/03/10 21:01:13 rszrama Exp $
+// $Id: uc_store.install,v 1.8.2.5 2008/03/31 20:45:13 rszrama Exp $
 
-function uc_store_install(){
-  switch($GLOBALS['db_type']){
+function uc_store_install() {
+  switch ($GLOBALS['db_type']) {
     case 'mysqli':
     case 'mysql':
       db_query("CREATE TABLE {uc_countries} (
@@ -137,7 +137,7 @@ function uc_store_uninstall() {
 
 function uc_store_update_1() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("DROP TABLE IF EXISTS {uc_address_formats}");
@@ -156,7 +156,7 @@ function uc_store_update_1() {
 function uc_store_update_2() {
   $ret = array();
   // Get rid of the auto_increment.
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_zones} CHANGE zone_id zone_id MEDIUMINT(11) NOT NULL");
@@ -197,9 +197,9 @@ function uc_store_update_2() {
   return $ret;
 }
 
-function uc_store_update_3(){
+function uc_store_update_3() {
   $ret = array();
-  switch ($GLOBALS['db_type']){
+  switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("CREATE TABLE {uc_store_footers} (

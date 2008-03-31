@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.4.2.6 2008/03/10 21:01:12 rszrama Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.4.2.7 2008/03/31 20:45:11 rszrama Exp $
 
 /**
  * @file
@@ -29,10 +29,10 @@ function uc_checkout_pane_cart($op) {
       $output = '<table>';
       foreach ($items as $item) {
         $rows = array();
-        foreach($item->options as $option){
-          $rows[] = $option['attribute'] .': '. $option['name'];
+        foreach ($item->options as $option) {
+          $rows[] = t('@attribute: @option', array('@attribute' => $option['attribute'], '@option' => $option['name']));
         }
-        $desc = $item->title . theme('item_list', $rows, NULL, 'ul', array('class' => 'product-options'));
+        $desc = check_plain($item->title) . theme('item_list', $rows, NULL, 'ul', array('class' => 'product-options'));
         $output .= '<tr valign="top"><td>'. $item->qty .'x</td><td width="100%">'. $desc
                   .'</td><td nowrap="nowrap">'. uc_currency_format($item->price * $item->qty) .'</td></tr>';
       }
@@ -54,9 +54,9 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
 
       if ($user->uid) {
         $description = t('Order information will be sent to your account e-mail listed below.');// .'<br />'
-        $contents['primary_email'] = array('#type' => 'hidden', '#value' => $email);
+        $contents['primary_email'] = array('#type' => 'hidden', '#value' => check_plain($email));
         $contents['email_text'] = array(
-          '#value' => '<div>'. t('<b>E-mail address:</b> !email (<a href="!url">edit</a>)', array('!email' => $email, '!url' => url('user/'. $user->uid .'/edit', 'destination=cart/checkout'))) .'</div>',
+          '#value' => '<div>'. t('<b>E-mail address:</b> @email (<a href="!url">edit</a>)', array('@email' => $email, '!url' => url('user/'. $user->uid .'/edit', 'destination=cart/checkout'))) .'</div>',
         );
       }
       else {
@@ -114,6 +114,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
          * This code adds profile fields required for registration to the
          * customer checkout pane.  However, I don't have the time to fool with
          * validation/submission stuff, so I'm postponing this feature. -RS
+        $null = NULL;
         $extra = _user_forms($null, NULL, NULL, 'register');
         if (!empty($extra)) {
           $contents = array_merge($contents, $extra);
@@ -177,7 +178,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
       return TRUE;
 
     case 'review':
-      $review[] = array('title' => t('E-mail'), 'data' => $arg1->primary_email);
+      $review[] = array('title' => t('E-mail'), 'data' => check_plain($arg1->primary_email));
       return $review;
 
     case 'settings':
@@ -246,7 +247,7 @@ function uc_checkout_pane_delivery($op, &$arg1, $arg2) {
       }
       if (uc_address_field_enabled('street2')) {
         $contents['delivery_street2'] = uc_textfield(uc_get_field_name('street2'), $arg1->delivery_street2, uc_address_field_required('street2'), NULL, 64);
-      }                                                                                                                        
+      }
       if (uc_address_field_enabled('city')) {
         $contents['delivery_city'] = uc_textfield(uc_get_field_name('city'), $arg1->delivery_city, uc_address_field_required('city'));
       }
@@ -290,7 +291,7 @@ function uc_checkout_pane_delivery($op, &$arg1, $arg2) {
     case 'review':
       $review[] = array('title' => t('Address'), 'data' => uc_order_address($arg1, 'delivery', FALSE));
       if (uc_address_field_enabled('phone') && !empty($arg1->delivery_phone)) {
-        $review[] = array('title' => t('Phone'), 'data' => $arg1->delivery_phone);
+        $review[] = array('title' => t('Phone'), 'data' => check_plain($arg1->delivery_phone));
       }
       return $review;
   }
@@ -379,7 +380,7 @@ function uc_checkout_pane_billing($op, &$arg1, $arg2) {
     case 'review':
       $review[] = array('title' => t('Address'), 'data' => uc_order_address($arg1, 'billing', FALSE));
       if (uc_address_field_enabled('phone') && !empty($arg1->billing_phone)) {
-        $review[] = array('title' => t('Phone'), 'data' => $arg1->billing_phone);
+        $review[] = array('title' => t('Phone'), 'data' => check_plain($arg1->billing_phone));
       }
       return $review;
   }
@@ -407,15 +408,14 @@ function uc_checkout_pane_comments($op, &$arg1, $arg2) {
     case 'process':
       if (strlen($arg2['comments']) > 0) {
         db_query("DELETE FROM {uc_order_comments} WHERE order_id = %d", $arg1->order_id);
-        uc_order_comment_save($arg1->order_id, 0, $arg2['comments'], 'order', uc_order_state_default('in_checkout'), TRUE);
+        uc_order_comment_save($arg1->order_id, 0, $arg2['comments'], 'order', uc_order_state_default('post_checkout'), TRUE);
       }
       return TRUE;
 
     case 'review':
-      $result = db_query("SELECT message FROM {uc_order_comments} WHERE "
-                        ."order_id = %d", $arg1->order_id);
+      $result = db_query("SELECT message FROM {uc_order_comments} WHERE order_id = %d", $arg1->order_id);
       if ($comment = db_fetch_object($result)) {
-        $review[] = array('title' => t('Comment'), 'data' => $comment->message);
+        $review[] = array('title' => t('Comment'), 'data' => check_plain($comment->message));
       }
       return $review;
   }
@@ -512,7 +512,7 @@ function _checkout_pane_list($action = NULL) {
   }
 
   $panes = module_invoke_all('checkout_pane', NULL);
-  for ($i = 0; $i < count($panes); $i++) {
+  foreach ($panes as $i => $value) {
     $panes[$i]['enabled'] = variable_get('uc_pane_'. $panes[$i]['id'] .'_enabled', (!isset($panes[$i]['enabled']) ? TRUE : $panes[$i]['enabled']));
     $panes[$i]['weight'] = variable_get('uc_pane_'. $panes[$i]['id'] .'_weight', (!isset($panes[$i]['weight']) ? 0 : $panes[$i]['weight']));
     $panes[$i]['review'] = !isset($panes[$i]['review']) ? TRUE : $panes[$i]['review'];
@@ -551,10 +551,11 @@ function theme_cart_review_table($show_subtotal = TRUE) {
     $item = $items[$i];
 
     $rows = array();
-    foreach($item->options as $option){
-      $rows[] = $option['attribute'] .': '. $option['name'];
+    foreach ($item->options as $option) {
+      // $rows[] = $option['attribute'] .': '. $option['name'];
+      $rows[] = t('@attribute: @option', array('@attribute' => $option['attribute'], '@option' => $option['name']));
     }
-    $desc = $item->title . theme('item_list', $rows, NULL, 'ul', array('class' => 'product-options'));
+    $desc = check_plain($item->title) . theme('item_list', $rows, NULL, 'ul', array('class' => 'product-options'));
 
     $total = ($item->qty) ? $item->qty * $item->price : $item->price;
     $subtotal += $total;
