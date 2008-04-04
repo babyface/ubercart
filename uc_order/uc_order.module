@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.7 2008/03/31 20:45:12 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.8 2008/04/04 21:04:46 rszrama Exp $
 
 /**
  * @file
@@ -2663,18 +2663,10 @@ function uc_order_comments_load($order_id, $admin = FALSE) {
  */
 function uc_order_comment_save($order_id, $uid, $message, $type = 'admin', $status = 'pending', $notify = FALSE) {
   if ($type == 'admin') {
-    db_query("INSERT INTO {uc_order_admin_comments} (order_id, uid, message, created) "
-            ."VALUES (%d, %d, '%s', %d)", $order_id, $uid, $message, time());
+    db_query("INSERT INTO {uc_order_admin_comments} (order_id, uid, message, created) VALUES (%d, %d, '%s', %d)", $order_id, $uid, $message, time());
   }
   elseif ($type == 'order') {
-    if ($notify) {
-      db_query("INSERT INTO {uc_order_comments} (order_id, uid, message, order_status, notified, created) "
-              ."VALUES (%d, %d, '%s', '%s', %d, %d)", $order_id, $uid, $message, $status, 1, time());
-    }
-    else {
-      db_query("INSERT INTO {uc_order_comments} (order_id, uid, message, order_status, created) "
-              ."VALUES (%d, %d, '%s', '%s', %d)", $order_id, $uid, $message, $status, time());
-    }
+    db_query("INSERT INTO {uc_order_comments} (order_id, uid, message, order_status, notified, created) VALUES (%d, %d, '%s', '%s', %d, %d)", $order_id, $uid, $message, $status, $notify ? 1 : 0, time());
   }
 }
 

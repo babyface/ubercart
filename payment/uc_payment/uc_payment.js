@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.4.2.6 2008/03/31 20:45:09 rszrama Exp $
+// $Id: uc_payment.js,v 1.4.2.7 2008/04/04 21:04:45 rszrama Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
@@ -64,7 +64,7 @@ function render_line_items() {
       li_info[a] = li_weight[a] + ';' + li_values[a] + ';' + li_titles[a] + ';' + li_summed[a];
 
       // Tally up the current order total for storage in a hidden item.
-      if (li_titles[a] != '') {
+      if (li_titles[a] != '' && li_summed[a] == 1) {
         cur_total += li_values[a];
       }
     }
@@ -87,6 +87,15 @@ function render_line_items() {
 function remove_line_item(key) {
   li_titles[key] = '';
   render_line_items();
+}
+
+/**
+ * Doesn't refresh the payment details if they've already been loaded.
+ */
+function init_payment_details(payment_method) {
+  if (payment_update == 0) {
+    get_payment_details('cart/checkout/payment_details/' + payment_method);
+  }
 }
 
 /**

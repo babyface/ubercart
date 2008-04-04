@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_checkout_pane.inc,v 1.4.2.6 2008/03/31 20:45:09 rszrama Exp $
+// $Id: uc_payment_checkout_pane.inc,v 1.4.2.7 2008/04/04 21:04:45 rszrama Exp $
 
 function uc_checkout_pane_payment($op, &$arg1, $arg2) {
   switch ($op) {
@@ -127,7 +127,7 @@ function theme_uc_payment_method_select($form) {
 
   // Perhaps instead this should be a normal JS function and we just print the
   // default payment method to a JS variable or use a selector.  -RS
-  drupal_add_js("\$(document).ready( function () { get_payment_details('cart/checkout/payment_details/". $form['#default_value'] ."'); } );", 'inline');
+  drupal_add_js("\$(document).ready( function () { init_payment_details('". $form['#default_value'] ."'); } );", 'inline');
 
   return drupal_render($form);
 }

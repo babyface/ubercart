@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.4.2.7 2008/03/31 20:45:09 rszrama Exp $
+// $Id: uc_credit.module,v 1.4.2.8 2008/04/04 21:04:45 rszrama Exp $
 
 /**
  * @file
@@ -293,10 +293,23 @@ function uc_payment_method_credit($op, &$arg1) {
     case 'cart-process':
       $arg1->payment_details['cc_type'] = check_plain($_POST['cc_type']);
       $arg1->payment_details['cc_owner'] = check_plain($_POST['cc_owner']);
+
+      // Account for partial numbers.
       if (substr($_POST['cc_number'], 0, strlen(t('(Last 4) '))) == t('(Last 4) ')) {
+        // Attempt to load the actual number from the DB.
         $result = db_query("SELECT cc_number FROM {uc_payment_credit} WHERE order_id = %d", $arg1->order_id);
         if ($number = db_result($result)) {
-          $arg1->payment_details['cc_number'] = $number;
+          // Check to see if we need to decrypt the result.
+          $key = uc_credit_encryption_key();
+
+          if ($key !== FALSE) {
+            $crypt = new uc_encryption_class;
+            $arg1->payment_details['cc_number'] = $crypt->decrypt($key, $number);
+            uc_store_encryption_errors($crypt, 'uc_credit');
+          }
+          else {
+            $arg1->payment_details['cc_number'] = $number;
+          }
         }
         else {
           $arg1->payment_details['cc_number'] = '';
@@ -475,7 +488,7 @@ function uc_payment_method_credit($op, &$arg1) {
       $form['cc_types']['uc_credit_accepted_types'] = array(
         '#type' => 'textarea',
         '#title' => t('Card type select box options'),
-        '#description' => t('Enter one card type per line. The select box at checkout uses these options regardless of your choices above.'),
+        '#description' => t('Enter one card type per line. The checkout form will uses these options regardless of the checked card types above.'),
         '#default_value' => variable_get('uc_credit_accepted_types', implode("\r\n", array(t('Visa'), t('Mastercard'), t('Discover'), t('American Express')))),
       );
 
@@ -981,6 +994,8 @@ function uc_credit_encrypt_existing() {
  * Validate a CVV number during checkout.
  */
 function _valid_cvv($cvv) {
+  $digits = array();
+
   if (variable_get('uc_credit_visa', TRUE) ||
       variable_get('uc_credit_mastercard', TRUE) ||
       variable_get('uc_credit_discover', TRUE)) {
@@ -990,7 +1005,8 @@ function _valid_cvv($cvv) {
     $digits[] = 4;
   }
 
-  if (!in_array(strlen($cvv), $digits) || !is_numeric($cvv)) {
+  // Fail validation if it's non-numeric or an incorrect length.
+  if (!is_numeric($cvv) || (count($digits) > 0 && !in_array(strlen($cvv), $digits))) {
     return FALSE;
   }
 
