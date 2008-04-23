@@ -1,17 +1,13 @@
 <?php
-// $Id: uc_payment_checkout_pane.inc,v 1.4.2.7 2008/04/04 21:04:45 rszrama Exp $
+// $Id: uc_payment_checkout_pane.inc,v 1.4.2.8 2008/04/23 19:38:03 rszrama Exp $
 
 function uc_checkout_pane_payment($op, &$arg1, $arg2) {
   switch ($op) {
     case 'view':
       if (variable_get('uc_payment_show_order_total_preview', TRUE)) {
-        drupal_add_js('misc/progress.js');
-        if (module_exists('uc_taxes')) {
-          drupal_add_js('var tax_weight = '. variable_get('uc_li_tax_weight', 9), 'inline');
-          drupal_add_js(drupal_get_path('module', 'uc_taxes') .'/uc_taxes.js');
-        }
-        drupal_add_js("var def_payment_msg = '". addslashes(variable_get('uc_default_payment_msg', t('Continue with checkout to complete payment.'))) ."';", 'inline');
-  
+        uc_add_js('misc/progress.js');
+        uc_add_js("var def_payment_msg = '". addslashes(variable_get('uc_default_payment_msg', t('Continue with checkout to complete payment.'))) ."';", 'inline');
+
         $contents['current_total'] = array(
           '#type' => 'hidden',
           '#value' => $arg1->order_total > 0 ? $arg1->order_total : NULL,
@@ -20,7 +16,7 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
           '#value' => '<div style="padding: .5em 1em; margin-bottom: 1em; border: dashed 1px #bbb;" id="line-items-div"><em>'. t('Javascript must be enabled to view the order total preview.') .'</em></div>',
           '#weight' => -20,
         );
-        drupal_add_js("\$(document).ready(function() { show_progressBar('#line-items-div'); } );", 'inline');
+        uc_add_js("\$(document).ready(function() { show_progressBar('#line-items-div'); } );", 'inline');
       }
 
       $description = t('Select a payment method from the following options.');
@@ -127,7 +123,7 @@ function theme_uc_payment_method_select($form) {
 
   // Perhaps instead this should be a normal JS function and we just print the
   // default payment method to a JS variable or use a selector.  -RS
-  drupal_add_js("\$(document).ready( function () { init_payment_details('". $form['#default_value'] ."'); } );", 'inline');
+  uc_add_js("\$(document).ready( function () { init_payment_details('". $form['#default_value'] ."'); } );", 'inline');
 
   return drupal_render($form);
 }

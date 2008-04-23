@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_order_pane.inc,v 1.4.2.3 2008/03/31 20:45:09 rszrama Exp $
+// $Id: uc_payment_order_pane.inc,v 1.4.2.4 2008/04/23 19:38:03 rszrama Exp $
 
 /**
  * @file
@@ -51,8 +51,8 @@ function uc_order_pane_payment($op, $arg1) {
       return $output;
 
     case 'edit-form':
-      drupal_add_js('misc/progress.js');
-      drupal_add_js("var def_payment_msg = '';", 'inline');
+      uc_add_js('misc/progress.js');
+      uc_add_js("var def_payment_msg = '';", 'inline');
       
       $form['payment'] = array(
         '#type' => 'fieldset',
@@ -75,15 +75,15 @@ function uc_order_pane_payment($op, $arg1) {
       return $form;
 
     case 'edit-theme':
-      drupal_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
+      uc_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
       $methods = _payment_method_list();
       $js = 'var methods = {';
       foreach ($methods as $method) {
         $js .= '"'. $method['name'] .'": "' . $method['id'] .'", ';
       }
       $js = rtrim($js, ' ,') .'};';
-      drupal_add_js($js, 'inline');
-      drupal_add_js("\$(document).ready( function () { add_order_save_hold(); get_payment_details('admin/store/orders/' + \$('#edit-order-id').val() + '/payment_details/' + \$('#edit-payment-method').val()); } );", 'inline');
+      uc_add_js($js, 'inline');
+      uc_add_js("\$(document).ready( function () { add_order_save_hold(); get_payment_details('admin/store/orders/' + \$('#edit-order-id').val() + '/payment_details/' + \$('#edit-payment-method').val()); } );", 'inline');
       $output = '<table class="order-edit-table">';
       foreach (element_children($arg1['payment']) as $field) {
         $title = $arg1['payment'][$field]['#title'];

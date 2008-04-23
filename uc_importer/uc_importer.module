@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_importer.module,v 1.6.2.6 2008/03/31 20:45:12 rszrama Exp $
+// $Id: uc_importer.module,v 1.6.2.7 2008/04/23 19:38:09 rszrama Exp $
 
 /**
  * @file
@@ -176,7 +176,7 @@ function uc_importer_admin_settings_submit($form_id, $form_values) {
  * Wrapper function to generate a page to hold the export form.
  */
 function uc_importer_export_page() {
-  drupal_add_js(drupal_get_path('module', 'uc_product') .'/uc_product.js', 'module');
+  uc_add_js(drupal_get_path('module', 'uc_product') .'/uc_product.js', 'module');
   $output = '';
   $nids = array();
   $args = func_get_args();

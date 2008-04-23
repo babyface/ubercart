@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.4.2.7 2008/04/04 21:04:45 rszrama Exp $
+// $Id: uc_ups.module,v 1.4.2.8 2008/04/23 19:38:05 rszrama Exp $
 
 /**
  * @file
@@ -290,14 +290,14 @@ function uc_ups_admin_settings() {
     '#default_value' => variable_get('uc_ups_pickup_type', '01'),
   );
   $form['uc_ups_classification'] = array('#type' => 'select',
-    '#title' => t('Customer classification'),
+    '#title' => t('UPS Customer classification'),
     '#options' => array(
       '01' => t('Wholesale'),
       '03' => t('Occasional'),
       '04' => t('Retail'),
     ),
     '#default_value' => variable_get('uc_ups_classification', '04'),
-    '#description' => t('For daily pickups the default is wholesale; for customer counter pickups the default is retail; for other pickups the default is occasional.'),
+    '#description' => t('The kind of customer you are to UPS. For daily pickups the default is wholesale; for customer counter pickups the default is retail; for other pickups the default is occasional.'),
   );
   $form['uc_ups_negotiated_rates'] = array('#type' => 'radios',
     '#title' => t('Negotiated rates'),
@@ -1067,13 +1067,13 @@ function uc_ups_fulfill_order($order_id, $package_ids) {
 }
 
 /**
- * Submit handler for uc_ups_fulfill_order().
+ * Validation handler for uc_ups_fulfill_order().
  *
  * Pass final information into shipment object.
  *
  * @see uc_ups_confirm_shipment
  */
-function uc_ups_fulfill_order_submit($form_id, $form_values) {
+function uc_ups_fulfill_order_validate($form_id, $form_values) {
   include_once(drupal_get_path('module', 'uc_store') .'/includes/simplexml.php');
   $origin = new stdClass();
   $destination = new stdClass();
@@ -1112,7 +1112,7 @@ function uc_ups_fulfill_order_submit($form_id, $form_values) {
   $response_obj = drupal_http_request(variable_get('uc_ups_connection_address', 'https://wwwcie.ups.com/ups.app/xml/') .'ShipConfirm', array(), 'POST', $request);
   $response = new JSimpleXML();
   $response->loadString($response_obj->data);
-  drupal_set_message('<pre>'. htmlentities($response->document->asXML()) .'</pre>');
+  //drupal_set_message('<pre>'. htmlentities($response->document->asXML()) .'</pre>');
   if (is_array($response->document->response[0]->error)) {
     $error = $response->document->response[0]->error[0];
     $error_msg = $error->errorseverity[0]->data() .' Error '. $error->errorcode[0]->data() .': '. $error->errordescription[0]->data();
@@ -1135,7 +1135,16 @@ function uc_ups_fulfill_order_submit($form_id, $form_values) {
   $_SESSION['ups']['rate']['currency'] = $charge->currencycode[0]->data();
   $_SESSION['ups']['rate']['amount'] = $charge->monetaryvalue[0]->data();
   $_SESSION['ups']['digest'] = $response->document->shipmentdigest[0]->data();
+}
 
+/**
+ * Submit handler for uc_ups_fulfill_order().
+ *
+ * Pass final information into shipment object.
+ *
+ * @see uc_ups_confirm_shipment
+ */
+function uc_ups_fulfill_order_submit($form_id, $form_values) {
   return 'admin/store/orders/'. $form_values['order_id'] .'/shipments/ups';
 }
 
@@ -1193,9 +1202,9 @@ function theme_uc_ups_confirm_shipment($form) {
   $output .= '<b>'. $method['ups']['quote']['accessorials'][$_SESSION['ups']['service']] .'</b><br />';
   $output .= '<i>'. check_plain($_SESSION['ups']['rate']['type']) .'</i>: '. uc_currency_format($_SESSION['ups']['rate']['amount']) .' ('. check_plain($_SESSION['ups']['rate']['currency']) .')<br />';
   $ship_date = $_SESSION['ups']['ship_date'];
-  $output .= 'Ship date: '. format_date(gmmktime(12, 0, 0, $ship_date['month'], $ship_date['day'], $ship_date['year']), 'custom', 'Y/m/d');
+  $output .= 'Ship date: '. format_date(gmmktime(12, 0, 0, $ship_date['month'], $ship_date['day'], $ship_date['year']), 'custom', variable_get('uc_date_format_default', 'm/d/Y'));
   $exp_delivery = $_SESSION['ups']['expected_delivery'];
-  $output .= '<br />Expected delivery: '. format_date(gmmktime(12, 0, 0, $exp_delivery['month'], $exp_delivery['day'], $exp_delivery['year']), 'custom', 'Y/m/d');
+  $output .= '<br />Expected delivery: '. format_date(gmmktime(12, 0, 0, $exp_delivery['month'], $exp_delivery['day'], $exp_delivery['year']), 'custom', variable_get('uc_date_format_default', 'm/d/Y'));
   $output .= "</div>\n<br style=\"clear: both;\" />";
   $output .= drupal_render($form);
   return $output;

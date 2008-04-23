@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.4.2.8 2008/04/04 21:04:45 rszrama Exp $
+// $Id: uc_credit.module,v 1.4.2.9 2008/04/23 19:38:03 rszrama Exp $
 
 /**
  * @file
@@ -366,7 +366,7 @@ function uc_payment_method_credit($op, &$arg1) {
       return $review;
 
     case 'order-view':
-      drupal_add_js(drupal_get_path('module', 'uc_credit') .'/uc_credit.js');
+      uc_add_js(drupal_get_path('module', 'uc_credit') .'/uc_credit.js');
       $output .= '<span onclick="toggle_card_details();" style="cursor: pointer;">'
                 .'<a id="cc_details_title" href="" onclick="return false;" '
                 .'style="display: none;">View card details.</a>';

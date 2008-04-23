@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.13.2.8 2008/04/04 21:04:46 rszrama Exp $
+// $Id: uc_product.module,v 1.13.2.9 2008/04/23 19:38:09 rszrama Exp $
 
 /**
  * @file
@@ -385,11 +385,13 @@ function uc_product_node_info($reset = false) {
 function uc_product_forms($saved_args) {
   $forms = array();
   if (substr($saved_args[0], 0, 27) == 'uc_product_add_to_cart_form' || substr($saved_args[0], 0, 26) == 'uc_catalog_buy_it_now_form') {
-    $products = db_query("SELECT DISTINCT nid FROM {uc_products} WHERE nid = %d", $saved_args[1]->nid);
+    $products = db_query("SELECT DISTINCT nid, type FROM {node} WHERE nid = %d", $saved_args[1]->nid);
 
     while ($product = db_fetch_object($products)) {
-      $forms['uc_product_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_add_to_cart_form');
-      $forms['uc_catalog_buy_it_now_form_'. $product->nid] = array('callback' => 'uc_catalog_buy_it_now_form');
+      if (in_array($product->type, array_keys(uc_product_node_info()))) {
+        $forms['uc_product_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_add_to_cart_form');
+        $forms['uc_catalog_buy_it_now_form_'. $product->nid] = array('callback' => 'uc_catalog_buy_it_now_form');
+      }
     }
   }
   return $forms;
@@ -1028,6 +1030,14 @@ function uc_product_views_tables() {
       'model' => array(
         'name' => t('Product: SKU'),
         'help' => t('Model number'),
+        'handler' => 'views_handler_field_nodelink',
+        'option' => array(
+          '#type' => 'select',
+          '#options' => array(
+            'link' => 'As link',
+            'nolink' => 'Without link'
+          ),
+        ),
         'sortable' => TRUE,
       ),
       'list_price' => array(
@@ -1090,6 +1100,36 @@ function uc_product_views_tables() {
         'list-type' => 'select',
         'handler' => 'uc_product_views_handler_filter_product',
         'help' => t('Filter the node based on whether or not it is derived from content type Product.'),
+      ),
+      'model' =>  array(
+        'name' => t('Product: SKU'),
+        'operator' => 'views_handler_operator_like',
+        'handler' => 'views_handler_filter_like',
+        'help' => t('This filter allows nodes to be filtered by their model number.'),
+      ),
+      'list_price' => array(
+        'name' => t('Product: List Price'),
+        'operator' => array('=' => 'Equals', '<' => 'Less Than', '>' => 'Greater Than'),
+        'handler' => 'views_handler_filter_numeric',
+        'help' => t('Filter the node based on whether or not it matches list price criteria.'),
+      ),
+      'cost' => array(
+        'name' => t('Product: Cost'),
+        'operator' => array('=' => 'Equals', '<' => 'Less Than', '>' => 'Greater Than'),
+        'handler' => 'views_handler_filter_numeric',
+        'help' => t('Filter the node based on whether or not it matches cost criteria.'),
+      ),
+      'sell_price' => array(
+        'name' => t('Product: Sell Price'),
+        'operator' => array('=' => 'Equals', '<' => 'Less Than', '>' => 'Greater Than'),
+        'handler' => 'views_handler_filter_numeric',
+        'help' => t('Filter the node based on whether or not it matches sell price criteria.'),
+      ),
+      'weight' => array(
+        'name' => t('Product: Weight'),
+        'operator' => array('=' => 'Equals', '<' => 'Less Than', '>' => 'Greater Than'),
+        'handler' => 'views_handler_filter_numeric',
+        'help' => t('Filter the node based on whether or not it matches weight criteria.'),
       ),
     ),
   );
@@ -1610,7 +1650,7 @@ function uc_product_image_defaults($checks) {
  * List the subcategories of product administration.
  */
 function uc_product_administration() {
-  drupal_add_js(drupal_get_path('module', 'uc_product') .'/uc_product.js', 'module');
+  uc_add_js(drupal_get_path('module', 'uc_product') .'/uc_product.js', 'module');
 
   // Parse the URL for nodes in the list.
   $nids = array();
@@ -2054,7 +2094,7 @@ function uc_product_class_default() {
 function uc_product_class_form($pcid = null) {
   if ($pcid) {
     $class = uc_product_class_load($pcid);
-    drupal_set_title($class->name);
+    drupal_set_title(check_plain($class->name));
     $form['pcid'] = array('#type' => 'hidden', '#value' => $pcid);
   }
   else {
@@ -2513,7 +2553,7 @@ function uc_product_feature_settings_form() {
  * Displays the project features tab on a product node edit form.
  */
 function uc_product_features($node) {
-  drupal_set_title($node->title);
+  drupal_set_title(check_plain($node->title));
 
   if (arg(4)) {
     // First check to see if we're trying to remove a feature.

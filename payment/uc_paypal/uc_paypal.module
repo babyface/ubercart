@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.4.2.7 2008/03/31 20:45:10 rszrama Exp $
+// $Id: uc_paypal.module,v 1.4.2.8 2008/04/23 19:38:04 rszrama Exp $
 
 /**
  * @file
@@ -971,7 +971,7 @@ function uc_paypal_ec_review_form($order) {
       '#value' => '<div id="quote"></div>',
     );
 
-    drupal_add_js("\$(document).ready(function() { \$(' #edit-quote-button').click(); });", 'inline');
+    uc_add_js("\$(document).ready(function() { \$(' #edit-quote-button').click(); });", 'inline');
 
     // Fake the checkout form delivery information.
     $form['delivery_first_name'] = array('#type' => 'hidden', '#value' => $order->delivery_first_name);
@@ -1115,6 +1115,8 @@ function uc_paypal_ec_submit_form_submit($form_id, $form_values) {
       }
     }
   }
+
+  $subtotal = $order->order_total - $tax - $shipping;
 
   $country = uc_get_country_data(array('country_id' => $order->billing_country));
   if ($country === FALSE) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.8.2.6 2008/03/31 20:45:12 rszrama Exp $
+// $Id: uc_order.install,v 1.8.2.7 2008/04/23 19:38:09 rszrama Exp $
 
 /**
  * Implementation of hook_install().
@@ -89,7 +89,7 @@ function uc_order_install() {
         nid mediumint(9) NOT NULL,
         title varchar(128) NOT NULL,
         manufacturer varchar(32) NOT NULL,
-        model varchar(32) NOT NULL,
+        model varchar(255) NOT NULL,
         qty smallint(6) NOT NULL,
         cost decimal(10,2) NOT NULL,
         price decimal(10,2) NOT NULL,
@@ -193,7 +193,7 @@ function uc_order_install() {
         nid integer NOT NULL default 0,
         title varchar(128) NOT NULL default '',
         manufacturer varchar(32) NOT NULL default '',
-        model varchar(32) NOT NULL default '',
+        model varchar(255) NOT NULL default '',
         qty smallint NOT NULL default 0,
         cost decimal(10,2) NOT NULL default 0.00,
         price decimal(10,2) NOT NULL default 0.00,
@@ -367,3 +367,19 @@ function uc_order_update_6() {
   }
   return $ret;
 }
+
+function uc_order_update_7() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_order_products} CHANGE model model VARCHAR(255) CHARACTER SET utf8 NOT NULL");
+    break;
+    case 'pgsql':
+      db_change_column($ret, 'uc_order_products', 'model', 'model', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+    break;
+  }
+
+  return $ret;
+}
+

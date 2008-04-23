@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.11.2.7 2008/03/31 20:45:11 rszrama Exp $
+// $Id: uc_attribute.module,v 1.11.2.8 2008/04/23 19:38:07 rszrama Exp $
 
 /**
  * @file
@@ -963,8 +963,8 @@ function uc_object_options_form($id, $type) {
       $form['attributes'][$aid]['default'] = array(
         '#type' => 'radios',
         '#options' => $options,
-        '#default_value' => $attribute->required ? NULL : $attribute->default_option,
-        '#disabled' => $attribute->required,
+        '#default_value' => /* $attribute->required ? NULL : */ $attribute->default_option,
+        //'#disabled' => $attribute->required,
       );
     }
     else {

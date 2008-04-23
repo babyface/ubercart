@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.13.2.7 2008/03/31 20:45:14 rszrama Exp $
+// $Id: uc_store.module,v 1.13.2.8 2008/04/23 19:38:12 rszrama Exp $
 
 /**
  * @file
@@ -271,7 +271,7 @@ function uc_store_menu($may_cache) {
     if (!variable_get('clean_url', 0)) {
       $base_path .= '?q=';
     }
-    drupal_add_js(array('base_path' => $base_path), 'setting');
+    uc_add_js(array('base_path' => $base_path), 'setting');
 
     $items[] = array(
       'path' => 'uc_js_util/'. arg(1),
@@ -341,7 +341,7 @@ function uc_store_menu($may_cache) {
  */
 function uc_store_init() {
   // Add base_path to the Drupal object for use in Ubercart .js files.
-  // drupal_add_js(array('base_path' => base_path()), 'setting');
+  // uc_add_js(array('base_path' => base_path()), 'setting');
 }
 
 /**
@@ -407,7 +407,7 @@ function uc_store_help($section) {
       return t('Ubercart contacts Ubercart.org once a day to retrieve update reminders and security alerts that may prevent monetary losses from security vulnerabilites. Additional information may be sent to generate anonymous, community-wide statistical data for display on the site.');
   }
 }
- 
+
 /**
  * Implementation of hook_cron().
  */
@@ -442,9 +442,9 @@ function uc_store_cron() {
           $vars['modules'][] = $return;
         }
       }
-        
+
       $vars['currency'] = variable_get('uc_currency_code', 'USD');
-    
+
       $count_query = '';
       switch ($GLOBALS['db_type']) {
         case 'mysql':
@@ -461,9 +461,9 @@ function uc_store_cron() {
           ."GROUP BY o.order_status";
           break;
       }
-    
+
       $result = db_query($count_query);
-   
+
       if ($stats = db_fetch_array($result)) {
         if (variable_get('uc_store_opt_in_orders', TRUE)) {
           $vars['orders'] = $stats['orders'];
@@ -501,7 +501,7 @@ function uc_store_block($op = 'list', $delta = 0, $edit = array()) {
           break;
         }
 
-        drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
+        uc_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
 
         $menu = menu_get_item(null, 'admin/store');
         $output = '<ul id="store-links">'. "\n";
@@ -601,7 +601,7 @@ function uc_store_admin() {
       default:
         $icon = base_path() . drupal_get_path('module', 'uc_store') .'/images/info.gif';
     }
-      
+
     $rows[] = array('data' => array(
       array('data' => '<img src="'. $icon .'" />'),
       array('data' => '<strong>'. $message['title'] .'</strong>', 'nowrap' => 'nowrap'),
@@ -619,8 +619,8 @@ function uc_store_admin() {
 // Themes the dashboard on the admin/store page.
 function theme_uc_admin_dashboard($type, $menus) {
   if ($type == 1) {
-    drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js', 'module');
-    drupal_add_js("var text_show = '". t('- Show links -') ."';\nvar text_hide = '". t('- Hide links -') ."';\n", 'inline');
+    uc_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js', 'module');
+    uc_add_js("var text_show = '". t('- Show links -') ."';\nvar text_hide = '". t('- Hide links -') ."';\n", 'inline');
   }
 
   $output = '<table class="uc-store-admin-table" align="center"><tr valign="top">';
@@ -681,7 +681,7 @@ function uc_store_customers($message = NULL, $query = NULL, $count_query = NULL,
             ."o.billing_country FROM {uc_orders} AS o LEFT JOIN "
             ."{users} AS u ON o.uid = u.uid WHERE o.uid > 0 AND "
             ."o.order_status IN ". uc_order_status_list('general', TRUE);
-  
+
     $count_query = "";
     switch ($GLOBALS['db_type']) {
       case 'mysql':
@@ -700,7 +700,7 @@ function uc_store_customers($message = NULL, $query = NULL, $count_query = NULL,
                       ." GROUP BY o.uid, o.billing_last_name, o.billing_first_name ";
         break;
     }
-    
+
     $message = t('The following users on your site have placed orders:');
   }
 
@@ -760,7 +760,7 @@ function uc_store_customers($message = NULL, $query = NULL, $count_query = NULL,
     );
   }
 
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
+  uc_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
 
   $output = '<p>'. $message .'</p>'
           . theme('table', $header, $rows, array('width' => '100%', 'class' => 'uc-customer-table'))
@@ -812,7 +812,7 @@ function uc_store_customer_orders($uid) {
         'data' => array(
           array('data' => $icons),
           array('data' => $order->order_id),
-          array('data' => format_date($order->created, 'custom', 'm/d/Y')),
+          array('data' => format_date($order->created, 'custom', variable_get('uc_date_format_default', 'm/d/Y'))),
           array('data' => check_plain($bname)),
           array('data' => check_plain($sname)),
           array('data' => $item_count['COUNT(*)']),
@@ -822,7 +822,7 @@ function uc_store_customer_orders($uid) {
     }
   }
 
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
+  uc_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
 
   $output = '<p>'. l(t('Create an order for this customer.'),
                      'admin/store/orders/create/'. $uid) .'</p>';
@@ -863,9 +863,9 @@ function uc_store_customer_search() {
             ."{users} AS u ON o.uid = u.uid WHERE o.uid > 0 AND "
             ."o.order_status IN ". uc_order_status_list('general', TRUE)
            . $where;// ." ORDER BY o.billing_last_name ASC";
-    
 
-    $count_query = '';  
+
+    $count_query = '';
     switch ($GLOBALS['db_type']) {
       case 'mysql':
       case 'mysqli':
@@ -881,12 +881,12 @@ function uc_store_customer_search() {
                       ."FROM {uc_orders} AS o "
                       ."LEFT JOIN {users} AS u ON o.uid = u.uid WHERE o.uid > 0 AND "
                       ."o.order_status IN ". uc_order_status_list('general', TRUE)
-                      . $where 
-                      ."GROUP BY o.uid, o.billing_first_name, o.billing_last_name, u.mail "; 
+                      . $where
+                      ."GROUP BY o.uid, o.billing_first_name, o.billing_last_name, u.mail ";
                       //."ORDER BY o.billing_last_name ASC";
         break;
     }
-    
+
     $message = t('Search returned the following results:');
 
     $output .= uc_store_customers($message, $query, $count_query, 100);
@@ -1069,7 +1069,7 @@ function uc_country_import_form() {
         $country->country_iso_code_3,
         array('data' => abs($country->version), 'align' => 'center')
       );
-  
+
       $ops = array();
       if ($country->version < 0) {
         $ops[] = l(t('enable'), 'admin/store/settings/countries/'. $country->country_id .'/enable');
@@ -1082,7 +1082,7 @@ function uc_country_import_form() {
       }
       $ops[] = l(t('remove'), 'admin/store/settings/countries/'. $country->country_id .'/remove');
       $row[] = implode(' ', $ops);
-  
+
       $rows[] = $row;
       unset($files[$country->country_id]);
     }
@@ -1096,21 +1096,22 @@ function uc_country_import_form() {
   }
 
   $form['text'] = array(
-    '#value' => '<div><p>'. theme('table', $header, $rows) .'</p><br><p>'
-              . t('To import new country data, make sure the file has been placed in the<br>Ubercart folder uc_store/countries, select it in the list, and click <em>Import</em>:') .'</p></div>',
+    '#value' => t('To import new country data, select it in the list and click the import button. If you are using a custom or contributed import file, it must be placed in the Ubercart folder uc_store/countries.'),
   );
-  $form['table1'] = array('#value' => '<table cellpadding="2" style="width: auto;"><tbody style="border-top: 0px;"><tr><td><b>'. t('Country:') .'</b></td><td>');
   $form['import_file'] = array(
     '#type' => 'select',
+    '#title' => t('Country'),
     '#options' => is_array($import_list) ? $import_list : array(t('-None available-')),
+    '#disabled' => is_array($import_list) ? FALSE : TRUE,
   );
-  $form['table2'] = array('#value' => '</td><td>');
   $form['import_button'] = array(
     '#type' => 'submit',
     '#value' => t('Import'),
     '#disabled' => is_array($import_list) ? FALSE : TRUE,
   );
-  $form['table3'] = array('#value' => '</td></tr></tbody></table>');
+  $form['country_table'] = array(
+    '#value' => theme('table', $header, $rows),
+  );
 
   return $form;
 }
@@ -1326,7 +1327,7 @@ function uc_country_formats_form_submit($form_id, $form_values) {
     variable_set('uc_address_format_'. $country_id, $data['address_format']);
   }
   drupal_set_message(t('Country settings saved.'));
-}      
+}
 
 /**
  * Display the store settings overview page.
@@ -1534,7 +1535,7 @@ function uc_store_format_settings_form() {
     '#options' => drupal_map_assoc(array(0, 1, 2)),
     '#default_value' => variable_get('uc_currency_prec', 2),
   );
-  
+
   $form['weight'] = array(
     '#type' => 'fieldset',
     '#title' => t('Weight format'),
@@ -1933,7 +1934,7 @@ function uc_currency_format($value, $sign = TRUE, $thou = TRUE, $dec = NULL) {
       $value = 0;
     }
   }
-  
+
   if ($value < 0) {
     $value = abs($value);
     $format = '-';
@@ -1957,11 +1958,11 @@ function uc_currency_format($value, $sign = TRUE, $thou = TRUE, $dec = NULL) {
  */
 function uc_weight_format($value, $unit = NULL) {
   $vars = array('!value' => $value);
-  
+
   if (is_null($unit)) {
     $unit = variable_get('uc_weight_unit', 'lb');
   }
-  
+
   $defaults = array(
     'lb' => '!value lb.',
     'oz' => '!value oz.',
@@ -1997,11 +1998,11 @@ function uc_weight_conversion($from_units, $to_units = NULL) {
  */
 function uc_length_format($value, $unit = NULL) {
   $vars = array('!value' => $value);
-  
+
   if (is_null($unit)) {
     $unit = variable_get('uc_length_unit', 'in');
   }
-  
+
   $defaults = array(
     'in' => '!valuein.',
     'ft' => '!valueft.',
@@ -2050,8 +2051,7 @@ function uc_date_format($month, $day, $year, $class = 'default') {
  * Save the address format for a country.
  */
 function uc_set_address_format($country_id, $format) {
-  $country = intval($country_id);
-  variable_set('uc_address_format_'. $country_id, $format);
+  variable_set('uc_address_format_'. intval($country_id), $format);
 }
 
 /**
@@ -2327,7 +2327,7 @@ function uc_country_select($title, $default = NULL, $description = NULL, $displa
     '#required' => $required,
   );
 
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_country_select.js');
+  uc_add_js(drupal_get_path('module', 'uc_store') .'/uc_country_select.js');
 
   return $select;
 }
@@ -2437,7 +2437,7 @@ function uc_get_addresses($uid, $type = 'billing') {
       break;
     case 'pgsql':
       // In pgsql, ORDER BY requires the field being sorted by to be in the SELECT list.
-      // But if we have the 'created' column in the SELECT list, the DISTINCT is 
+      // But if we have the 'created' column in the SELECT list, the DISTINCT is
       // rather useless. So for pgsql we will just sort addresses alphabetically.
       $result = db_query("SELECT DISTINCT ". $type ."_first_name AS first_name, "
                    . $type ."_last_name AS last_name, ". $type ."_phone AS phone, "
@@ -2496,7 +2496,7 @@ function _country_import_list() {
               $pieces = explode('_', substr($file, 0, strlen($file) - 4));
               $country_id = intval($pieces[count($pieces) - 2]);
               $version = $pieces[count($pieces) - 1];
-              
+
               if (!isset($countries[$country_id])) {
                 $countries[$country_id]['version'] = $version;
                 $countries[$country_id]['file'] = $file;
@@ -2573,7 +2573,7 @@ function theme_uc_settings_overview($sections) {
     return t('No overview found.');
   }
 
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
+  uc_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
 
   $output = '<p><table class="settings-overview">';
 
@@ -2856,7 +2856,7 @@ if (!module_exists('currency_api')) {
       'ZMK' => t('Zambian Kwacha (ZMK)'),
       'ZWD' => t('Zimbabwe Dollar (ZWD)'),
     );
-  
+
     return $currency;
   }
 }
@@ -2867,10 +2867,13 @@ function uc_store_email_from() {
   if (empty($email_from)) {
     $email_from = variable_get('site_mail', ini_get('sendmail_from'));
   }
-  $store = variable_get('uc_store_name', '');
-  if (!empty($store)) {
-    $email_from = $store .' <'. $email_from .'>';
-  }
+
+  // Removed to prevent server conflicts; would love to figure out some way to
+  // add this feature back in. - RS
+  // $store = variable_get('uc_store_name', '');
+  // if (!empty($store)) {
+  //   $email_from = $store .' <'. $email_from .'>';
+  // }
 
   return $email_from;
 }
@@ -3089,5 +3092,25 @@ function uc_store_default_country() {
   }
 
   return $default;
+}
+
+// Wrapper for uc_add_js() to cache .js files based on their timestamp.
+function uc_add_js($data = NULL, $type = 'module', $scope = 'header', $defer = FALSE, $cache = TRUE) {
+  // If we're adding a module or theme .js file...
+  if (($type == 'module' || $type == 'theme') && $cache) {
+    // And the file actually exists...
+    if (file_exists($data)) {
+      // Add the file timestamp to the query so the browser-cached
+      // javascript is updated when the file is updated.
+      drupal_add_js($data .'?'. substr(filemtime($data), -5), $type, $scope, $defer, $cache);
+    }
+    else {
+      // Log a file not found to the watchdog.
+      watchdog('uc_store', t('Could not find JS file %path.', array('%path' => $data)), WATCHDOG_ERROR);
+    }
+  }
+  else {
+    drupal_add_js($data, $type, $scope, $defer, $cache);
+  }
 }
 

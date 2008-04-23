@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.14.2.9 2008/03/31 20:45:11 rszrama Exp $
+// $Id: uc_cart.module,v 1.14.2.10 2008/04/23 19:38:07 rszrama Exp $
 
 /**
  * @file
@@ -221,9 +221,9 @@ function uc_cart_block($op = 'list', $delta = 0, $edit = array()) {
 
     if (variable_get('uc_cart_block_collapsible', TRUE)) {
       $val = variable_get('uc_cart_block_collapsed', TRUE) ? 'true' : 'false';
-      drupal_add_js('var collapsed_block = '. $val .';', 'inline');
-      drupal_add_js("var uc_cart_path = '". $uc_cart_path ."';", 'inline');
-      drupal_add_js(drupal_get_path('module', 'uc_cart') .'/uc_cart_block.js');
+      uc_add_js('var collapsed_block = '. $val .';', 'inline');
+      uc_add_js("var uc_cart_path = '". $uc_cart_path ."';", 'inline');
+      uc_add_js(drupal_get_path('module', 'uc_cart') .'/uc_cart_block.js');
     }
 
     drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart_block.css');
@@ -1331,7 +1331,7 @@ function uc_cart_checkout() {
     }
   }
 
-  drupal_add_js(drupal_get_path('module', 'uc_cart') .'/uc_cart.js');
+  uc_add_js(drupal_get_path('module', 'uc_cart') .'/uc_cart.js');
   $output = drupal_get_form('uc_cart_checkout_form');
 
   return $output;

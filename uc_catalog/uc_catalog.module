@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.14.2.8 2008/03/31 20:45:12 rszrama Exp $
+// $Id: uc_catalog.module,v 1.14.2.9 2008/04/23 19:38:07 rszrama Exp $
 
 /**
  * @file
@@ -69,7 +69,7 @@ function uc_catalog_menu($may_cache) {
       'title' => variable_get('uc_catalog_name', t('Catalog')),
       'callback' => 'theme',
       'callback arguments' => array('uc_catalog_browse'),
-      'type' => MENU_NORMAL_ITEM,
+      'type' => MENU_SUGGESTED_ITEM,
     );
     $items[] = array('path' => 'admin/store/settings/catalog',
       'access' => user_access('administer catalog'),
@@ -132,7 +132,7 @@ function uc_catalog_menu($may_cache) {
  * Implementation of hook_perm().
  */
 function uc_catalog_perm() {
-  return array('view catalog', 'administer catalog'); // JTR - 'view catalog' permission added
+  return array('view catalog', 'administer catalog');
 }
 
 /**
@@ -335,7 +335,10 @@ function uc_catalog_link_alter(&$node, &$links) {
 function uc_catalog_block($op = 'list', $delta = 0, $edit = array()) {
   switch ($op) {
     case 'list':
-      $blocks[0]['info'] = variable_get('uc_catalog_name', t('Catalog'));
+      $blocks[0] = array(
+        'info' => variable_get('uc_catalog_name', t('Catalog')),
+        'status' => 1,
+       );
       return $blocks;
 
     case 'view':
@@ -563,19 +566,6 @@ function uc_catalog_settings_overview() {
         t('The number of nodes in a category will be shown in the catalog breadcrumb.') :
         t('The number of nodes in a category will not be shown in the catalog breadcrumb.'),
       format_plural(variable_get('uc_catalog_category_columns', 3), 'Subcategories will be displayed in @count column.', 'Subcategories will be displayed in @count columns.'),
-      variable_get('uc_catalog_special_block', true) ?
-        t('The catalog page will display the Special Offers block at bottom.') :
-        t('The catalog page will not display any Special Offers block at bottom.'),
-      format_plural(variable_get('uc_catalog_special_block_lines', 1), 'The Special Offers block will display @count line.', 'The Special Offers block will display @count lines.'),
-      variable_get('uc_catalog_bestsellers_block', true) ?
-        t('The catalog page will display the Best Sellers products block at bottom.') :
-        t('The catalog page will not display any Best Sellers products block at bottom.'),
-      format_plural(variable_get('uc_catalog_bestsellers_block_lines', 1), 'The Best Sellers block will display @count line.', 'The Best Sellers block will display @count lines.'),
-      variable_get('uc_catalog_consult_block', true) ?
-        t('The catalog page will display the Consult Form block at bottom.') :
-        t('The catalog page will not display any Consult Form block at bottom.'),
-      t('The base URL pointing to the Consult Form is !url.',
-        array('!url' => variable_get('uc_catalog_contact_url', 'contact'))),
     ),
   );
   $sections[] = array(
@@ -616,18 +606,6 @@ function uc_catalog_settings_overview() {
       variable_get('uc_catalog_expand_categories', false) ?
         t('Categories in the catalog block will always be expanded.') :
         t('Categories in the catalog block will be expanded only when selected.'),
-      t('The title for the "Visual catalog" block is %name.',
-        array('%name' => variable_get('uc_visual_block_catalog_name', t('Visual catalog')))),
-      t('The title for the "Special offers" block is %name.',
-        array('%name' => variable_get('uc_catalog_special_block_title', t('Special offers')))),
-      variable_get('uc_catalog_special_block_help_allowed', true) ?
-        t('Help text below the "Special offers" block is displayed.') :
-        t('Help text below the "Special offers" block is not displayed.'),
-      t('The title for the "Best sellers" block is %name.',
-        array('%name' => variable_get('uc_catalog_bestsellers_block_title', t('Best sellers')))),
-      variable_get('uc_catalog_bestsellers_block_help_allowed', true) ?
-        t('Help text below the "Best sellers" block is displayed.') :
-        t('Help text below the "Best sellers" block is not displayed.'),
     ),
   );
 
@@ -711,7 +689,7 @@ function uc_catalog_set_category_form() {
   $form['buffer']['#suffix'] = '</div>';
   unset($form['buffer']['submit']);
 
-  drupal_add_js(drupal_get_path('module', 'uc_product') .'/uc_product.js', 'module');
+  uc_add_js(drupal_get_path('module', 'uc_product') .'/uc_product.js', 'module');
 
   $form['categories'] = taxonomy_form(variable_get('uc_catalog_vid', 0));
   $form['categories']['#title'] = t('New category');
@@ -828,11 +806,9 @@ function uc_catalog_get_page($tid) {
 function theme_uc_catalog_browse($tid = 0) {
   drupal_add_css(drupal_get_path('module', 'uc_catalog') .'/uc_catalog.css');
 
-  // $args = func_get_args();
-  //drupal_set_message('<pre>'. print_r($args, true) .'</pre>');
   $output = '';
   $catalog = uc_catalog_get_page((int)$tid);
-  drupal_set_title($catalog->name);
+  drupal_set_title(check_plain($catalog->name));
   drupal_set_breadcrumb(uc_catalog_set_breadcrumb($catalog->tid));
   $types = module_invoke_all('product_types');
   $links = array();
@@ -890,7 +866,7 @@ function theme_uc_catalog_browse($tid = 0) {
   $header = tapir_get_header('uc_product_table', array());
   $order = substr(tablesort_sql($header), 10);
   if (empty($_REQUEST['order'])) {
-    $order = 'p.ordering, n.title';
+    $order = 'p.ordering, n.title, n.nid';
   }
   $product_types = module_invoke_all('product_types');
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.8 2008/04/04 21:04:46 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.9 2008/04/23 19:38:09 rszrama Exp $
 
 /**
  * @file
@@ -192,7 +192,7 @@ function uc_order_menu($may_cache) {
 
     if (arg(0) == 'admin' && arg(1) == 'store' && arg(2) == 'orders' && is_numeric(arg(3))) {
       if (arg(4) == 'edit') {
-        drupal_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
+        uc_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
       }
 
       $items[] = array(
@@ -486,7 +486,7 @@ function uc_order_table_settings() {
     'access' => 'administer store',
     'preview' => FALSE,
   );
-  
+
   return $tables;
 }
 
@@ -860,7 +860,7 @@ function uc_order_workflow_form() {
       );
     }
   }
-                                               
+
   $form['order_statuses']['create'] = array(
     '#type' => 'submit',
     '#value' => t('Create new status'),
@@ -1077,7 +1077,7 @@ function uc_order_admin($sql = NULL, $search = FALSE) {
 
   if (is_null($sql)) {
     $show_status = 1;
-  
+
     if (arg(3) == 'sort' && !is_null(arg(4))) {
       $_SESSION['sort_status'] = arg(4);
       $where = "WHERE o.order_status = '". arg(4) ."'";
@@ -1124,21 +1124,21 @@ function uc_order_admin($sql = NULL, $search = FALSE) {
       else {
         $order_name = t('User: !name', array('!name' => $account));
       }
-    } 
+    }
     $rows[] = array(
       'data' => array(
         array('data' => uc_order_actions($order, TRUE), 'nowrap' => 'nowrap'),
         array('data' => $order->order_id),
         array('data' => check_plain($order_name), 'nowrap' => 'nowrap'),
         array('data' => uc_currency_format($order->order_total, TRUE), 'align' => 'right', 'nowrap' => 'true'),
-        array('data' => format_date($order->created, 'custom', 'm/d/Y'), 'align' => 'center'),
+        array('data' => format_date($order->created, 'custom', variable_get('uc_date_format_default', 'm/d/Y')), 'align' => 'center'),
         array('data' => $order->title),
       ),
       'id' => 'order-'. $order->order_id,
     );
   }
 
-  drupal_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
+  uc_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
 
   if ($search === FALSE) {
     $output = '<div class="order-overview-form">'. drupal_get_form('uc_order_select_form') .'</div>'
@@ -1185,7 +1185,7 @@ function uc_order_admin_sort_form() {
   foreach (uc_order_status_list() as $status) {
     $options[$status['id']] = $status['title'];
   }
-  
+
   $options['all'] = t('All orders');
 
   if (!isset($_SESSION['sort_status']) || is_null($_SESSION['sort_status'])) {
@@ -1235,7 +1235,7 @@ function uc_order_create($uid = NULL) {
     drupal_goto('admin/store/orders/'. $order->order_id .'/edit');
   }
 
-  drupal_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
+  uc_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
 
   $output = '<div style="position: relative; top: 2px; cursor: pointer;" '
            .'onclick="load_customer_search();">'
@@ -1523,7 +1523,7 @@ function uc_order_history($uid) {
       $link .= '<span class="order-admin-icons">'. uc_order_actions($order, TRUE) .'</span>';
     }
     $rows[] = array(
-      array('data' => format_date($order->created, 'custom', 'm/d/Y')),
+      array('data' => format_date($order->created, 'custom', variable_get('uc_date_format_default', 'm/d/Y'))),
       array('data' => $link, 'nowrap' => 'nowrap'),
       array('data' => $order->title),
       array('data' => (!is_null($order->products) ? $order->products : 0), 'align' => 'center'),
@@ -1584,7 +1584,7 @@ function uc_order_view($order_id, $view = 'view') {
   }
 
   if ($view == 'customer' && variable_get('uc_cust_view_order_invoices', TRUE)) {
-    drupal_add_js("function open_invoice() { window.open(Drupal.settings['base_path'] + 'user/". arg(1) ."/order/". arg(3) ."/invoice/print', '". t('Invoice') ."', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=600,height=480,left=50,top=50'); }", 'inline');
+    uc_add_js("function open_invoice() { window.open(Drupal.settings['base_path'] + 'user/". arg(1) ."/order/". arg(3) ."/invoice/print', '". t('Invoice') ."', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=600,height=480,left=50,top=50'); }", 'inline');
     $contents = '<a href="#" onclick="open_invoice();">'
                . uc_store_get_icon('file:print') .' '
                . t('Click to open a window with a printable invoice.') .'</a>';
@@ -1729,7 +1729,7 @@ function uc_order_edit_form_submit($form_id, $form_values) {
       }
     }
   }
-  
+
   drupal_set_message(t('Order changes saved.'));
 }
 
@@ -1741,9 +1741,16 @@ function uc_order_edit_products($order_id) {
     exit();
   }
 
+  if (is_array($_POST['products'])) {
+    foreach ($_POST['products'] as $key => $product) {
+      $product['data'] = unserialize($product['data']);
+      uc_order_product_save($order_id, (object) $product);
+    }
+  }
+
   switch ($_POST['action']) {
     case 'add_blank':
-      db_query("INSERT INTO {uc_order_products} (order_id, qty) VALUES (%d, 1)", $order_id);
+      db_query("INSERT INTO {uc_order_products} (order_product_id, order_id, qty) VALUES (%d, %d, 1)", db_next_id('{uc_order_products}_order_product_id'), $order_id);
       if (variable_get('uc_order_logging', TRUE)) {
         uc_order_log_changes($order_id, array('add' => 'Added new product line to order.'));
       }
@@ -1805,65 +1812,65 @@ function uc_order_edit_products_form($products) {
         '#parents' => array(),
       );
       $form['products'][$i]['order_product_id'] = array(
-        '#name' => "products[$i][order_product_id]",
-        '#parents' => array(),
         '#type' => 'hidden',
         '#value' => $products[$i]->order_product_id,
+        '#name' => "products[$i][order_product_id]",
+        '#parents' => array(),
       );
       $form['products'][$i]['nid'] = array(
-        '#name' => "products[$i][nid]",
-        '#parents' => array(),
         '#type' => 'hidden',
         '#value' => $products[$i]->nid,
+        '#name' => "products[$i][nid]",
+        '#parents' => array(),
       );
       $form['products'][$i]['qty'] = array(
-        '#name' => "products[$i][qty]",
-        '#parents' => array(),
         '#type' => 'textfield',
         '#value' => $products[$i]->qty,
-        '#size' => 1,
+        '#name' => "products[$i][qty]",
+        '#parents' => array(),
+        '#size' => 2,
         '#maxlength' => 6,
       );
       $form['products'][$i]['title'] = array(
-        '#name' => "products[$i][title]",
-        '#parents' => array(),
         '#type' => 'textfield',
         '#value' => $products[$i]->title,
+        '#name' => "products[$i][title]",
+        '#parents' => array(),
         '#size' => 30,
       );
       $form['products'][$i]['model'] = array(
-        '#name' => "products[$i][model]",
-        '#parents' => array(),
         '#type' => 'textfield',
         '#value' => $products[$i]->model,
+        '#name' => "products[$i][model]",
+        '#parents' => array(),
         '#size' => 6,
       );
       $form['products'][$i]['weight'] = array(
-        '#name' => "products[$i][weight]",
-        '#parents' => array(),
         '#type' => 'textfield',
         '#value' => $products[$i]->weight,
+        '#name' => "products[$i][weight]",
+        '#parents' => array(),
         '#size' => 3,
       );
       $form['products'][$i]['cost'] = array(
-        '#name' => "products[$i][cost]",
-        '#parents' => array(),
         '#type' => 'textfield',
         '#value' => $products[$i]->cost,
+        '#name' => "products[$i][cost]",
+        '#parents' => array(),
         '#size' => 5,
       );
       $form['products'][$i]['price'] = array(
-        '#name' => "products[$i][price]",
-        '#parents' => array(),
         '#type' => 'textfield',
         '#value' => $products[$i]->price,
+        '#name' => "products[$i][price]",
+        '#parents' => array(),
         '#size' => 5,
       );
       $form['products'][$i]['data'] = array(
-        '#name' => "products[$i][data]",
-        '#parents' => array(),
         '#type' => 'hidden',
         '#value' => $products[$i]->data,
+        '#name' => "products[$i][data]",
+        '#parents' => array(),
       );
     }
   }
@@ -1882,7 +1889,7 @@ function op_products_edit_table($op, $form) {
                         'enabled' => TRUE);
       $fields[] = array('name' => 'qty', 'title' => t('Qty'), 'weight' => 1,
                         'enabled' => TRUE);
-      $fields[] = array('name' => 'title', 'title' => t('Name'), 'weight' => 2, 
+      $fields[] = array('name' => 'title', 'title' => t('Name'), 'weight' => 2,
                         'enabled' => TRUE);
       $fields[] = array('name' => 'model', 'title' => t('Model'), 'weight' => 4,
                         'enabled' => TRUE);
@@ -2119,7 +2126,7 @@ function uc_order_log($order_id) {
   else {
     $header = array(t('Time'), t('User'), t('Changes'));
     while ($change = db_fetch_object($result)) {
-      $rows[] = array('data' => array(date('m/d/Y', $change->created), uc_get_initials($change->uid), $change->changes), 'valign' => 'top');
+      $rows[] = array('data' => array(format_date($change->created, 'custom', 'm/d/Y'), uc_get_initials($change->uid), $change->changes), 'valign' => 'top');
     }
     $output = theme('table', $header, $rows);
   }
@@ -2144,7 +2151,7 @@ function uc_order_delete_confirm($order_id) {
   }
 
   $output = t('Are you sure you want to delete order @order_id?', array('@order_id' => $order_id))
-           .'<p>' . drupal_get_form('uc_order_delete_confirm_form', $order_id) .'</p>';
+          . drupal_get_form('uc_order_delete_confirm_form', $order_id);
 
   return $output;
 }
@@ -2155,28 +2162,20 @@ function uc_order_delete_confirm_form($order_id) {
     '#value' => $order_id
   );
 
-  $form['cancel'] = array(
-    '#type' => 'submit',
-    '#value' => t('Cancel')
-  );
-
   $form['delete'] = array(
     '#type' => 'submit',
-    '#value' => t('Delete')
+    '#value' => t('Delete'),
+    '#suffix' => l(t('Cancel'), 'admin/store/orders'),
   );
 
   return $form;
 }
 
 function uc_order_delete_confirm_form_submit($form_id, $form_values) {
-  switch ($form_values['op']) {
-    case t('Cancel'):
-      drupal_goto('admin/store/orders');
-    case t('Delete'):
-      uc_order_delete($form_values['order_id']);
-      drupal_set_message(t('Order @order_id completely removed from the database.', array('@order_id' => $form_values['order_id'])));
-      drupal_goto('admin/store/orders');
-  }
+  uc_order_delete($form_values['order_id']);
+  drupal_set_message(t('Order @order_id completely removed from the database.', array('@order_id' => $form_values['order_id'])));
+
+  return 'admin/store/orders';
 }
 
 function uc_order_address_book() {
@@ -2310,14 +2309,14 @@ function uc_order_select_customer_form($options = NULL) {
                  .'(<em>'. t('Leave a field empty to ignore it in the search.')
                  .'</em>)</div>',
     );
-  
+
     $form['first_name'] = array(
       '#type' => 'textfield',
       '#title' => t('First name'),
       '#size' => 24,
       '#maxlength' => 32,
     );
-  
+
     $form['last_name'] = array(
       '#type' => 'textfield',
       '#title' => t('Last name'),
@@ -2877,10 +2876,10 @@ function uc_order_is_shippable($order) {
       $results[] = FALSE;
       continue;
     }
-  
+
     // See if any other modules have a say in the matter...
     $result = module_invoke_all('cart_item', 'can_ship', $product);
-  
+
     // Return TRUE by default.
     if (empty($result) || in_array(TRUE, $result)) {
       $results[] = TRUE;
@@ -3215,12 +3214,12 @@ function uc_order_actions($order, $icon_html = FALSE) {
       );
     }
   }
-  
+
   $extra = module_invoke_all('order_actions', $order);
   if (count($extra)) {
     $actions = array_merge($actions, $extra);
   }
-  
+
   if ($icon_html) {
     foreach ($actions as $action) {
       $output .= l($action['icon'], $action['url'], array('title' => $action['title']), NULL, NULL, NULL, TRUE);

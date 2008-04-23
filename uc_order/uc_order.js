@@ -1,4 +1,4 @@
-// $Id: uc_order.js,v 1.8.2.3 2008/03/31 20:45:12 rszrama Exp $
+// $Id: uc_order.js,v 1.8.2.4 2008/04/23 19:38:09 rszrama Exp $
 
 var customer_select = '';
 var add_product_browser = '';
@@ -204,6 +204,9 @@ function uc_order_load_product_edit_div(order_id) {
   $(document).ready(
     function() {
       add_order_save_hold();
+
+      show_product_throbber();
+
       $.post(Drupal.settings['base_path'] + 'admin/store/orders/' + order_id + '/products',
              { action: 'view' },
              function(contents) {
@@ -211,6 +214,7 @@ function uc_order_load_product_edit_div(order_id) {
                  $('#products-container').empty().append(contents);
                }
                remove_order_save_hold();
+               hide_product_throbber();
              });
     }
   );
@@ -224,9 +228,12 @@ function load_product_select(order_id, search) {
     options = { };
   }
 
+  show_product_throbber();
+
   $.post(Drupal.settings['base_path'] + 'admin/store/orders/' + order_id + '/product_select', options,
          function (contents) {
            $('#products-selector').empty().addClass('product-select-box2').append(contents);
+           hide_product_throbber();
          }
   );
 
@@ -246,20 +253,24 @@ function close_product_select() {
 function add_product_form() {
   add_product_browser = $('#products-selector').html();
 
+  show_product_throbber();
+
   if (parseInt($('#edit-unid').val()) > 0) {
     $.post(Drupal.settings['base_path'] + 'admin/store/orders/' + $('#edit-order-id').val() + '/add_product/' + $('#edit-unid').val(), { },
            function(contents) {
              $('#products-selector').empty().append(contents);
-           });
+             hide_product_throbber();
+           }
+    );
   }
 }
 
 function add_product_to_order(order_id, node_id) {
-  var post_vars = {
-    'action' : 'add',
-    'nid'    : node_id,
-    'qty'    : $('#edit-add-qty').val()
-  };
+  var post_vars = fetch_product_data();
+  post_vars['action'] = 'add';
+  post_vars['nid'] = node_id;
+  post_vars['qty'] = $('#edit-add-qty').val();
+
   $('#uc-order-add-product-form :input').each(
     function() {
       if ($(this).attr('name').substr(0, 10) == 'attributes') {
@@ -267,36 +278,67 @@ function add_product_to_order(order_id, node_id) {
       }
     }
   );
+
+  show_product_throbber();
+
   $.post(Drupal.settings['base_path'] + 'admin/store/orders/' + order_id + '/products', post_vars,
          function(contents) {
            if (contents != '') {
              $('#products-container').empty().append(contents);
            }
+           hide_product_throbber();
          }
   );
+
   $('#add-product-button').click();
+
   return false;
 }
 
+function fetch_product_data() {
+  var pdata = { };
+
+  $('.order-pane-table :input').each(
+    function() {
+      pdata[$(this).attr('name')] = $(this).val();
+    }
+  );
+
+  return pdata;
+}
+
 function add_blank_line_button(order_id) {
+  var post_vars = fetch_product_data();
+  post_vars['action'] = 'add_blank';
+
+  show_product_throbber();
+
   $.post(Drupal.settings['base_path'] + 'admin/store/orders/' + order_id + '/products',
-         { action: 'add_blank' },
+         post_vars,
          function(contents) {
            if (contents != '') {
              $('#products-container').empty().append(contents);
            }
+           hide_product_throbber();
          }
   );
 }
 
 function remove_product_button(message, opid) {
   if (confirm(message)) {
+    var post_vars = fetch_product_data();
+    post_vars['action'] = 'remove';
+    post_vars['opid'] = opid;
+
+    show_product_throbber();
+
     $.post(Drupal.settings['base_path'] + 'admin/store/orders/' + $('#edit-order-id').val() + '/products',
-           { 'action': 'remove', 'opid': opid },
+           post_vars,
            function(contents) {
              if (contents != '') {
                $('#products-container').empty().append(contents);
              }
+             hide_product_throbber();
            }
     );
   }
@@ -329,3 +371,12 @@ function remove_order_save_hold() {
 function release_held_buttons() {
   $('#uc-order-edit-form input.save-button').removeAttr('disabled');
 }
+
+function show_product_throbber() {
+  $('#product-div-throbber').attr('style', 'background-image: url(' + Drupal.settings['base_path'] + 'misc/throbber.gif); background-repeat: no-repeat; background-position: 100% -20px;').html('&nbsp;&nbsp;&nbsp;&nbsp;');
+}
+
+function hide_product_throbber() {
+  $('#product-div-throbber').removeAttr('style').empty();
+}
+

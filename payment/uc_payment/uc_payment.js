@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.4.2.7 2008/04/04 21:04:45 rszrama Exp $
+// $Id: uc_payment.js,v 1.4.2.8 2008/04/23 19:38:03 rszrama Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_links.install,v 1.1.2.1 2008/02/08 22:22:38 rszrama Exp $
+// $Id: uc_cart_links.install,v 1.1.2.2 2008/04/23 19:38:07 rszrama Exp $
 
 function uc_cart_links_install() {
   switch ($GLOBALS['db_type']) {

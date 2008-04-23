@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_order_pane.inc,v 1.4.2.6 2008/03/31 20:45:13 rszrama Exp $
+// $Id: uc_order_order_pane.inc,v 1.4.2.7 2008/04/23 19:38:09 rszrama Exp $
 
 /**
  * @file
@@ -159,7 +159,7 @@ function uc_order_pane_bill_to($op, $arg1) {
                 .'/images/address_book.gif" alt="'. t('Select from address book.') .'" '
                 .'title="'. t('Select from address book.') .'" onclick="load_address_select('. $arg1['order_uid']['#value'] .', \'#billing_address_select\', \'billing\');" '
                 .'style="position: relative; top: 2px; cursor: pointer;" />';
-      $output .= ' <img src="'. base_path() . drupal_get_path('module', 'uc_store') 
+      $output .= ' <img src="'. base_path() . drupal_get_path('module', 'uc_store')
                .'/images/copy.gif" alt="'. t('Copy shipping information.') .'" title="'
                . t('Copy shipping information.') .'" onclick="uc_order_copy_shipping_to_billing();" '
                .'style="position: relative; top: 2px; cursor: pointer;" />';
@@ -274,7 +274,7 @@ function uc_order_pane_products($op, $arg1) {
       return tapir_get_table('op_products_customer_table', $arg1->products);
 
     case 'edit-theme':
-      drupal_add_js('uc_order_load_product_edit_div('. $arg1['order_id']['#value'] .');', 'inline');
+      uc_add_js('uc_order_load_product_edit_div('. $arg1['order_id']['#value'] .');', 'inline');
 
       $output = '<div id="products-selector"></div>'
                .'<div id="products-container">'. t('Loading product information... (<em>If nothing happens, make sure you have Javascript enabled.</em>)') .'</div>';
@@ -305,6 +305,7 @@ function uc_order_pane_products($op, $arg1) {
       $output .= '<input type="button" value="'. t('Add blank line')
                 .'" onclick="add_blank_line_button('. $arg1['order_id']['#value']
                 .');" />';
+      $output .= ' <span id="product-div-throbber"></span>';
       return $output;
   }
 }
@@ -368,7 +369,7 @@ function uc_order_pane_line_items($op, $arg1) {
           }
         }
       }
-      usort($line_items, 'uc_weight_sort');      
+      usort($line_items, 'uc_weight_sort');
 
       $form['add_line_item'] = array(
         '#type' => 'fieldset',
@@ -496,7 +497,7 @@ function uc_order_pane_order_comments($op, $arg1) {
       $comments = uc_order_comments_load($arg1->order_id);
       $header = array(t('Date'), t('Status'), array('data' => t('Message'), 'width' => '100%'));
       $rows[] = array(
-        format_date($arg1->created, 'custom', 'm/d/Y'),
+        format_date($arg1->created, 'custom', variable_get('uc_date_format_default', 'm/d/Y')),
         array('data' => '-', 'align' => 'center'),
         t('Order created.')
       );
@@ -504,7 +505,7 @@ function uc_order_pane_order_comments($op, $arg1) {
         foreach ($comments as $comment) {
           $rows[] = array(
             'data' => array(
-              array('data' => format_date($comment->created, 'custom', 'm/d/Y'), 'align' => 'center'),
+              array('data' => format_date($comment->created, 'custom', variable_get('uc_date_format_default', 'm/d/Y')), 'align' => 'center'),
               array('data' => $comment->title, 'align' => 'center', 'nowrap' => 'nowrap'),
               check_plain($comment->message),
             ),
@@ -667,7 +668,7 @@ function op_products_view_table($op, $products) {
     case 'fields':
       $fields[] = array('name' => 'qty', 'title' => t('Qty'), 'weight' => 0,
                         'enabled' => TRUE, 'attributes' => array('class' => 'text-right'));
-      $fields[] = array('name' => 'product', 'title' => t('Product'), 'weight' => 1, 
+      $fields[] = array('name' => 'product', 'title' => t('Product'), 'weight' => 1,
                         'enabled' => TRUE, 'attributes' => array('width' => '80%'));
       $fields[] = array('name' => 'model', 'title' => t('Model'), 'weight' => 2,
                         'enabled' => TRUE, 'attributes' => array('class' => 'text-center', 'nowrap' => 'nowrap'));
@@ -714,7 +715,7 @@ function op_products_customer_table($op, $products) {
     case 'fields':
       $fields[] = array('name' => 'qty', 'title' => t('Qty'), 'weight' => 0,
                         'enabled' => TRUE, 'attributes' => array('class' => 'text-right'));
-      $fields[] = array('name' => 'product', 'title' => t('Product'), 'weight' => 1, 
+      $fields[] = array('name' => 'product', 'title' => t('Product'), 'weight' => 1,
                         'enabled' => TRUE, 'attributes' => array('width' => '80%'));
       $fields[] = array('name' => 'model', 'title' => t('Model'), 'weight' => 2,
                         'enabled' => TRUE, 'attributes' => array('class' => 'text-center', 'nowrap' => 'nowrap'));
@@ -761,7 +762,7 @@ function op_order_comments_view_table($op, $comments) {
     case 'fields':
       $fields[] = array('name' => 'date', 'title' => t('Date'), 'weight' => 0,
                         'enabled' => TRUE, 'attributes' => array('class' => 'text-center'));
-      $fields[] = array('name' => 'user', 'title' => t('User'), 'weight' => 1, 
+      $fields[] = array('name' => 'user', 'title' => t('User'), 'weight' => 1,
                         'enabled' => TRUE);
       $fields[] = array('name' => 'notified', 'title' => t('Notified'), 'weight' => 2,
                         'enabled' => TRUE);
@@ -774,7 +775,7 @@ function op_order_comments_view_table($op, $comments) {
     case 'data':
       if (is_array($comments)) {
         foreach ($comments as $comment) {
-          $data['date'][] = array('data' => format_date($comment->created, 'custom', 'm/d/Y<\b\r />g:i:s A'), 'align' => 'center', 'nowrap' => 'true');
+          $data['date'][] = array('data' => format_date($comment->created, 'custom', variable_get('uc_date_format_default', 'm/d/Y') .'<\b\r />g:i:s A'), 'align' => 'center', 'nowrap' => 'true');
           $data['user'][] = array('data' => uc_get_initials($comment->uid), 'align' => 'center');
           $data['notified'][] = array('data' => (($comment->notified == 1) ? '<img src="'. base_path() . drupal_get_path('module', 'uc_order') .'/images/true-icon.gif" />': '<img src="'. base_path() . drupal_get_path('module', 'uc_order') .'/images/false-icon.gif" />'), 'align' => 'center');
           $data['status'][] = array('data' => $comment->title, 'align' => 'center');
@@ -785,7 +786,7 @@ function op_order_comments_view_table($op, $comments) {
         $data['comment'][] = array('data' => t('This order has no comments associated with it.'), 'colspan' => 10);
       }
       return $data;
-      
+
     case 'attributes':
       $attributes = array('class' => 'order-pane-table');
       return $attributes;
@@ -797,7 +798,7 @@ function op_admin_comments_view_table($op, $comments) {
     case 'fields':
       $fields[] = array('name' => 'date', 'title' => t('Date'), 'weight' => 0,
                         'enabled' => TRUE, 'attributes' => array('class' => 'text-center'));
-      $fields[] = array('name' => 'user', 'title' => t('User'), 'weight' => 1, 
+      $fields[] = array('name' => 'user', 'title' => t('User'), 'weight' => 1,
                         'enabled' => TRUE, 'attributes' => array('class' => 'text-center'));
       $fields[] = array('name' => 'comment', 'title' => t('Comment'), 'weight' => 2,
                         'enabled' => TRUE, 'attributes' => array('width' => '80%'));
@@ -806,7 +807,7 @@ function op_admin_comments_view_table($op, $comments) {
     case 'data':
       if (is_array($comments)) {
         foreach ($comments as $comment) {
-          $data['date'][] = array('data' => format_date($comment->created, 'custom', 'm/d/Y<\b\r />g:i:s A'), 'align' => 'center', 'nowrap' => 'true', 'valign' => 'top');
+          $data['date'][] = array('data' => format_date($comment->created, 'custom', variable_get('uc_date_format_default', 'm/d/Y') .'<\b\r />g:i:s A'), 'align' => 'center', 'nowrap' => 'true', 'valign' => 'top');
           $data['user'][] = array('data' => uc_get_initials($comment->uid), 'align' => 'center', 'valign' => 'top');
           $data['comment'][] = array('data' => filter_xss_admin($comment->message), 'valign' => 'top');
         }
@@ -815,7 +816,7 @@ function op_admin_comments_view_table($op, $comments) {
         $data['comment'][] = array('data' => t('This order has no admin comments associated with it.'), 'colspan' => 10);
       }
       return $data;
-      
+
     case 'attributes':
       $attributes = array('class' => 'order-pane-table');
       return $attributes;

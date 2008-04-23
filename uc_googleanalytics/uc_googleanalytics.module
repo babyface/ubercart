@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_googleanalytics.module,v 1.5.2.2 2008/03/31 20:45:12 rszrama Exp $
+// $Id: uc_googleanalytics.module,v 1.5.2.3 2008/04/23 19:38:08 rszrama Exp $
 
 /**
  * @file
@@ -35,7 +35,7 @@ function uc_googleanalytics_footer($main = 0) {
       $script .= _uc_googleanalytics_ecommerce_form($order);
       $_SESSION['uc_googleanalytics_order_id'] = NULL;
       unset($_SESSION['uc_googleanalytics_order_id']);
-      drupal_add_js('$(document).ready(function() { __utmSetTrans(); });', 'inline');
+      uc_add_js('$(document).ready(function() { __utmSetTrans(); });', 'inline');
     }
   }
   return $script;

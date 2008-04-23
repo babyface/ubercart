@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.11.2.7 2008/03/31 20:45:14 rszrama Exp $
+// $Id: uc_taxes.module,v 1.11.2.8 2008/04/23 19:38:13 rszrama Exp $
 
 /**
  * @file
@@ -21,8 +21,8 @@ function uc_taxes_help($section) {
   switch ($section) {
     case 'admin/store/settings/taxes':
       $output .= t('After setting up tax rates and rules on this page, go to the
-  <a href="!link">Workflow-ng configurations</a> to add 
-  conditions to the taxes. Especially important are the geographic area 
+  <a href="!link">Workflow-ng configurations</a> to add
+  conditions to the taxes. Especially important are the geographic area
   conditions for the delivery address.', array('!link' => url('admin/build/workflow-ng')));
     break;
   }
@@ -41,7 +41,7 @@ function uc_taxes_perm() {
  */
 function uc_taxes_menu($may_cache) {
   $items = array();
-  
+
   if ($may_cache) {
     $items[] = array('path' => 'admin/store/settings/taxes',
       'title' => t('Tax rates and settings'),
@@ -76,8 +76,22 @@ function uc_taxes_menu($may_cache) {
       'type' => MENU_CALLBACK,
     );
   }
-  
+
   return $items;
+}
+
+function uc_taxes_form_alter($form_id, &$form) {
+  if ($form_id == 'uc_cart_checkout_form') {
+    if (isset($form['panes']['payment'])) {
+      drupal_add_js('var tax_weight = '. variable_get('uc_li_tax_weight', 9), 'inline');
+      drupal_add_js(drupal_get_path('module', 'uc_taxes') .'/uc_taxes.js');
+    }
+  }
+  else if ($form_id == 'uc_order_edit_form') {
+    if (isset($form['quotes'])) {
+      drupal_add_js(drupal_get_path('module', 'uc_taxes') .'/uc_taxes.js');
+    }
+  }
 }
 
 /*******************************************************************************
@@ -189,7 +203,7 @@ function uc_taxes_form($tax_id = 0) {
     $form_values['taxed_product_types'] = array_values(unserialize($form_values['taxed_product_types']));
     $form_values['taxed_line_items'] = array_values(unserialize($form_values['taxed_line_items']));
   }
-  
+
   $form['id'] = array('#type' => 'hidden', '#value' => $form_values['id']);
   $form['name'] = array('#type' => 'textfield',
     '#title' => t('Name'),
@@ -235,7 +249,7 @@ function uc_taxes_form($tax_id = 0) {
     '#description' => t('Lighter taxes are applied to an order first. This value is unimportant if there are no taxes on tax line items.'),
   );
   $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
-  
+
   return $form;
 }
 
@@ -260,7 +274,7 @@ function uc_taxes_form_submit($form_id, $form_values) {
         db_next_id('{uc_taxes}_id'), $form_values['name'], $rate, serialize(array_filter($form_values['taxed_product_types'])), serialize(array_filter($form_values['taxed_line_items'])), $form_values['weight']
       );
     }
-    
+
     drupal_set_message(t('%name settings have been saved.', array('%name' => $form_values['name'])));
   }
   return 'admin/store/settings/taxes';
@@ -271,11 +285,11 @@ function uc_taxes_form_submit($form_id, $form_values) {
  */
 function uc_taxes_copy($tax_id) {
   $rule = db_fetch_array(db_query("SELECT * FROM {uc_taxes} WHERE id = %d", $tax_id));
-  
+
   db_query("INSERT INTO {uc_taxes} (id, name, rate, taxed_product_types, taxed_line_items, weight) VALUES (%d, '%s', %f, '%s', '%s', %d)",
     db_next_id('{uc_taxes}_id'), $rule['name'], $rate, serialize(array_filter($rule['taxed_product_types'])), serialize(array_filter($rule['taxed_line_items'])), $rule['weight']
   );
-  
+
   drupal_goto('admin/store/settings/taxes');
 }
 
@@ -306,10 +320,12 @@ function uc_taxes_delete($tax_id = 0) {
 function uc_taxes_delete_submit($form_id, $form_values) {
   if ($form_values['confirm']) {
     db_query("DELETE FROM {uc_taxes} WHERE id = %d", $form_values['id']);
+    db_query("DELETE FROM {workflow_ng_cfgs} WHERE name = '%s'", 'uc_taxes_'. $form_values['id']);
+    workflow_ng_clear_cache();
   }
-  
+
   drupal_set_message(t('Tax rule deleted.'));
-  
+
   return 'admin/store/settings/taxes';
 }
 
@@ -328,7 +344,7 @@ function uc_line_item_tax($op, $order) {
         $script .= "set_line_item('tax_". $tax['id'] ."', '". $tax['name'] ."', ". $tax['amount'] .", + ". variable_get('uc_li_tax_weight', 9) + ($tax['weight'] / 10) .", 1, false);\n";
       }
       if ($script) {
-        drupal_add_js("\$(document).ready(function() {
+        uc_add_js("\$(document).ready(function() {
           if (window.set_line_item) {
             ". $script .";
             render_line_items();
@@ -375,7 +391,7 @@ function uc_line_item_tax_subtotal($op, $order) {
   if ($different && $has_taxes) {
     switch ($op) {
       case 'cart-preview':
-        drupal_add_js("\$(document).ready(function() {
+        uc_add_js("\$(document).ready(function() {
           if (window.set_line_item) {
             set_line_item('tax_subtotal', '". t('Subtotal excluding taxes') ."', ". $amount .", ". variable_get('uc_li_tax_subtotal_weight', 8) .");
           }
@@ -401,7 +417,7 @@ function uc_line_item_tax_subtotal($op, $order) {
  */
 function uc_taxes_get_rates() {
   static $taxes = array();
-  
+
   if (empty($taxes)) {
     $result = db_query("SELECT * FROM {uc_taxes} ORDER BY weight");
     while ($rule = db_fetch_object($result)) {
@@ -410,7 +426,7 @@ function uc_taxes_get_rates() {
       $taxes[$rule->id] = $rule;
     }
   }
-  
+
   return $taxes;
 }
 

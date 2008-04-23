@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.install,v 1.8.2.5 2008/03/31 20:45:12 rszrama Exp $
+// $Id: uc_catalog.install,v 1.8.2.6 2008/04/23 19:38:07 rszrama Exp $
 
 function uc_catalog_install() {
   $t = get_t();

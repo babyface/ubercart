@@ -1,10 +1,11 @@
-/* $Id: uc_store.css,v 1.6 2007/10/02 18:11:58 rszrama Exp $ */
+/* $Id: uc_store.css,v 1.7.2.1 2008/04/23 19:38:12 rszrama Exp $ */
 
 #store-links, #store-links ul {
   padding: 0;
   margin: 0;
   list-style: none; 
   line-height: 1.75em;
+  text-align: left;
   z-index: 1000;
 }
 
@@ -22,9 +23,9 @@
 }
 
 #store-links li {
-  margin: 0;
+  margin: 0 !important;
   padding: 0;
-  background-color: #ffffff;
+  background-color: #ffffff !important;
   background-image: none;
   border: solid 1px black;
   float: left;
@@ -147,3 +148,19 @@ tr.section {
 tr.section:hover {
   background-color: #ddd;
 }
+
+#uc-country-import-form .form-item, #uc-country-import-form .form-item label {
+  display: inline;
+  float: left;
+  margin-right: 1em;
+}
+
+#uc-country-import-form .form-submit {
+  float: left;
+  margin-top: 1em;
+}
+
+#uc-country-import-form table {
+  clear: left;
+}
+

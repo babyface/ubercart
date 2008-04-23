@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_workflow.inc,v 1.1.2.3 2008/03/31 20:45:13 rszrama Exp $
+// $Id: uc_order_workflow.inc,v 1.1.2.4 2008/04/23 19:38:09 rszrama Exp $
 
 /**
  * @file
@@ -452,7 +452,7 @@ function uc_order_condition_count_products($order, $settings) {
 
 function uc_order_condition_count_products_form($settings = array()) {
   $options = array('all' => t('<All products>'));
-  $result = db_query("SELECT nid, model FROM {uc_products}");
+  $result = db_query("SELECT nid, model FROM {uc_products} ORDER BY model");
   while ($product = db_fetch_object($result)) {
     $options[$product->nid] = $product->model;
   }
@@ -470,7 +470,7 @@ function uc_order_condition_count_products_form($settings = array()) {
     '#default_value' => $settings['product_count_value'],
     '#size' => 16,
   );
-  
+
   $options = array(
     'less' => t('Total is less than specified value.'),
     'less_equal' => t('Total is less than or equal to specified value.'),
@@ -484,7 +484,7 @@ function uc_order_condition_count_products_form($settings = array()) {
     '#options' => $options,
     '#default_value' => isset($settings['product_count_comparison']) ? $settings['product_count_comparison'] : 'greater_equal',
   );
-  
+
   return $form;
 }
 
@@ -556,7 +556,7 @@ function uc_order_condition_products_weight_form($settings = array()) {
     '#default_value' => $settings['product_weight_value'],
     '#size' => 16,
   );
-  
+
   $options = array(
     'less' => t('Total is less than specified value.'),
     'less_equal' => t('Total is less than or equal to specified value.'),
@@ -570,7 +570,7 @@ function uc_order_condition_products_weight_form($settings = array()) {
     '#options' => $options,
     '#default_value' => isset($settings['product_weight_comparison']) ? $settings['product_weight_comparison'] : 'greater_equal',
   );
-  
+
   return $form;
 }
 

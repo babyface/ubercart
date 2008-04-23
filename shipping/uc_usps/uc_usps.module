@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.5.2.7 2008/03/31 20:45:10 rszrama Exp $
+// $Id: uc_usps.module,v 1.5.2.8 2008/04/23 19:38:06 rszrama Exp $
 
 /**
  * @file
@@ -18,7 +18,7 @@
  */
 function uc_usps_menu($may_cache) {
   $items = array();
-  
+
   if ($may_cache) {
     $items[] = array('path' => 'admin/store/settings/quotes/methods/usps',
       'title' => t('USPS'),
@@ -28,7 +28,7 @@ function uc_usps_menu($may_cache) {
       'type' => MENU_LOCAL_TASK,
     );
   }
-  
+
   return $items;
 }
 
@@ -130,13 +130,13 @@ function uc_usps_configuration() {
       'countries' => $countries,
     ),
   ));
-  
+
   $action = workflow_ng_use_action('uc_quote_action_get_quote', array(
     '#label' => t('Fetch a shipping quote'),
   ));
   $configurations['uc_usps_get_quote'] = workflow_ng_configure($configurations['uc_usps_get_quote'], $action, $us_area_condition);
   $configurations['uc_usps_get_intl_quote'] = workflow_ng_configure($configurations['uc_usps_get_intl_quote'], $action, $not_us_area_condition);
-  
+
   return $configurations;
 }
 
@@ -149,13 +149,13 @@ function uc_usps_configuration() {
  */
 function uc_usps_shipping_type() {
   $weight = variable_get('uc_quote_type_weight', array('small_package' => 0));
-  
+
   $types = array('small_package' => array(
     'id' => 'small_package',
     'title' => t('Small package'),
     'weight' => $weight['small_package'],
   ));
-  
+
   return $types;
 }
 
@@ -165,7 +165,7 @@ function uc_usps_shipping_type() {
 function uc_usps_shipping_method() {
   $enabled = variable_get('uc_quote_enabled', array());
   $weight = variable_get('uc_quote_method_weight', array('usps' => 0, 'usps_intl' => 1));
-  
+
   $methods = array(
     'usps' => array(
       'id' => 'usps',
@@ -190,7 +190,7 @@ function uc_usps_shipping_method() {
       'weight' => $weight['usps_intl'],
     ),
   );
-  
+
   return $methods;
 }
 
@@ -205,7 +205,7 @@ function uc_usps_shipping_method() {
  */
 function uc_usps_admin_settings() {
   $form = array();
-  
+
   $form['uc_usps_user_id'] = array('#type' => 'textfield',
     '#title' => t('USPS user ID'),
     '#description' => t('To acquire or locate your user ID, refer to the <a href="!url">USPS documentation</a>.', array('!url' => 'http://www.ubercart.org/docs/user/312/usps_web_tool_shipping_quote_settings')),
@@ -246,7 +246,7 @@ function uc_usps_admin_settings() {
     ),
     '#description' => t('Indicate whether each product is quoted as shipping separately or all in one package.'),
   );
-  
+
   return system_settings_form($form);
 }
 
@@ -274,25 +274,25 @@ function uc_usps_quote($products, $details) {
   if (!count($packages)) {
     return array();
   }
-  
+
   $dest = (object)$details;
-  
+
   $usps_server = 'production.shippingapis.com';
   $api_dll = 'ShippingAPI.dll';
   $connection_url = 'http://'. $usps_server .'/'. $api_dll;
-  
+
   foreach ($packages as $key => $ship_packages) {
     $orig = (object)$addresses[$key];
     $orig->email = variable_get('uc_store_email', '');
     $request = uc_usps_rate_request($ship_packages, $orig, $dest);
-  
+
     $result = drupal_http_request($connection_url, array(), 'POST', $request);
     if (user_access('configure quotes') && variable_get('uc_quote_display_debug', false)) {
       $services['data']['debug'] .= htmlentities($result->data) ."<br />\n";
     }
     $response = new JSimpleXML();
     $response->loadString($result->data);
-    
+
     if (is_array($response->document->package)) {
       foreach ($response->document->package as $package) {
         if (isset($package->error)) {
@@ -362,9 +362,9 @@ function uc_usps_quote($products, $details) {
       } */
     }
   }
-  
+
   uasort($services, 'uc_quote_price_sort');
-  
+
   return $services;
 }
 
@@ -387,13 +387,13 @@ function uc_usps_intl_quote($products, $details) {
   if (!count($packages)) {
     return array();
   }
-  
+
   $dest = (object)$details;
-  
+
   $usps_server = 'production.shippingapis.com';
   $api_dll = 'ShippingAPI.dll';
   $connection_url = 'http://'. $usps_server .'/'. $api_dll;
-  
+
   foreach ($packages as $key => $ship_packages) {
     $orig = $addresses[$key];
     $orig->email = variable_get('uc_store_email', '');
@@ -404,11 +404,11 @@ function uc_usps_intl_quote($products, $details) {
     }
     $response = new JSimpleXML();
     $response->loadString($result->data);
-     
+
     // drupal_set_message('<pre>'. htmlentities($result->data) .'</pre>');
-    
+
     if (is_array($response->document->package)) {
-    
+
       foreach ($response->document->package as $package) {
         if (isset($package->error)) {
           $services['data']['error'] .= $package->error[0]->description[0]->data() .'<br />';
@@ -439,12 +439,12 @@ function uc_usps_intl_quote($products, $details) {
       $services[$key]['option_label'] = $quote['label'];
     }
   }
-  
+
   uasort($services, 'uc_quote_price_sort');
-  
+
   return $services;
-}  
-  
+}
+
 
 
 /**
@@ -466,8 +466,8 @@ function uc_usps_rate_request($packages, $origin, $destination) {
   foreach ($packages as $package) {
     $request .= '<Package ID="' . $services_count . '">' .
       '<Service>ALL</Service>' .
-      '<ZipOrigination>' . $origin->postal_code . '</ZipOrigination>' .
-      '<ZipDestination>' . $destination->postal_code . '</ZipDestination>' .
+      '<ZipOrigination>' . substr($origin->postal_code, 0, 5) . '</ZipOrigination>' .
+      '<ZipDestination>' . substr($destination->postal_code, 0, 5) . '</ZipDestination>' .
       '<Pounds>' . intval($package->pounds) . '</Pounds>' .
       '<Ounces>' . number_format($package->ounces, 1, '.', '') . '</Ounces>' .
       '<Container>' . $package->container . '</Container>' .
@@ -487,20 +487,20 @@ function uc_usps_rate_request($packages, $origin, $destination) {
  * uc_usps_intl_rate_request function (added by Erik - feel free to improve)
  *
  */
- 
+
 function uc_usps_intl_rate_request($packages, $origin, $destination) {
   $request  = '<IntlRateRequest USERID="' . variable_get('uc_usps_user_id', '') . '">';
   $services_count = 0;
 
   // This needs to be international name per USPS website. See http://pe.usps.com/text/Imm/immctry.htm
   $shipto_country = uc_get_country_data(array('country_id' => $destination->country));
-  
+
   foreach ($packages as $package) {
     $request .= '<Package ID="' . $services_count . '">' .
       '<Pounds>' . intval($package->pounds) . '</Pounds>' .
       '<Ounces>' . ceil($package->ounces) . '</Ounces>' .
       '<MailType>Package</MailType>' .
-      '<Country>'.$shipto_country[0]['country_name'].'</Country>' .    
+      '<Country>'.$shipto_country[0]['country_name'].'</Country>' .
       '</Package>';
 
     $services_count++;
@@ -510,7 +510,7 @@ function uc_usps_intl_rate_request($packages, $origin, $destination) {
   $request = 'API=IntlRate&XML=' . urlencode($request);
   return $request;
 }
- 
+
 /**
  * Modify the rate received from USPS before displaying to the customer.
  */
@@ -577,7 +577,7 @@ function _uc_usps_package_products($products, &$addresses) {
         $product->pkg_qty = 1;
       }
       $num_of_pkgs = (int)($product->qty / $product->pkg_qty);
-  
+
       $package = drupal_clone($product);
       $package->description = $product->model;
       $weight = $product->weight * $product->pkg_qty;
@@ -628,7 +628,7 @@ function _uc_usps_package_products($products, &$addresses) {
       $package->price = $product->price * $product->pkg_qty;
       $package->qty = $num_of_pkgs;
       $packages[$key][] = $package;
-  
+
       $remaining_qty = $product->qty % $product->pkg_qty;
       if ($remaining_qty) {
         $package = drupal_clone($product);

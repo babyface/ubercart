@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.10.2.5 2008/03/31 20:45:13 rszrama Exp $
+// $Id: uc_product_kit.module,v 1.10.2.6 2008/04/23 19:38:10 rszrama Exp $
 
 /**
  * @file
@@ -19,7 +19,7 @@
  */
 function uc_product_kit_access($op, $node) {
   global $user;
-  
+
   switch ($op) {
     case 'create':
       return user_access('create products');
@@ -69,7 +69,7 @@ function uc_product_kit_insert(&$node) {
   $obj->sell_price = 0;
   $obj->weight = 0;
   $obj->weight_units = variable_get('uc_weight_unit', 'lb');
-  
+
   $obj->ordering = $node->ordering;
   $obj->shippable = false;
 
@@ -77,7 +77,7 @@ function uc_product_kit_insert(&$node) {
   $placeholders = array();
   foreach ($node->products as $product) {
     $product = node_load($product);
-    
+
     $values[] = $node->vid;
     $values[] = $node->nid;
     $values[] = $product->nid;
@@ -85,7 +85,7 @@ function uc_product_kit_insert(&$node) {
     $values[] = 1;
     $values[] = $product->sell_price;
     $placeholders[] = '(%d, %d, %d, %d, %d, %f)';
-    
+
     $obj->model .= $product->model . ' / ';
     $obj->list_price += $product->list_price;
     $obj->cost += $product->cost;
@@ -126,7 +126,7 @@ function uc_product_kit_update(&$node) {
   $obj->default_qty = $node->default_qty;
   $obj->ordering = $node->ordering;
   $obj->shippable = false;
-  
+
   $values = array();
   $placeholders = array();
   foreach ($node->products as $i => $product) {
@@ -235,10 +235,10 @@ function uc_product_kit_forms($saved_args) {
   $forms = array();
   if (substr($saved_args[0], 0, 31) == 'uc_product_kit_add_to_cart_form' || substr($saved_args[0], 0, 26) == 'uc_catalog_buy_it_now_form') {
     $products = db_query("SELECT DISTINCT nid FROM {uc_product_kits} WHERE nid = %d", $saved_args[1]->nid);
-    
+
     while ($prodrow = db_fetch_object($products)) {
       $forms['uc_product_kit_add_to_cart_form_'. $prodrow->nid] = array('callback' => 'uc_product_kit_add_to_cart_form');
-      $forms['uc_catalog_buy_it_now_form_'. $prodrow->nid] = array('callback' => 'uc_catalog_buy_it_now_form');
+      $forms['uc_catalog_buy_it_now_form_'. $prodrow->nid] = array('callback' => 'uc_product_kit_buy_it_now_form');
     }
   }
   return $forms;
@@ -265,7 +265,7 @@ function uc_product_kit_form_alter($form_id, &$form) {
  */
 function uc_product_kit_form(&$node) {
   $form = array();
-  
+
   $form['title'] = array('#type' => 'textfield',
     '#title' => t('Name'),
     '#required' => TRUE,
@@ -273,14 +273,16 @@ function uc_product_kit_form(&$node) {
     '#default_value' => $node->title,
     '#description' => t('Name of the product kit')
   );
-  $form['body'] = array('#type' => 'textarea',
+  $form['body_filter']['body'] = array('#type' => 'textarea',
     '#title' => t('Description'),
     '#required' => FALSE,
-    '#weight' => -4,
     '#default_value' => $node->body,
+    '#rows' => 20,
     '#description' => t('Explain these whatchamacallits.'),
   );
-  
+  $form['body_filter']['format'] = filter_form($node->format);
+  $form['body_filter']['#weight'] = -4;
+
   $product_types = module_invoke_all('product_types');
   unset($product_types[array_search('product_kit', $product_types)]);
   $result = db_query("SELECT nid, title FROM {node} WHERE type IN ('". implode("','", $product_types) ."')");
@@ -348,7 +350,7 @@ function uc_product_kit_form(&$node) {
     '#default_value' => $node->ordering,
     '#weight' => 30,
   );
-  
+
   return $form;
 }
 
@@ -357,7 +359,7 @@ function uc_product_kit_form(&$node) {
  */
 function uc_product_kit_view($node, $teaser = 0, $page = 0) {
   $node = node_prepare($node, $teaser);
- 
+
   $enabled = variable_get('uc_product_field_enabled', array(
     'image' => 1,
     'display_price' => 1,
@@ -374,7 +376,7 @@ function uc_product_kit_view($node, $teaser = 0, $page = 0) {
     'sell_price' => 4,
     'weight' => 5,
   ));
-  
+
   //drupal_set_message('<pre>'. print_r($node->field_image_cache, true) .'</pre>');
   if (isset($node->field_image_cache) && file_exists($node->field_image_cache[0]['filepath'])) {
     $node->content['image'] = array('#value' => theme('uc_product_image', $node->field_image_cache),
@@ -404,12 +406,12 @@ function uc_product_kit_view($node, $teaser = 0, $page = 0) {
   else {
     $node->content['#attributes'] = array('style' => 'display: inline');
   }
-  
+
   $node->content['sell_price'] = array('#value' => theme('uc_product_sell_price', $node->sell_price, $teaser),
     '#access' => $enabled['sell_price'],
     '#weight' => $weight['sell_price'],
   );
-  
+
   if (!$teaser) {
     $node->content['weight'] = array('#value' => theme('uc_product_weight', $node->weight, $node->weight_units),
       '#access' => $enabled['weight'],
@@ -493,6 +495,43 @@ function uc_product_kit_add_to_cart_form_submit($form_id, $form_values) {
   return uc_cart_add_item($form_values['nid'], $form_values['qty'], $form_values);
 }
 
+function uc_product_kit_buy_it_now_form($node) {
+  $form = array();
+  $form['#base'] = 'uc_product_kit_buy_it_now_form';
+  $form['nid'] = array('#type' => 'hidden', '#value' => $node->nid);
+  if ($node->type == 'product_kit') {
+    $form['products'] = array('#tree' => true);
+    foreach ($node->products as $i => $product) {
+      $form['products'][$i] = array(/* '#type' => 'fieldset',  */'#title' => $product->title);
+      $form['products'][$i]['nid'] = array('#type' => 'hidden', '#value' => $product->nid);
+      $form['products'][$i]['qty'] = array('#type' => 'hidden', '#value' => $product->qty);
+    }
+  }
+  $form['submit'] = array('#type' => 'submit', '#value' =>  variable_get('uc_teaser_add_to_cart_text', t('Add to cart')), );
+  return $form;
+}
+
+function uc_product_kit_buy_it_now_form_submit($form_id, $form_values) {
+  $node = node_load($form_values['nid']);
+  if (module_exists('uc_attribute')) {
+    $attributes = uc_product_get_attributes($node->nid);
+    if (!empty($attributes)) {
+      drupal_set_message(t('This product has options that need to be selected before purchase. Please select them in the form below.'), 'error');
+      return drupal_get_path_alias('node/'. $form_values['nid']);
+    }
+    if (is_array($node->products)) {
+      foreach ($node->products as $nid => $product) {
+        $attributes = uc_product_get_attributes($nid);
+        if (!empty($attributes)) {
+          drupal_set_message(t('This product has options that need to be selected before purchase. Please select them in the form below.'), 'error');
+          return drupal_get_path_alias('node/'. $form_values['nid']);
+        }
+      }
+    }
+  }
+  return uc_cart_add_item($form_values['nid'], 1, $form_values);
+}
+
 /******************************************************************************
  * Übercart Hooks                                                             *
  ******************************************************************************/
@@ -513,7 +552,7 @@ function uc_product_kit_add_to_cart($nid, $qty, $kit_data) {
       if (isset($_GET['destination'])) {
         drupal_goto();
       }
-  
+
       $redirect = variable_get('uc_add_item_redirect', 'cart');
       if ($redirect != '<none>') {
         $_SESSION['last_url'] = referer_uri();

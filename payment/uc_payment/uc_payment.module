@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.4.2.8 2008/04/04 21:04:45 rszrama Exp $
+// $Id: uc_payment.module,v 1.4.2.9 2008/04/23 19:38:03 rszrama Exp $
 
 /**
  * @file
@@ -188,8 +188,8 @@ function uc_payment_perm() {
  */
 function uc_payment_form_alter($form_id, &$form) {
   if ($form_id == 'uc_cart_checkout_form') {
-    drupal_add_js('misc/progress.js');
-    drupal_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
+    uc_add_js('misc/progress.js');
+    uc_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
   }
 }
 
@@ -548,11 +548,11 @@ function uc_payment_get_totals() {
 
   if (is_array($totals) && count($totals) > 0) {
     usort($totals, '_total_sort');
-  
+
     $output = t('Order total preview:')
              .' <span id="order-total-throbber"></span><table>';
     $grand_total = 0;
-  
+
     foreach ($totals as $line) {
       if (!empty($line[2])) {
         $output .= '<tr><td align="right"><b>'. $line[2] .':</b></td>'
@@ -562,7 +562,7 @@ function uc_payment_get_totals() {
         }
       }
     }
-  
+
     $output .= '<tr><td align="right"><b>'. t('Order total:') .'</b></td>'
               .'<td align="right">'. uc_currency_format($grand_total)
               .'</td></tr></table>';
@@ -604,7 +604,7 @@ function uc_payment_by_order_form($order_id) {
   if ($payments !== FALSE) {
     foreach ($payments as $payment) {
       $form['payments'][$payment->receipt_id]['received'] = array(
-        '#value' => format_date($payment->received, 'custom', 'm/d/Y<b\r>H:i:s'),
+        '#value' => format_date($payment->received, 'custom', variable_get('uc_date_format_default', 'm/d/Y') .'<b\r>H:i:s'),
       );
       $form['payments'][$payment->receipt_id]['user'] = array(
         '#value' => uc_get_initials($payment->uid),
@@ -743,7 +743,7 @@ function uc_payment_delete_confirm($order_id, $receipt_id) {
           . t('!method payment of !amount received on !date.',
               array('!method' => $payment->method,
                     '!amount' => uc_currency_format($payment->amount),
-                    '!date' => format_date($payment->received, 'custom', 'm/d/Y'))) .'</p>';
+                    '!date' => format_date($payment->received, 'custom', variable_get('uc_date_format_default', 'm/d/Y')))) .'</p>';
   $output .= t('Are you sure you want to delete this payment?') .'<p>'
            . drupal_get_form('uc_payment_delete_confirm_form', $order_id, $receipt_id);
 
