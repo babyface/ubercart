@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.install,v 1.1 2008/02/08 22:22:37 rszrama Exp $
+// $Id: uc_recurring.install,v 1.2 2008/04/23 19:38:04 rszrama Exp $
 
 function uc_recurring_install() {
   switch ($GLOBALS['db_type']) {
