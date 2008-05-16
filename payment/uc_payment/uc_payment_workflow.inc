@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_workflow.inc,v 1.1.2.3 2008/04/23 19:38:03 rszrama Exp $
+// $Id: uc_payment_workflow.inc,v 1.1.2.4 2008/05/16 20:30:49 rszrama Exp $
 
 /**
  * @file
@@ -19,7 +19,7 @@ function uc_payment_configuration() {
     '#label' => t('Update order status on full payment'),
     '#event' => 'payment_entered',
     '#module' => 'uc_payment',
-    '#active' => FALSE,
+    '#active' => TRUE,
   );
   $configurations['uc_payment_received'][] = array(
     '#type' => 'condition',

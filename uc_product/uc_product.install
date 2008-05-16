@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.install,v 1.11.2.5 2008/04/23 19:38:09 rszrama Exp $
+// $Id: uc_product.install,v 1.11.2.6 2008/05/16 20:30:52 rszrama Exp $
 
 /**
  * @file
@@ -122,7 +122,7 @@ function uc_product_update_1() {
     break;
   }
 
-  if ($max_id = db_result(db_query("SELECT cfid FROM {uc_class_fields} ORDER BY cfid DESC LIMIT 1"))) {
+  if ($max_id = db_result(db_query_range("SELECT cfid FROM {uc_class_fields} ORDER BY cfid DESC", 0, 1))) {
     $ret[] = update_sql("INSERT INTO {sequences} (name, id) VALUES ('{uc_class_fields}_cfid', %d)", $max_id);
   }
 
@@ -163,7 +163,7 @@ function uc_product_update_3() {
 
 function uc_product_update_4() {
   $ret = array();
-  
+
   $ret[] = update_sql("UPDATE {node} AS n, {uc_products} AS p, {uc_product_classes} AS pc SET n.type = REPLACE(LOWER(pc.name), ' ', '_') WHERE n.nid = p.nid AND p.pcid = pc.pcid");
   switch ($GLOBALS['db_type']) {
     case 'mysql':
@@ -197,15 +197,15 @@ function uc_product_update_4() {
     $result = db_query("INSERT INTO {vocabulary_node_types} (vid, type) VALUES ". implode(',', $placeholders), $values);
     $ret[] = array('success' => $result, 'query' => t('Added the following node types to the Catalog vocabulary: %list', array('%list' => implode(', ', $values))));
   }
-  
+
   node_types_rebuild();
-  
+
   return $ret;
 }
 
 function uc_product_update_5() {
   $ret = array();
-  
+
   switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
@@ -215,13 +215,13 @@ function uc_product_update_5() {
       db_add_column($ret, 'uc_products', 'default_qty', 'smallint unsigned', array('not null' => true, 'default' => 1));
     break;
   }
-  
+
   return $ret;
 }
 
 function uc_product_update_6() {
   $ret = array();
-  
+
   switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
@@ -231,7 +231,7 @@ function uc_product_update_6() {
       db_add_column($ret, 'uc_products', 'default_qty', 'smallint(2)', array('not null' => true, 'default' => 0));
     break;
   }
-  
+
   return $ret;
 }
 
@@ -328,5 +328,21 @@ function uc_product_update_11() {
       db_change_column($ret, 'uc_products', 'default_qty', 'defautl_qty', 'smallint_unsigned', array('not null' => true, 'default' => 1));
     break;
   }
+  return $ret;
+}
+
+function uc_product_update_12() {
+  $ret = array();
+
+  if (module_exists('imagecache')) {
+    $preset_id = db_next_id('{imagecache_preset}_presetid');
+    $action_id = db_next_id('{imagecache_action}_actionid');
+    db_query("INSERT INTO {imagecache_preset} (presetid, presetname) VALUES (%d, 'uc_thumbnail')", $preset_id);
+    db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", $action_id, $preset_id, 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"35";s:6:"height";s:2:"35";}');
+    cache_clear_all('imagecache:presets', 'cache');
+    $ret[] = array('success' => TRUE, 'query' => "INSERT INTO {imagecache_preset} (presetid, presetname) VALUES (". $preset_id .", 'uc_thumbnail')");
+    $ret[] = array('success' => TRUE, 'query' => "INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (". $action_id .", ". $preset_id .", 0, '". 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"35";s:6:"height";s:2:"35";}' ."')");
+  }
+
   return $ret;
 }

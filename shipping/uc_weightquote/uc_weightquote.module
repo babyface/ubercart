@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.module,v 1.4.2.5 2008/04/23 19:38:06 rszrama Exp $
+// $Id: uc_weightquote.module,v 1.4.2.6 2008/05/16 20:30:51 rszrama Exp $
 
 /**
  * @file
@@ -17,7 +17,7 @@
  */
 function uc_weightquote_menu($may_cache) {
   $items = array();
-  
+
   if ($may_cache) {
     $items[] = array('path' => 'admin/store/settings/quotes/methods/weightquote',
       'access' => user_access('configure quotes'),
@@ -27,7 +27,7 @@ function uc_weightquote_menu($may_cache) {
       'type' => MENU_LOCAL_TASK,
     );
   }
-  
+
   return $items;
 }
 
@@ -42,11 +42,12 @@ function uc_weightquote_form_alter($form_id, &$form) {
   $node = $form['#node'];
   if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && in_array($node->type, module_invoke_all('product_types'))) {
     $enabled = variable_get('uc_quote_enabled', array());
+    $weight = variable_get('uc_quote_method_weight', array('weightquote' => 0));
     $form['shipping']['weightquote'] = array('#type' => 'fieldset',
       '#title' => t('Shipping rate by weight'),
       '#collapsible' => true,
       '#collapsed' => ($enabled['weightquote'] == false),
-      '#weight' => 2,
+      '#weight' => $weight['weightquote'],
     );
 
     $form['shipping']['weightquote']['weightquote'] = array(
@@ -115,12 +116,12 @@ function uc_weightquote_configuration() {
       '#active' => $enabled['weightquote'],
     ),
   );
-  
+
   $action = workflow_ng_use_action('uc_quote_action_get_quote', array(
     '#label' => t('Fetch a shipping quote'),
   ));
   $configurations['uc_weightquote_get_quote'] = workflow_ng_configure($configurations['uc_weightquote_get_quote'], $action);
-  
+
   return $configurations;
 }
 
@@ -133,7 +134,7 @@ function uc_weightquote_configuration() {
  */
 function uc_weightquote_shipping_method() {
   $methods = array();
-  
+
   $enabled = variable_get('uc_quote_enabled', array());
   $weight = variable_get('uc_quote_method_weight', array('weightquote' => 0));
   $methods['weightquote'] = array(
@@ -150,7 +151,7 @@ function uc_weightquote_shipping_method() {
     ),
     'weight' => $weight['weightquote'],
   );
-  
+
   return $methods;
 }
 
@@ -205,10 +206,10 @@ function uc_weightquote_quote($products, $details) {
     $rate += $node->weightquote * $product->qty * $product->weight * uc_weight_conversion($node->weight_units, variable_get('uc_weight_unit', 'lb'));
   }
   $rate += variable_get('uc_weightquote_base_rate', 0);
-  
+
   $method = uc_weightquote_shipping_method();
-  
+
   $quotes[] = array('rate' => $rate, 'format' => uc_currency_format($rate), 'option_label' => $method['weightquote']['quote']['accessorials'][0]);
-  
+
   return $quotes;
 }

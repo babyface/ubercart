@@ -7,6 +7,10 @@
   white-space: normal;
 }
 
+.solid-border#quote {
+  margin-top: 1em;
+}
+
 .quote-button {
   cursor: pointer;
   font-weight: bold;

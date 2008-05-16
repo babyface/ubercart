@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.13.2.9 2008/04/23 19:38:09 rszrama Exp $
+// $Id: uc_product.module,v 1.13.2.10 2008/05/16 20:30:52 rszrama Exp $
 
 /**
  * @file
@@ -304,7 +304,7 @@ function uc_product_enable() {
     content_clear_type_cache();
   }
   if (module_exists('imagecache')) {
-    $presets = array('product', 'product_list', 'thumbnail');
+    $presets = array('product', 'product_list', 'uc_thumbnail');
     $preset_keys = array();
     foreach ($presets as $preset) {
       $preset_keys[$preset] = 0;
@@ -928,7 +928,14 @@ function uc_catalog_buy_it_now_form($node) {
   $form = array();
   $form['#base'] = 'uc_catalog_buy_it_now_form';
   $form['nid'] = array('#type' => 'hidden', '#value' => $node->nid);
-  $form['submit'] = array('#type' => 'submit', '#value' =>  variable_get('uc_teaser_add_to_cart_text', t('Add to cart')), );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' =>  variable_get('uc_teaser_add_to_cart_text', t('Add to cart')),
+    '#id' => 'edit-submit-'. $node->nid,
+    '#attributes' => array(
+      'class' => 'list-add-to-cart',
+    ),
+  );
   return $form;
 }
 
@@ -1070,6 +1077,13 @@ function uc_product_views_tables() {
         'sortable' => FALSE,
         'notafield' => TRUE,
         'handler' => 'uc_product_views_handler_add_to_cart_link',
+      ),
+      'buyitnowbutton' => array(
+        'name' => t('Product: Buy it now button'),
+        'help' => t('A button to add a product to the cart without quantity or attribute fields.'),
+        'sortable' => FALSE,
+        'notafield' => TRUE,
+        'handler' => 'uc_product_views_handler_buy_it_now_button',
       ),
     ),
     'sorts' => array(
@@ -1240,6 +1254,14 @@ function uc_product_views_handler_add_to_cart_link($fieldinfo, $fielddata, $valu
 }
 
 /**
+ * Return a formatted buy it now button to display in the View.
+ */
+function uc_product_views_handler_buy_it_now_button($fieldinfo, $fielddata, $value, $data) {
+  $product = node_load($data->nid);
+  return drupal_get_form('uc_catalog_buy_it_now_form_'. $data->nid, $product);
+}
+
+/**
  * Filter out nodes that are not products.
  */
 function uc_product_views_handler_filter_product($op, $filter, $filterinfo, &$query) {
@@ -1266,7 +1288,7 @@ function uc_product_views_default_views() {
   $view = new stdClass();
   $view->name = 'products';
   $view->description = 'products';
-  $view->access = array ();
+  $view->access = array();
   $view->view_args_php = '';
   $view->page = TRUE;
   $view->page_title = 'Products';
@@ -1289,30 +1311,30 @@ function uc_product_views_default_views() {
   $view->menu_tab_default_parent_type = 'tab';
   $view->menu_parent_tab_weight = '0';
   $view->menu_parent_title = '';
-  $view->sort = array (
-    array (
+  $view->sort = array(
+    array(
       'tablename' => 'uc_products',
       'field' => 'ordering',
       'sortorder' => 'ASC',
       'options' => '',
     ),
-    array (
+    array(
       'tablename' => 'node',
       'field' => 'title',
       'sortorder' => 'ASC',
       'options' => '',
     ),
   );
-  $view->argument = array ();
-  $view->field = array (
-    array (
+  $view->argument = array();
+  $view->field = array(
+    array(
       'tablename' => 'node_data_field_image_cache',
       'field' => 'field_image_cache_fid',
       'label' => 'Image(s)',
       'handler' => 'content_views_field_handler_group',
       'options' => 'product_list_linked',
     ),
-    array (
+    array(
       'tablename' => 'node',
       'field' => 'title',
       'label' => 'Description',
@@ -1320,22 +1342,22 @@ function uc_product_views_default_views() {
       'sortable' => '1',
       'options' => 'link',
     ),
-    array (
+    array(
       'tablename' => 'uc_products',
       'field' => 'sell_price',
       'label' => 'Price',
       'sortable' => '1',
     ),
   );
-  $view->filter = array (
-    array (
+  $view->filter = array(
+    array(
       'tablename' => 'node',
       'field' => 'status',
       'operator' => '=',
       'options' => '',
       'value' => '1',
     ),
-    array (
+    array(
       'tablename' => 'uc_products',
       'field' => 'is_product',
       'operator' => '=',
@@ -1343,7 +1365,7 @@ function uc_product_views_default_views() {
       'value' => '1',
     ),
   );
-  $view->exposed_filter = array ();
+  $view->exposed_filter = array();
   $view->requires = array('node_data_field_image_cache', 'node', 'uc_products');
   $views[$view->name] = $view;
 
@@ -1372,9 +1394,9 @@ function uc_product_store_status() {
     $field_check = (bool) db_num_rows($result);
     $result = db_query("SELECT field_name, type_name FROM {node_field_instance} WHERE field_name = 'field_image_cache' AND type_name = 'product'");
     $product_field_check = (bool) db_num_rows($result);
-    $presets = array('product', 'product_list', 'thumbnail');
+    $presets = array('product', 'product_list', 'uc_thumbnail');
     if (module_exists('uc_catalog')) {
-      $presets[] = 'category';
+      $presets[] = 'uc_category';
     }
     if (module_exists('uc_cart')) {
       $presets[] = 'cart';
@@ -1475,7 +1497,7 @@ function uc_product_update_cart_item($nid, $data = array(), $qty, $cid = NULL) {
  */
 function uc_product_add_to_cart_data($form_values) {
   $node = node_load($form_values['nid']);
-  return array('module' => 'uc_product', 'shippable' => $node->shippable);
+  return array('shippable' => $node->shippable);
 }
 
 function uc_product_product_class($pcid, $op) {
@@ -1531,9 +1553,9 @@ function uc_product_image_defaults($checks) {
   $preset_check = $checks & 2;
   $action_check = $checks & 1;
 
-  $presets = array('product', 'product_list', 'thumbnail');
+  $presets = array('product', 'product_list', 'uc_thumbnail');
   if (module_exists('uc_catalog')) {
-    $presets[] = 'category';
+    $presets[] = 'uc_category';
   }
   if (module_exists('uc_cart')) {
     $presets[] = 'cart';
@@ -1626,10 +1648,10 @@ function uc_product_image_defaults($checks) {
           case 'product_list':
             db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:3:"100";s:6:"height";s:3:"100";}');
           break;
-          case 'thumbnail':
+          case 'uc_thumbnail':
             db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"35";s:6:"height";s:2:"35";}');
           break;
-          case 'category':
+          case 'uc_category':
             db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"96";s:6:"height";s:2:"96";}');
           break;
           case 'cart':
@@ -1754,7 +1776,7 @@ function uc_product_administration() {
 function uc_product_buffer_form($nids) {
   foreach ($nids as $nid) {
     $node = node_load($nid);
-    $buffer .= theme('imagecache', 'thumbnail', $node->field_image_cache[0]['filepath'], $node->field_image_cache[0]['alt'], $node->field_image_cache[0]['title']);
+    $buffer .= theme('imagecache', 'uc_thumbnail', $node->field_image_cache[0]['filepath'], $node->field_image_cache[0]['alt'], $node->field_image_cache[0]['title']);
   }
 
   $form['#attributes'] = array('class' => 'product-buffer');
@@ -2291,7 +2313,14 @@ function uc_product_add_to_cart_form($node) {
   else {
     $form['qty'] = array('#type' => 'hidden', '#value' => 1);
   }
-  $form['submit'] = array('#type' => 'submit', '#value' =>  variable_get('uc_product_add_to_cart_text', t('Add to cart')), );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' =>  variable_get('uc_product_add_to_cart_text', t('Add to cart')),
+    '#id' => 'edit-submit-'. $node->nid,
+    '#attributes' => array(
+      'class' => 'node-add-to-cart',
+    ),
+  );
   return $form;
 }
 
@@ -2410,7 +2439,7 @@ function theme_uc_product_image($images) {
     if ($thickbox_enabled) {
       $output .= '<a href="'. check_url(file_create_url($thumbnail['filepath'])) .'" title="'. $thumbnail['title'] .'" class="thickbox" rel="field_image_cache_'. $rel_count .'">';
     }
-    $output .= theme('imagecache', 'thumbnail', $thumbnail['filepath'], $thumbnail['alt'], $thumbnail['title']);
+    $output .= theme('imagecache', 'uc_thumbnail', $thumbnail['filepath'], $thumbnail['alt'], $thumbnail['title']);
     if ($thickbox_enabled) {
       $output .= '</a>';
     }
@@ -2462,9 +2491,9 @@ function uc_product_get_cost($node_id) {
  * @param $node_id
  *   The node's id.
  * @param $format
- *   By default, 'thumbnail', with possible values of '_original', 'thumbnail', and 'preview'.
+ *   By default, 'uc_thumbnail', with possible values of '_original', 'thumbnail', and 'preview'.
  * @return
- *   An HTML img. When $format is 'thumbnail', the image is a link to the node.
+ *   An HTML img. When $format is 'uc_thumbnail', the image is a link to the node.
  *   When $format is 'preview', the image is a link to the image file.
  */
 function uc_product_get_picture($node_id, $format = 'product') {
@@ -2505,7 +2534,7 @@ function uc_product_class_load($class_id) {
  * AJAX callback helper for product images.
  */
 function _uc_product_get_image_field_filepath($nid) {
-  $result = db_result(db_query("SELECT filepath FROM {files} WHERE nid = %d ORDER BY fid LIMIT 1", $nid));
+  $result = db_result(db_query_range("SELECT filepath FROM {files} WHERE nid = %d ORDER BY fid", $nid, 0, 1));
   if ($result) {
     print $result;
   }

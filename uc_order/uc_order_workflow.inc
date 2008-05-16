@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_workflow.inc,v 1.1.2.4 2008/04/23 19:38:09 rszrama Exp $
+// $Id: uc_order_workflow.inc,v 1.1.2.5 2008/05/16 20:30:52 rszrama Exp $
 
 /**
  * @file
@@ -94,13 +94,13 @@ function uc_order_condition_info() {
   $conditions['uc_order_condition_count_products'] = array(
     '#label' => t("Check an order's number of products"),
     '#arguments' => array('order' => $order_arg),
-    '#description' => t('Deterimines if the order has the specified number of products, possibly of a certain type.'),
+    '#description' => t('Determines if the order has the specified number of products, possibly of a certain type.'),
     '#module' => t('Order: Product'),
   );
   $conditions['uc_order_condition_products_weight'] = array(
     '#label' => t("Check an order's total weight"),
     '#arguments' => array('order' => $order_arg),
-    '#description' => t('Deterimines if the order has the specified weight, possibly counting only a certain type of product.'),
+    '#description' => t('Determines if the order has the specified weight, possibly counting only a certain type of product.'),
     '#module' => t('Order: Product'),
   );
   $conditions['uc_order_condition_is_shippable'] = array(
@@ -349,7 +349,8 @@ function uc_order_condition_billing_country($order, $settings) {
 }
 
 function uc_order_condition_billing_country_form($settings = array()) {
-  $form['countries'] = uc_country_select(uc_get_field_name('country'), $settings['countries']);
+  $form['countries'] = uc_country_select(uc_get_field_name('country'));
+  $form['countries']['#default_value'] = $settings['countries'];
   $form['countries']['#multiple'] = TRUE;
   $form['countries']['#required'] = TRUE;
 

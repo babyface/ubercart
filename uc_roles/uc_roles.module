@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.1.2.8 2008/04/23 19:38:11 rszrama Exp $
+// $Id: uc_roles.module,v 1.1.2.9 2008/05/16 20:30:53 rszrama Exp $
 
 /**
  * @file
@@ -726,7 +726,7 @@ function uc_roles_feature_settings() {
     '#type' => 'select',
     '#title' => t('Order status'),
     '#default_value' => variable_get('uc_roles_default_order_status', 'completed'),
-    '#description' => t('Where in the order status that the role will be granted.'),
+    '#description' => t('Where in the order status that the role will be granted. Be aware that if payments are processed automatically, this happens before anonymous customers have an account created. This order status should not be reached before the user account exists.'),
     '#options' => $statuses,
   );
   $form['uc_roles_default_length'] = array(

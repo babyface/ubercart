@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.1.2.8 2008/04/23 19:38:08 rszrama Exp $
+// $Id: uc_file.module,v 1.1.2.9 2008/05/16 20:30:51 rszrama Exp $
 
 /**
  * @file
@@ -450,7 +450,7 @@ function uc_file_feature_settings() {
     '#type' => 'select',
     '#title' => t('Order status'),
     '#default_value' => variable_get('uc_file_default_order_status', 'completed'),
-    '#description' => t('Where in the order status the user will be given the file download.'),
+    '#description' => t('Where in the order status the user will be given the file download. Be aware that if payments are processed automatically, this happens before anonymous customers have an account created. This order status should not be reached before the user account exists.'),
     '#options' => $statuses,
   );
   $form['uc_file_base_dir'] = array(

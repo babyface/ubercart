@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.4.2.8 2008/04/23 19:38:03 rszrama Exp $
+// $Id: uc_payment.js,v 1.4.2.9 2008/05/16 20:30:49 rszrama Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
@@ -112,8 +112,14 @@ function get_payment_details(path) {
   // Set the global timestamp for the update.
   payment_update = this_update.getTime();
 
+  if ($('#edit-payment-details-data').length) {
+    data = { 'payment-details-data' : $('#edit-payment-details-data').val() };
+  }
+  else {
+    data = {};
+  }
   // Make the post to get the details for the chosen payment method.
-  $.post(Drupal.settings['base_path'] + path, { },
+  $.post(Drupal.settings['base_path'] + path, data,
     function(details) {
       if (this_update.getTime() == payment_update) {
         // If the response was empty, throw up the default message.
@@ -127,10 +133,9 @@ function get_payment_details(path) {
       }
 
       // If on the order edit screen, clear out the order save hold.
-      try {
+      if (window.remove_order_save_hold) {
         remove_order_save_hold();
       }
-      catch (err) {}
     }
   );
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.10.2.6 2008/04/23 19:38:10 rszrama Exp $
+// $Id: uc_product_kit.module,v 1.10.2.7 2008/05/16 20:30:52 rszrama Exp $
 
 /**
  * @file
@@ -233,11 +233,12 @@ function uc_product_kit_load(&$node) {
  */
 function uc_product_kit_forms($saved_args) {
   $forms = array();
-  if (substr($saved_args[0], 0, 31) == 'uc_product_kit_add_to_cart_form' || substr($saved_args[0], 0, 26) == 'uc_catalog_buy_it_now_form') {
+  if (substr($saved_args[0], 0, 31) == 'uc_product_kit_add_to_cart_form' || substr($saved_args[0], 0, 27) == 'uc_product_add_to_cart_form' || substr($saved_args[0], 0, 26) == 'uc_catalog_buy_it_now_form') {
     $products = db_query("SELECT DISTINCT nid FROM {uc_product_kits} WHERE nid = %d", $saved_args[1]->nid);
 
     while ($prodrow = db_fetch_object($products)) {
       $forms['uc_product_kit_add_to_cart_form_'. $prodrow->nid] = array('callback' => 'uc_product_kit_add_to_cart_form');
+      $forms['uc_product_add_to_cart_form_'. $prodrow->nid] = array('callback' => 'uc_product_kit_add_to_cart_form');
       $forms['uc_catalog_buy_it_now_form_'. $prodrow->nid] = array('callback' => 'uc_product_kit_buy_it_now_form');
     }
   }
@@ -481,7 +482,14 @@ function uc_product_kit_add_to_cart_form($node) {
   else {
     $form['qty'] = array('#type' => 'hidden', '#value' => 1);
   }
-  $form['submit'] = array('#type' => 'submit', '#value' => variable_get('uc_product_add_to_cart_text', t('Add to cart')), );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' =>  variable_get('uc_product_add_to_cart_text', t('Add to cart')),
+    '#id' => 'edit-submit-'. $node->nid,
+    '#attributes' => array(
+      'class' => 'node-add-to-cart',
+    ),
+  );
   return $form;
 }
 
@@ -507,7 +515,14 @@ function uc_product_kit_buy_it_now_form($node) {
       $form['products'][$i]['qty'] = array('#type' => 'hidden', '#value' => $product->qty);
     }
   }
-  $form['submit'] = array('#type' => 'submit', '#value' =>  variable_get('uc_teaser_add_to_cart_text', t('Add to cart')), );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' =>  variable_get('uc_teaser_add_to_cart_text', t('Add to cart')),
+    '#id' => 'edit-submit-'. $node->nid,
+    '#attributes' => array(
+      'class' => 'list-add-to-cart',
+    ),
+  );
   return $form;
 }
 
@@ -538,6 +553,16 @@ function uc_product_kit_buy_it_now_form_submit($form_id, $form_values) {
 
 function uc_product_kit_product_types() {
   return array('product_kit');
+}
+
+function uc_product_kit_store_status() {
+  if (module_exists('imagefield')) {
+    $result = db_query("SELECT field_name FROM {node_field_instance} WHERE field_name = 'field_image_cache' AND widget_type = 'image' AND type_name = 'product_kit'");
+    if (!db_num_rows($result)) {
+      return array(array('status' => 'ok', 'title' => t('Images'), 'desc' => t('Product kits do not have an image field. You may add the existing <em>field_image_cache</em> at the <a href="!url">Add field page</a>.', array('!url' => url('admin/content/types/product-kit/add_field')))));
+    }
+  }
+
 }
 
 function uc_product_kit_add_to_cart($nid, $qty, $kit_data) {

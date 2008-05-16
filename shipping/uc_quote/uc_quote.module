@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.4.2.8 2008/04/23 19:38:05 rszrama Exp $
+// $Id: uc_quote.module,v 1.4.2.9 2008/05/16 20:30:50 rszrama Exp $
 
 /**
  * @file
@@ -64,13 +64,13 @@ function uc_quote_menu($may_cache) {
       'type' => MENU_DEFAULT_LOCAL_TASK,
       'weight' => -10,
     );
-  }
-  else {
     $items[] = array('path' => 'cart/checkout/shipping/quote',
       'access' => user_access('access content'),
       'callback' => 'uc_quote_request_quotes',
       'type' => MENU_CALLBACK,
     );
+  }
+  else {
     drupal_add_css(drupal_get_path('module', 'uc_quote') .'/uc_quote.css', 'module');
   }
   return $items;
@@ -206,6 +206,7 @@ function uc_quote_form_alter($form_id, &$form) {
          array('!here' => url('admin/store/settings/quotes'))),
       '#collapsible' => true,
       '#collapsed' => true,
+      '#weight' => -6,
     );
     $form['shipping']['default_address']['first_name'] = uc_textfield(uc_get_field_name('first_name'), $address->first_name, FALSE);
     $form['shipping']['default_address']['last_name'] = uc_textfield(uc_get_field_name('last_name'), $address->last_name, FALSE);
@@ -234,7 +235,7 @@ function uc_quote_form_alter($form_id, &$form) {
       '#title' => t('Default product shipping type'),
       '#default_value' => uc_quote_get_shipping_type($type, $id),
       '#options' => $types,
-      '#weight' => -1,
+      '#weight' => -7,
     );
   }
   else if ($form_id == 'uc_cart_checkout_form' && isset($form['panes']['quotes'])) {
@@ -281,6 +282,13 @@ function uc_quote_condition_info() {
         'order' => array('#entity' => 'order', '#label' => t('Order')),
       ),
       '#module' => t('Order: Product'),
+    ),
+    'uc_quote_condition_order_shipping_method' => array(
+      '#label' => t("Order has a shipping quote from a particular method"),
+      '#arguments' => array(
+        'order' => array('#entity' => 'order', '#label' => t('Order')),
+      ),
+      '#module' => t('Order: Shipping Quote'),
     ),
   );
 }
@@ -331,6 +339,54 @@ function uc_quote_condition_product_shipping_type_form($settings = array()) {
 function uc_quote_condition_product_shipping_type_submit($form_id, $form_values) {
   return array(
     'type' => $form_values['type'],
+  );
+}
+
+function uc_quote_condition_order_shipping_method($order, $settings) {
+  // Check the easy way first.
+  if (is_array($order->quote)) {
+    return $order->quote['method'] == $settings['method'];
+  }
+  // Otherwise, look harder.
+  if (is_array($order->line_items)) {
+    foreach ($order->line_items as $line_item) {
+      if ($line_item['type'] == 'shipping' && in_array($line_item['title'], $settings['accessorials'])) {
+        return TRUE;
+      }
+    }
+  }
+  return FALSE;
+}
+
+function uc_quote_condition_order_shipping_method_form($settings = array()) {
+  $form = array();
+  $methods = module_invoke_all('shipping_method');
+  $enabled = variable_get('uc_quote_enabled', array());
+
+  $options = array();
+  foreach ($methods as $id => $method) {
+    $options[$id] = $method['title'];
+    if (!$enabled[$id]) {
+      $options[$id] .= ' '. t('(disabled)');
+    }
+  }
+
+  $form['method'] = array(
+    '#type' => 'select',
+    '#title' => t('Shipping quote method'),
+    '#default_value' => $settings['method'],
+    '#options' => $options,
+  );
+
+  return $form;
+}
+
+function uc_quote_condition_order_shipping_method_submit($form_id, $form_values) {
+  $methods = module_invoke_all('shipping_method');
+
+  return array(
+    'method' => $form_values['method'],
+    'accessorials' => $methods[$form_values['method']]['quote']['accessorials'],
   );
 }
 
@@ -919,7 +975,7 @@ function uc_cart_pane_quotes($items) {
   $form['quote'] = array('#type' => 'markup',
     '#value' => '<div id="quote"></div>',
   );
-  
+
   uc_add_js(array(
     'uc_quote' => array(
       'progress_msg' => t('Receiving quotes:'),
@@ -1247,7 +1303,7 @@ function uc_quote_cache_quotes($form_id, &$form) {
     if (isset($_SESSION['quote']) && $_SESSION['quote']['rate']) {
       $quote = $_SESSION['quote'];
         $form['panes']['quotes']['quote'] = array('#type' => 'markup',
-          '#value' => '<div id="quote" class="solid-border" style="margin-top: 1em;">'. rawurldecode($_SESSION['quote']['quote_form']) .'</div>',
+          '#value' => '<div id="quote" class="solid-border">'. rawurldecode($_SESSION['quote']['quote_form']) .'</div>',
           '#weight' => 1,
         );
         $methods = module_invoke_all('shipping_method');

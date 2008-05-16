@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.14.2.9 2008/04/23 19:38:07 rszrama Exp $
+// $Id: uc_catalog.module,v 1.14.2.10 2008/05/16 20:30:51 rszrama Exp $
 
 /**
  * @file
@@ -138,14 +138,14 @@ function uc_catalog_perm() {
 /**
  * Implementation of hook_enable().
  *
- * Add imagecache preset "category".
+ * Add imagecache preset "uc_category".
  */
 function uc_catalog_enable() {
   if (module_exists('imagecache')) {
-    $result = db_query("SELECT presetid FROM {imagecache_preset} WHERE presetname = 'category'");
+    $result = db_query("SELECT presetid FROM {imagecache_preset} WHERE presetname = 'uc_category'");
     if (!db_fetch_object($result)) {
       $id = db_next_id('{imagecache_preset}_presetid');
-      db_query("INSERT INTO {imagecache_preset} (presetid, presetname) VALUES (%d, 'category')", $id);
+      db_query("INSERT INTO {imagecache_preset} (presetid, presetname) VALUES (%d, 'uc_category')", $id);
       db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $id, 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"96";s:6:"height";s:2:"96";}');
       cache_clear_all('imagecache:presets', 'cache');
     }
@@ -294,7 +294,7 @@ function uc_catalog_form_alter($form_id, &$form) {
     $image = uc_catalog_image_load($form['tid']['#value']);
     if ($image) {
       if (module_exists('imagecache')) {
-        $image_display = theme('imagecache', 'category', $image->filepath);
+        $image_display = theme('imagecache', 'uc_category', $image->filepath);
       }
       else {
         $image_display = theme('image', $image->filename, t('Term image'));
@@ -501,11 +501,6 @@ function uc_catalog_store_status() {
         'desc' => format_plural($excluded, 'There is @count product not listed in the catalog.', 'There are @count products not listed in the catalog.')
           . t(' Products are listed by assigning a category from the Product Catalog vocabulary to them. ')
           . l(t('Find orphaned products here.'), 'admin/store/products/orphans'),
-      );
-    }
-    else {
-      $statuses[] = array('status' => 'ok', 'title' => t('Unlisted products'),
-        'desc' => t('All products are currently listed in the catalog.'),
       );
     }
   }
@@ -755,7 +750,7 @@ function uc_catalog_get_page($tid) {
   $catalog->children = array();
   if ($file = uc_catalog_image_load($catalog->tid)) {
     if (module_exists('imagecache')) {
-      $file_path =  file_create_url(file_directory_path() .'/imagecache/category/'. $file->filepath);
+      $file_path =  file_create_url(file_directory_path() .'/imagecache/uc_category/'. $file->filepath);
     }
     else {
       $file_path = $file->filepath;
@@ -776,7 +771,7 @@ function uc_catalog_get_page($tid) {
     $child->nodes = $n;
     // Display child category's image.
     if (module_exists('imagecache') && $file = uc_catalog_image_load($child->tid)) {
-      $imagecache_path =  file_create_url(file_directory_path() .'/imagecache/category/'. $file->filepath);
+      $imagecache_path =  file_create_url(file_directory_path() .'/imagecache/uc_category/'. $file->filepath);
       $info = image_get_info($imagecache_path);
       $child->image = $info;
       $child->image['filepath'] = $file->filepath;
@@ -822,7 +817,7 @@ function theme_uc_catalog_browse($tid = 0) {
     if ($child->image) {
       $image = '<div>';
       if (module_exists('imagecache')) {
-        $image .= l(theme('imagecache', 'category', $child->image['filepath']), uc_catalog_path($child), array(), null, null, false, true);
+        $image .= l(theme('imagecache', 'uc_category', $child->image['filepath']), uc_catalog_path($child), array(), null, null, false, true);
       }
       else {
         $image.= l(theme('image', $child->image['filepath']), uc_catalog_path($child), array(), null, null, false, true);
@@ -861,7 +856,7 @@ function theme_uc_catalog_browse($tid = 0) {
     }
   }
   if ($catalog->image) {
-    $output .= theme('imagecache', 'thumbnail', $catalog->image['filepath'], $catalog->name, $catalog->name, array('class' => 'category'));
+    $output .= theme('imagecache', 'uc_thumbnail', $catalog->image['filepath'], $catalog->name, $catalog->name, array('class' => 'category'));
   }
   $header = tapir_get_header('uc_product_table', array());
   $order = substr(tablesort_sql($header), 10);
@@ -1007,8 +1002,8 @@ function theme_uc_catalog_product_grid($products) {
       else {
         $product_table .= drupal_get_form('uc_catalog_buy_it_now_form_'. $product->nid, $product);
       }
-      $product_table .= '</td>';
     }
+    $product_table .= '</td>';
 
     $count++;
   }
@@ -1257,7 +1252,11 @@ function uc_catalog_orphaned_products() {
 function _uc_catalog_navigation($branch) {
   static $terms;
   static $breadcrumb;
+  static $types;
 
+  if (empty($types)) {
+    $types = module_invoke_all('product_types');
+  }
 
   $branch_path = uc_catalog_path($branch);
   if (!isset($breadcrumb)) {
@@ -1287,12 +1286,15 @@ function _uc_catalog_navigation($branch) {
     $inpath = $here;
   }
 
-  $num = taxonomy_term_count_nodes($branch->tid);
+  $num = 0;
+  foreach ($types as $type) {
+    $num += taxonomy_term_count_nodes($branch->tid, $type);
+  }
 
   // Checks to see if node counts are desired in navigation
   $num_text = '';
   if (variable_get('uc_catalog_block_nodecount',TRUE)) {
-    $num_text = ' ('.$num.')';
+    $num_text = ' ('. $num .')';
   }
 
   if (!$num) { // No nodes in category or descendants. Not in path and display nothing.

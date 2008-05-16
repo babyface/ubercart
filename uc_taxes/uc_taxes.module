@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.11.2.8 2008/04/23 19:38:13 rszrama Exp $
+// $Id: uc_taxes.module,v 1.11.2.9 2008/05/16 20:30:54 rszrama Exp $
 
 /**
  * @file
@@ -68,8 +68,6 @@ function uc_taxes_menu($may_cache) {
       'callback arguments' => array('uc_taxes_delete'),
       'type' => MENU_CALLBACK,
     );
-  }
-  else {
     $items[] = array('path' => 'taxes/calculate',
       'access' => true,
       'callback' => 'uc_taxes_javascript',

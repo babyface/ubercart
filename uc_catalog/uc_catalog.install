@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.install,v 1.8.2.6 2008/04/23 19:38:07 rszrama Exp $
+// $Id: uc_catalog.install,v 1.8.2.7 2008/05/16 20:30:51 rszrama Exp $
 
 function uc_catalog_install() {
   $t = get_t();
@@ -16,7 +16,7 @@ function uc_catalog_install() {
   }
   variable_set('uc_catalog_vid', $vid);
   variable_set('uc_catalog_name', t('Catalog'));
-  
+
 
   switch ($GLOBALS['db_type']) {
     case 'mysql':
@@ -136,6 +136,22 @@ function uc_catalog_update_5() {
   variable_del('uc_catlaog_bestsellers_block_title');
   variable_del('uc_catalog_contact_url');
   variable_del('uc_catalog_consult_block');
-  
+
   return array(array('success' => TRUE, 'query' => "DELETE unused variables"));
+}
+
+function uc_catalog_update_6() {
+  $ret = array();
+
+  if (module_exists('imagecache')) {
+    $preset_id = db_next_id('{imagecache_preset}_presetid');
+    $action_id = db_next_id('{imagecache_action}_actionid');
+    db_query("INSERT INTO {imagecache_preset} (presetid, presetname) VALUES (%d, 'uc_catalog')", $preset_id);
+    db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", $action_id, $preset_id, 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"96";s:6:"height";s:2:"96";}');
+    cache_clear_all('imagecache:presets', 'cache');
+    $ret[] = array('success' => TRUE, 'query' => "INSERT INTO {imagecache_preset} (presetid, presetname) VALUES (". $preset_id .", 'uc_catalog')");
+    $ret[] = array('success' => TRUE, 'query' => "INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (". $action_id .", ". $preset_id .", 0, '". 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"96";s:6:"height";s:2:"96";}' ."')");
+  }
+
+  return $ret;
 }

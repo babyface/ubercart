@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.14.2.10 2008/04/23 19:38:07 rszrama Exp $
+// $Id: uc_cart.module,v 1.14.2.11 2008/05/16 20:30:51 rszrama Exp $
 
 /**
  * @file
@@ -28,27 +28,27 @@ function uc_cart_menu($may_cache) {
     $items[] = array(
       'path' => 'admin/store/settings/cart',
       'title' => t('Cart settings'),
+      'description' => t('Configure the cart settings.'),
       'callback' => 'uc_cart_cart_settings_overview',
       'access' => user_access('administer store'),
-      'description' => t('Configure the cart settings.'),
     );
     $items[] = array(
       'path' => 'admin/store/settings/cart/overview',
       'title' => t('Overview'),
-      'access' => user_access('administer store'),
       'description' => t('View the cart settings.'),
-      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'access' => user_access('administer store'),
       'weight' => -10,
+      'type' => MENU_DEFAULT_LOCAL_TASK,
     );
     $items[] = array(
       'path' => 'admin/store/settings/cart/edit',
       'title' => t('Edit'),
+      'description' => t('Edit the cart settings.'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('uc_cart_cart_settings_form'),
       'access' => user_access('administer store'),
-      'description' => t('Edit the cart settings.'),
-      'type' => MENU_LOCAL_TASK,
       'weight' => -5,
+      'type' => MENU_LOCAL_TASK,
     );
     $items[] = array(
       'path' => 'admin/store/settings/cart/edit/basic',
@@ -61,85 +61,85 @@ function uc_cart_menu($may_cache) {
     $items[] = array(
       'path' => 'admin/store/settings/cart/edit/panes',
       'title' => t('Cart panes'),
-      'access' => user_access('administer store'),
+      'description' => t('Edit the pane settings for the cart view page.'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('uc_cart_cart_panes_form'),
-      'description' => t('Edit the pane settings for the cart view page.'),
-      'type' => MENU_LOCAL_TASK,
+      'access' => user_access('administer store'),
       'weight' => -5,
+      'type' => MENU_LOCAL_TASK,
     );
     $items[] = array(
       'path' => 'admin/store/settings/cart/edit/block',
       'title' => t('Cart block'),
-      'access' => user_access('administer store'),
       'callback' => 'uc_cart_block_edit_info',
       'description' => t('Edit the settings for the shopping cart block.'),
-      'type' => MENU_LOCAL_TASK,
+      'access' => user_access('administer store'),
       'weight' => 0,
+      'type' => MENU_LOCAL_TASK,
     );
 
     $items[] = array(
       'path' => 'admin/store/settings/checkout',
       'title' => t('Checkout settings'),
+      'description' => t('Configure the checkout settings.'),
       'callback' => 'uc_cart_checkout_settings_overview',
       'access' => user_access('administer store'),
-      'description' => t('Configure the checkout settings.'),
     );
     $items[] = array(
       'path' => 'admin/store/settings/checkout/overview',
       'title' => t('Overview'),
-      'access' => user_access('administer store'),
       'description' => t('View the checkout settings.'),
-      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'access' => user_access('administer store'),
       'weight' => -10,
+      'type' => MENU_DEFAULT_LOCAL_TASK,
     );
     $items[] = array(
       'path' => 'admin/store/settings/checkout/edit',
       'title' => t('Edit'),
+      'description' => t('Edit the cart settings.'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('uc_cart_checkout_settings_form'),
       'access' => user_access('administer store'),
-      'description' => t('Edit the cart settings.'),
-      'type' => MENU_LOCAL_TASK,
       'weight' => -5,
+      'type' => MENU_LOCAL_TASK,
     );
     $items[] = array(
       'path' => 'admin/store/settings/checkout/edit/basic',
       'title' => t('Checkout settings'),
-      'access' => user_access('administer store'),
       'description' => t('Edit the basic checkout settings.'),
-      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'access' => user_access('administer store'),
       'weight' => -10,
+      'type' => MENU_DEFAULT_LOCAL_TASK,
     );
     $items[] = array(
       'path' => 'admin/store/settings/checkout/edit/panes',
       'title' => t('Checkout panes'),
-      'access' => user_access('administer store'),
+      'description' => t('Edit the pane settings for the checkout page.'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('uc_cart_checkout_panes_form'),
-      'description' => t('Edit the pane settings for the checkout page.'),
-      'type' => MENU_LOCAL_TASK,
+      'access' => user_access('administer store'),
       'weight' => -5,
+      'type' => MENU_LOCAL_TASK,
     );
     $items[] = array(
       'path' => 'admin/store/settings/checkout/edit/messages',
       'title' => t('Checkout messages'),
-      'access' => user_access('administer store'),
+      'description' => t('Edit the messages for the checkout completion page.'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('uc_cart_checkout_messages_form'),
-      'description' => t('Edit the messages for the checkout completion page.'),
-      'type' => MENU_LOCAL_TASK,
+      'access' => user_access('administer store'),
       'weight' => 0,
+      'type' => MENU_LOCAL_TASK,
     );
     $items[] = array(
       'path' => 'admin/store/settings/checkout/edit/fields',
       'title' => t('Address fields'),
-      'access' => user_access('administer store'),
+      'description' => t('Edit the address field settings.'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('uc_store_address_fields_form'),
-      'description' => t('Edit the address field settings.'),
-      'type' => MENU_LOCAL_TASK,
+      'access' => user_access('administer store'),
       'weight' => 5,
+      'type' => MENU_LOCAL_TASK,
     );
 
     $items[] = array(
@@ -493,7 +493,7 @@ function uc_cart_table_settings() {
     'access' => 'administer store',
     'preview' => FALSE,
   );
-  
+
   return $tables;
 }
 
@@ -639,7 +639,7 @@ function uc_cart_cart_settings_overview() {
   return $output;
 }
 
-function uc_cart_block_edit_info() {                 
+function uc_cart_block_edit_info() {
   $output = t('Drupal handles all the block settings forms automatically.') .'<p>'
           . t('<a href="!url">Click here</a> to goto the shopping cart block configuration page.',
               array('!url' => url('admin/build/block/configure/uc_cart/0')));
@@ -1171,7 +1171,7 @@ function uc_cart_view_form($items = NULL) {
     $display_item = module_invoke($item->module, 'cart_display', $item);
     if (!empty($display_item)) {
       $form['items'][$i] = $display_item;
-      $form['items'][$i]['image']['#value'] = uc_product_get_picture($item->nid, 'cart');
+      $form['items'][$i]['image']['#value'] = uc_product_get_picture($display_item['nid']['#value'], 'cart');
       $i++;
     }
   }
@@ -1483,7 +1483,9 @@ function uc_cart_checkout_form_validate($form_id, $form_values) {
   }
 
   $order->products = unserialize($form_values['cart_contents']);
+
   $order->order_total = uc_order_get_total($order, TRUE);
+
   // Validate/process the cart panes.  A FALSE value results in failed checkout.
   $_SESSION['checkout_valid'] = TRUE;
   foreach (element_children($form_values['panes']) as $pane_id) {
@@ -1614,13 +1616,13 @@ function theme_uc_cart_checkout_review($help, $panes, $form) {
 }
 
 function uc_cart_checkout_review_form() {
+  // Set the session variable to pass the redirect check on the pageload.
   if ($_POST['op'] == t('Back')) {
-    cache_clear_all();
-    drupal_goto('cart/checkout');
+    $_SESSION['do_review'] = TRUE;
   }
 
   $form['back'] = array(
-    '#type' => 'button',
+    '#type' => 'submit',
     '#value' => t('Back'),
   );
   $form['submit'] = array(
@@ -1633,6 +1635,11 @@ function uc_cart_checkout_review_form() {
 
 function uc_cart_checkout_review_form_submit($form_id, $form_values) {
   switch ($form_values['op']) {
+    case t('Back'):
+      cache_clear_all();
+      unset($_SESSION['do_review']);
+      return 'cart/checkout';
+
     case variable_get('uc_checkout_submit_button', t('Submit order')):
       // Invoke hook_order($op = 'submit') to test to make sure the order can
       // be completed... used for auto payment in uc_credit.module.
@@ -1706,8 +1713,26 @@ function uc_cart_complete_sale($order, $login = FALSE) {
       $message_type = 'existing_user';
     }
     else {
+      // Get a valid new username.
+      if (empty($order->data['new_user']['name'])) {
+        // Default to the first part of the e-mail address.
+        $name = substr($order->primary_email, 0, strpos($order->primary_email, '@'));
+
+        // Trim that value for spaces and length.
+        $name = trim(substr($name, 0, USERNAME_MAX_LENGTH));
+
+        // Make sure we don't hand out a duplicate username.
+        while (db_num_rows(db_query("SELECT uid FROM {users} WHERE LOWER(name) = LOWER('%s')", $name)) > 0) {
+          $name .= rand(0, 9);
+        }
+      }
+      else {
+        $name = $order->data['new_user']['name'];
+      }
+
+      // Setup the account fields array and save it as a new user.
       $fields = array(
-        'name' => empty($order->data['new_user']['name']) ? $order->primary_email : $order->data['new_user']['name'],
+        'name' => $name,
         'mail' => $order->primary_email,
         'init' => $order->primary_email,
         'pass' => empty($order->data['new_user']['pass']) ? user_password(variable_get('uc_pwd_length', 6)) : $order->data['new_user']['pass'],
@@ -1715,6 +1740,7 @@ function uc_cart_complete_sale($order, $login = FALSE) {
         'status' => variable_get('uc_new_customer_status_active', TRUE) ? 1 : 0,
       );
       $account = user_save('', $fields);
+
       if (variable_get('uc_new_customer_email', TRUE)) {
         $variables = array('!username' => $fields['name'], '!site' => variable_get('site_name', 'Drupal'), '!password' => $fields['pass'], '!uri' => $base_url, '!uri_brief' => substr($base_url, strlen('http://')), '!mailto' => $fields['mail'], '!date' => format_date(time()), '!login_uri' => url('user', NULL, NULL, TRUE), '!edit_uri' => url('user/'. $account->uid .'/edit', NULL, NULL, TRUE), '!login_url' => user_pass_reset_url($account));
         $from = uc_store_email_from();
@@ -1846,6 +1872,9 @@ function uc_cart_add_item($nid, $qty = 1, $data = NULL, $cid = NULL, $msg = TRUE
 
   if (is_null($data)) {
     $data = array('module' => 'uc_product');
+  }
+  if (!isset($data['module'])) {
+    $data['module'] = 'uc_product';
   }
 
   if (!in_array($node->type, module_invoke_all('product_types'))) {

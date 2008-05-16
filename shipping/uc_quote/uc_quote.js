@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, getTax; -*-
-// $Id: uc_quote.js,v 1.4.2.6 2008/04/23 19:38:04 rszrama Exp $
+// $Id: uc_quote.js,v 1.4.2.7 2008/05/16 20:30:50 rszrama Exp $
 
 var page;
 var details;
@@ -10,7 +10,11 @@ function setQuoteCallbacks(products) {
     quoteCallback(products);
   };
   $("input[@name*=delivery_postal_code]").change(triggerQuoteCallback);
-  $("input[@id*=quote-button], input[@name*=quote_method]").click(function() {
+  $("input[@id*=quote-button]").click(function() {
+    // returns false to prevent default actions and propogation
+    return quoteCallback(products);
+  });
+  $("input[@name*=quote_method]").change(function() {
     // returns false to prevent default actions and propogation
     return quoteCallback(products);
   });
@@ -31,7 +35,10 @@ function setQuoteCallbacks(products) {
 }
 
 function setTaxCallbacks() {
-  $("#quote").find("input:radio").change(function() {
+  // Choosing to use click because of IE's bloody stupid bug not to
+  // trigger onChange until focus is lost. Click is better than doing
+  // set_line_item() and getTax() twice, I believe.
+  $("#quote").find("input:radio").click(function() {
     var i = $(this).val();
     if (window.set_line_item) {
       var label = $(this).parent().text();
@@ -88,7 +95,7 @@ function quoteCallback(products) {
   var progress = new Drupal.progressBar("quoteProgress");
   progress.setProgress(-1, Drupal.settings.uc_quote.progress_msg);
   $("#quote").empty().append(progress.element);
-  $("#quote").addClass("solid-border").css("margin-top", "1em");
+  $("#quote").addClass("solid-border");
   // progress.startMonitoring(Drupal.settings['base_path'] + "shipping/quote", 0);
   $.ajax({
     type: "POST",
@@ -97,7 +104,7 @@ function quoteCallback(products) {
     dataType: "json",
     success: displayQuote
   });
-  
+
   return false;
 }
 
@@ -115,7 +122,7 @@ function displayQuote(data) {
     var item = '';
     var label = data[i].option_label;
     if (data[i].rate != undefined || data[i].error || data[i].notes) {
-      
+
       if (data[i].rate != undefined) {
         if (numQuotes > 1 && page != 'cart') {
           item = "<input type=\"hidden\" name=\"rate[" + i + "]\" value=\"" + (Math.round(data[i].rate * 100) / 100) + "\" />"
@@ -131,6 +138,12 @@ function displayQuote(data) {
             if (label != "" && window.set_line_item) {
               set_line_item("shipping", label, Math.round(data[i].rate * 100) / 100, 1);
             }
+            if (window.getTax) {
+              getTax();
+            }
+            else if (window.render_line_items) {
+              render_line_items();
+            }
           }
         }
       }
@@ -141,11 +154,14 @@ function displayQuote(data) {
         item += '<div class="quote-notes">' + data[i].notes + "</div>";
       }
       if (data[i].rate == undefined && item.length) {
-        item = label + ': ' + item; 
+        item = label + ': ' + item;
       }
       quoteDiv.append('<div class="form-item">' + item + "</div>\n");
       if (page == "checkout") {
-        quoteDiv.find("input:radio[@value=" + i +"]").change(function() {
+        // Choosing to use click because of IE's bloody stupid bug not to
+        // trigger onChange until focus is lost. Click is better than doing
+        // set_line_item() and getTax() twice, I believe.
+        quoteDiv.find("input:radio[@value=" + i +"]").click(function() {
           var i = $(this).val();
           if (window.set_line_item) {
             set_line_item("shipping", data[i].option_label, Math.round(data[i].rate * 100) / 100, 1, 1, false);
@@ -167,7 +183,7 @@ function displayQuote(data) {
     quoteDiv.end().append(Drupal.settings.uc_quote.err_msg);
   }
   else {
-    quoteDiv.end().find("input:radio").eq(0).change().attr("checked", "checked").end().end();
+    quoteDiv.end().find("input:radio").eq(0).click().attr("checked", "checked").end().end();
     var quoteForm = quoteDiv.html();
     quoteDiv.append("<input type=\"hidden\" name=\"quote-form\" value=\"" + encodeURIComponent(quoteForm) + "\" />");
   }

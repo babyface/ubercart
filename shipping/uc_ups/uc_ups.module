@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.4.2.8 2008/04/23 19:38:05 rszrama Exp $
+// $Id: uc_ups.module,v 1.4.2.9 2008/05/16 20:30:50 rszrama Exp $
 
 /**
  * @file
@@ -60,11 +60,12 @@ function uc_ups_form_alter($form_id, &$form) {
   $node = $form['#node'];
   if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && in_array($node->type, module_invoke_all('product_types'))) {
     $enabled = variable_get('uc_quote_enabled', array());
+    $weight = variable_get('uc_quote_method_weight', array('ups' => 0));
     $ups = array('#type' => 'fieldset',
       '#title' => t('UPS product description'),
       '#collapsible' => true,
       '#collapsed' => ($enabled['ups'] == false || uc_product_get_shipping_type($node) != 'small_package'),
-      '#weight' => 2,
+      '#weight' => $weight['ups'],
       '#tree' => true,
     );
     $ups['pkg_type'] = array('#type' => 'select',
@@ -244,12 +245,13 @@ function uc_ups_admin_settings() {
   $form = array();
 
   $form['uc_ups_access_license'] = array('#type' => 'textfield',
-    '#title' => t('UPS OnLine Tools Access #'),
+    '#title' => t('UPS OnLine Tools XML Access Key'),
     '#default_value' => variable_get('uc_ups_access_license', ''),
     '#required' => true,
   );
   $form['uc_ups_shipper_number'] = array('#type' => 'textfield',
     '#title' => t('UPS Shipper #'),
+    '#description' => t('The 6-character string identifying your UPS account as a shipper.'),
     '#default_value' => variable_get('uc_ups_shipper_number', ''),
     '#required' => true,
   );
@@ -804,7 +806,7 @@ function uc_ups_quote($products, $details) {
   $addresses = array((array)variable_get('uc_quote_store_default_address', new stdClass()));
   $last_key = 0;
   $packages = array();
-  if (variable_get('uc_ups_all_in_one', true)) {
+  if (variable_get('uc_ups_all_in_one', true) && count($products) > 1) {
     foreach ($products as $product) {
       if ($product->nid) {
         $address = (array)uc_quote_get_default_shipping_address($product->nid);

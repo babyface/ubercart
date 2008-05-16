@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.11.2.8 2008/04/23 19:38:07 rszrama Exp $
+// $Id: uc_attribute.module,v 1.11.2.9 2008/05/16 20:30:51 rszrama Exp $
 
 /**
  * @file
@@ -232,11 +232,11 @@ function uc_attribute_nodeapi(&$node, $op, $arg3 = null, $arg4 = null) {
         switch ($GLOBALS['db_type']) {
           case 'mysqli':
           case 'mysql':
-            db_query("INSERT IGNORE INTO {uc_product_attributes} (nid, aid, ordering, required, default_option) SELECT %d, aid, ordering, required, default_option FROM {uc_class_attributes} WHERE pcid = '%s'", $node->nid, $node->type);
+            db_query("INSERT IGNORE INTO {uc_product_attributes} (nid, aid, ordering, required, display, default_option) SELECT %d, aid, ordering, required, display, default_option FROM {uc_class_attributes} WHERE pcid = '%s'", $node->nid, $node->type);
             db_query("INSERT IGNORE INTO {uc_product_options} (nid, oid, cost, price, weight, ordering) SELECT %d, oid, cost, price, weight, ordering FROM {uc_class_attribute_options} WHERE pcid = '%s'", $node->nid, $node->type);
             break;
           case 'pgsql':
-            db_query("INSERT INTO {uc_product_attributes} (nid, aid, ordering, required, default_option) SELECT %d, aid, ordering, required, default_option FROM {uc_class_attributes} WHERE pcid = '%s'", $node->nid, $node->type);
+            db_query("INSERT INTO {uc_product_attributes} (nid, aid, ordering, required, display, default_option) SELECT %d, aid, ordering, required, display, default_option FROM {uc_class_attributes} WHERE pcid = '%s'", $node->nid, $node->type);
             db_query("INSERT INTO {uc_product_options} (nid, oid, cost, price, weight, ordering) SELECT %d, oid, cost, price, weight, ordering FROM {uc_class_attribute_options} WHERE pcid = '%s'", $node->nid, $node->type);
             break;
         }
@@ -1126,7 +1126,7 @@ function uc_product_adjustments_form($nid) {
   $query_from = " FROM";
   $query_where = " WHERE";
   $query_order = " ORDER BY";
-  $result = db_query("SELECT pa.*, a.*, COUNT(po.oid) FROM {uc_product_attributes} AS pa LEFT JOIN {uc_attributes} AS a ON pa.aid = a.aid LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid LEFT JOIN {uc_product_options} AS po ON ao.oid = po.oid AND po.nid = %d WHERE pa.nid = %d GROUP BY ao.aid HAVING count(po.oid) > 0", $nid, $nid);
+  $result = db_query("SELECT pa.*, a.*, COUNT(po.oid) FROM {uc_product_attributes} AS pa LEFT JOIN {uc_attributes} AS a ON pa.aid = a.aid LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid LEFT JOIN {uc_product_options} AS po ON ao.oid = po.oid AND po.nid = %d WHERE pa.nid = %d GROUP BY ao.aid HAVING count(po.oid) > 0 ORDER BY pa.ordering, a.ordering", $nid, $nid);
   $num_prod_attr = db_num_rows($result);
   $i = 1;
   $attribute_names = '';
@@ -1254,6 +1254,10 @@ function uc_product_adjustments_form_submit($form_id, $form_values) {
         db_query("INSERT INTO {uc_product_adjustments} (nid, combination, model) VALUES (%d, '%s', '%s')",
           $form_values['nid'], $value['combo_array'], $value['model']);
       }
+    }
+    else {
+      db_query("DELETE FROM {uc_product_adjustments} WHERE nid = %d AND combination = '%s'",
+        $form_values['nid'], $value['combo_array']);
     }
   }
   drupal_set_message(t('Product adjustments have been saved.'));

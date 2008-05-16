@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.13.2.8 2008/04/23 19:38:12 rszrama Exp $
+// $Id: uc_store.module,v 1.13.2.9 2008/05/16 20:30:53 rszrama Exp $
 
 /**
  * @file
@@ -238,12 +238,12 @@ function uc_store_menu($may_cache) {
       'weight' => 0,
     );
     $items[] = array(
-      'path' => 'admin/store/settings/store/edit/census',
-      'title' => t('Census settings'),
+      'path' => 'admin/store/settings/store/edit/report',
+      'title' => t('Reporting settings'),
       'callback' => 'drupal_get_form',
-      'callback arguments' => array('uc_store_census_settings'),
+      'callback arguments' => array('uc_store_report_settings'),
       'access' => user_access('administer store'),
-      'description' => t('Control information reported to www.ubercart.org.'),
+      'description' => t('Report version information to Ubercart.org.'),
       'type' => MENU_LOCAL_TASK,
       'weight' => 10,
     );
@@ -403,8 +403,8 @@ function uc_store_token_list($type = 'all') {
 
 function uc_store_help($section) {
   switch ($section) {
-    case 'admin/store/settings/store/edit/census':
-      return t('Ubercart contacts Ubercart.org once a day to retrieve update reminders and security alerts that may prevent monetary losses from security vulnerabilites. Additional information may be sent to generate anonymous, community-wide statistical data for display on the site.');
+    case 'admin/store/settings/store/edit/report':
+      return t("Reporting to Ubercart.org happens once a week during a normal cron run and is logged in your site's watchdog. Reporting lets Ubercart.org calculate the total number of Ubercart installations and aggregate version information for use in development. Your site's data is never shared with anyone, and aggregate statistics displayed through Ubercart.org will be in the form of anonymous group statistics. Reporting will also allow Ubercart.org to report security notices back to your site if needed.");
   }
 }
 
@@ -412,77 +412,9 @@ function uc_store_help($section) {
  * Implementation of hook_cron().
  */
 function uc_store_cron() {
-  if (variable_get('uc_store_opt_in', TRUE)) {
-    $prev_time = variable_get('uc_store_prev_time', 0);
-    if ($prev_time < time() - 86390) {
-      $prev_time = time() - 86390;
-    }
-    $later = strtotime("tomorrow", $prev_time);
-    if (time() > $later) { // Run updates once a day.
-      $vars = array();
-      $vars['site_id'] = variable_get('uc_store_site_id', null);
-      if (variable_get('uc_store_opt_in_hostname', TRUE)) {
-        $vars['server_name'] = $_SERVER['SERVER_NAME'];
-      }
-      $vars['php_version'] = PHP_VERSION;
-      $vars['drupal_version'] = VERSION;
-      $vars['db_type'] = $GLOBALS['db_type'];
-      $vars['db_version'] = db_version();
-      if (variable_get('uc_store_opt_in_modules', TRUE)) {
-        $result = db_query("SELECT name, filename FROM {system} WHERE type = 'module' AND status = 1 ORDER BY filename ASC");
-        while ($module = db_fetch_object($result)) {
-          $info = _module_parse_info_file(dirname($module->filename) .'/'. $module->name .'.info');
-          $return = array('name' => $module->name);
-          if (isset($info['version'])) {
-            $return['version'] = $info['version'];
-            if ($module->name == 'uc_store') {
-              $vars['ubercart_version'] = $info['version'];
-            }
-          }
-          $vars['modules'][] = $return;
-        }
-      }
-
-      $vars['currency'] = variable_get('uc_currency_code', 'USD');
-
-      $count_query = '';
-      switch ($GLOBALS['db_type']) {
-        case 'mysql':
-        case 'mysqli':
-          $count_query = "SELECT COUNT(DISTINCT o.order_id) AS orders, SUM(o.order_total) AS sales "
-          ."FROM {uc_orders} AS o "
-          ."WHERE o.order_status = 'completed' "
-          ."GROUP BY o.order_status";
-          break;
-        case 'pgsql':
-          $count_query = "SELECT DISTINCT o.order_id, COUNT(o.order_id) as orders, SUM(o.order_total) AS sales "
-          ."FROM {uc_orders} AS o "
-          ."WHERE o.order_status = 'completed' "
-          ."GROUP BY o.order_status";
-          break;
-      }
-
-      $result = db_query($count_query);
-
-      if ($stats = db_fetch_array($result)) {
-        if (variable_get('uc_store_opt_in_orders', TRUE)) {
-          $vars['orders'] = $stats['orders'];
-        }
-        if (variable_get('uc_store_opt_in_sales', TRUE)) {
-          $vars['sales'] = $stats['sales'];
-        }
-      }
-      $result = db_query("SELECT SUM(op.qty) AS products FROM {uc_order_products} AS op LEFT JOIN {uc_orders} AS o ON op.order_id = o.order_id WHERE o.order_status = 'completed' GROUP BY o.order_status");
-      if ($stats = db_fetch_array($result)) {
-        if (variable_get('uc_store_opt_in_products', TRUE)) {
-          $vars['products'] = $stats['products'];
-        }
-      }
-      variable_set('uc_store_prev_time', $later - 10);
-      $response = drupal_http_request('http://www.ubercart.org/statistics/gather', array('Content-Type' => 'application/x-www-form-urlencoded'), 'POST', drupal_query_string_encode($vars));
-      $sid = $response->data;
-      variable_set('uc_store_site_id', $sid);
-    }
+  // Report version information into Ubercart.org once a week if enabled.
+  if (variable_get('uc_store_report', TRUE) && variable_get('uc_store_last_report', 0) <= time() - 604800) {
+    uc_store_send_report();
   }
 }
 
@@ -1387,32 +1319,15 @@ function uc_store_store_settings_overview() {
   );
 
   $items = array();
-  if (variable_get('uc_store_opt_in', TRUE)) {
-    $opt_in[] = t('Basic version information');
-    if (variable_get('uc_store_opt_in_hostname', TRUE)) {
-      $opt_in[] = t('Host name');
-    }
-    if (variable_get('uc_store_opt_in_modules', TRUE)) {
-      $opt_in[] = t('List of enabled modules');
-    }
-    if (variable_get('uc_store_opt_in_orders', TRUE)) {
-      $opt_in[] = t('Number of fulfilled orders');
-    }
-    if (variable_get('uc_store_opt_in_products', TRUE)) {
-      $opt_in[] = t('Number of products sold');
-    }
-    if (variable_get('uc_store_opt_in_sales', TRUE)) {
-      $opt_in[] = t('Total sales');
-    }
-    $items[] = t('You are reporting the following to Ubercart.org:')
-              .'<br />'. theme('item_list', $opt_in);
+  if (variable_get('uc_store_report', TRUE)) {
+    $items[] = t('Version information is being reported to Ubercart.org.');
   }
   else {
-    $items[] = t('You are not reporting any data to Ubercart.org.');
+    $items[] = t('Your site is not reporting to Ubercart.org.');
   }
   $sections[] = array(
-    'edit' => 'admin/store/settings/store/edit/census',
-    'title' => t('Census settings'),
+    'edit' => 'admin/store/settings/store/edit/report',
+    'title' => t('Reporting settings'),
     'items' => $items,
   );
 
@@ -1426,6 +1341,12 @@ function uc_store_store_settings_form() {
   $form['uc_store_name'] = uc_textfield(t('Store name'), variable_get('uc_store_name', NULL), FALSE, NULL, 64);
   $form['uc_store_owner'] = uc_textfield(t('Store owner'), variable_get('uc_store_owner', NULL), FALSE, NULL, 64);
   $form['uc_store_email'] = uc_textfield(t('E-mail address'), variable_get('uc_store_email', NULL), FALSE, NULL, 128);
+  $form['uc_store_email_include_name'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Include the store name in the from line of store e-mails.'),
+    '#description' => t('May not be available on all server configurations. Turn off if this causes problems.'),
+    '#default_value' => variable_get('uc_store_email_include_name', TRUE),
+  );
   $form['uc_store_phone'] = uc_textfield(t('Phone number'), variable_get('uc_store_phone', NULL), FALSE);
   $form['uc_store_fax'] = uc_textfield(t('Fax number'), variable_get('uc_store_fax', NULL), FALSE);
   $form['uc_store_street1'] = uc_textfield(uc_get_field_name('street1'), variable_get('uc_store_street1', NULL), FALSE, NULL, 128);
@@ -1506,12 +1427,6 @@ function uc_store_format_settings_form() {
     '#title' => t('Currency format'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
-  );
-  $form['currency']['uc_currency_code'] = array(
-    '#type' => 'select',
-    '#title' => t('ISO 3-letter currency code'),
-    '#options' => currency_api_get_list(),
-    '#default_value' => variable_get('uc_currency_code', 'USD'),
   );
   $form['currency']['example'] = array(
     '#type' => 'textfield',
@@ -1759,44 +1674,19 @@ function uc_store_initials_submit($form_id, $form_values) {
   }
 }
 
-function uc_store_census_settings() {
-  $form['uc_store_opt_in'] = array(
+function uc_store_report_settings() {
+  $form['uc_store_report'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Send anonymous statistical data to Ubercart.org as specified below.'),
-    '#default_value' => variable_get('uc_store_opt_in', TRUE),
-    '#description' => t('To see the results of this data collection, please visit the !statistics page.', array('!statistics' => l('Übercart statistics', 'http://www.ubercart.org/statistics'))),
+    '#title' => t('Report version information to Ubercart.org as shown below.'),
+    '#default_value' => variable_get('uc_store_report', TRUE),
   );
 
   $form['data'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Optional data'),
-    '#description' => t('In addition to PHP, MySQL, and Drupal version information, the following types of data will also be reported:'),
-    '#collapsible' => FALSE,
+    '#title' => t('Report preview'),
   );
-  $form['data']['uc_store_opt_in_hostname'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Host name'),
-    '#default_value' => variable_get('uc_store_opt_in_hostname', TRUE),
-  );
-  $form['data']['uc_store_opt_in_modules'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('List of enabled modules'),
-    '#default_value' => variable_get('uc_store_opt_in_modules', TRUE),
-  );
-  $form['data']['uc_store_opt_in_orders'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Number of fulfilled orders'),
-    '#default_value' => variable_get('uc_store_opt_in_orders', TRUE),
-  );
-  $form['data']['uc_store_opt_in_products'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Number of products sold'),
-    '#default_value' => variable_get('uc_store_opt_in_products', TRUE),
-  );
-  $form['data']['uc_store_opt_in_sales'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Total sales'),
-    '#default_value' => variable_get('uc_store_opt_in_sales', TRUE),
+  $form['data']['preview'] = array(
+    '#value' => '<pre>'. print_r(uc_store_report_data(), TRUE) .'</pre>',
   );
 
   return system_settings_form($form);
@@ -2695,172 +2585,6 @@ function uc_numeric_validate($form, $sign = 0) {
   }
 }
 
-if (!module_exists('currency_api')) {
-  function currency_api_get_list() {
-    $currency = array(
-      'AED' => t('UAE Dirham (AED)'),
-      'AFA' => t('Afghanistan Afghani (AFA)'),
-      'ALL' => t('Albanian Lek (ALL)'),
-      'ANG' => t('Neth Antilles Guilder (ANG)'),
-      'ARS' => t('Argentine Peso (ARS)'),
-      'AUD' => t('Australian Dollar (AUD)'),
-      'AWG' => t('Aruba Florin (AWG)'),
-      'BBD' => t('Barbados Dollar (BBD)'),
-      'BDT' => t('Bangladesh Taka (BDT)'),
-      'BGN' => t('Bulgarian Lev (BGN)'),
-      'BHD' => t('Bahraini Dinar (BHD)'),
-      'BIF' => t('Burundi Franc (BIF)'),
-      'BMD' => t('Bermuda Dollar (BMD)'),
-      'BND' => t('Brunei Dollar (BND)'),
-      'BOB' => t('Bolivian Boliviano (BOB)'),
-      'BRL' => t('Brazilian Real (BRL)'),
-      'BSD' => t('Bahamian Dollar (BSD)'),
-      'BTN' => t('Bhutan Ngultrum (BTN)'),
-      'BWP' => t('Botswana Pula (BWP)'),
-      'BYR' => t('Belarus Ruble (BYR)'),
-      'BZD' => t('Belize Dollar (BZD)'),
-      'CAD' => t('Canadian Dollar (CAD)'),
-      'CHF' => t('Swiss Franc (CHF)'),
-      'CLP' => t('Chilean Peso (CLP)'),
-      'CNY' => t('Chinese Yuan (CNY)'),
-      'COP' => t('Colombian Peso (COP)'),
-      'CRC' => t('Costa Rica Colon (CRC)'),
-      'CUP' => t('Cuban Peso (CUP)'),
-      'CVE' => t('Cape Verde Escudo (CVE)'),
-      'CYP' => t('Cyprus Pound (CYP)'),
-      'CZK' => t('Czech Koruna (CZK)'),
-      'DJF' => t('Dijibouti Franc (DJF)'),
-      'DKK' => t('Danish Krone (DKK)'),
-      'DOP' => t('Dominican Peso (DOP)'),
-      'DZD' => t('Algerian Dinar (DZD)'),
-      'ECS' => t('Ecuador Sucre (ECS)'),
-      'EEK' => t('Estonian Kroon (EEK)'),
-      'EGP' => t('Egyptian Pound (EGP)'),
-      'ERN' => t('Eritrea Nakfa (ERN)'),
-      'ETB' => t('Ethiopian Birr (ETB)'),
-      'EUR' => t('Euro (EUR)'),
-      'FJD' => t('Fiji Dollar (FJD)'),
-      'FKP' => t('Falkland Islands Pound (FKP)'),
-      'GBP' => t('British Pound (GBP)'),
-      'GHC' => t('Ghanian Cedi (GHC)'),
-      'GIP' => t('Gibraltar Pound (GIP)'),
-      'GMD' => t('Gambian Dalasi (GMD)'),
-      'GNF' => t('Guinea Franc (GNF)'),
-      'GTQ' => t('Guatemala Quetzal (GTQ)'),
-      'GYD' => t('Guyana Dollar (GYD)'),
-      'HKD' => t('Hong Kong Dollar (HKD)'),
-      'HNL' => t('Honduras Lempira (HNL)'),
-      'HRK' => t('Croatian Kuna (HRK)'),
-      'HTG' => t('Haiti Gourde (HTG)'),
-      'HUF' => t('Hungarian Forint (HUF)'),
-      'IDR' => t('Indonesian Rupiah (IDR)'),
-      'ILS' => t('Israeli Shekel (ILS)'),
-      'INR' => t('Indian Rupee (INR)'),
-      'IQD' => t('Iraqi Dinar (IQD)'),
-      'IRR' => t('Iran Rial (IRR)'),
-      'ISK' => t('Iceland Krona (ISK)'),
-      'JMD' => t('Jamaican Dollar (JMD)'),
-      'JOD' => t('Jordanian Dinar (JOD)'),
-      'JPY' => t('Japanese Yen (JPY)'),
-      'KES' => t('Kenyan Shilling (KES)'),
-      'KHR' => t('Cambodia Riel (KHR)'),
-      'KMF' => t('Comoros Franc (KMF)'),
-      'KPW' => t('North Korean Won (KPW)'),
-      'KRW' => t('Korean Won (KRW)'),
-      'KWD' => t('Kuwaiti Dinar (KWD)'),
-      'KYD' => t('Cayman Islands Dollar (KYD)'),
-      'KZT' => t('Kazakhstan Tenge (KZT)'),
-      'LAK' => t('Lao Kip (LAK)'),
-      'LBP' => t('Lebanese Pound (LBP)'),
-      'LKR' => t('Sri Lanka Rupee (LKR)'),
-      'LRD' => t('Liberian Dollar (LRD)'),
-      'LSL' => t('Lesotho Loti (LSL)'),
-      'LTL' => t('Lithuanian Lita (LTL)'),
-      'LVL' => t('Latvian Lat (LVL)'),
-      'LYD' => t('Libyan Dinar (LYD)'),
-      'MAD' => t('Moroccan Dirham (MAD)'),
-      'MDL' => t('Moldovan Leu (MDL)'),
-      'MGF' => t('Malagasy Franc (MGF)'),
-      'MKD' => t('Macedonian Denar (MKD)'),
-      'MMK' => t('Myanmar Kyat (MMK)'),
-      'MNT' => t('Mongolian Tugrik (MNT)'),
-      'MOP' => t('Macau Pataca (MOP)'),
-      'MRO' => t('Mauritania Ougulya (MRO)'),
-      'MTL' => t('Maltese Lira (MTL)'),
-      'MUR' => t('Mauritius Rupee (MUR)'),
-      'MVR' => t('Maldives Rufiyaa (MVR)'),
-      'MWK' => t('Malawi Kwacha (MWK)'),
-      'MXN' => t('Mexican Peso (MXN)'),
-      'MYR' => t('Malaysian Ringgit (MYR)'),
-      'MZM' => t('Mozambique Metical (MZM)'),
-      'NAD' => t('Namibian Dollar (NAD)'),
-      'NGN' => t('Nigerian Naira (NGN)'),
-      'NIO' => t('Nicaragua Cordoba (NIO)'),
-      'NOK' => t('Norwegian Krone (NOK)'),
-      'NPR' => t('Nepalese Rupee (NPR)'),
-      'NZD' => t('New Zealand Dollar (NZD)'),
-      'OMR' => t('Omani Rial (OMR)'),
-      'PAB' => t('Panama Balboa (PAB)'),
-      'PEN' => t('Peruvian Nuevo Sol (PEN)'),
-      'PGK' => t('Papua New Guinea Kina (PGK)'),
-      'PHP' => t('Philippine Peso (PHP)'),
-      'PKR' => t('Pakistani Rupee (PKR)'),
-      'PLN' => t('Polish Zloty (PLN)'),
-      'PYG' => t('Paraguayan Guarani (PYG)'),
-      'QAR' => t('Qatar Rial (QAR)'),
-      'ROL' => t('Romanian Leu (ROL)'),
-      'RUB' => t('Russian Rouble (RUB)'),
-      'RWF' => t('Rwanda Franc (RWF)'),
-      'SAR' => t('Saudi Arabian Riyal (SAR)'),
-      'SBD' => t('Solomon Islands Dollar (SBD)'),
-      'SCR' => t('Seychelles Rupee (SCR)'),
-      'SDD' => t('Sudanese Dinar (SDD)'),
-      'SEK' => t('Swedish Krona (SEK)'),
-      'SGD' => t('Singapore Dollar (SGD)'),
-      'SHP' => t('St Helena Pound (SHP)'),
-      'SIT' => t('Slovenian Tolar (SIT)'),
-      'SKK' => t('Slovak Koruna (SKK)'),
-      'SLL' => t('Sierra Leone Leone (SLL)'),
-      'SOS' => t('Somali Shilling (SOS)'),
-      'SRG' => t('Surinam Guilder (SRG)'),
-      'STD' => t('Sao Tome Dobra (STD)'),
-      'SVC' => t('El Salvador Colon (SVC)'),
-      'SYP' => t('Syrian Pound (SYP)'),
-      'SZL' => t('Swaziland Lilageni (SZL)'),
-      'THB' => t('Thai Baht (THB)'),
-      'TND' => t('Tunisian Dinar (TND)'),
-      'TOP' => t('Tonga Pa\'anga (TOP)'),
-      'TRL' => t('Turkish Lira (TRL)'),
-      'TTD' => t('Trinidad & Tobago Dollar (TTD)'),
-      'TWD' => t('Taiwan Dollar (TWD)'),
-      'TZS' => t('Tanzanian Shilling (TZS)'),
-      'UAH' => t('Ukraine Hryvnia (UAH)'),
-      'UGX' => t('Ugandan Shilling (UGX)'),
-      'USD' => t('U.S. Dollar (USD)'),
-      'UYU' => t('Uruguayan New Peso (UYU)'),
-      'VEB' => t('Venezuelan Bolivar (VEB)'),
-      'VND' => t('Vietnam Dong (VND)'),
-      'VUV' => t('Vanuatu Vatu (VUV)'),
-      'WST' => t('Samoa Tala (WST)'),
-      'XAF' => t('CFA Franc (BEAC) (XAF)'),
-      'XAG' => t('Silver Ounces (XAG)'),
-      'XAU' => t('Gold Ounces (XAU)'),
-      'XCD' => t('East Caribbean Dollar (XCD)'),
-      'XOF' => t('CFA Franc (BCEAO) (XOF)'),
-      'XPD' => t('Palladium Ounces (XPD)'),
-      'XPF' => t('Pacific Franc (XPF)'),
-      'XPT' => t('Platinum Ounces (XPT)'),
-      'YER' => t('Yemen Riyal (YER)'),
-      'YUM' => t('Yugoslav Dinar (YUM)'),
-      'ZAR' => t('South African Rand (ZAR)'),
-      'ZMK' => t('Zambian Kwacha (ZMK)'),
-      'ZWD' => t('Zimbabwe Dollar (ZWD)'),
-    );
-
-    return $currency;
-  }
-}
-
 // Returns the e-mail from string in the format of Store Name <store@email.com>
 function uc_store_email_from() {
   $email_from = variable_get('uc_store_email', '');
@@ -2868,12 +2592,14 @@ function uc_store_email_from() {
     $email_from = variable_get('site_mail', ini_get('sendmail_from'));
   }
 
-  // Removed to prevent server conflicts; would love to figure out some way to
-  // add this feature back in. - RS
-  // $store = variable_get('uc_store_name', '');
-  // if (!empty($store)) {
-  //   $email_from = $store .' <'. $email_from .'>';
-  // }
+  // Add the store name to the e-mail from line.  Must be optional to prevent
+  // server conflicts.
+  if (variable_get('uc_store_email_include_name', TRUE)) {
+    $store = variable_get('uc_store_name', '');
+    if (!empty($store)) {
+      $email_from = $store .' <'. $email_from .'>';
+    }
+  }
 
   return $email_from;
 }
@@ -2901,8 +2627,8 @@ class uc_encryption_class {
 
   function uc_encryption_class() {
     $this->errors = array();
-    $this->scramble1 = '! #$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~';
-    $this->scramble2 = 'f^jAE]okIOzU[2&q1{3`h5w_794p@6s8?BgP>dFV=m D<TcS%Ze|r:lGK/uCy.Jx)HiQ!#$~(;Lt-R}Ma,NvW+Ynb*0X';
+    $this->scramble1 = '! #$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`"abcdefghijklmnopqrstuvwxyz{|}~';
+    $this->scramble2 = 'f^jAE]okIOzU[2&q1{3`h5w_794p@6s8?BgP>dFV=m" D<TcS%Ze|r:lGK/uCy.Jx)HiQ!#$~(;Lt-R}Ma,NvW+Ynb*0X';
     $this->adj = 1.75;
     $this->mod = 3;
   }
@@ -2955,8 +2681,10 @@ class uc_encryption_class {
     }
 
     if (empty($source)) {
-        $this->errors[] = t('No value has been supplied for encryption');
-        return;
+      // Commented out to prevent errors getting logged for use cases that may
+      // have variable encryption/decryption requirements. -RS
+      // $this->errors[] = t('No value has been supplied for encryption');
+      return;
     }
 
     while (strlen($source) < $sourcelen) {
@@ -3033,7 +2761,9 @@ class uc_encryption_class {
 
   function _convertKey ($key) {
     if (empty($key)) {
-      $this->errors[] = 'No value has been supplied for the encryption key';
+      // Commented out to prevent errors getting logged for use cases that may
+      // have variable encryption/decryption requirements. -RS
+      // $this->errors[] = 'No value has been supplied for the encryption key';
       return;
     }
 
@@ -3114,3 +2844,39 @@ function uc_add_js($data = NULL, $type = 'module', $scope = 'header', $defer = F
   }
 }
 
+// Builds the version info reported to Ubercart.org.
+function uc_store_report_data() {
+  // Build the data array.
+  $data = array(
+    'site_id' => variable_get('uc_store_site_id', ''),
+    'server_name' => $_SERVER['SERVER_NAME'],
+    'php_version' => PHP_VERSION,
+    'drupal_version' => VERSION,
+    'db_type' => $GLOBALS['db_type'],
+    'db_version' => db_version(),
+  );
+
+  // Grab the Ubercart version from uc_store.info.
+  $info = _module_parse_info_file(drupal_get_path('module', 'uc_store') .'/uc_store.info');
+  $data['ubercart_version'] = $info['version'] ? $info['version'] : 'bzr';
+
+  return $data;
+}
+
+function uc_store_send_report() {
+  // Load the version data array.
+  $data = uc_store_report_data();
+
+  // Set the time of our report.
+  variable_set('uc_store_last_report', time());
+
+  // Send the data off to Ubercart.org.
+  $response = drupal_http_request('http://www.ubercart.org/statistics/report', array('Content-Type' => 'application/x-www-form-urlencoded'), 'POST', drupal_query_string_encode($data));
+
+  // If we got a response, store it as the site ID.
+  if ($response->data) {
+    variable_set('uc_store_site_id', $response->data);
+  }
+
+  watchdog('uc_store', t('Reported the following version info to Ubercart.org:') .'<pre>'. print_r($data, TRUE) .'</pre>');
+}

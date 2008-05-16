@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.5.2.7 2008/04/23 19:38:05 rszrama Exp $
+// $Id: uc_shipping.module,v 1.5.2.8 2008/05/16 20:30:50 rszrama Exp $
 
 /**
  * @file
@@ -202,7 +202,7 @@ function uc_shipping_order_packages($order_id) {
     if ($package->sid && $package->label_image) {
       $method = db_result(db_query("SELECT shipping_method FROM {uc_shipments} WHERE sid = %d", $package->sid));
     }
-    $row[] = isset($package->label_image) ? l(theme('imagecache', 'thumbnail', $package->label_image, t('Shipping Label'), t('Shipping Label')), 'admin/store/orders/'. $order_id .'/shipments/labels/'. $method .'/'. $package->label_image, array(), null, null, false, true) : '';
+    $row[] = isset($package->label_image) ? l(theme('imagecache', 'uc_thumbnail', $package->label_image, t('Shipping Label'), t('Shipping Label')), 'admin/store/orders/'. $order_id .'/shipments/labels/'. $method .'/'. $package->label_image, array(), null, null, false, true) : '';
     $row[] = l(t('edit'), 'admin/store/orders/'. $order_id .'/packages/'. $package->package_id .'/edit');
     $row[] = l(t('delete'), 'admin/store/orders/'. $order_id .'/packages/'. $package->package_id .'/delete');
     if ($package->sid) {

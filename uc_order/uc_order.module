@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.9 2008/04/23 19:38:09 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.10 2008/05/16 20:30:52 rszrama Exp $
 
 /**
  * @file
@@ -97,7 +97,7 @@ function uc_order_menu($may_cache) {
       'title' => t('Orders'),
       'description' => t('View and process orders.'),
       'callback' => 'uc_order_admin',
-      'callback arguments' => array(NULL, FALSE),
+      'callback arguments' => array(NULL, NULL, FALSE),
       'access' => user_access('view all orders'),
       'weight' => -10,
       'type' => MENU_NORMAL_ITEM,
@@ -106,7 +106,7 @@ function uc_order_menu($may_cache) {
       'path' => 'admin/store/orders/view',
       'title' => t('View orders'),
       'description' => t('View and process the orders received through your website.'),
-      'callback arguments' => array(NULL, FALSE),
+      'callback arguments' => array(NULL, NULL, FALSE),
       'access' => user_access('view all orders'),
       'weight' => -10,
       'type' => MENU_NORMAL_ITEM,
@@ -1065,7 +1065,7 @@ function uc_order_panes_form() {
 /**
  * Display the main order admin screen, an overview of all received orders.
  */
-function uc_order_admin($sql = NULL, $search = FALSE) {
+function uc_order_admin($sql = NULL, $args = NULL, $search = FALSE) {
   $header = array(
     array('data' => t('Actions')),
     array('data' => t('Order ID'), 'field' => 'o.order_id', 'sort' => 'desc'),
@@ -1076,15 +1076,18 @@ function uc_order_admin($sql = NULL, $search = FALSE) {
   );
 
   if (is_null($sql)) {
+    $args = array();
     $show_status = 1;
 
     if (arg(3) == 'sort' && !is_null(arg(4))) {
       $_SESSION['sort_status'] = arg(4);
-      $where = "WHERE o.order_status = '". arg(4) ."'";
+      $where = "WHERE o.order_status = '%s'";
+      $args[] = arg(4);
     }
     else {
       if (isset($_SESSION['sort_status']) && !is_null($_SESSION['sort_status'])) {
-        $where = "WHERE o.order_status = '". $_SESSION['sort_status'] ."'";
+        $where = "WHERE o.order_status = '%s'";
+        $args[] = $_SESSION['sort_status'];
       }
       else {
         $where = 'WHERE o.order_status IN '. uc_order_status_list('general', TRUE);
@@ -1106,7 +1109,7 @@ function uc_order_admin($sql = NULL, $search = FALSE) {
     $address = 'billing';
   }
 
-  $result = pager_query($sql, variable_get('uc_order_number_displayed', 30));
+  $result = pager_query($sql, variable_get('uc_order_number_displayed', 30), 0, NULL, $args);
   while ($order = db_fetch_object($result)) {
     if ($address == 'shipping') {
       $order_name = $order->delivery_first_name .' '. $order->delivery_last_name;
@@ -1313,30 +1316,39 @@ function uc_order_usearch() {
     $start_date = check_plain(arg(11));
     $end_date = check_plain(arg(12));
 
+    $args = array();
     if ($billing_first_name !== '0' && $billing_first_name !== '%') {
-      $where .= " AND LOWER(o.billing_first_name) LIKE '". $billing_first_name ."'";
+      $where .= " AND LOWER(o.billing_first_name) LIKE '%s'";
+      $args[] = $billing_first_name;
     }
     if ($billing_last_name !== '0' && $billing_last_name !== '%') {
-      $where .= " AND LOWER(o.billing_last_name) LIKE '". $billing_last_name ."'";
+      $where .= " AND LOWER(o.billing_last_name) LIKE '%s'";
+      $args[] = $billing_last_name;
     }
     if ($billing_company !== '0' && $billing_company !== '%') {
-      $where .= " AND LOWER(o.billing_company) LIKE '". $billing_company ."'";
+      $where .= " AND LOWER(o.billing_company) LIKE '%s'";
+      $args[] = $billing_company;
     }
     if ($shipping_first_name !== '0' && $shipping_first_name !== '%') {
-      $where .= " AND LOWER(o.delivery_first_name) LIKE '". $shipping_first_name ."'";
+      $where .= " AND LOWER(o.delivery_first_name) LIKE '%s'";
+      $args[] = $shipping_first_name;
     }
     if ($shipping_last_name !== '0' && $shipping_last_name !== '%') {
-      $where .= " AND LOWER(o.delivery_last_name) LIKE '". $shipping_last_name ."'";
+      $where .= " AND LOWER(o.delivery_last_name) LIKE '%s'";
+      $args[] = $shipping_last_name;
     }
     if ($shipping_company !== '0' && $shipping_company !== '%') {
-      $where .= " AND LOWER(o.delivery_company) LIKE '". $shipping_company ."'";
+      $where .= " AND LOWER(o.delivery_company) LIKE '%s'";
+      $args[] = $shipping_company;
     }
 
     if ($start_date !== '0') {
-      $where .= " AND o.created >= ". $start_date;
+      $where .= " AND o.created >= %d";
+      $args[] = $start_date;
     }
     if ($end_date !== '0') {
-      $where .= " AND o.created <= ". $end_date;
+      $where .= " AND o.created <= %d";
+      $args[] = $end_date;
     }
 
     $sql = 'SELECT o.order_id, o.billing_first_name, o.billing_last_name, o.order_total, '
@@ -1344,7 +1356,7 @@ function uc_order_usearch() {
           .'ON o.order_status = os.order_status_id WHERE o.order_status NOT IN '. uc_order_status_list('specific', TRUE)
          . $where .' ORDER BY o.created DESC';
 
-    $output .= uc_order_admin($sql, TRUE);
+    $output .= uc_order_admin($sql, $args, TRUE);
   }
 
   return $output;
@@ -2604,7 +2616,7 @@ function uc_order_load($order_id) {
   usort($order->line_items, 'uc_weight_sort');
 
   // Make sure the total still matches up...
-  if (($total = uc_order_get_total($order)) != $order->order_total) {
+  if (($total = uc_order_get_total($order)) !== $order->order_total) {
     db_query("UPDATE {uc_orders} SET order_total = %f WHERE order_id = %d", $total, $order->order_id);
     $order->order_total = $total;
   }

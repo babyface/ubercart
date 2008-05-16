@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.4.2.9 2008/04/23 19:38:03 rszrama Exp $
+// $Id: uc_payment.module,v 1.4.2.10 2008/05/16 20:30:49 rszrama Exp $
 
 /**
  * @file
@@ -902,8 +902,7 @@ function uc_payment_process($method, $order_id, $amount, $data = NULL, $default 
     if (!empty($result['uid'])) {
       $result['uid'] = 0;
     }
-    uc_payment_enter($order_id, $method, $amount, $result['uid'],
-                     $result['data'], $result['comment']);
+    uc_payment_enter($order_id, $method, $amount, $result['uid'], $result['data'], $result['comment']);
   }
   else {
     watchdog('uc_payment', t('Payment failed: !message', array('!message' => $result['message'])), WATCHDOG_WARNING);
