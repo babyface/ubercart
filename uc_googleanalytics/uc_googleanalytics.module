@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_googleanalytics.module,v 1.5.2.3 2008/04/23 19:38:08 rszrama Exp $
+// $Id: uc_googleanalytics.module,v 1.5.2.4 2008/06/04 20:33:20 rszrama Exp $
 
 /**
  * @file
@@ -98,7 +98,7 @@ function _uc_googleanalytics_ecommerce_form(&$order) {
   
   foreach ($order->line_items as $line_item) {
     if ($line_item['type'] == 'tax') {
-      $tax += $lite_item['amount'];
+      $tax += $line_item['amount'];
     }
     if ($line_item['type'] == 'shipping') {
       $shipping_cost += $line_item['amount'];

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.install,v 1.8.2.7 2008/05/16 20:30:53 rszrama Exp $
+// $Id: uc_store.install,v 1.8.2.8 2008/06/04 20:33:22 rszrama Exp $
 
 function uc_store_install() {
   switch ($GLOBALS['db_type']) {
@@ -85,7 +85,6 @@ function uc_store_uninstall() {
   variable_del('uc_store_name');
   variable_del('uc_store_owner');
   variable_del('uc_store_email');
-  variable_del('uc_store_email_from');
   variable_del('uc_store_phone');
   variable_del('uc_store_fax');
   variable_del('uc_store_street1');

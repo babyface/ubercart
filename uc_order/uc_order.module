@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.10 2008/05/16 20:30:52 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.11 2008/06/04 20:33:21 rszrama Exp $
 
 /**
  * @file
@@ -1438,6 +1438,15 @@ function uc_order_search_form() {
 
   $form['search']['table8'] = array('#value' => '</td></tr><tr><td>');
 
+  $form['search']['use_dates'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Search using date range.'),
+    '#description' => t('Specify dates to the right if checked.'),
+    '#default_value' => arg(11) != 0 ? 1 : 0,
+  );
+
+  $form['search']['table9'] = array('#value' => '</td><td>');
+
   $timestamp = arg(11) == 0 ? time() : arg(11);
   $form['search']['start_date'] = array(
     '#type' => 'date',
@@ -1445,21 +1454,13 @@ function uc_order_search_form() {
     '#default_value' => array('year' => format_date($timestamp, 'custom', 'Y'), 'month' => format_date($timestamp, 'custom', 'n'), 'day' => format_date($timestamp, 'custom', 'j'))
   );
 
-  $form['search']['table9'] = array('#value' => '</td><td>');
+  $form['search']['table10'] = array('#value' => '</td><td>');
 
   $timestamp = arg(12) == 0 ? time() : arg(12);
   $form['search']['end_date'] = array(
     '#type' => 'date',
     '#title' => t('End date'),
     '#default_value' => array('year' => format_date($timestamp, 'custom', 'Y'), 'month' => format_date($timestamp, 'custom', 'n'), 'day' => format_date($timestamp, 'custom', 'j')),
-  );
-
-  $form['search']['table10'] = array('#value' => '</td><td>');
-
-  $form['search']['use_dates'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Search using date range.'),
-    '#default_value' => arg(11) != 0 ? 1 : 0,
   );
 
   $form['search']['table11'] = array('#value' => '</td></tr><tr><td colspan="3">');
@@ -2106,9 +2107,7 @@ function uc_order_mail_invoice_form_submit($form_id, $form_values) {
   $output = uc_order_load_invoice($order, 'admin-mail', variable_get('uc_cust_order_invoice_template', 'customer'));
   $recipient = check_plain($form_values['email']);
 
-  $sent = drupal_mail('invoice', $recipient, t('Your Order Invoice'),
-            $output, variable_get('uc_store_email_from', variable_get('site_mail', ini_get('sendmail_from'))),
-            array('Content-Type' => 'text/html; charset=UTF-8; format=flowed'));
+  $sent = drupal_mail('invoice', $recipient, t('Your Order Invoice'), $output, uc_store_email_from(), array('Content-Type' => 'text/html; charset=UTF-8; format=flowed'));
 
   if (!$sent) {
     drupal_set_message(t('E-mail failed.'));
@@ -2158,7 +2157,7 @@ function uc_order_delete_confirm($order_id) {
   }
 
   if (!uc_order_can_delete($order)) {
-    drupal_set_message(t('It is not possible to delete order %id.', array('%id' => $order->order_id)));
+    drupal_set_message(t('It is not possible to delete order @id.', array('@id' => $order->order_id)));
     drupal_goto('admin/store/orders');
   }
 
@@ -2294,7 +2293,7 @@ function uc_order_select_customer($email = NULL) {
       $user = user_save(NULL, $data);
       if ($_POST['sendmail'] == 'true') {
         $variables = array('!username' => $data['name'], '!site' => variable_get('site_name', 'Drupal'), '!password' => $data['pass'], '!uri' => $base_url, '!uri_brief' => substr($base_url, strlen('http://')), '!mailto' => $data['mail'], '!date' => format_date(time()), '!login_uri' => url('user', NULL, NULL, TRUE), '!edit_uri' => url('user/'. $user->uid .'/edit', NULL, NULL, TRUE), '!login_url' => user_pass_reset_url($user));
-        $from = variable_get('uc_store_email_from', ini_get('sendmail_from'));
+        $from = uc_store_email_from();
         $subject = _user_mail_text('welcome_subject', $variables);
         $body = _user_mail_text('welcome_body', $variables);
         drupal_mail('user-register-welcome', $user->mail, $subject, $body, $from);

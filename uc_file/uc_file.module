@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.1.2.9 2008/05/16 20:30:51 rszrama Exp $
+// $Id: uc_file.module,v 1.1.2.10 2008/06/04 20:33:19 rszrama Exp $
 
 /**
  * @file
@@ -950,7 +950,7 @@ function _email_file_download($user, $order, $file_users) {
   $token_filters = array('global' => NULL, 'user' => $user, 'order' => $order, 'uc_file' => $file_users);
   $key = 'uc_file_download_notify';
   $to = $order->primary_email;
-  $from = variable_get('uc_store_email_from', ini_get('sendmail_from'));
+  $from = uc_store_email_from();
   $subject = token_replace_multiple(variable_get('uc_file_download_notification_subject', uc_get_message('uc_file_download_subject')), $token_filters);
   $body = token_replace_multiple(variable_get('uc_file_download_notification_message', uc_get_message('uc_file_download_message')), $token_filters);
   $body = check_markup($body, variable_get('uc_file_download_notification_format', 3), FALSE);

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.13.2.10 2008/05/16 20:30:52 rszrama Exp $
+// $Id: uc_product.module,v 1.13.2.11 2008/06/04 20:33:21 rszrama Exp $
 
 /**
  * @file
@@ -31,17 +31,11 @@ function uc_product_menu($may_cache) {
       'callback' => 'uc_product_default',
       'type' => MENU_SUGGESTED_ITEM,
     );
-    /* $items[] = array(
-      'path' => 'node/add/product',
-      'title' => t('Product'),
-      'access' => user_access('create products'),
-    ); */
     $items[] = array(
       'path' => 'admin/store/products',
       'title' => t('Products'),
       'description' => t('Administer products, classes, and more.'),
       'access' => user_access('administer products'),
-      //'callback' => 'uc_product_overview',
       'callback' => 'uc_product_administration',
       'type' => MENU_NORMAL_ITEM,
       'weight' => -2,
@@ -1458,7 +1452,7 @@ function uc_product_cart_display($item) {
   }
 
   $element['title'] = array(
-    '#value' => l($node->title, 'node/'. $node->nid),
+    '#value' => l($item->title, 'node/'. $node->nid),
   );
   $element['#total'] = $item->price * $item->qty;
   $element['data'] = array('#type' => 'hidden', '#value' => serialize($item->data));
@@ -2748,14 +2742,18 @@ function uc_product_feature_data($fid, $key) {
  * @ingroup forms
  */
 function uc_product_feature_form($form) {
-  $form['nid'] = array(
-    '#type' => 'hidden',
-    '#value' => intval(arg(1)),
-  );
-  $form['pfid'] = array(
-    '#type' => 'hidden',
-    '#value' => intval(arg(5)),
-  );
+  if (!isset($form['nid'])) {
+    $form['nid'] = array(
+      '#type' => 'hidden',
+      '#value' => intval(arg(1)),
+    );
+  }
+  if (!isset($form['pfid'])) {
+    $form['pfid'] = array(
+      '#type' => 'hidden',
+      '#value' => intval(arg(5)),
+    );
+  }
 
   $form['submit'] = array(
     '#type' => 'submit',

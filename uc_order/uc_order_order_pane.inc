@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_order_pane.inc,v 1.4.2.7 2008/04/23 19:38:09 rszrama Exp $
+// $Id: uc_order_order_pane.inc,v 1.4.2.8 2008/06/04 20:33:21 rszrama Exp $
 
 /**
  * @file
@@ -608,6 +608,7 @@ function uc_order_view_update_form($order) {
 
   $form['controls'] = array(
     '#theme' => 'uc_order_view_update_controls',
+    '#weight' => 10,
   );
 
   foreach (uc_order_status_list('general') as $status) {

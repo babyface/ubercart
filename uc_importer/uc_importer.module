@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_importer.module,v 1.6.2.8 2008/05/16 20:30:52 rszrama Exp $
+// $Id: uc_importer.module,v 1.6.2.9 2008/06/04 20:33:20 rszrama Exp $
 
 /**
  * @file
@@ -198,7 +198,7 @@ function uc_importer_export_page() {
     'select' => 'buffer_products("'. file_create_url('') .'")',
   );
 
-  if (module_exists('uc_catalog')) {
+  if (module_exists('uc_catalog') && variable_get('uc_catalog_vid', 0)) {
     $output .= ubrowser($settings, 'products-selector');
     $output .= drupal_get_form('uc_importer_export_buffer_form', $nids);
   }
@@ -583,6 +583,7 @@ function _uc_importer_export_products($products) {
     $xml .= '<length_units>'. $product->length_units .'</length_units>';
     $xml .= '<pkg_qty>'. $product->pkg_qty .'</pkg_qty>';
     $xml .= '<default_qty>'. $product->default_qty .'</default_qty>';
+    $xml .= '<shippable>'. $product->shippable .'</shippable>';
     if (isset($product->field_image_cache) && file_exists($product->field_image_cache[0]['filepath'])) {
       foreach ($product->field_image_cache as $image) {
         $xml .= '<image>';
@@ -1045,6 +1046,9 @@ function uc_importer_import($xml) {
           }
           if (isset($product_data->default_qty)) {
             $product->default_qty = (int)$product_data->default_qty[0]->data();
+          }
+          if (isset($product_data->shippable)) {
+            $product->shippable = (int)$product_data->shippable[0]->data();
           }
           $i = 0;
           if (module_exists('imagefield')) {

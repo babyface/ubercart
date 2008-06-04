@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.5.2.8 2008/05/16 20:30:50 rszrama Exp $
+// $Id: uc_shipping.module,v 1.5.2.9 2008/06/04 20:33:18 rszrama Exp $
 
 /**
  * @file
@@ -938,7 +938,7 @@ function uc_shipping_shipment_edit($order_id, $shipment) {
   $form['shipment']['accessorials'] = array('#type' => 'textfield',
     '#title' => t('Shipment options'),
     '#default_value' => $shipment->accessorials,
-    '#description' => t('Short notes about the shipment, e.g. residentail, overnight, etc.'),
+    '#description' => t('Short notes about the shipment, e.g. residential, overnight, etc.'),
   );
   $form['shipment']['transaction_id'] = array('#type' => 'textfield',
     '#title' => t('Transaction ID'),

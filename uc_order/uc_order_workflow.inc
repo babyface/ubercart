@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_workflow.inc,v 1.1.2.5 2008/05/16 20:30:52 rszrama Exp $
+// $Id: uc_order_workflow.inc,v 1.1.2.6 2008/06/04 20:33:21 rszrama Exp $
 
 /**
  * @file
@@ -374,7 +374,7 @@ function uc_order_condition_has_products($order, $settings) {
     $required_check = (bool)count($required);
   }
   if ($settings['forbidden']) {
-    $forbidden = array_diff($settings['products'], $products);
+    $forbidden = array_diff($products, $settings['products']);
     $forbidden_check = (bool)count($forbidden);
   }
   else {
@@ -427,7 +427,7 @@ function uc_order_condition_count_products($order, $settings) {
   $total = 0;
   foreach ($order->products as $product) {
     $totals['all'] += $product->qty;
-    $totals[$product->model] = $product->qty;
+    $totals[$product->nid] = $product->qty;
   }
   if (in_array('all', $settings['products'])) {
     $total = $totals['all'];

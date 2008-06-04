@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.4.2.8 2008/04/23 19:38:04 rszrama Exp $
+// $Id: uc_paypal.module,v 1.4.2.9 2008/06/04 20:33:17 rszrama Exp $
 
 /**
  * @file
@@ -195,11 +195,19 @@ function uc_paypal_payment_method() {
 
 // Settings for Website Payments Pro on the Payment gateways form.
 function uc_paypal_wpp_settings_form() {
+  // The DoDirectPayment API call allows fewer currencies than PayPal in general.
   $form['paypal_wpp']['uc_paypal_wpp_currency'] = array(
     '#type' => 'select',
     '#title' => t('Currency code'),
     '#description' => t('Transactions can only be processed in one of the listed currencies.'),
-    '#options' => _uc_paypal_currency_array(),
+    '#options' => drupal_map_assoc(array(
+      'AUD',
+      'CAD',
+      'EUR',
+      'GBP',
+      'JPY',
+      'USD',
+    )),
     '#default_value' => variable_get('uc_paypal_wpp_currency', 'USD'),
   );
   $form['paypal_wpp']['uc_paypal_wpp_server'] = array(
@@ -464,7 +472,7 @@ function uc_payment_method_paypal_wps($op, &$arg1) {
       $form['uc_paypal_wps_payment_action'] = array(
         '#type' => 'select',
         '#title' => t('Payment action'),
-        '#description' => t('"Complete sale" will authorize and capture the funds at the time the payment is processed.<br>"Authorization" will only reserve funds on the card to be captured later through your PayPal account.'), 
+        '#description' => t('"Complete sale" will authorize and capture the funds at the time the payment is processed.<br>"Authorization" will only reserve funds on the card to be captured later through your PayPal account.'),
         '#options' => array(
           'Sale' => t('Complete sale'),
           'Authorization' => t('Authorization'),
@@ -575,7 +583,6 @@ function uc_paypal_ipn($order_id = 0) {
   $txn_id = check_plain($_POST['txn_id']);
   $txn_type = check_plain($_POST['txn_type']);
   $payer_email = check_plain($_POST['payer_email']);
-  $receiver_email = check_plain($_POST['receiver_email']);
 
   $req = 'cmd=_notify-validate';
 
@@ -595,24 +602,32 @@ function uc_paypal_ipn($order_id = 0) {
 
   // Post back to PayPal to validate
   $header = "POST /cgi-bin/webscr HTTP/1.0\r\n";
-  $header .= "Host: ".$host[0].":80\r\n";
+  $header .= 'Host: '. $host[0] ."\r\n";
   $header .= "Content-Type: application/x-www-form-urlencoded\r\n";
-  $header .= "Content-Length: ". strlen($req) ."\r\n\r\n";
+  $header .= 'Content-Length: '. strlen($req) ."\r\n\r\n";
 
-  $fp = fsockopen($host[0], 80, $errno, $errstr, 30);
+  // Address a screw-up on PayPal's Sandbox that prevents normal validation.
+  if (strpos($host[0], 'sandbox') !== FALSE && function_exists('openssl_open')) {
+    $fp = fsockopen('ssl://www.sandbox.paypal.com', 443, $errno, $errstr, 30);
+  }
+  else {
+    // The old "normal" way of validating an IPN.
+    $fp = fsockopen($host[0], 80, $errno, $errstr, 30);
+  }
+
 
   if (!$fp) {
     watchdog('uc_paypal', t('IPN failed with HTTP error.'), WATCHDOG_ERROR);
     return;
   }
 
-  fputs ($fp, $header . $req);
+  fputs($fp, $header . $req);
   while (!feof($fp)) {
     $res = fgets($fp, 1024);
     if (strcmp ($res, 'VERIFIED') == 0) {
       watchdog('uc_paypal', t('IPN transaction verified.'));
 
-      $duplicate = db_result(db_query("SELECT COUNT(*) FROM {uc_payment_paypal_ipn} WHERE txn_id = '%s'", $txn_id));
+      $duplicate = db_result(db_query("SELECT COUNT(*) FROM {uc_payment_paypal_ipn} WHERE txn_id = '%s' AND status != 'Pending'", $txn_id));
       if ($duplicate > 0) {
         if ($order->payment_method != 'credit') {
           watchdog('uc_paypal', t('IPN transaction ID has been processed before.'), WATCHDOG_NOTICE);
@@ -639,7 +654,7 @@ function uc_paypal_ipn($order_id = 0) {
           $comment = t('PayPal transaction ID: @txn_id', array('@txn_id' => $txn_id));
           uc_payment_enter($order_id, 'paypal_wps', $payment_amount, $order->uid, NULL, $comment);
           uc_cart_complete_sale($order);
-          uc_order_comment_save($order_id, 0, t('Payment of !amount !currency submitted through PayPal.', array('!amount' => uc_currency_format($payment_amount, FALSE), '!currency' => $payment_currency)), 'customer', 'payment_received');
+          uc_order_comment_save($order_id, 0, t('Payment of !amount !currency submitted through PayPal.', array('!amount' => uc_currency_format($payment_amount, FALSE), '!currency' => $payment_currency)), 'order', 'payment_received');
           uc_order_comment_save($order_id, 0, t('PayPal IPN reported a payment of !amount !currency.', array('!amount' => uc_currency_format($payment_amount, FALSE), '!currency' => $payment_currency)));
           break;
 
@@ -1095,6 +1110,11 @@ function uc_paypal_ec_submit_form() {
 }
 
 function uc_paypal_ec_submit_form_submit($form_id, $form_values) {
+  if ($form_values['op'] == t('Back')) {
+    unset($_SESSION['TOKEN'], $_SESSION['PAYERID']);
+    return;
+  }
+
   $order = uc_order_load($_SESSION['cart_order']);
 
   list($desc, $subtotal) = _uc_paypal_product_details($order->products);
@@ -1258,7 +1278,7 @@ function uc_paypal_wps_form($order) {
       // PayPal will only display the first two...
       if (is_array($item->data['attributes']) && count($item->data['attributes']) > 0) {
         $o = 0;
-        foreach ($item->data['attributes'] as $name => $setting) { 
+        foreach ($item->data['attributes'] as $name => $setting) {
           $data['on'. $o .'_'. $i] = $name;
           $data['os'. $o .'_'. $i] = $setting;
           $o++;

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.4.2.9 2008/05/16 20:30:50 rszrama Exp $
+// $Id: uc_quote.module,v 1.4.2.10 2008/06/04 20:33:18 rszrama Exp $
 
 /**
  * @file
@@ -428,7 +428,9 @@ function uc_quote_action_get_quote($order, $method) {
     // methods won't mess up the products in their methods.
     $products = array();
     foreach ($order->products as $key => $item) {
-      $products[$key] = drupal_clone($item);
+      if (uc_cart_product_is_shippable($item)) {
+        $products[$key] = drupal_clone($item);
+      }
     }
     $quote_data = call_user_func($method['quote']['callback'], $products, $details, $method);
   }
@@ -491,6 +493,14 @@ function uc_quote_order_pane() {
   );
 
   return $panes;
+}
+
+function uc_quote_add_to_cart() {
+  unset($_SESSION['quote']);
+}
+
+function uc_quote_update_cart_item() {
+  unset($_SESSION['quote']);
 }
 
 /**
@@ -1356,7 +1366,12 @@ function uc_quote_request_quotes() {
     $product->cost = $props[5];
     $product->price = $props[6];
     $product->weight = $props[7];
-    $product->data = $props[8];
+    if ($data = unserialize($props[8])) {
+      $product->data = $data;
+    }
+    else {
+      $product->data = $props[8];
+    }
     if ($product->nid) {
       $node = (array)node_load($product->nid);
       foreach ($node as $key => $value) {

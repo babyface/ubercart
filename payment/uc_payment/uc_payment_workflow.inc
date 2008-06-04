@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_workflow.inc,v 1.1.2.4 2008/05/16 20:30:49 rszrama Exp $
+// $Id: uc_payment_workflow.inc,v 1.1.2.5 2008/06/04 20:33:17 rszrama Exp $
 
 /**
  * @file
@@ -14,6 +14,8 @@
 
 // Tell Workflow about default configurations.
 function uc_payment_configuration() {
+  // Set the order status to "Payment Received" when a payment is received
+  // and the balance is less than or equal to 0.
   $configurations['uc_payment_received'] = array(
     '#type' => 'configuration',
     '#label' => t('Update order status on full payment'),
@@ -39,6 +41,44 @@ function uc_payment_configuration() {
     ),
     '#settings' => array(
       'order_status' => 'payment_received',
+    ),
+  );
+
+  // Set the order status to "Completed" when checkout is complete, none
+  // of the products are shippable, and the balance is less than or equal to 0.
+  $configurations['uc_checkout_complete'] = array(
+    '#type' => 'configuration',
+    '#label' => t('Update order status on completed checkout'),
+    '#event' => 'payment_entered',
+    '#module' => 'uc_payment',
+    '#active' => TRUE,
+  );
+  $configurations['uc_checkout_complete'][] = array(
+    '#type' => 'condition',
+    '#name' => 'uc_payment_condition_balance',
+    '#argument map' => array(
+      'order' => 'order',
+    ),
+    '#settings' => array(
+      'balance_comparison' => 'less_equal',
+    ),
+  );
+  $configurations['uc_checkout_complete'][] = array(
+    '#type' => 'condition',
+    '#name' => 'uc_order_condition_is_shippable',
+    '#argument map' => array(
+      'order' => 'order',
+    ),
+    '#negate' => TRUE,
+  );
+  $configurations['uc_checkout_complete'][] = array(
+    '#type' => 'action',
+    '#name' => 'uc_order_action_update_status',
+    '#argument map' => array(
+      'order' => 'order',
+    ),
+    '#settings' => array(
+      'order_status' => 'completed',
     ),
   );
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.4.2.9 2008/05/16 20:30:50 rszrama Exp $
+// $Id: uc_ups.module,v 1.4.2.10 2008/06/04 20:33:19 rszrama Exp $
 
 /**
  * @file
@@ -406,7 +406,7 @@ function uc_ups_shipping_quote($packages, $origin, $destination, $ups_service) {
   $store['name'] = variable_get('uc_store_name', NULL);
   $store['owner'] = variable_get('uc_store_owner', NULL);
   $store['email'] = variable_get('uc_store_email', NULL);
-  $store['email_from'] = variable_get('uc_store_email_from', NULL);
+  $store['email_from'] = variable_get('uc_store_email', NULL);
   $store['phone'] = variable_get('uc_store_phone', NULL);
   $store['fax'] = variable_get('uc_store_fax', NULL);
   $store['street1'] = variable_get('uc_store_street1', NULL);
@@ -585,7 +585,7 @@ function uc_ups_shipment_request($packages, $origin, $destination, $ups_service)
   $store['name'] = variable_get('uc_store_name', NULL);
   $store['owner'] = variable_get('uc_store_owner', NULL);
   $store['email'] = variable_get('uc_store_email', NULL);
-  $store['email_from'] = variable_get('uc_store_email_from', NULL);
+  $store['email_from'] = variable_get('uc_store_email', NULL);
   $store['phone'] = variable_get('uc_store_phone', NULL);
   $store['fax'] = variable_get('uc_store_fax', NULL);
   $store['street1'] = variable_get('uc_store_street1', NULL);

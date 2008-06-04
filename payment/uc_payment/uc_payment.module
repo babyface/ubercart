@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.4.2.10 2008/05/16 20:30:49 rszrama Exp $
+// $Id: uc_payment.module,v 1.4.2.11 2008/06/04 20:33:17 rszrama Exp $
 
 /**
  * @file
@@ -899,7 +899,7 @@ function uc_payment_process($method, $order_id, $amount, $data = NULL, $default 
   }
 
   if ($result['success'] === TRUE) {
-    if (!empty($result['uid'])) {
+    if (empty($result['uid'])) {
       $result['uid'] = 0;
     }
     uc_payment_enter($order_id, $method, $amount, $result['uid'], $result['data'], $result['comment']);

@@ -1,11 +1,9 @@
 <?php
-// $Id: uc_2checkout.module,v 1.5.2.4 2008/05/16 20:30:49 rszrama Exp $
+// $Id: uc_2checkout.module,v 1.5.2.5 2008/06/04 20:33:17 rszrama Exp $
 
 /**
  * @file
  * Integrates 2Checkout.com's redirected payment service.
- *
- * Development sponsored by .
  */
 
 /*******************************************************************************
@@ -21,6 +19,13 @@ function uc_2checkout_menu($may_cache) {
       'path' => 'cart/2checkout/complete',
       'title' => t('Order complete'),
       'callback' => 'uc_2checkout_complete',
+      'access' => user_access('access content'),
+      'type' => MENU_CALLBACK,
+    );
+    $items[] = array(
+      'path' => 'cart/2checkout/finalize',
+      'title' => t('Order complete'),
+      'callback' => 'uc_2checkout_finalize',
       'access' => user_access('access content'),
       'type' => MENU_CALLBACK,
     );
@@ -268,14 +273,42 @@ function uc_2checkout_complete($cart_id = 0) {
 
   // Empty that cart...
   uc_cart_empty($cart_id);
+  
+  // Save changes to order without it's completion (it will be on finalization step)
+  uc_order_save($order);
 
-  $output .= uc_cart_complete_sale($order);
+  $url = 'cart/2checkout/finalize/'. $order->order_id;
+
+  // Javascript redirect on the finalization page.
+  $output = '<script type="text/javascript">window.location = "'. url($url, NULL, NULL, TRUE) .'";</script>';
+
+  // Text link for users without Javascript enabled.
+  $output .= l('Click to complete checkout.', $url, array(), NULL, NULL, TRUE);
+
+  // 2CO needs page larger than 255 characters to display.
+  while (strlen($output) < 255) {
+    $output .= '&nbsp;';
+  }
+
+  print $output;
+  exit();
+}
+
+function uc_2checkout_finalize() {
+  $order = uc_order_load(arg(3));
 
   // Add a comment to let sales team know this came in through the site.
   uc_order_comment_save($order->order_id, 0, t('Order created through website.'), 'admin');
 
-  print $output;
-  exit();
+  $output = uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
+
+  $page = variable_get('uc_cart_checkout_complete_page', '');
+
+  if (!empty($page)) {
+    drupal_goto($page);
+  }
+
+  return $output;
 }
 
 function _2checkout_post_url($type) {

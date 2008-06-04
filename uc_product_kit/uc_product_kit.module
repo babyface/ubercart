@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.10.2.7 2008/05/16 20:30:52 rszrama Exp $
+// $Id: uc_product_kit.module,v 1.10.2.8 2008/06/04 20:33:21 rszrama Exp $
 
 /**
  * @file
@@ -134,19 +134,18 @@ function uc_product_kit_update(&$node) {
     $values[] = $node->nid;
     $values[] = $product;
     $values[] = $node->mutable;
+    $product = node_load($product);
     if (is_null($node->items[$i]['qty']) || $node->items[$i]['qty'] === '') {
       $node->items[$i]['qty'] = 1;
     }
     $values[] = $node->items[$i]['qty'];
     if (is_null($node->items[$i]['discount']) || $node->items[$i]['discount'] === '') {
-      $item = node_load($i);
-      $node->items[$i]['discount'] = $item->sell_price;
+      $node->items[$i]['discount'] = $product->sell_price;
     }
     $values[] = $node->items[$i]['discount'];
     $values[] = $node->items[$i]['ordering'];
     $placeholders[] = '(%d, %d, %d, %d, %d, %f, %d)';
 
-    $product = node_load($product);
     $product->qty = $node->items[$i]['qty'];
     if ($node->items[$i]['discount'] < 0) {
       $product->sell_price += $node->items[$i]['discount'];
@@ -224,6 +223,19 @@ function uc_product_kit_load(&$node) {
   }
 
   return $obj;
+}
+
+function uc_product_kit_nodeapi(&$node, $op, $arg3 = null, $arg4 = null) {
+  switch ($op) {
+    case 'update':
+      $result = db_query("SELECT nid FROM {uc_product_kits} WHERE product_id = %d", $node->nid);
+      while ($nid = db_fetch_object($result)) {
+        $kit = node_load($nid, NULL, TRUE);
+        node_object_prepare($kit);
+        $redirect = drupal_execute('product_kit_node_form', array(), $kit);
+      }
+    break;
+  }
 }
 
 /**
@@ -365,17 +377,23 @@ function uc_product_kit_view($node, $teaser = 0, $page = 0) {
     'image' => 1,
     'display_price' => 1,
     'model' => 1,
+    'list_price' => 0,
+    'cost' => 0,
     'sell_price' => 1,
-    'weight' => 1,
+    'weight' => 0,
+    'dimensions' => 0,
+    'add_to_cart' => 1,
   ));
   $weight = variable_get('uc_product_field_weight', array(
     'image' => -2,
-    'display_price' -1,
+    'display_price' => -1,
     'model' => 0,
     'list_price' => 2,
     'cost' => 3,
     'sell_price' => 4,
     'weight' => 5,
+    'dimensions' => 6,
+    'add_to_cart' => 10,
   ));
 
   //drupal_set_message('<pre>'. print_r($node->field_image_cache, true) .'</pre>');

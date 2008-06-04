@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_notify.module,v 1.10.2.5 2008/04/23 19:38:09 rszrama Exp $
+// $Id: uc_notify.module,v 1.10.2.6 2008/06/04 20:33:21 rszrama Exp $
 
 /**
  * @file
@@ -112,7 +112,7 @@ function uc_notify_uc_message() {
 
   return $messages;
 }
- 
+
 /**
  * Implementation of hook_order().
  */
@@ -157,7 +157,7 @@ function uc_notify_settings_overview() {
     'items' => array(
       t('Customer checkout notifications are !status.', array('!status' => variable_get('uc_notify_cust_checkout_enabled', TRUE) ? t('enabled') : t('disabled'))),
       t('Customer e-mail template: !template', array('!template' => $cust_template == '0' ? t('custom') : $cust_template)),
-      t('Admin checkout notifications are !status.', array('!status' => variable_get('uc_notify_admin_checkout_enabled', TRUE) ? t('enabled') : t('disabled'))),
+      t('Admin checkout notifications are !status.', array('!status' => variable_get('uc_notify_admin_checkout_enabled', FALSE) ? t('enabled') : t('disabled'))),
       t('Admin e-mail template: !template', array('!template' => $admin_template == '0' ? t('custom') : $admin_template)),
       t('Admin e-mails are sent to:') . theme('item_list', $emails),
     ),
@@ -258,7 +258,7 @@ function uc_notify_checkout_form() {
   $form['admin']['uc_notify_admin_checkout_custom'] = array(
     '#type' => 'textarea',
     '#title' => t('Custom template (if selected above)'),
-    '#description' => l(t('Uses Uc_order and Global tokens.'), 'admin/store/help/tokens'),
+    '#description' => l(t('Uses order and global tokens.'), 'admin/store/help/tokens'),
     '#default_value' => variable_get('uc_notify_admin_checkout_custom', ''),
     '#rows' => 5,
   );
@@ -288,7 +288,7 @@ function uc_notify_order_update_form() {
   $form['uc_notify_order_update_body'] = array(
     '#type' => 'textarea',
     '#title' => t('Body'),
-    '#description' => l(t('Uses Uc_order and Global tokens.'), 'admin/store/help/tokens'),
+    '#description' => l(t('Uses order and global tokens.'), 'admin/store/help/tokens'),
     '#default_value' => variable_get('uc_notify_order_update_body', uc_get_message('order_update_email')),
     '#rows' => 10,
   );

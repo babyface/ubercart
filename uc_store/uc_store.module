@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.13.2.9 2008/05/16 20:30:53 rszrama Exp $
+// $Id: uc_store.module,v 1.13.2.10 2008/06/04 20:33:22 rszrama Exp $
 
 /**
  * @file
@@ -494,6 +494,16 @@ function uc_store_footer() {
   }
 }
 
+/**
+ * Implementation of hook_exit().
+ */
+function uc_store_exit() {
+  // Save the current request for tracking paths on subsequent page requests.
+  // $_SESSION['uc_referer_uri'] = $_GET['q'];
+
+  // Save the timestamp of the last access.
+  // $_SESSION['uc_last_access'] = time();
+}
 
 /******************************************************************************
  * Callback Functions, Forms, and Tables
@@ -1311,7 +1321,7 @@ function uc_store_store_settings_overview() {
     'edit' => 'admin/store/settings/store/edit/format',
     'title' => t('Format settings'),
     'items' => array(
-      t('Default currency: !code', array('!code' => variable_get('uc_currency_code', 'USD'))),
+      // t('Default currency: !code', array('!code' => variable_get('uc_currency_code', 'USD'))),
       t('Currency format: !value', array('!value' => uc_currency_format(1234.56))),
       t('Weight format: !value', array('!value' => uc_weight_format(36))),
       t('Date format: !value', array('!value' => uc_date_format(8, 18, 2007))),
@@ -2258,7 +2268,7 @@ function uc_select_month($title = NULL, $default = NULL) {
  */
 function uc_select_year($title = NULL, $default = NULL, $min = NULL, $max = NULL) {
   $min = is_null($min) ? intval(date('Y')) : $min;
-  $max = is_null($max) ? intval(date('Y')) + 10 : $max;
+  $max = is_null($max) ? intval(date('Y')) + 20 : $max;
 
   $select = array(
     '#type' => 'select',
@@ -2465,27 +2475,23 @@ function theme_uc_settings_overview($sections) {
 
   uc_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
 
-  $output = '<p><table class="settings-overview">';
+  $output = '<table class="settings-overview">';
 
   foreach ($sections as $section) {
     $output .= '<tr class="section" id="'. $section['edit'] .'">'
               .'<td valign="top">'. uc_store_get_icon('file:order_edit', FALSE,
-               'settings-icon', t('Edit')) .'</td><td><table '
-              .'class="section-items"><tr class="section-title">'
-              .'<td colspan="2">'. $section['title'] .':</td></tr>';
+               'settings-icon', t('Edit')) .'</td><td class="section-items">'
+              .'<div class="section-title">'. $section['title'] .':</div>';
     if (is_array($section['items']) && count($section['items']) > 0) {
-      foreach ($section['items'] as $item) {
-        $output .= '<tr><td valign="top"><img src="'. base_path()
-                  .'misc/menu-leaf.png" /></td><td>'. $item .'</td></tr>';
-      }
+      $output .= theme('item_list', $section['items']);
     }
     else {
       $output .= '<tr><td>'. t('No settings found.') .'</td></tr>';
     }
-    $output .= '</table></td></tr>';
+    $output .= '</td></tr>';
   }
 
-  $output .= '</table></p>';
+  $output .= '</table>';
 
   return $output;
 };
@@ -2585,7 +2591,7 @@ function uc_numeric_validate($form, $sign = 0) {
   }
 }
 
-// Returns the e-mail from string in the format of Store Name <store@email.com>
+// Returns the e-mail from string in the format of Store Name <store@email.com>.
 function uc_store_email_from() {
   $email_from = variable_get('uc_store_email', '');
   if (empty($email_from)) {
@@ -2880,3 +2886,4 @@ function uc_store_send_report() {
 
   watchdog('uc_store', t('Reported the following version info to Ubercart.org:') .'<pre>'. print_r($data, TRUE) .'</pre>');
 }
+

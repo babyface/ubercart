@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.14.2.11 2008/05/16 20:30:51 rszrama Exp $
+// $Id: uc_cart.module,v 1.14.2.12 2008/06/04 20:33:19 rszrama Exp $
 
 /**
  * @file
@@ -467,7 +467,11 @@ function uc_cart_form_alter($form_id, &$form) {
       $form['#action'] = url($_GET['q'], "destination=cart/checkout");
       return;
     }
+
+    // Grab the referer if possible.
     $referer = referer_uri();
+
+    // Compare it for checkout page URLs.
     if (substr($referer, -13, 13) == 'cart/checkout') {
       $form['#action'] = url($_GET['q'], "destination=cart/checkout");
     }
@@ -1069,7 +1073,7 @@ function uc_cart_checkout_messages_form() {
   $form['uc_msg_order_submit'] = array(
     '#type' => 'textarea',
     '#title' => t('Checkout completion message header'),
-    '#description' => t('Header for message displayed after a user checks out. <a href="!url">Uses order and global tokens</a>.', array('!url' => 'admin/store/help/tokens')),
+    '#description' => t('Header for message displayed after a user checks out. <a href="!url">Uses order and global tokens</a>.', array('!url' => url('admin/store/help/tokens'))),
     '#default_value' => variable_get('uc_msg_order_submit', uc_get_message('completion_message')),
     '#rows' => 3,
   );
@@ -1084,7 +1088,7 @@ function uc_cart_checkout_messages_form() {
   $form['checkout_messages']['uc_msg_order_logged_in'] = array(
     '#type' => 'textarea',
     '#title' => t('Checkout completion for logged-in users'),
-    '#description' => t('Message displayed upon checkout for a user who has logged in. <a href="!url">Uses order and global tokens</a>.', array('!url' => 'admin/store/help/tokens')),
+    '#description' => t('Message displayed upon checkout for a user who has logged in. <a href="!url">Uses order and global tokens</a>.', array('!url' => url('admin/store/help/tokens'))),
     '#default_value' => variable_get('uc_msg_order_logged_in', uc_get_message('completion_logged_in')),
     '#rows' => 3,
   );
@@ -1092,7 +1096,7 @@ function uc_cart_checkout_messages_form() {
   $form['checkout_messages']['uc_msg_order_existing_user'] = array(
     '#type' => 'textarea',
     '#title' => t('Checkout completion for existing users'),
-    '#description' => t("Message displayed upon checkout for a user who has an account but wasn't logged in. <a href=\"!url\">Uses order and global tokens</a>.", array('!url' => 'admin/store/help/tokens')),
+    '#description' => t("Message displayed upon checkout for a user who has an account but wasn't logged in. <a href=\"!url\">Uses order and global tokens</a>.", array('!url' => url('admin/store/help/tokens'))),
     '#default_value' => variable_get('uc_msg_order_existing_user', uc_get_message('completion_existing_user')),
     '#rows' => 3,
   );
@@ -1100,7 +1104,7 @@ function uc_cart_checkout_messages_form() {
   $form['checkout_messages']['uc_msg_order_new_user'] = array(
     '#type' => 'textarea',
     '#title' => t('Checkout completion for new users'),
-    '#description' => t('Message displayed upon checkout for a new user whose account was just created. <a href="!url">Uses order and global tokens</a>.', array('!url' => 'admin/store/help/tokens')),
+    '#description' => t('Message displayed upon checkout for a new user whose account was just created. <a href="!url">Uses order and global tokens</a>.', array('!url' => url('admin/store/help/tokens'))),
     '#default_value' => variable_get('uc_msg_order_new_user', uc_get_message('completion_new_user')),
     '#rows' => 3,
   );
@@ -1109,7 +1113,7 @@ function uc_cart_checkout_messages_form() {
   $form['uc_msg_continue_shopping'] = array(
     '#type' => 'textarea',
     '#title' => t('Continue shopping message'),
-    '#description' => t('Message displayed upon checkout to direct customers to another part of your site. <a href="!url">Uses order and global tokens</a>.', array('!url' => 'admin/store/help/tokens')),
+    '#description' => t('Message displayed upon checkout to direct customers to another part of your site. <a href="!url">Uses order and global tokens</a>.', array('!url' => url('admin/store/help/tokens'))),
     '#default_value' => variable_get('uc_msg_continue_shopping', uc_get_message('continue_shopping')),
     '#rows' => 3,
   );
@@ -1319,9 +1323,12 @@ function uc_cart_checkout() {
   // Send anonymous users to login page when anonymous checkout is disabled.
   if (!$user->uid && !variable_get('uc_checkout_anonymous', TRUE)) {
     drupal_set_message(t('You must login before you can proceed to checkout.'));
-    drupal_set_message(t('If you do not have an account, you can !click_here to create one.', array('!click_here' => l(t('click here'), 'user/register'))));
+    drupal_set_message(t('If you do not have an account, you can <a href="!url">click here</a> to create one.', array('!url' => url('user/register', NULL, NULL, TRUE))));
     $_SESSION['checkout-redirect'] = TRUE;
     drupal_goto('user');
+  }
+  else {
+    unset($_SESSION['checkout-redirect']);
   }
 
   $list = _line_item_list();
@@ -1349,14 +1356,16 @@ function uc_cart_checkout_form() {
     drupal_goto('cart');
   }
 
-  // Check the referer URI to clear the order details and prevent identity theft.
+  $order = uc_order_load($_SESSION['cart_order']);
+
+  // Check the referer URI to clear order details and prevent identity theft.
   $referer = referer_uri();
   if (substr($referer, -20, 20) == 'cart/checkout/review' || substr($referer, -13, 13) == 'cart/checkout') {
-    if (!($order = uc_order_load($_SESSION['cart_order'])) || uc_order_status_data($order->order_status, 'state') != 'in_checkout') {
+    if ($order == FALSE || uc_order_status_data($order->order_status, 'state') != 'in_checkout') {
       unset($_SESSION['cart_order']);
       $order = NULL;
     }
-    if (uc_order_status_data($order->order_status, 'state') != 'in_checkout' || ($user->uid && $user->uid != $order->uid)) {
+    if (uc_order_status_data($order->order_status, 'state') != 'in_checkout' || ($user->uid > 0 && $user->uid != $order->uid)) {
       $order = NULL;
     }
   }
@@ -1523,18 +1532,15 @@ function uc_cart_checkout_review() {
   $form = drupal_get_form('uc_cart_checkout_review_form');
 
   if ($_SESSION['do_review'] !== TRUE && substr(referer_uri(), -13) != 'cart/checkout') {
-    drupal_goto('cart');
+    drupal_goto('cart/checkout');
   }
   unset($_SESSION['do_review']);
 
-  $order_id = intval($_SESSION['cart_order']);
-
-  $order = uc_order_load($order_id);
+  $order = uc_order_load($_SESSION['cart_order']);
 
   if ($order === FALSE || uc_order_status_data($order->order_status, 'state') != 'in_checkout') {
-    $_SESSION['cart_order'] = NULL;
     unset($_SESSION['cart_order']);
-    drupal_goto('cart');
+    drupal_goto('cart/checkout');
   }
 
   $panes = _checkout_pane_list();
@@ -1704,10 +1710,11 @@ function uc_cart_checkout_complete() {
  *   The HTML text of the default order completion page.
  */
 function uc_cart_complete_sale($order, $login = FALSE) {
+  global $user;
   // Logic to create new user if necessary:
   if ($order->uid == 0) {
     $result = db_query("SELECT uid FROM {users} WHERE mail = '%s'", $order->primary_email);
-    if ($user = db_fetch_object($result)) {
+    if ($account = db_fetch_object($result)) {
       $order->uid = $user->uid;
       db_query("UPDATE {uc_orders} SET uid = %d WHERE order_id = %d", $order->uid, $order->order_id);
       $message_type = 'existing_user';
@@ -1762,7 +1769,12 @@ function uc_cart_complete_sale($order, $login = FALSE) {
     }
   }
   else {
-    $message_type = 'logged_in';
+    if ($order->uid == $user->uid) {
+      $message_type = 'logged_in';
+    }
+    else {
+      $message_type = 'existing_user';
+    }
   }
 
   $output = check_markup(variable_get('uc_msg_order_submit', uc_get_message('completion_message')),
@@ -1792,7 +1804,6 @@ function uc_cart_complete_sale($order, $login = FALSE) {
   // Clear our the session variables used to force the cart workflow.
   unset($_SESSION['cart_order'], $_SESSION['do_complete'], $_SESSION['new_user']);
 
-  global $user;
   workflow_ng_invoke_event('checkout_complete', $order, $user->uid == 0 ? $account : $user);
 
   return $output;

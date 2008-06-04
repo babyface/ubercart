@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.4.2.10 2008/05/16 20:30:49 rszrama Exp $
+// $Id: uc_credit.module,v 1.4.2.11 2008/06/04 20:33:17 rszrama Exp $
 
 /**
  * @file
@@ -84,9 +84,20 @@ function uc_credit_form_alter($form_id, &$form) {
         // Clear the session of the details.
         unset($_SESSION['sescrd']);
       }
+      unset($_SESSION['cc_pay']);
       break;
 
     case 'uc_cart_checkout_review_form':
+      // Check if the customer paid by CC and refreshed on the review page.
+      if (isset($_SESSION['cc_pay']) && !isset($_SESSION['sescrd']) && empty($_POST['sescrd'])) {
+        // Send them back to the checkout form to put in their details again.
+        drupal_set_message(t('To protect our customers from identity theft, credit card details are erased when a browser refreshes on the checkout review page.  Please enter your card details again and re-submit the form.'), 'error');
+
+        $_SESSION['clear_cc'] = TRUE;
+        unset($_SESSION['cc_pay']);
+        drupal_goto('cart/checkout');
+      }
+
       // Cache the CC details for use in other functions.
       uc_credit_cache('save', $_SESSION['sescrd']);
 
@@ -110,16 +121,39 @@ function uc_credit_form_alter($form_id, &$form) {
 function uc_credit_cron() {
   // Clear the data
   $time = strtotime(variable_get('uc_cart_anon_duration', '4') .' '. variable_get('uc_cart_anon_unit', 'hours') .' ago');
-  db_query("DELETE upc.* FROM {uc_orders} AS uo LEFT JOIN {uc_payment_credit} "
-          ."AS upc ON uo.order_id = upc.order_id WHERE uo.modified <= %d AND "
-          ."uo.order_status = '%s'", $time, uc_order_state_default('in_checkout'));
-
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("DELETE upc.* FROM {uc_orders} AS uo LEFT JOIN {uc_payment_credit} "
+              ."AS upc ON uo.order_id = upc.order_id WHERE uo.modified <= %d AND "
+              ."uo.order_status = '%s'", $time, uc_order_state_default('in_checkout'));
+    break;
+    case 'pgsql':
+      db_query("DELETE FROM {uc_payment_credit} AS upc USING {uc_orders} AS o"
+              ." WHERE o.order_id = upc.order_id"
+              ." AND o.modified <= %d"
+              ." AND o.order_status = '%s'",
+              $time, uc_order_state_default('in_checkout'));
+    break;
+  }
   // Mask old stored credit card numbers.
   $time = strtotime(variable_get('uc_credit_number_duration', '1') .' '. variable_get('uc_credit_number_unit', 'years') .' ago');
-  db_query("DELETE upc.* FROM {uc_orders} AS uo LEFT JOIN {uc_payment_credit} "
-          ."AS upc ON uo.order_id = upc.order_id WHERE uo.modified <= %d AND "
-          ."uo.order_status = '%s'", $time,
-           variable_get('uc_credit_clear_status', uc_order_state_default('completed')));
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("DELETE upc.* FROM {uc_orders} AS uo LEFT JOIN {uc_payment_credit} "
+              ."AS upc ON uo.order_id = upc.order_id WHERE uo.modified <= %d AND "
+              ."uo.order_status = '%s'", $time,
+               variable_get('uc_credit_clear_status', uc_order_state_default('completed')));
+    break;
+    case 'pgsql':
+      db_query("DELETE FROM {uc_payment_credit} AS upc USING {uc_orders} AS o"
+              ." WHERE o.order_id = upc.order_id"
+              ." AND o.modified <= %d"
+              ." AND o.order_status = '%s'",
+              $time, variable_get('uc_credit_clear_status', uc_order_state_default('completed')));
+    break;
+  }
 
   if (variable_get('uc_credit_debug', FALSE)) {
     $key = uc_credit_encryption_key();
@@ -197,6 +231,9 @@ function uc_credit_order($op, &$arg1, $arg2) {
   switch ($op) {
     case 'submit':
       if ($arg1->payment_method == 'credit') {
+        // Clear out that session variable denoting this as a CC paid order.
+        unset($_SESSION['cc_pay']);
+
         // Process CC transactions when an order is submitted after review.
         if (variable_get('uc_credit_checkout_process', TRUE)) {
           // Attempt to process the CC payment.
@@ -329,7 +366,7 @@ function uc_payment_method_credit($op, &$arg1) {
       }
 
       // Account for masked CVV numbers.
-      if ($cc_data['cc_cvv'] == str_repeat('-', strlen($cc_data['cc_cvv']))) {
+      if (!empty($cc_data['cc_cvv']) && $cc_data['cc_cvv'] == str_repeat('-', strlen($cc_data['cc_cvv']))) {
         // Recover the number from the encrypted data in $_POST if truncated.
         if (isset($cache['cc_cvv'])) {
           $cc_data['cc_cvv'] = $cache['cc_cvv'];
@@ -386,6 +423,12 @@ function uc_payment_method_credit($op, &$arg1) {
 
       // Log any errors to the watchdog.
       uc_store_encryption_errors($crypt, 'uc_credit');
+
+      // If we're going to the review screen, set a variable that lets us know
+      // we're paying by CC.
+      if ($return) {
+        $_SESSION['cc_pay'] = TRUE;
+      }
 
       return $return;
 
@@ -795,7 +838,7 @@ function uc_payment_method_credit_form($order) {
   $form['cc_number'] = array(
     '#type' => 'textfield',
     '#title' => t('Card number'),
-    '#default_value' => $default_num,
+    '#default_value' => $_SESSION['clear_cc'] ? '' : $default_num,
     '#attributes' => array('autocomplete' => 'off'),
     '#size' => 20,
     '#maxlength' => 16,
@@ -823,7 +866,7 @@ function uc_payment_method_credit_form($order) {
     $form['cc_cvv'] = array(
       '#type' => 'textfield',
       '#title' => t('CVV'),
-      '#default_value' => $default_cvv,
+      '#default_value' => $_SESSION['clear_cc'] ? '' : $default_cvv,
       '#attributes' => array('autocomplete' => 'off'),
       '#size' => variable_get('uc_credit_amex', TRUE) ? 4 : 3,
       '#maxlength' => variable_get('uc_credit_amex', TRUE) ? 4 : 3,
@@ -840,6 +883,8 @@ function uc_payment_method_credit_form($order) {
       '#maxlength' => 64,
     );
   }
+
+  unset($_SESSION['clear_cc']);
 
   return $form;
 }
