@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_reports.module,v 1.9 2008/05/16 20:30:53 rszrama Exp $
+// $Id: uc_reports.module,v 1.10 2008/06/04 20:33:21 rszrama Exp $
 
 /**
  * @file
@@ -431,7 +431,7 @@ function uc_reports_sales_summary() {
   $output .= theme('table', $header, $rows, array('width' => '100%', 'class' => 'uc-sales-table'));
 
   // Build the total orders by status table header.
-  $header = array(array('data' => t('Total orders by status'), 'width' => '50%'));
+  $header = array(array('data' => t('Total orders by status'), 'width' => '50%'), '');
   $rows = array();
   $unknown = 0;
 
