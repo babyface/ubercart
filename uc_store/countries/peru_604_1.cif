@@ -1,5 +1,5 @@
 <?php
-// $Id: peru_604_1.cif,v 1.1 2008/01/07 20:56:46 rszrama Exp $
+// $Id: peru_604_1.cif,v 1.2 2008/07/10 12:41:06 islandusurper Exp $
 
 function peru_install() {
   // Make the entry in the country table.

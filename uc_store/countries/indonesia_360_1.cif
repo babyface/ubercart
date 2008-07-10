@@ -1,5 +1,5 @@
 <?php
-// $Id: indonesia_360_1.cif,v 1.1 2008/01/07 20:56:46 rszrama Exp $
+// $Id: indonesia_360_1.cif,v 1.2 2008/07/10 12:41:06 islandusurper Exp $
 
 function indonesia_install() {
   db_query("INSERT INTO {uc_countries} VALUES (360, 'Indonesia', 'ID', 'IDN', 1)");

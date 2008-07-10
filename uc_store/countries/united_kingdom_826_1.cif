@@ -1,5 +1,5 @@
 <?php
-// $Id: united_kingdom_826_1.cif,v 1.4 2007/11/05 20:32:01 rszrama Exp $
+// $Id: united_kingdom_826_1.cif,v 1.5 2008/07/10 12:41:06 islandusurper Exp $
 
 /**
  * First implement hook_install() using the name of the country as the base of
@@ -115,7 +115,7 @@ function united_kingdom_install() {
           ."(%d, 826, 'WLT', 'Wiltshire'),"
           ."(%d, 826, 'WORCS', 'Worcestershire'),"
           ."(%d, 826, 'WRX', 'Wrexham')",
-					 uc_get_zone_ids(100));
+           uc_get_zone_ids(100));
 
   // Use uc_set_address_format() with the country ID as the first argument and
   // an address format string as the second.  Documentation on address formats

@@ -1,4 +1,4 @@
-# $Id: es.po,v 1.1 2008/01/07 20:56:44 rszrama Exp $
+# $Id: es.po,v 1.2 2008/07/10 12:41:03 islandusurper Exp $
 #
 # LANGUAGE translation of Drupal (uc_product_kit.module)
 # Copyright YEAR NAME <EMAIL@ADDRESS>

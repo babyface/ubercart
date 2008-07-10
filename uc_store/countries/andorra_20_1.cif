@@ -1,5 +1,5 @@
 <?php
-// $Id: andorra_20_1.cif,v 1.1 2008/04/23 19:38:13 rszrama Exp $
+// $Id: andorra_20_1.cif,v 1.2 2008/07/10 12:41:06 islandusurper Exp $
 
 /**
  * Brought to you by teh doomed :)
@@ -21,7 +21,7 @@ function andorra_install() {
           ."(%d, 20, 'EN', 'Encamp'),"
           ."(%d, 20, 'MA', 'La Massana'),"
           ."(%d, 20, 'OR', 'Ordino'),"
-          ."(%d, 20, 'JL', 'Sant Juliï¿½ de Lï¿½ria'),"
+          ."(%d, 20, 'JL', 'Sant Julià de Lòria'),"
           ."(%d, 20, 'AN', 'Andorra La Vella'),"
           ."(%d, 20, 'EE', 'Escaldes Engordany')",
            uc_get_zone_ids(7));

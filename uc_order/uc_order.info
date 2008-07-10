@@ -1,6 +1,6 @@
-; $Id: uc_order.info,v 1.5 2007/11/05 20:31:59 rszrama Exp $
+; $Id: uc_order.info,v 1.6 2008/07/10 12:41:02 islandusurper Exp $
 name = Order
 description = REQUIRED. Receive and manage orders through your website.
-dependencies = token
+dependencies[] = token
 package = Ubercart - core
-
+core = 6.x

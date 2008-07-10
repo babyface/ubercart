@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.module,v 1.6 2008/06/04 20:33:17 rszrama Exp $
+// $Id: uc_recurring.module,v 1.7 2008/07/10 12:40:58 islandusurper Exp $
 
 /**
  * @file
@@ -850,11 +850,11 @@ function uc_recurring_fee_load($type, $id) {
 function uc_recurring_fee_delete($feature, $type = 'product') {
   switch ($type) {
     case 'product':
-      db_query("DELETE FROM {uc_recurring_products} WHERE pfid = %d", $feature['fid']);
+      db_query("DELETE FROM {uc_recurring_products} WHERE pfid = %d", $feature['pfid']);
       break;
     case 'user':
       module_invoke_all('recurring_api', 'delete', $feature['fid']);
-      db_query("DELETE FROM {uc_recurring_users} WHERE rfid = %d", $feature['fid']);
+      db_query("DELETE FROM {uc_recurring_users} WHERE rfid = %d", $feature['pfid']);
       break;
   }
 }

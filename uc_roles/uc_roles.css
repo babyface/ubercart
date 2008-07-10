@@ -1,9 +1,9 @@
-/* $Id: uc_roles.css,v 1.1 2007/11/05 20:32:01 rszrama Exp $ */
+/* $Id: uc_roles.css,v 1.2 2008/07/10 12:41:04 islandusurper Exp $ */
 
 .expiration {
-	display:inline;
+  display:inline;
 } 
 
 .expiration .form-item {
-	display:inline;
+  display:inline;
 }

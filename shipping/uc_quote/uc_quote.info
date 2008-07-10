@@ -1,6 +1,7 @@
-; $Id: uc_quote.info,v 1.3 2007/11/05 20:31:55 rszrama Exp $
+; $Id: uc_quote.info,v 1.4 2008/07/10 12:40:58 islandusurper Exp $
 name = Shipping Quotes
 description = Retrieve and display quotes for shipping products.
-dependencies = uc_store uc_order uc_cart workflow_ng
+dependencies[] = uc_cart
+dependencies[] = ca
 package = "Ubercart - core (optional)"
-
+core = 6.x

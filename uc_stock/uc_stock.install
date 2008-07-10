@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.install,v 1.5 2008/04/23 19:38:12 rszrama Exp $
+// $Id: uc_stock.install,v 1.6 2008/07/10 12:41:05 islandusurper Exp $
 
 function uc_stock_install() {
   switch ($GLOBALS['db_type']) {

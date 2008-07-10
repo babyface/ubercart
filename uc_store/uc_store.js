@@ -1,18 +1,4 @@
-// $Id: uc_store.js,v 1.8 2007/11/05 20:32:01 rszrama Exp $
-
-// Add the mouseover and mouseout functions for the store links block.
-sfHover = function() {
-    $('#store-links li, #store-links li li, #store-links li li li, #store-links li li li li').mouseover(
-      function(){
-        $(this).addClass('sfhover');
-      }
-    ).mouseout(
-      function(){
-        $(this).removeClass('sfhover');
-      }
-    );
-  }
-if (window.attachEvent) window.attachEvent("onload", sfHover); 
+// $Id: uc_store.js,v 1.9 2008/07/10 12:41:06 islandusurper Exp $
 
 // Add the show more link on the store admin display.
 $(document).ready(
@@ -44,7 +30,7 @@ $(document).ready(
       function() {
         $(this).dblclick(
           function() {
-            window.location = Drupal.settings['base_path'] + 'admin/store/customers/orders/' + this.id.substring(9);
+            window.location = Drupal.settings.basePath + 'admin/store/customers/orders/' + this.id.substring(9);
           }
         );
       }
@@ -59,7 +45,7 @@ $(document).ready(
       function() {
         $(this).dblclick(
           function() {
-            window.location = Drupal.settings['base_path'] + 'admin/store/orders/' + this.id.substring(6);
+            window.location = Drupal.settings.basePath + 'admin/store/orders/' + this.id.substring(6);
           }
         );
       }
@@ -74,7 +60,7 @@ $(document).ready(
       function() {
         $(this).click(
           function() {
-            window.location = Drupal.settings['base_path'] + this.id;
+            window.location = Drupal.settings.basePath + this.id;
           }
         );
       }

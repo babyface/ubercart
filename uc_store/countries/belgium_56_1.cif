@@ -1,5 +1,5 @@
 <?php
-// $Id: belgium_56_1.cif,v 1.1 2008/01/07 20:56:46 rszrama Exp $
+// $Id: belgium_56_1.cif,v 1.2 2008/07/10 12:41:06 islandusurper Exp $
 
 function belgium_install() {
   db_query("INSERT INTO {uc_countries} VALUES ('056', 'Belgium', 'BE', 'BEL', 1)");
@@ -16,7 +16,7 @@ function belgium_install() {
           ."(%d, 056, 'LU', 'Luxemburg'),"
           ."(%d, 056, 'NM', 'Namen')" , uc_get_zone_ids(10));
 
-  uc_set_address_format(056, "!company\n!first_name !last_name\n!street\n!postal_code !city\n!country_name_if");
+  uc_set_address_format(56, "!company\n!first_name !last_name\n!street\n!postal_code !city\n!country_name_if");
 }
 
 function belgium_update($version) {

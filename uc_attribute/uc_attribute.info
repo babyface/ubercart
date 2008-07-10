@@ -1,6 +1,7 @@
-; $Id: uc_attribute.info,v 1.5 2007/11/05 20:31:56 rszrama Exp $
+; $Id: uc_attribute.info,v 1.6 2008/07/10 12:41:00 islandusurper Exp $
 name = Attribute
 description = Allow the customer to choose attributes for a product at checkout.
-dependencies = uc_product
+dependencies[] = uc_product
 package = "Ubercart - core (optional)"
+core = 6.x
 
