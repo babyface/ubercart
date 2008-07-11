@@ -1,4 +1,4 @@
-# $Id: uc_file.pot,v 1.1 2008/07/10 12:41:01 islandusurper Exp $
+# $Id: uc_file.pot,v 1.1.2.1 2008/07/11 21:41:25 islandusurper Exp $
 #
 # LANGUAGE translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>

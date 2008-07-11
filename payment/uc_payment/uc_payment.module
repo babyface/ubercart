@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.5 2008/07/10 12:40:57 islandusurper Exp $
+// $Id: uc_payment.module,v 1.5.2.1 2008/07/11 21:41:21 islandusurper Exp $
 
 /**
  * @file
@@ -40,7 +40,7 @@ function uc_payment_menu() {
   );
   $items['admin/store/settings/payment/edit'] = array(
     'title' => 'Edit',
-    'description' => t('Edit the payment settings.'),
+    'description' => 'Edit the payment settings.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_payment_settings_form'),
     'access arguments' => array('administer store'),
@@ -679,7 +679,7 @@ function theme_uc_payment_by_order_form($form) {
            .'<br /><strong>'. t('Current balance:') .'</strong> '
           . drupal_render($form['balance']) .'</p>';
   $output .= '<p>'. tapir_get_table('uc_payments_table', $form) .'</p>'
-           . '<p>'. drupal_render($form['form_id'])
+           .'<p>'. drupal_render($form['form_id'])
            . drupal_render($form['form_token']) .'</p>';
   return $output;
 }

@@ -1,50 +1,99 @@
 <?php
-// $Id: uc_paypal.install,v 1.6 2008/07/10 12:40:57 islandusurper Exp $
+// $Id: uc_paypal.install,v 1.6.2.1 2008/07/11 21:41:21 islandusurper Exp $
+
+/**
+ * @file
+ * Installation file for PayPal, primarily for the logging of IPNs.
+
+/**
+ * Implementation of hook_schema().
+ */
+function uc_paypal_schema() {
+  $schema = array();
+
+  $schema['uc_payment_paypal_ipn'] = array(
+    'description' => t('Logs PayPal Instant Payment Notifications.'),
+    'fields' => array(
+      'order_id' => array(
+        'description' => t('The order ID.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'txn_id' => array(
+        'description' => t('The transaction ID from PayPal.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'txn_type' => array(
+        'description' => t('The transaction type from PayPal.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'mc_gross' => array(
+        'description' => t('The payment amount from PayPal.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'status' => array(
+        'description' => t('The IPN status from PayPal.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'receiver_email' => array(
+        'description' => t('The e-mail address of the PayPal account.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'payer_email' => array(
+        'description' => t('The e-mail address of the buyer.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'received' => array(
+        'description' => t('The IPN receipt timestamp.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'order_id' => array('order_id'),
+    ),
+  );
+
+  return $schema;
+}
 
 /**
  * Implementation of hook_install().
  */
 function uc_paypal_install() {
-  $t = get_t();
+  drupal_install_schema('uc_paypal');
 
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      db_query("CREATE TABLE {uc_payment_paypal_ipn} (
-        order_id int(11) NOT NULL,
-        txn_id varchar(255) NOT NULL,
-        txn_type varchar(255) NOT NULL,
-        mc_gross varchar(255) NOT NULL,
-        status varchar(255) NOT NULL,
-        receiver_email varchar(255) NOT NULL,
-        payer_email varchar(255) NOT NULL,
-        received int(11) NOT NULL,
-        KEY order_id (order_id)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
-      db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('paypal_pending', '". $t('PayPal pending') ."', 'payment_received', 7, 1);");
-    break;
-    case 'pgsql':
-      db_query("CREATE TABLE {uc_payment_paypal_ipn} (
-        order_id integer NOT NULL,
-        txn_id varchar(255) NOT NULL,
-        txn_type varchar(255) NOT NULL,
-        mc_gross varchar(255) NOT NULL,
-        status varchar(255) NOT NULL,
-        receiver_email varchar(255) NOT NULL,
-        payer_email varchar(255) NOT NULL,
-        received integer NOT NULL
-      );");
-      db_query("CREATE INDEX {uc_payment_paypal_ipn}_order_id ON {uc_payment_paypal_ipn} (order_id)");
-      db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('paypal_pending', '". $t('PayPal pending') ."', 'payment_received', 7, 1);");
-    break;
-  }
+  $t = get_t();
+  db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('paypal_pending', '". $t('PayPal pending') ."', 'payment_received', 7, 1);");
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function uc_paypal_uninstall() {
-  db_query("DROP TABLE {uc_payment_paypal_ipn}");
+  drupal_uninstall_schema('uc_paypal');
 }
 
 function uc_paypal_update_1() {

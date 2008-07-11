@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cybersource.module,v 1.4 2008/07/10 12:40:57 islandusurper Exp $
+// $Id: uc_cybersource.module,v 1.4.2.1 2008/07/11 21:41:21 islandusurper Exp $
 
 /**
  * @file
@@ -8,29 +8,35 @@
  * Developed by Ryan of Ubercart.org.
  *
  * Development sponsored by Plum Drama - http://www.plumdrama.com
+ *
+ * In order to use the Silent Order POST method, you must download your HOP.php
+ * from your CyberSource account and place it in the uc_cybersource directory.
+ * For it to be compatible with Drupal, you must open it and replace any
+ * instance of L( with csL(.
  */
 
-/*******************************************************************************
- * Hook Functions (Drupal)
- ******************************************************************************/
 
-function uc_cybersource_menu($may_cache) {
-  $items[] = array(
-    'path' => 'cs/receipt',
-    'title' => t('Payment received'),
-    'callback' => 'uc_cybersource_receipt',
-    'access' => TRUE,
+/**
+ * Implementation of hook_menu().
+ */
+function uc_cybersource_menu() {
+  $items['cs/receipt'] = array(
+    'title' => 'Payment received',
+    'page callback' => 'uc_cybersource_receipt',
+    'access callback' => 'uc_cybersource_receipt_access',
     'type' => MENU_CALLBACK,
   );
 
   return $items;
 }
 
+function uc_cybersource_receipt_access() {
+  return TRUE;
+}
 
-/*******************************************************************************
- * Hook Functions (Ubercart)
- ******************************************************************************/
-
+/**
+ * Implementation of hook_payment_gateway().
+ */
 function uc_cybersource_payment_gateway() {
   $gateways[] = array(
     'id' => 'cybersource',
@@ -43,19 +49,17 @@ function uc_cybersource_payment_gateway() {
   return $gateways;
 }
 
-
-/*******************************************************************************
- * Callback Functions, Forms, and Tables
- ******************************************************************************/
-
+// Validates a return receipt from CyberSource. Currently not functional.
 function uc_cybersource_receipt() {
   drupal_goto('<front>');
 }
 
+// Adds the CyberSource fields to the payment gateway settings form.
 function uc_cybersource_settings_form() {
+  // Check for the HOP.php for Silent Order POST.
   if (variable_get('uc_cybersource_method', 'post') == 'post' &&
       !file_exists(drupal_get_path('module', 'uc_cybersource') .'/HOP.php')) {
-    drupal_set_message(t('You must download the security script from your CyberSource account (found in Tools & Settings > Hosted Order Page > Security) and place it in the ubercart/payment/uc_cybersource directory to use the Silent Order POST.'), 'error');
+    drupal_set_message(t('You must download the security script from your CyberSource account (found in Tools & Settings > Hosted Order Page > Security) and place it in the ubercart/payment/uc_cybersource directory to use the Silent Order POST. Remember to open it and replace instances of L( with csL(.'), 'error');
   }
 
   $form['cybersource'] = array(
@@ -86,7 +90,7 @@ function uc_cybersource_settings_form() {
   $form['cybersource']['uc_cybersource_transaction_type'] = array(
     '#type' => 'select',
     '#title' => t('Transaction type'),
-    '#description' => t('"Complete sale" will authorize and capture the funds at the time the payment is processed.<br>"Authorization" will only reserve funds on the card to be captured later through your PayPal account.'), 
+    '#description' => t('"Complete sale" will authorize and capture the funds at the time the payment is processed.<br />"Authorization" will only reserve funds on the card to be captured later through your PayPal account.'),
     '#options' => array(
       'sale' => t('Complete sale'),
       'authorization' => t('Authorization'),
@@ -141,7 +145,7 @@ function uc_cybersource_charge($order_id, $amount, $data) {
     $cc_type = _uc_cybersource_card_type($order->payment_details['cc_number']);
     if ($cc_type === FALSE) {
       drupal_set_message(t('The credit card type did not pass validation.', 'error'));
-      watchdog('uc_paypal', t('Could not figure out cc type: !number / !type', array('!number' => $order->payment_details['cc_number'], '!type' => $order->payment_details['cc_type'])), WATCHDOG_ERROR);
+      watchdog('uc_paypal', 'Could not figure out CC type: @number / @type', array('@number' => $order->payment_details['cc_number'], '@type' => $order->payment_details['cc_type']), WATCHDOG_ERROR);
       return array('success' => FALSE);
     }
   }
@@ -172,22 +176,22 @@ function uc_cybersource_charge($order_id, $amount, $data) {
 
   if (variable_get('uc_cybersource_method', 'post') == 'post') {
     $currency = variable_get('uc_cybersource_currency', 'usd');
-    $merchantID = getMerchantID();
+    $merchant_id = getMerchantID();
     $timestamp = getmicrotime();
-    $data = $merchantID . $amount . $currency . $timestamp;
+    $data = $merchant_id . $amount . $currency . $timestamp;
     $pub = getPublicKey();
-    $serialNumber = getSerialNumber();
+    $serial_number = getSerialNumber();
     $pub_digest = hopHash($data, $pub);
 
     $request['amount'] = $amount;
     $request['currency'] = $currency;
-    $request['merchantID'] = $merchantID;
+    $request['merchantID'] = $merchant_id;
     $request['orderNumber'] = $order_id;
     $request['orderPage_timestamp'] = $timestamp;
     $request['orderPage_ignoreAVS'] = variable_get('uc_cybersource_avs', 'true');
     $request['orderPage_signaturePublic'] = $pub_digest;
     $request['orderPage_version'] = '4';
-    $request['orderPage_serialNumber'] = $serialNumber;
+    $request['orderPage_serialNumber'] = $serial_number;
     $request['orderPage_transactionType'] = variable_get('uc_cybersource_transaction_type', 'sale');
 
     $data = '';
@@ -195,14 +199,14 @@ function uc_cybersource_charge($order_id, $amount, $data) {
       $data .= $key .'='. urlencode(ereg_replace(',', '', $value)) .'&';
     }
     $data = substr($data, 0, -1);
-  
+
     if (variable_get('uc_cybersource_server', 'test') == 'test') {
       $url = 'https://orderpagetest.ic3.com/hop/ProcessOrder.do';
     }
     else {
       $url = 'https://orderpage.ic3.com/hop/ProcessOrder.do';
     }
-  
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_VERBOSE, 0);
@@ -211,13 +215,13 @@ function uc_cybersource_charge($order_id, $amount, $data) {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
     curl_setopt($ch, CURLOPT_NOPROGRESS, 1);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION,0);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 0);
     $response = curl_exec($ch);
     if ($error = curl_error($ch)) {
-      watchdog('uc_cybersource', $error, WATCHDOG_ERROR);
+      watchdog('uc_cybersource', $error, NULL, WATCHDOG_ERROR);
     }
     curl_close($ch);
-  
+
     if (preg_match_all('`name=".+" value=".+"`', $response, $pairs) > 0) {
       for ($i = 0; $i < count($pairs[0]); $i++) {
         list($name, $value) = explode('" value="', substr($pairs[0][$i], 6, strlen($pairs[0][$i]) - 7));
@@ -260,26 +264,30 @@ function uc_cybersource_charge($order_id, $amount, $data) {
         'message' => t('No response returned from CyberSource.'),
       );
     }
-  
+
     return $result;
   }
-  else {
-    $config = cybs_load_config('cybs.ini');
-    if (variable_get('uc_cybersource_server', 'test') == 'test') {
-      $config['sendToProduction'] = 'false';
-    }
-
-    $request['ccAuthService_run'] = 'true';
-    if (variable_get('uc_cybersource_transaction_type', 'sale') == 'sale') {
-      $request['ccCaptureService_run'] = 'true';
-    }
-    $request['merchantReferenceCode'] = $order_id;
-    $request['purchaseTotals_currency'] = 'USD';
-    $request['purchaseTotals_grandTotalAmount'] = $amount;
-
-    drupal_set_message('<pre>'. print_r($config, TRUE) .'</pre>');
-    drupal_set_message('<pre>'. print_r($request, TRUE) .'</pre>');
-  }
+  /**
+   * Code for the Simple Order API that was never completed.
+   *
+   * else {
+   *   $config = cybs_load_config('cybs.ini');
+   *   if (variable_get('uc_cybersource_server', 'test') == 'test') {
+   *     $config['sendToProduction'] = 'false';
+   *   }
+   *
+   *   $request['ccAuthService_run'] = 'true';
+   *   if (variable_get('uc_cybersource_transaction_type', 'sale') == 'sale') {
+   *     $request['ccCaptureService_run'] = 'true';
+   *   }
+   *   $request['merchantReferenceCode'] = $order_id;
+   *   $request['purchaseTotals_currency'] = 'USD';
+   *   $request['purchaseTotals_grandTotalAmount'] = $amount;
+   *
+   *   drupal_set_message('<pre>'. print_r($config, TRUE) .'</pre>');
+   *   drupal_set_message('<pre>'. print_r($request, TRUE) .'</pre>');
+   * }
+   */
 }
 
 function _uc_cybersource_card_type($cc_number) {

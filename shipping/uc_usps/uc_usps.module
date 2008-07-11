@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.6 2008/07/10 12:40:59 islandusurper Exp $
+// $Id: uc_usps.module,v 1.6.2.1 2008/07/11 21:41:22 islandusurper Exp $
 
 /**
  * @file
@@ -492,14 +492,17 @@ function uc_usps_intl_rate_request($packages, $origin, $destination) {
   $shipto_country = uc_get_country_data(array('country_id' => $destination->country));
 
   foreach ($packages as $package) {
-    $request .= '<Package ID="'. $services_count .'">'.
-      '<Pounds>'. intval($package->pounds) .'</Pounds>'.
-      '<Ounces>'. ceil($package->ounces) .'</Ounces>'.
-      '<MailType>Package</MailType>'.
-      '<Country>'. $shipto_country[0]['country_name'] .'</Country>'.
-      '</Package>';
+    $qty = $package->qty;
+    for ($i = 0; $i < $qty; $i++) {
+      $request .= '<Package ID="' . $services_count . '">' .
+        '<Pounds>' . intval($package->pounds) . '</Pounds>' .
+        '<Ounces>' . ceil($package->ounces) . '</Ounces>' .
+        '<MailType>Package</MailType>' .
+        '<Country>'.$shipto_country[0]['country_name'].'</Country>' .
+        '</Package>';
 
-    $services_count++;
+      $services_count++;
+    }
   }
   $request .= '</IntlRateRequest>';
 

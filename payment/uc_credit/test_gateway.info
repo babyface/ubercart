@@ -1,4 +1,4 @@
-; $Id: test_gateway.info,v 1.1 2008/07/10 12:40:56 islandusurper Exp $
+; $Id: test_gateway.info,v 1.1.2.1 2008/07/11 21:41:21 islandusurper Exp $
 name = Test Gateway
 description = Adds a credit card gateway that simulates a successful payment for testing checkout.
 dependencies[] = uc_payment

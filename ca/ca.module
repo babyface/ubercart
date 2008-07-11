@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.module,v 1.1 2008/07/10 12:40:55 islandusurper Exp $
+// $Id: ca.module,v 1.1.2.1 2008/07/11 21:41:20 islandusurper Exp $
 
 /**
  * @file
@@ -48,7 +48,7 @@ function ca_menu() {
     'type' => MENU_CALLBACK,
   );
   $items['admin/settings/ca/%/reset'] = array(
-    'title' => t('Reset a predicate'),
+    'title' => 'Reset a predicate',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('ca_predicate_delete_form', 3),
     'access arguments' => array('administer conditional actions'),

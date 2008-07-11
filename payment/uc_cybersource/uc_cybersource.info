@@ -1,6 +1,8 @@
-; $Id: uc_cybersource.info,v 1.4 2008/07/10 12:40:57 islandusurper Exp $
-name = "CyberSource"
-description = "Enable to process payments using CyberSource Silent Order POST."
-dependencies = uc_payment uc_credit
+; $Id: uc_cybersource.info,v 1.4.2.1 2008/07/11 21:41:21 islandusurper Exp $
+name = CyberSource
+description = Enable to process payments using CyberSource Silent Order POST.
+dependencies[] = uc_payment
+dependencies[] = uc_credit
 package = Ubercart - payment
+core = 6.x
 

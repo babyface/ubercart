@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.admin.inc,v 1.1 2008/07/10 12:40:55 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.1 2008/07/11 21:41:20 islandusurper Exp $
 
 /**
  * @file
@@ -8,6 +8,8 @@
 
 // Displays the administration page that lets you add and modify predicates.
 function ca_admin() {
+  drupal_add_css(drupal_get_path('module', 'ca') .'/ca.css');
+
   // Load all the module defined predicates into a temporary array.
   $temp = module_invoke_all('ca_predicate');
 
@@ -41,7 +43,13 @@ function ca_admin() {
   $triggers = module_invoke_all('ca_trigger');
 
   // Build the header for the predicate tables.
-  $header = array(t('Title'), t('Class'), t('Status'), t('Weight'), t('Operations'));
+  $header = array(
+    array('data' => t('Title'), 'class' => 'ca-predicate-table-title'),
+    t('Class'),
+    t('Status'),
+    t('Weight'),
+    t('Operations'),
+  );
 
   $rows = array();
 
@@ -66,8 +74,8 @@ function ca_admin() {
       check_plain($value['#title']),
       strpos($value['#class'], 'custom') === 0 ? check_plain(substr($value['#class'], 7)) : $value['#class'],
       $value['#status'] == 0 ? t('Disabled') : t('Enabled'),
-      $value['#weight'],
-      implode(' ', $ops),
+      array('data' => $value['#weight'], 'class' => 'ca-predicate-table-weight'),
+      array('data' => implode(' ', $ops), 'class' => 'ca-predicate-table-ops'),
     );
   }
 
@@ -194,7 +202,8 @@ function ca_predicate_meta_form_submit($form, &$form_state) {
 
   // Add empty conditions and actions arrays if this is a new predicate.
   if (empty($predicate['#pid'])) {
-    $predicate['#pid'] = db_next_id('{ca_predicates}_pid');
+    $predicate['#pid'] = variable_get('ca_predicates_pid', 1);
+    variable_set('ca_predicates_pid', $predicate['#pid'] + 1);
     $predicate['#conditions'] = array();
     $predicate['#actions'] = array();
   }

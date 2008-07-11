@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14 2008/07/10 12:41:03 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.1 2008/07/11 21:41:26 islandusurper Exp $
 
 /**
  * @file
@@ -182,8 +182,7 @@ function uc_product_perm() {
 /**
  * Implementation of hook_access().
  */
-function uc_product_access($op, $node) {
-  global $user;
+function uc_product_access($op, $node, $account) {
   $type = is_string($node) ? $node : (is_array($node) ? $node['type'] : $node->type);
 
   if ($type == 'product') {
@@ -194,10 +193,10 @@ function uc_product_access($op, $node) {
   }
   switch ($op) {
     case 'create':
-      return user_access('create '. $type .'products');
+      return user_access('create '. $type .'products', $account);
     case 'update':
     case 'delete':
-    if (user_access('edit '. $type .'products') || (user_access('edit own '. $type .'products') && ($user->uid == $node->uid))) {
+    if (user_access('edit '. $type .'products', $account) || (user_access('edit own '. $type .'products', $account) && ($account->uid == $node->uid))) {
       return TRUE;
     }
   }
@@ -2126,7 +2125,7 @@ function theme_uc_product_field_settings_form($form) {
   return $output;
 }
 
-function uc_product_field_settings_form_reset($form_id, &$form_state) {
+function uc_product_field_settings_form_reset($form, &$form_state) {
   variable_del('uc_product_field_enabled');
   variable_del('uc_product_field_weight');
 
@@ -2136,7 +2135,7 @@ function uc_product_field_settings_form_reset($form_id, &$form_state) {
 /**
  * Submit handler for uc_product_settings_form.
  */
-function uc_product_field_settings_form_submit($form_id, &$form_state) {
+function uc_product_field_settings_form_submit($form, &$form_state) {
   $enabled = array();
   $weight = array();
   foreach ($form_state['values']['fields'] as $id => $field) {
@@ -2210,7 +2209,7 @@ function uc_product_class_form($form_state, $class = null) {
     '#description' => t('This text describes the content type created for this product class to administrators.'),
     '#default_value' => $class->description,
   );
-  $form['op'] = array(
+  $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
   );
@@ -2283,9 +2282,9 @@ function uc_product_class_delete_confirm($form_state, $class) {
 /**
  * Submit handler for uc_product_class_delete_confirm.
  */
-function uc_product_class_delete_confirm_submit($form_id, &$form_state) {
+function uc_product_class_delete_confirm_submit($form, &$form_state) {
   if ($form_state['values']['confirm']) {
-    $type = node_get_types('type', $form_values['pcid']);
+    $type = node_get_types('type', $form_state['values']['pcid']);
     $type->module = 'node';
     $type->custom = 1;
     node_type_save($type);
@@ -2864,9 +2863,6 @@ function uc_product_feature_save($data) {
     if (arg(0) == 'node' && arg(3) == 'features' && intval(arg(5)) > 0) {
       $data['pfid'] = intval(arg(5));
     }
-    else {
-      $data['pfid'] = db_next_id('{uc_product_features}_pfid');
-    }
   }
 
   // First attempt to update an existing row.
@@ -2874,8 +2870,8 @@ function uc_product_feature_save($data) {
 
   // Otherwise insert this feature as a new row.
   if (db_affected_rows() == 0) {
-    db_query("INSERT INTO {uc_product_features} VALUES (%d, %d, '%s', '%s')",
-             $data['pfid'], $data['nid'], $data['fid'], $data['description']);
+    db_query("INSERT INTO {uc_product_features} (nid, fid, description) VALUES (%d, '%s', '%s')",
+             $data['nid'], $data['fid'], $data['description']);
     drupal_set_message(t('The product feature has been added.'));
   }
   else {

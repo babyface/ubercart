@@ -1,5 +1,10 @@
-; $Id: uc_stock.info,v 1.3 2008/07/10 12:41:05 islandusurper Exp $
+; $Id: uc_stock.info,v 1.3.2.1 2008/07/11 21:41:27 islandusurper Exp $
 name = Stock
-description = Manage stock levels of your ubercart products
-dependencies = uc_product uc_reports workflow_ng
+description = Manage stock levels of your Ubercart products
+dependencies[] = ca
+dependencies[] = uc_product
+dependencies[] = uc_reports 
+dependencies[] = uc_store
 package = "Ubercart - extra"
+core = 6.x
+php = 5.1

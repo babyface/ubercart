@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12 2008/07/10 12:41:00 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.1 2008/07/11 21:41:23 islandusurper Exp $
 
 /**
  * @file
@@ -495,7 +495,7 @@ function uc_attribute_delete_confirm($form_state, $attribute) {
   return $output;
 }
 
-function uc_attribute_delete_confirm_submit($form_id, &$form_state) {
+function uc_attribute_delete_confirm_submit($form, &$form_state) {
   if ($form_state['values']['confirm']) {
     db_query("DELETE FROM co USING {uc_class_attribute_options} AS co, {uc_attribute_options} AS ao WHERE co.oid = ao.oid AND ao.aid = %d", $form_state['values']['aid']);
     db_query("DELETE FROM {uc_class_attributes} WHERE aid = %d", $form_state['values']['aid']);
@@ -896,7 +896,7 @@ function uc_object_options_form($form_state, $object, $type) {
     $attributes = uc_product_get_attributes($id);
     $table = '{uc_product_options}';
     $id_type = 'nid';
-    $sql_type = '%d';
+    $sql_type = db_type_placeholder('int');
   }
   else if ($type == 'class') {
     $class = $object;
@@ -905,7 +905,7 @@ function uc_object_options_form($form_state, $object, $type) {
     $attributes = uc_class_get_attributes($id);
     $table = '{uc_class_attribute_options}';
     $id_type = 'pcid';
-    $sql_type = "'%s'";
+    $sql_type = db_type_placeholder('varchar');
   }
 
   foreach ($attributes as $aid => $attribute) {
@@ -932,7 +932,7 @@ function uc_object_options_form($form_state, $object, $type) {
     if ($base_attr->options) {
       $options = array();
 
-      $result = db_query("SELECT ao.aid, ao.oid, ao.name, ao.cost AS default_cost, ao.price AS default_price, ao.weight AS default_weight, ao.ordering AS default_ordering, po.cost, po.price, po.weight, po.ordering FROM {uc_attribute_options} AS ao LEFT JOIN $table AS po ON ao.oid = po.oid AND po.$id_type = $sql_type WHERE aid = %d ORDER BY po.ordering, default_ordering, ao.name", $id, $attribute->aid);
+      $result = db_query("SELECT ao.aid, ao.oid, ao.name, ao.cost AS default_cost, ao.price AS default_price, ao.weight AS default_weight, ao.ordering AS default_ordering, po.cost, po.price, po.weight, po.ordering FROM {uc_attribute_options} AS ao LEFT JOIN $table AS po ON ao.oid = po.oid AND po.". $id_type ." = ". $sql_type ." WHERE aid = %d ORDER BY po.ordering, default_ordering, ao.name", $id, $attribute->aid);
       while ($option = db_fetch_object($result)) {
         $oid = $option->oid;
         $options[$oid] = '';
@@ -1214,7 +1214,7 @@ function uc_product_adjustments_form($form_state, $node) {
         '#value' => $cells,
       );
       $form['table']['body'][$i]['combo_array'] = array(
-        '#type' => 'hidden',
+        '#type' => 'value',
         '#value' => $serial_array,
       );
       $form['table']['body'][$i]['model'] = array(
@@ -1260,7 +1260,7 @@ function uc_product_adjustments_form_submit($form, &$form_state) {
     }
     else {
       db_query("DELETE FROM {uc_product_adjustments} WHERE nid = %d AND combination = '%s'",
-        $form_values['nid'], $value['combo_array']);
+        $form_state['values']['nid'], $value['combo_array']);
     }
   }
   drupal_set_message(t('Product adjustments have been saved.'));

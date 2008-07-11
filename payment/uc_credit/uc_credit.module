@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.5 2008/07/10 12:40:56 islandusurper Exp $
+// $Id: uc_credit.module,v 1.5.2.1 2008/07/11 21:41:21 islandusurper Exp $
 
 /**
  * @file
@@ -29,7 +29,7 @@ function uc_credit_menu() {
     'page callback' => 'uc_credit_terminal',
     'page arguments' => array(3),
     'access arguments' => array('process credit cards'),
-    'type' => MENU_CALLBACK
+    'type' => MENU_CALLBACK,
   );
 
   return $items;
@@ -106,7 +106,12 @@ function uc_credit_form_alter(&$form, &$form_state, $form_id) {
       // Add submit handler to preserve CC details for the back button and
       // failed order submissions.
       $form['back']['#submit'][] = 'uc_credit_cart_review_back_submit';
-      $form['#submit'][] = 'uc_credit_cart_review_submit_submit';
+
+      // Reconstruct the submit handler array for before and after processing.
+      $submit = array_merge(array('uc_credit_cart_review_pre_form_submit'), $form['#submit']);
+      $submit[] = 'uc_credit_cart_review_post_form_submit';
+
+      $form['#submit'] = $submit;
 
       // Clear the session of the details.
       unset($_SESSION['sescrd']);
@@ -351,7 +356,7 @@ function uc_payment_method_credit($op, &$arg1) {
       }
 
       // Validate the CC number if that's turned on.
-      if (variable_get('uc_credit_validate_numbers', TRUE) || intval($cc_data['cc_number']) == 0) {
+      if (variable_get('uc_credit_validate_numbers', TRUE) || !ctype_digit($cc_data['cc_number'])) {
         if (!_valid_card_number($cc_data['cc_number'])) {
           drupal_set_message(t('You have entered an invalid credit card number.'), 'error');
           $return = FALSE;
@@ -677,6 +682,9 @@ function uc_payment_method_credit($op, &$arg1) {
 
 // Makes sure the encryption key directory in the credit card settings is valid.
 function uc_credit_settings_form_validate($form, &$form_state) {
+  $dir = variable_get('uc_credit_encryption_path', t('Not configured, see below.'));
+  $filename = rtrim($dir, '/\\') .'/uc_credit.key';
+
   if ($form_state['values']['uc_credit_encryption_path'] !== variable_get('uc_credit_encryption_path', t('Not configured, see below.'))) {
     $dir = rtrim($form_state['values']['uc_credit_encryption_path'], '/\\');
 
@@ -1151,11 +1159,17 @@ function uc_credit_cart_review_back_submit($form, &$form_state) {
   uc_credit_cache('save', $_POST['sescrd']);
 }
 
-// Cache the encrypted CC data if the submit failed so we don't lose it.
-function uc_credit_cart_review_submit_submit($form, &$form_state) {
-  if (!$_SESSION['do_complete']) {
-    $_SESSION['sescrd'] = $_POST['sescrd'];
-    uc_credit_cache('save', $_POST['sescrd']);
+// Caches the encrypted CC data on the review order form for processing.
+function uc_credit_cart_review_pre_form_submit($form, $form_state) {
+  $_SESSION['sescrd'] = $_POST['sescrd'];
+  uc_credit_cache('save', $_POST['sescrd']);
+}
+
+// Clears the temporary CC data if the review order form submits.
+function uc_credit_cart_review_post_form_submit($form, &$form_state) {
+  if ($_SESSION['do_complete']) {
+    // Otherwise stuff it back in the session for the next pageload.
+    unset($_SESSION['sescrd']);
   }
 }
 
@@ -1190,7 +1204,7 @@ function _valid_card_number($number) {
       ($id == 4 && !variable_get('uc_credit_visa', TRUE)) ||
       ($id == 5 && !variable_get('uc_credit_mastercard', TRUE)) ||
       ($id == 6 && !variable_get('uc_credit_discover', TRUE)) ||
-      !is_numeric($number)) {
+      !ctype_digit($number)) {
     return FALSE;
   }
 

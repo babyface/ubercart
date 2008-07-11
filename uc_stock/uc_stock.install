@@ -1,42 +1,37 @@
 <?php
-// $Id: uc_stock.install,v 1.6 2008/07/10 12:41:05 islandusurper Exp $
+// $Id: uc_stock.install,v 1.6.2.1 2008/07/11 21:41:27 islandusurper Exp $
+
+/**
+ * @file
+ * The installation file
+ */
+
+/**
+ * Implementation of hook_schema().
+ */
+
+function uc_stock_schema() {
+  $schema = array();
+
+  $schema['uc_product_stock'] = array(
+      'description' => t('Stock levels for Ubercart products'),
+      'fields' => array(
+           'sku' => array('description' => t('SKU of a product'), 'type' => 'varchar', 'length' => '255', 'not null' => TRUE),
+           'nid' => array('description' => t('Node ID of a product'), 'type' => 'int', 'size' => 'medium', 'not null' => TRUE, 'disp-width' => '9'),
+           'active' => array('description' => t(''), 'type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0, 'disp-width' => '2'),
+           'stock' => array('description' => t('Level of stock'), 'type' => 'int', 'size' => 'medium', 'not null' => TRUE, 'default' => 0, 'disp-width' => '11'),
+           'threshold' => array('description' => t('Threshold level'), 'type' => 'int', 'size' => 'medium', 'not null' => TRUE, 'default' => 0, 'disp-width' => '11')),
+      'primary key' => array('sku'),
+      'indexes' => array(
+           'nid' => array('nid')),
+  );
+  return $schema;
+}
 
 function uc_stock_install() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysqli':
-    case 'mysql':
-      db_query("CREATE TABLE {uc_product_stock} (
-        `sku` varchar(255) NOT NULL,
-        `nid` mediumint(9) NOT NULL,
-        `active` tinyint(2) NOT NULL default 0,
-        `stock` mediumint(11) NOT NULL default 0,
-        `threshold` mediumint(11) NOT NULL default 0,
-        PRIMARY KEY (`sku`),
-        KEY nid (nid)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
-      break;
-    case 'pgsql':
-      db_query("CREATE TABLE {uc_product_stock} (
-        sku varchar(255) NOT NULL default '',
-        nid integer NOT NULL default 0,
-        active smallint NOT NULL default 0,
-        stock integer NOT NULL default 0,
-        threshold integer NOT NULL default 0,
-        PRIMARY KEY (sku)
-      );");
-      db_query("CREATE INDEX {uc_product_stock}_nid ON {uc_product_stock} (nid)");
-      break;
-  }
+  drupal_install_schema('uc_stock');
 }
 
 function uc_stock_uninstall() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysqli':
-    case 'mysql':
-      db_query("DROP TABLE IF EXISTS {uc_product_stock}");
-      break;
-  case 'pgsql':
-      db_query("DROP TABLE {uc_product_stock}");
-      break;
-  }
+  drupal_uninstall_schema('uc_stock');
 }

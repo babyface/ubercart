@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15 2008/07/10 12:41:01 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.1 2008/07/11 21:41:24 islandusurper Exp $
 
 /**
  * @file
@@ -91,7 +91,7 @@ function uc_catalog_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   $items['admin/store/settings/catalog/edit/catalog'] = array(
-    'title' => t('Catalog'),
+    'title' => 'Catalog',
     'weight' => -10,
     'access arguments' => array('administer catalog'),
     'type' => MENU_DEFAULT_LOCAL_TASK,

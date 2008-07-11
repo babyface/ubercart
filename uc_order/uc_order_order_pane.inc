@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_order_pane.inc,v 1.5 2008/07/10 12:41:02 islandusurper Exp $
+// $Id: uc_order_order_pane.inc,v 1.5.2.1 2008/07/11 21:41:25 islandusurper Exp $
 
 /**
  * @file
@@ -639,7 +639,7 @@ function theme_uc_order_view_update_controls($form) {
   return '<div class="update-controls">'. drupal_render($form) .'</div>';
 }
 
-function uc_order_view_update_form_submit($form_id, &$form_state) {
+function uc_order_view_update_form_submit($form, &$form_state) {
   global $user;
 
   if ($form_state['values']['status'] != $form_state['values']['current_status']) {

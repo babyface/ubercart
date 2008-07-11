@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12 2008/07/10 12:41:02 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.1 2008/07/11 21:41:25 islandusurper Exp $
 
 /**
  * @file
@@ -35,7 +35,7 @@ function uc_order_menu() {
   );
   $items['admin/store/settings/orders/overview'] = array(
     'title' => 'Overview',
-    'description' => t('View the order settings.'),
+    'description' => 'View the order settings.',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
@@ -50,7 +50,7 @@ function uc_order_menu() {
   );
   $items['admin/store/settings/orders/edit/basic'] = array(
     'title' => 'Order settings',
-    'description' => t('Edit the basic order settings.'),
+    'description' => 'Edit the basic order settings.',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
@@ -98,6 +98,13 @@ function uc_order_menu() {
     'access arguments' => array('view all orders'),
     'type' => MENU_NORMAL_ITEM,
     'weight' => -10,
+  );
+  $items['admin/store/orders/sort/%'] = array(
+    'title' => 'Orders',
+    'description' => 'View orders with a particular order status.',
+    'page arguments' => array(NULL, NULL, FALSE),
+    'access arguments' => array('view all orders'),
+    'type' => MENU_CALLBACK,
   );
   $items['admin/store/orders/create'] = array(
     'title' => 'Create order',
@@ -291,6 +298,9 @@ function uc_order_theme() {
     'uc_order_edit_products_form' => array(
       'arguments' => array('form' => NULL),
     ),
+    'uc_order_view_update_controls' => array(
+      'arguments' => array('form' => NULL),
+    ),
   );
 }
 
@@ -343,9 +353,9 @@ function uc_order_token_values($type, $object = NULL) {
         $values['order-first-name'] = check_plain($order->billing_first_name);
         $values['order-last-name'] = check_plain($order->billing_last_name);
       }
-      $result = db_result(db_query("SELECT message FROM {uc_order_comments} WHERE order_id = %d AND uid = 0 ORDER BY created DESC LIMIT 1", $order->order_id));
+      $result = db_result(db_query_range("SELECT message FROM {uc_order_comments} WHERE order_id = %d AND uid = 0 ORDER BY created DESC", $order->order_id, 0, 1));
       $values['order-comments'] = empty($result) ? t('<i>No comments left.</i>') : check_plain($result);
-      $result = db_result(db_query("SELECT message FROM {uc_order_comments} WHERE order_id = %d AND uid > 0 ORDER BY created DESC LIMIT 1", $order->order_id));
+      $result = db_result(db_query_range("SELECT message FROM {uc_order_comments} WHERE order_id = %d AND uid > 0 ORDER BY created DESC", $order->order_id, 0, 1));
       $values['order-last-comment'] = empty($result) ? t('<i>No comment found.</i>') : check_plain($result);
       $values['order-status'] = uc_order_status_data($order->order_status, 'title');
       $values['order-date-created'] = format_date($order->created, 'small');
@@ -1943,22 +1953,21 @@ function op_products_edit_table($form_state, $form) {
  * When the Catalog module or uBrowser aren't enabled, use this product select.
  */
 function uc_order_load_product_select($order) {
-  foreach (module_invoke_all('product_types') as $type) {
-    $typestr .= "'$type', ";
-  }
-  $typestr = substr($typestr, 0, strlen($typestr) - 2);
+  $args = module_invoke_all('product_types');
 
   if (!empty($_POST['search'])) {
     $search = strtolower(str_replace('*', '%', check_plain($_POST['search'])));
 
+    $args[] = $search;
+    $args[] = $search;
     $result = db_query("SELECT n.nid, n.title FROM {node} AS n LEFT JOIN "
                       ."{uc_products} AS p ON n.nid = p.nid WHERE n.type IN "
-                      ."($typestr) AND (LOWER(n.title) LIKE '%s' OR LOWER(p.model) LIKE '%s')"
-                      ." ORDER BY n.title", strtolower($search), strtolower($search));
+                      ."(". db_placeholders($args, 'varchar') .") AND (LOWER(n.title) LIKE '%s' OR LOWER(p.model) LIKE '%s')"
+                      ." ORDER BY n.title", $args);
   }
   else {
-    $result = db_query("SELECT nid, title FROM {node} WHERE type IN ($typestr) "
-                      ."ORDER BY title");
+    $result = db_query("SELECT nid, title FROM {node} WHERE type IN (". db_placeholders($args, 'varchar') .") "
+                      ."ORDER BY title", $args);
   }
   while ($row = db_fetch_object($result)) {
     $options[$row->nid] = $row->title;
@@ -2132,15 +2141,15 @@ function uc_order_delete_confirm($order) {
     drupal_goto('admin/store/orders');
   }
 
-  $output = t('Are you sure you want to delete order @order_id?', array('@order_id' => $order_id))
-          . drupal_get_form('uc_order_delete_confirm_form', $order_id);
+  $output = t('Are you sure you want to delete order @order_id?', array('@order_id' => $order->order_id))
+          . drupal_get_form('uc_order_delete_confirm_form', $order->order_id);
 
   return $output;
 }
 
 function uc_order_delete_confirm_form($form_state, $order_id) {
   $form['order_id'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => $order_id
   );
 

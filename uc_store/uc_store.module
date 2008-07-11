@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14 2008/07/10 12:41:06 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.1 2008/07/11 21:41:27 islandusurper Exp $
 
 /**
  * @file
@@ -160,7 +160,7 @@ function uc_store_menu() {
   );
   $items['admin/store/settings/countries/edit/formats'] = array(
     'title' => 'Country formats',
-    'description' => t('Edit the country specific format settings.'),
+    'description' => 'Edit the country specific format settings.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_country_formats_form'),
     'access arguments' => array('administer store'),
@@ -184,7 +184,7 @@ function uc_store_menu() {
   );
   $items['admin/store/settings/store/edit'] = array(
     'title' => 'Edit',
-    'description' => t('Edit the store settings.'),
+    'description' => 'Edit the store settings.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_store_store_settings_form'),
     'access arguments' => array('administer store'),
@@ -842,7 +842,7 @@ function uc_store_customer_search_form() {
   return $form;
 }
 
-function uc_store_customer_search_form_submit($form_id, &$form_state) {
+function uc_store_customer_search_form_submit($form, &$form_state) {
   if (strlen(trim($form_state['values']['first_name'])) == 0) {
     $first_name = '0';
   }
@@ -1007,7 +1007,7 @@ function uc_country_import_form() {
   return $form;
 }
 
-function uc_country_import_form_submit($form_id, &$form_state) {
+function uc_country_import_form_submit($form, &$form_state) {
   $file = $form_state['values']['import_file'];
 
   $pieces = explode('_', substr($file, 0, strlen($file) - 4));
@@ -1094,7 +1094,7 @@ function uc_country_remove_form($country_id) {
   return $form;
 }
 
-function uc_country_remove_form_submit($form_id, &$form_state) {
+function uc_country_remove_form_submit($form, &$form_state) {
   $country_id = $form_state['values']['country_id'];
 
   $result = db_query("SELECT * FROM {uc_countries} WHERE country_id = %d", $country_id);
@@ -1213,7 +1213,7 @@ function uc_country_formats_form() {
   return $form;
 }
 
-function uc_country_formats_form_submit($form_id, &$form_state) {
+function uc_country_formats_form_submit($form, &$form_state) {
   foreach ($form_state['values']['countries'] as $country_id => $data) {
     variable_set('uc_address_format_'. $country_id, $data['address_format']);
   }
@@ -1571,7 +1571,7 @@ function theme_uc_store_address_fields_form($form) {
   return $output;
 }
 
-function uc_store_address_fields_form_submit($form_id, &$form_state) {
+function uc_store_address_fields_form_submit($form, &$form_state) {
   $fields = array();
   $required = array();
   foreach ($form_state['values']['fields'] as $field => $data) {
@@ -1623,7 +1623,7 @@ function uc_store_initials() {
   return $form;
 }
 
-function uc_store_initials_submit($form_id, &$form_state) {
+function uc_store_initials_submit($form, &$form_state) {
   $result = db_query("SELECT uid FROM {users} WHERE name = '%s'", $form_state['values']['username']);
   if ($user = db_fetch_object($result)) {
     if ($form_state['values']['initials'] == '') {
@@ -2122,14 +2122,14 @@ function uc_zone_select($title, $default = NULL, $description = NULL, $country_i
  * $display can be 'name', 'code2' for the 2-digit code, or 'code3' for the 3-digit code.
  */
 function uc_country_select($title, $default = NULL, $description = NULL, $display = 'name', $required = FALSE) {
-  if ($display == 'name') {
-    $order_by = 'country_name';
-  }
-  elseif ($display == 'code2') {
+  if ($display == 'code2') {
     $order_by = 'country_iso_code_2';
   }
   elseif ($display == 'code3') {
     $order_by = 'country_iso_code_3';
+  }
+  else {
+    $order_by = 'country_name';
   }
 
   $result = db_query("SELECT * FROM {uc_countries} WHERE version > 0 ORDER BY %s", $order_by);
@@ -2486,27 +2486,6 @@ function uc_store_address() {
   return $store_address;
 }
 
-function uc_numeric_validate($form, $sign = 0) {
-  $error = t('You must enter a number.');
-  switch ($sign) {
-    case -1:
-      $error = t('You must enter a negative number.');
-    break;
-    case 1:
-      $error = t('You must enter a positive number.');
-    break;
-  }
-  // Allow an empty field to be cast to 0
-  if (empty($form['#value']) || is_numeric($form['#value'])) {
-    if (($form['#value'] <= 0 && $sign == 1) || ($form['#value'] >= 0 && $sign == -1)) {
-      form_error($form, $error);
-    }
-  }
-  else {
-    form_error($form, $error);
-  }
-}
-
 // Returns the e-mail from string in the format of Store Name <store@email.com>.
 function uc_store_email_from() {
   $email_from = variable_get('uc_store_email', '');
@@ -2740,7 +2719,7 @@ function uc_store_default_country() {
 
   $result = db_result(db_query("SELECT COUNT(*) FROM {uc_countries} WHERE country_id = %d AND version > 0", $default));
   if ($result == 0) {
-    $default = db_result(db_query("SELECT country_id FROM {uc_countries} WHERE version > 0 ORDER BY country_name LIMIT 1"));
+    $default = db_result(db_query_range("SELECT country_id FROM {uc_countries} WHERE version > 0 ORDER BY country_name", 0, 1));
   }
 
   return $default;
@@ -2862,6 +2841,6 @@ function uc_store_send_report() {
     variable_set('uc_store_site_id', $response->data);
   }
 
-  watchdog('uc_store', t('Reported the following version info to Ubercart.org:') .'<pre>'. print_r($data, TRUE) .'</pre>');
+  watchdog('uc_store', 'Reported the following version info to Ubercart.org: !data', array('!data' => '<pre>'. print_r($data, TRUE) .'</pre>'));
 }
 

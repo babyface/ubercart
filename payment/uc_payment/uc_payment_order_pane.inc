@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_order_pane.inc,v 1.5 2008/07/10 12:40:57 islandusurper Exp $
+// $Id: uc_payment_order_pane.inc,v 1.5.2.1 2008/07/11 21:41:21 islandusurper Exp $
 
 /**
  * @file
@@ -53,7 +53,7 @@ function uc_order_pane_payment($op, $arg1) {
     case 'edit-form':
       uc_add_js('misc/progress.js');
       uc_add_js("var def_payment_msg = '';", 'inline');
-      
+
       $form['payment'] = array(
         '#type' => 'fieldset',
         '#title' => t("Modify 'Payment info'"),
@@ -79,7 +79,7 @@ function uc_order_pane_payment($op, $arg1) {
       $methods = _payment_method_list();
       $js = 'var methods = {';
       foreach ($methods as $method) {
-        $js .= '"'. $method['name'] .'": "' . $method['id'] .'", ';
+        $js .= '"'. $method['name'] .'": "'. $method['id'] .'", ';
       }
       $js = rtrim($js, ' ,') .'};';
       uc_add_js($js, 'inline');

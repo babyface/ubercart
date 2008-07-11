@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.6 2008/07/10 12:40:59 islandusurper Exp $
+// $Id: uc_shipping.module,v 1.6.2.1 2008/07/11 21:41:22 islandusurper Exp $
 
 /**
  * @file
@@ -634,7 +634,7 @@ function uc_shipping_order_shipments($order) {
     $output .= l(t('Make a new shipment'), 'admin/store/orders/'. $order->order_id .'/shipments/new');
   }
   else {
-    $result = db_query("SELECT op.order_product_id, SUM(op.qty) AS total, SUM(pp.qty) AS packaged FROM {uc_order_products} AS op LEFT JOIN {uc_packaged_products} AS pp ON op.order_product_id = pp.order_product_id WHERE op.order_id = %d GROUP BY op.order_product_id HAVING SUM(pp.qty) IS NULL OR SUM(op.qty) > SUM(pp.qty)", $order->order_id);
+    $result = db_query("SELECT op.order_product_id, CAST(SUM(op.qty) / COUNT(pp.qty) AS UNSIGNED) AS total, SUM(pp.qty) AS packaged FROM {uc_order_products} AS op LEFT JOIN {uc_packaged_products} AS pp ON op.order_product_id = pp.order_product_id WHERE op.order_id = %d AND op.data LIKE '%%%s%%' GROUP BY op.order_product_id HAVING SUM(pp.qty) IS NULL OR CAST(SUM(op.qty) / COUNT(pp.qty) AS UNSIGNED) > SUM(pp.qty)", $order->order_id, 's:9:"shippable";s:1:"1";');
     if (db_fetch_object($result)) {
       $output .= l(t('Put products into packages to make shipments.'), 'admin/store/orders/'. $order->order_id .'/packages/new');
     }
@@ -821,7 +821,7 @@ function uc_shipping_shipment_view($order, $shipment) {
   $origin = uc_order_address($shipment, 'o');
   $destination = uc_order_address($shipment, 'd');
   $output .= '<div class="order-pane pos-left"><div class="order-pane-title">'. t('Pickup Address:') .'</div>'. $origin .'</div>';
-  $output .= '<div class="order-pane pos-left"><div class="order-pane-title">'. t('Delviery Address:') .'</div>'. $destination .'</div>';
+  $output .= '<div class="order-pane pos-left"><div class="order-pane-title">'. t('Delivery Address:') .'</div>'. $destination .'</div>';
   $output .= '<div class="order-pane abs-left"><div class="order-pane-title">'. t('Schedule:') .'</div>';
   $rows = array();
   $rows[] = array(t('Ship date:'), format_date($shipment->ship_date, 'custom', 'D, '. variable_get('uc_date_format_default', 'm/d/Y')));
