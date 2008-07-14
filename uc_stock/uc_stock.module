@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.module,v 1.12.2.1 2008/07/11 21:41:27 islandusurper Exp $
+// $Id: uc_stock.module,v 1.12.2.2 2008/07/14 13:09:38 islandusurper Exp $
 
 /**
  * @file
@@ -14,7 +14,7 @@
  * Development sponsored by the Ubercart project.  http://www.ubercart.org
  */
 
-require_once('uc_stock_ca.inc');
+require_once('uc_stock.ca.inc');
 
 /*******************************************************************************
  *
