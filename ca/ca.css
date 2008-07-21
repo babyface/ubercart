@@ -1,0 +1,13 @@
+/* $Id: ca.css,v 1.1 2008/07/21 13:18:31 islandusurper Exp $ */
+
+.ca-predicate-table-title {
+  width: 100%;
+}
+
+.ca-predicate-table-weight {
+  text-align: center;
+}
+
+.ca-predicate-table-ops {
+  white-space: nowrap;
+}
