@@ -1,5 +1,5 @@
 <?php
-// $Id: hungary_348_1.cif,v 1.2.2.1 2008/07/11 21:41:27 islandusurper Exp $ 1.0.0
+// $Id: hungary_348_1.cif,v 1.2.2.2 2008/07/21 13:18:37 islandusurper Exp $ 1.0.0
 
 /**
  * First implement hook_install() using the name of the country as the base of
@@ -10,7 +10,7 @@ function hungary_install() {
 
   db_query("INSERT INTO {uc_zones} VALUES "
           ."(%d, 348, 'BUD', 'Budapest'),"
-          ."(%d, 348, 'BAR', 'Baranya'),"          
+          ."(%d, 348, 'BAR', 'Baranya'),"
           ."(%d, 348, 'BKK', 'Bács-Kiskun'),"
           ."(%d, 348, 'BÉK', 'Békés'),"
           ."(%d, 348, 'BAZ', 'Borsod-Abaúj-Zemplén'),"

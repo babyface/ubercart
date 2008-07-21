@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.install,v 1.2.2.1 2008/07/11 21:41:26 islandusurper Exp $
+// $Id: uc_roles.install,v 1.2.2.2 2008/07/21 13:18:36 islandusurper Exp $
 
 function uc_roles_install() {
   switch ($GLOBALS['db_type']) {
@@ -71,7 +71,7 @@ function uc_roles_uninstall() {
 
 function uc_roles_update_1() {
   $ret = array();
-  
+
   switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
@@ -81,13 +81,13 @@ function uc_roles_update_1() {
     case 'pgsql':
       break;
   }
-  
+
   return $ret;
 }
 
 function uc_roles_update_2() {
   $ret = array();
-  
+
   switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
@@ -96,13 +96,13 @@ function uc_roles_update_2() {
     case 'pgsql':
       break;
   }
-  
+
   return $ret;
 }
 
 function uc_roles_update_3() {
   $ret = array();
-  
+
   switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
@@ -112,6 +112,6 @@ function uc_roles_update_3() {
       $ret[] = update_sql("ALTER TABLE {uc_roles_products} ADD by_quantity boolean NOT NULL");
       break;
   }
-  
+
   return $ret;
 }

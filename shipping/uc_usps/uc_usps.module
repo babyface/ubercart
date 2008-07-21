@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.6.2.1 2008/07/11 21:41:22 islandusurper Exp $
+// $Id: uc_usps.module,v 1.6.2.2 2008/07/21 13:18:34 islandusurper Exp $
 
 /**
  * @file
@@ -90,7 +90,7 @@ function uc_usps_nodeapi(&$node, $op) {
 }
 
 /******************************************************************************
- * Workflow-ng Hooks                                                          *
+ * Conditional Actions Hooks                                                  *
  ******************************************************************************/
 
 /**
@@ -290,7 +290,6 @@ function uc_usps_admin_settings() {
  *   JSON object containing rate, error, and debugging information.
  */
 function uc_usps_quote($products, $details) {
-  include_once(drupal_get_path('module', 'uc_store') .'/includes/simplexml.php');
   //drupal_set_message('<pre>'. print_r($products, true) .'</pre>');
   //drupal_set_message('<pre>'. print_r($details, true) .'</pre>');
   $services = array();
@@ -315,30 +314,29 @@ function uc_usps_quote($products, $details) {
     if (user_access('configure quotes') && variable_get('uc_quote_display_debug', false)) {
       $services['data']['debug'] .= htmlentities($result->data) ."<br />\n";
     }
-    $response = new JSimpleXML();
-    $response->loadString($result->data);
+    $response = new SimpleXMLElement($result->data);
 
-    if (is_array($response->document->package)) {
-      foreach ($response->document->package as $package) {
-        if (isset($package->error)) {
-          $services['data']['error'] .= $package->error[0]->description[0]->data() .'<br />';
+    if (isset($response->Package)) {
+      foreach ($response->Package as $package) {
+        if (isset($package->Error)) {
+          $services['data']['error'] .= (string)$package->Error[0]->Description .'<br />';
         }
         else {
-          foreach ($package->postage as $postage) {
-            $attr = $postage->attributes();
-            if ($attr['classid'] === 0 || $attr['classid'] === '0') {
-              if ($postage->mailservice[0]->data() == "First Class Mail Parcel") {
-                $attr['classid'] = 'zeroParcel';
+          foreach ($package->Postage as $postage) {
+            $classid = (string)$postage['CLASSID'];
+            if ($classid === 0 || $classid === '0') {
+              if ((string)$postage->MailService == "First Class Mail Parcel") {
+                $classid = 'zeroParcel';
               }
-              else if ($postage->mailservice[0]->data() == "First Class Mail Flat") {
-                $attr['classid'] = 'zeroFlat';
+              else if ((string)$postage->MailService == "First Class Mail Flat") {
+                $classid = 'zeroFlat';
               }
               else {
-                $attr['classid'] = 'zero';
+                $classid = 'zero';
               }
             }
-            $services[$attr['classid']]['label'] = t('U.S.P.S. @service', array('@service' => $postage->mailservice[0]->data()));
-            $services[$attr['classid']]['rate'] += uc_usps_markup($postage->rate[0]->data());
+            $services[$classid]['label'] = t('U.S.P.S. @service', array('@service' => (string)$postage->MailService));
+            $services[$classid]['rate'] += uc_usps_markup((string)$postage->Rate);
           }
         }
       }
@@ -373,8 +371,6 @@ function uc_usps_quote($products, $details) {
  *   JSON object containing rate, error, and debugging information.
  */
 function uc_usps_intl_quote($products, $details) {
-  include_once(drupal_get_path('module', 'uc_store') .'/includes/simplexml.php');
-
   $services = array();
   $addresses = array(variable_get('uc_quote_store_default_address', new stdClass()));
   $packages = _uc_usps_package_products($products, $addresses);
@@ -396,25 +392,23 @@ function uc_usps_intl_quote($products, $details) {
     if (user_access('configure quotes') && variable_get('uc_quote_display_debug', false)) {
       $services['data']['debug'] .= htmlentities($result->data) ."<br />\n";
     }
-    $response = new JSimpleXML();
-    $response->loadString($result->data);
+    $response = new SimpleXMLElement($result->data);
 
     // drupal_set_message('<pre>'. htmlentities($result->data) .'</pre>');
 
-    if (is_array($response->document->package)) {
-
-      foreach ($response->document->package as $package) {
-        if (isset($package->error)) {
-          $services['data']['error'] .= $package->error[0]->description[0]->data() .'<br />';
+    if (is_array($response->Package)) {
+      foreach ($response->Package as $package) {
+        if (isset($package->Error)) {
+          $services['data']['error'] .= $package->Error[0]->Description .'<br />';
         }
         else {
-          foreach ($package->service as $service) {
-            $attr = $service->attributes();
-            if ($attr['id'] === 0 || $attr['id'] === '0') {
-              $attr['id'] = 'zero';
+          foreach ($package->Service as $service) {
+            $id = (string)$service['ID'];
+            if ($id === 0 || $id === '0') {
+              $id = 'zero';
             }
-            $services[$attr['id']]['label'] = t('USPS @service', array('@service' => $service->svcdescription[0]->data()));
-            $services[$attr['id']]['rate'] += uc_usps_markup($service->postage[0]->data());
+            $services[$id]['label'] = t('USPS @service', array('@service' => (string)$service->SvcDescription));
+            $services[$id]['rate'] += uc_usps_markup((string)$service->Postage);
           }
         }
       }

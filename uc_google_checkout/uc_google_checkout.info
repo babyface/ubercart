@@ -1,4 +1,4 @@
-; $Id: uc_google_checkout.info,v 1.1.2.1 2008/07/11 21:41:25 islandusurper Exp $
+; $Id: uc_google_checkout.info,v 1.1.2.2 2008/07/21 13:18:35 islandusurper Exp $
 name = Google Checkout
 description = Integrates Google's Checkout, Merchant Calculated Shipping, and Order Processing APIs.
 dependencies = uc_cart

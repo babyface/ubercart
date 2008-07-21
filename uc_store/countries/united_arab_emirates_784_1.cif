@@ -1,5 +1,5 @@
 <?php
-// $Id: united_arab_emirates_784_1.cif,v 1.2.2.1 2008/07/11 21:41:27 islandusurper Exp $
+// $Id: united_arab_emirates_784_1.cif,v 1.2.2.2 2008/07/21 13:18:37 islandusurper Exp $
 
 function united_arab_emirates_install() {
 
@@ -7,7 +7,7 @@ function united_arab_emirates_install() {
 
   db_query("INSERT INTO {uc_zones} VALUES "
           ."(%d, 784, 'DXB', 'Dubai'),"
-          ."(%d, 784, 'SHJ', 'Sharjah'),"          
+          ."(%d, 784, 'SHJ', 'Sharjah'),"
           ."(%d, 784, 'ABU', 'Abu dhabi'),"
           ."(%d, 784, 'UAQ', 'UM Al Quwain'),"
           ."(%d, 784, 'FUJ', 'Fujairah'),"

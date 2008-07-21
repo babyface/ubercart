@@ -1,5 +1,5 @@
 <?php
-// $Id: ukraine_804_1.cif,v 1.2.2.1 2008/07/11 21:41:27 islandusurper Exp $
+// $Id: ukraine_804_1.cif,v 1.2.2.2 2008/07/21 13:18:37 islandusurper Exp $
 
 function ukraine_install() {
   db_query("INSERT INTO {uc_countries} VALUES ('804', 'Україна', 'UA', 'UKR', 1)");

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.1 2008/07/11 21:41:26 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.2 2008/07/21 13:18:36 islandusurper Exp $
 
 /**
  * @file
@@ -2681,7 +2681,7 @@ function uc_product_features($node) {
         $question = $node->title;
         $description = t('Are you sure you wish to delete this %feature?', array('%feature' => uc_product_feature_data($feature['fid'], 'title')))
                       .'<div><b>'. t('Description') .':</b><br />'. $feature['description'] .'</div><br />';
-        return drupal_get_form('confirm_form', NULL, $question, 'node/'. arg(1) .'/edit/features', $description, t('Delete'), t('Cancel'), 'pf_delete');
+        return drupal_get_form('confirm_form', $question, 'node/'. arg(1) .'/edit/features', $description, t('Delete'), t('Cancel'), 'pf_delete');
       }
       else {
         drupal_set_message(t("That product feature doesn't exist."), 'error');

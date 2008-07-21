@@ -1,5 +1,5 @@
 <?php
-// $Id: bulgaria_100_1.cif,v 1.1.2.1 2008/07/11 21:41:27 islandusurper Exp $
+// $Id: bulgaria_100_1.cif,v 1.1.2.2 2008/07/21 13:18:37 islandusurper Exp $
 
 function bulgaria_install() {
   // VALUES = Country ID, Country Name, 2-digit Code, 3-digit Code, File Version

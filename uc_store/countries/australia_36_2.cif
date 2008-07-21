@@ -1,5 +1,5 @@
 <?php
-// $Id: australia_36_2.cif,v 1.2.2.1 2008/07/11 21:41:27 islandusurper Exp $
+// $Id: australia_36_2.cif,v 1.2.2.2 2008/07/21 13:18:37 islandusurper Exp $
 
 /**
  * First implement hook_install() using the name of the country as the base of

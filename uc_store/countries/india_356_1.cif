@@ -1,5 +1,5 @@
 <?php
-// $Id: india_356_1.cif,v 1.2.2.1 2008/07/11 21:41:27 islandusurper Exp $
+// $Id: india_356_1.cif,v 1.2.2.2 2008/07/21 13:18:37 islandusurper Exp $
 
 /**
  * First implement hook_install() using the name of the country as the base of
@@ -15,40 +15,40 @@ function india_install() {
   // $num is the number of zones in the INSERT query.
   // VALUES = %d for ID, Parent Country ID, Zone Abbreviation, Zone Name
   db_query("INSERT INTO {uc_zones} VALUES "
-		  ."(%d, 356, 'AP', 'Andhra Pradesh'),"
-		  ."(%d, 356, 'AR', 'Arunachal Pradesh'),"
-		  ."(%d, 356, 'AS', 'Assam'),"
-		  ."(%d, 356, 'BR', 'Bihar'),"
-		  ."(%d, 356, 'CG', 'Chattisgarh'),"
-		  ."(%d, 356, 'GA', 'Goa'),"
-		  ."(%d, 356, 'GJ', 'Gujarat'),"
-		  ."(%d, 356, 'HR', 'Haryana'),"
-		  ."(%d, 356, 'HP', 'Himachal Pradesh'),"
-		  ."(%d, 356, 'JK', 'Jammu & Kashmir'),"
-		  ."(%d, 356, 'JH', 'Jharkhand'),"
-		  ."(%d, 356, 'KA', 'Karnataka'),"
-		  ."(%d, 356, 'KL', 'Kerala'),"
-		  ."(%d, 356, 'MP', 'Madhya Pradesh'),"
-		  ."(%d, 356, 'MH', 'Maharashtra'),"
-		  ."(%d, 356, 'MN', 'Manipur'),"
-		  ."(%d, 356, 'ML', 'Meghalaya'),"
-		  ."(%d, 356, 'MZ', 'Mizoram'),"
-		  ."(%d, 356, 'NL', 'Nagaland'),"
-		  ."(%d, 356, 'OR', 'Orissa'),"
-		  ."(%d, 356, 'PB', 'Punjab'),"
-		  ."(%d, 356, 'RJ', 'Rajasthan'),"
-		  ."(%d, 356, 'SK', 'Sikkim'),"
-		  ."(%d, 356, 'TN', 'Tamil Nadu'),"
-		  ."(%d, 356, 'TR', 'Tripura'),"
-		  ."(%d, 356, 'UA', 'Uttarakhand'),"
-		  ."(%d, 356, 'UP', 'Uttar Pradesh'),"
-		  ."(%d, 356, 'WB', 'West Bengal'),"
-		  ."(%d, 356, 'AN', 'Andaman & Nicobar'),"
-		  ."(%d, 356, 'CH', 'Chandigarh'),"
-		  ."(%d, 356, 'DN', 'Dadra and Nagar Haveli'),"
-		  ."(%d, 356, 'DD', 'Daman & Diu'),"
-		  ."(%d, 356, 'DL', 'Delhi')",
-					 uc_get_zone_ids(33));
+      ."(%d, 356, 'AP', 'Andhra Pradesh'),"
+      ."(%d, 356, 'AR', 'Arunachal Pradesh'),"
+      ."(%d, 356, 'AS', 'Assam'),"
+      ."(%d, 356, 'BR', 'Bihar'),"
+      ."(%d, 356, 'CG', 'Chattisgarh'),"
+      ."(%d, 356, 'GA', 'Goa'),"
+      ."(%d, 356, 'GJ', 'Gujarat'),"
+      ."(%d, 356, 'HR', 'Haryana'),"
+      ."(%d, 356, 'HP', 'Himachal Pradesh'),"
+      ."(%d, 356, 'JK', 'Jammu & Kashmir'),"
+      ."(%d, 356, 'JH', 'Jharkhand'),"
+      ."(%d, 356, 'KA', 'Karnataka'),"
+      ."(%d, 356, 'KL', 'Kerala'),"
+      ."(%d, 356, 'MP', 'Madhya Pradesh'),"
+      ."(%d, 356, 'MH', 'Maharashtra'),"
+      ."(%d, 356, 'MN', 'Manipur'),"
+      ."(%d, 356, 'ML', 'Meghalaya'),"
+      ."(%d, 356, 'MZ', 'Mizoram'),"
+      ."(%d, 356, 'NL', 'Nagaland'),"
+      ."(%d, 356, 'OR', 'Orissa'),"
+      ."(%d, 356, 'PB', 'Punjab'),"
+      ."(%d, 356, 'RJ', 'Rajasthan'),"
+      ."(%d, 356, 'SK', 'Sikkim'),"
+      ."(%d, 356, 'TN', 'Tamil Nadu'),"
+      ."(%d, 356, 'TR', 'Tripura'),"
+      ."(%d, 356, 'UA', 'Uttarakhand'),"
+      ."(%d, 356, 'UP', 'Uttar Pradesh'),"
+      ."(%d, 356, 'WB', 'West Bengal'),"
+      ."(%d, 356, 'AN', 'Andaman & Nicobar'),"
+      ."(%d, 356, 'CH', 'Chandigarh'),"
+      ."(%d, 356, 'DN', 'Dadra and Nagar Haveli'),"
+      ."(%d, 356, 'DD', 'Daman & Diu'),"
+      ."(%d, 356, 'DL', 'Delhi')",
+           uc_get_zone_ids(33));
 
   // Use uc_set_address_format() with the country ID as the first argument and
   // an address format string as the second.  Documentation on address formats

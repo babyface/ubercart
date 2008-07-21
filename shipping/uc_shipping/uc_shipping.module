@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.6.2.1 2008/07/11 21:41:22 islandusurper Exp $
+// $Id: uc_shipping.module,v 1.6.2.2 2008/07/21 13:18:33 islandusurper Exp $
 
 /**
  * @file
@@ -785,7 +785,7 @@ function uc_shipping_make_shipment() {
     $methods = module_invoke_all('shipping_method');
     $method = $methods[$method_id];
     if (isset($method)) {
-      return drupal_get_form($method['ship']['callback'], $order->order_id, $package_ids);
+      return drupal_get_form($method['ship']['callback'], $order, $package_ids);
     }
     else {
       $shipment = new stdClass();

@@ -1,4 +1,4 @@
-; $Id: uc_roles.info,v 1.2.2.1 2008/07/11 21:41:26 islandusurper Exp $
+; $Id: uc_roles.info,v 1.2.2.2 2008/07/21 13:18:36 islandusurper Exp $
 name = Roles
 description = Assign permanent or expirable roles based on product purchases.
 dependencies = uc_product

@@ -1,30 +1,43 @@
 <?php
-// $Id: uc_ups.install,v 1.5 2008/07/10 12:40:59 islandusurper Exp $
+// $Id: uc_ups.install,v 1.5.2.1 2008/07/21 13:18:33 islandusurper Exp $
+
+function uc_ups_schema() {
+  $schema = array();
+
+  $schema['uc_ups_products'] = array(
+    'fields' => array(
+      'vid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'pkg_type' => array(
+        'type' => 'varchar',
+        'length' => 2,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('vid'),
+  );
+
+  return $schema;
+}
 
 function uc_ups_install() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      db_query("CREATE TABLE {uc_ups_products} (
-        `vid` mediumint(9) unsigned NOT NULL default 0,
-        `nid` mediumint(9) unsigned NOT NULL default 0,
-        `pkg_type` varchar(2) NOT NULL,
-        PRIMARY KEY (`vid`)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
-    break;
-    case 'pgsql':
-      db_query("CREATE TABLE {uc_ups_products} (
-        vid int_unsigned NOT NULL default 0,
-        nid int_unsigned NOT NULL default 0,
-        pkg_type varchar(2) NOT NULL default '',
-        PRIMARY KEY (vid)
-      );");
-    break;
-  }
+  drupal_install_schema('uc_ups');
 }
 
 function uc_ups_uninstall() {
-  db_query("DROP TABLE {uc_ups_products}");
+  drupal_uninstall_schema('uc_ups');
+
   variable_del('uc_ups_access_license');
   variable_del('uc_ups_shipper_number');
   variable_del('uc_ups_user_id');

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.2.2.1 2008/07/11 21:41:26 islandusurper Exp $
+// $Id: uc_roles.module,v 1.2.2.2 2008/07/21 13:18:36 islandusurper Exp $
 
 /**
  * @file
@@ -23,7 +23,7 @@
 function uc_roles_help($section) {
   switch ($section) {
     case 'admin/user/user/expiration':
-      return t('&Uuml;bercart grants certain roles to customers when they purchase products with a role assignment feature. These can be permanent or temporary roles. Here you can view and edit when temporary roles are set to expire.');
+      return t('Ubercart grants certain roles to customers when they purchase products with a role assignment feature. These can be permanent or temporary roles. Here you can view and edit when temporary roles are set to expire.');
   }
 }
 
@@ -748,7 +748,7 @@ function uc_roles_feature_settings() {
       'month' => t('month(s)'),
       'year' => t('year(s)')
     ),
-    '#description' => t('The default amount of time a granted &Uuml;bercart role will last until it expires.'),
+    '#description' => t('The default amount of time a granted Ubercart role will last until it expires.'),
     '#prefix' => '<div class="expiration">',
     '#suffix' => '</div>',
     '#attributes' => array(  //Javascript to disable qty on never select
@@ -759,7 +759,7 @@ function uc_roles_feature_settings() {
     '#type' => 'select',
     '#title' => t('Default role'),
     '#default_value' => variable_get('uc_roles_default_role', NULL),
-    '#description' => t('The default role &Uuml;bercart grants on specified products.'),
+    '#description' => t('The default role Ubercart grants on specified products.'),
     '#options' => _get_role_choices(),
   );
   $form['uc_roles_default_role_choices'] = array(

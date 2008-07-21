@@ -1,12 +1,12 @@
 <?php
-// $Id: portugal_620_1.cif,v 1.2.2.1 2008/07/11 21:41:27 islandusurper Exp $
+// $Id: portugal_620_1.cif,v 1.2.2.2 2008/07/21 13:18:37 islandusurper Exp $
 
 /**
  * Brought to you by teh doomed :>
  */
 
 function portugal_install() {
-  
+
   // VALUES = Country ID, Country Name, 2-digit Code, 3-digit Code, File Version
   db_query("INSERT INTO {uc_countries} VALUES (620, 'Portugal', 'PT', 'PRT', 1)");
 
@@ -34,7 +34,7 @@ function portugal_install() {
           ."(%d, 620, 'VIR', 'Vila Real'),"
           ."(%d, 620, 'VIS', 'Viseu'),"
           ."(%d, 620, 'ACO', 'Reg. Autónoma Açores'),"
-		  ."(%d, 620, 'MAD', 'Reg. Autónoma Madeira')",
+      ."(%d, 620, 'MAD', 'Reg. Autónoma Madeira')",
            uc_get_zone_ids(20));
 
   // Use uc_set_address_format() with the country ID as the first argument and
