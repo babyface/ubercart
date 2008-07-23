@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.2.2.2 2008/07/21 13:18:35 islandusurper Exp $
+// $Id: uc_file.module,v 1.2.2.3 2008/07/23 14:03:31 islandusurper Exp $
 
 /**
  * @file
@@ -417,10 +417,8 @@ function uc_file_feature_form_submit($form, &$form_state) {
   $shippable = ($form_state['values']['uc_file_shippable']) ? 1 : 0;
   $description .= ($shippable) ? t('<strong>Shippable:</strong> Yes') : t('<strong>Shippable:</strong> No');
 
-  //Insert or update uc_file_product table
   if (empty($form_state['values']['pfid'])) {
-    db_query("INSERT INTO {uc_file_products} (fid, model, description, shippable) VALUES (%d, '%s', '%s', %d)", $fid, $form_state['values']['uc_file_model'], $form_state['values']['uc_file_description'], $shippable);
-    $pfid = db_last_insert_id('uc_product_features', 'pfid');
+    $pfid = NULL;
   }
   else {
     $pfid = $form_state['values']['pfid'];
@@ -435,6 +433,12 @@ function uc_file_feature_form_submit($form, &$form_state) {
   );
 
   $form_state['redirect'] = uc_product_feature_save($data);
+
+  //Insert or update uc_file_product table
+  if (empty($form_state['values']['pfid'])) {
+    $pfid = db_last_insert_id('uc_product_features', 'pfid');
+    db_query("INSERT INTO {uc_file_products} (pfid, fid, model, description, shippable) VALUES (%d, %d, '%s', '%s', %d)", $pfid, $fid, $form_state['values']['uc_file_model'], $form_state['values']['uc_file_description'], $shippable);
+  }
 }
 
 /**

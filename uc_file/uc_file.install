@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.install,v 1.2.2.2 2008/07/21 13:18:35 islandusurper Exp $
+// $Id: uc_file.install,v 1.2.2.3 2008/07/23 14:03:31 islandusurper Exp $
 
 function uc_file_schema() {
   $schema = array();
@@ -24,9 +24,10 @@ function uc_file_schema() {
   $schema['uc_file_products'] = array(
     'fields' => array(
       'pfid' => array(
-        'type' => 'serial',
+        'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+        'default' => 0,
       ),
       'fid' => array(
         'type' => 'int',
