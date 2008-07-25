@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.5.2.9 2008/06/04 20:33:18 rszrama Exp $
+// $Id: uc_shipping.module,v 1.5.2.10 2008/07/25 20:56:49 rszrama Exp $
 
 /**
  * @file
@@ -215,10 +215,10 @@ function uc_shipping_order_packages($order_id) {
     $rows[] = $row;
   }
   if (empty($rows)) {
-    $rows[][] = array('data' => t("This order's products have not been organized into packages."), 'colspan' => 9);
+    $rows[][] = array('data' => t("This order's products have not been organized into packages."), 'colspan' => 10);
   }
   $output = theme('table', $header, $rows);
-  $result = db_query("SELECT op.order_product_id, SUM(op.qty) AS total, SUM(pp.qty) AS packaged FROM {uc_order_products} AS op LEFT JOIN {uc_packaged_products} AS pp ON op.order_product_id = pp.order_product_id WHERE op.order_id = %d GROUP BY op.order_product_id HAVING SUM(pp.qty) IS NULL OR SUM(op.qty) > SUM(pp.qty)", $order_id);
+  $result = db_query("SELECT op.order_product_id, CAST(SUM(op.qty) / COUNT(pp.qty) AS UNSIGNED) AS total, SUM(pp.qty) AS packaged FROM {uc_order_products} AS op LEFT JOIN {uc_packaged_products} AS pp ON op.order_product_id = pp.order_product_id WHERE op.order_id = %d AND op.data LIKE '%%%s%%' GROUP BY op.order_product_id HAVING SUM(pp.qty) IS NULL OR CAST(SUM(op.qty) / COUNT(pp.qty) AS UNSIGNED) > SUM(pp.qty)", $order_id, 's:9:"shippable";s:1:"1";');
   if (db_num_rows($result)) {
     $output .= l(t('Create packages.'), 'admin/store/orders/'. $order_id .'/packages/new');
   }
@@ -246,8 +246,10 @@ function uc_shipping_new_package($order_id) {
   $order = uc_order_load($order_id);
   $shipping_types_products = array();
   foreach ($order->products as $product) {
-    $product->shipping_type = uc_product_get_shipping_type($product);
-    $shipping_types_products[$product->shipping_type][] = $product;
+    if ($product->data['shippable']) {
+      $product->shipping_type = uc_product_get_shipping_type($product);
+      $shipping_types_products[$product->shipping_type][] = $product;
+    }
   }
 
   $shipping_type_weights = variable_get('uc_quote_type_weight', array());
@@ -434,9 +436,11 @@ function uc_shipping_package_edit($order_id, $package_id) {
   $order = uc_order_load($order_id);
   $shipping_types_products = array();
   foreach ($order->products as $product) {
-    $product->shipping_type = uc_product_get_shipping_type($product);
-    $shipping_types_products[$product->shipping_type][$product->order_product_id] = $product;
-    $products[$product->order_product_id] = $product;
+    if ($product->data['shippable']) {
+      $product->shipping_type = uc_product_get_shipping_type($product);
+      $shipping_types_products[$product->shipping_type][$product->order_product_id] = $product;
+      $products[$product->order_product_id] = $product;
+    }
   }
 
   $result = db_query("SELECT order_product_id, SUM(qty) AS quantity FROM {uc_packaged_products} AS pp LEFT JOIN {uc_packages} AS p ON pp.package_id = p.package_id WHERE p.order_id = %d GROUP BY order_product_id", $order_id);
@@ -603,7 +607,7 @@ function uc_shipping_order_shipments($order_id) {
     $output .= l(t('Make a new shipment'), 'admin/store/orders/'. $order_id .'/shipments/new');
   }
   else {
-    $result = db_query("SELECT op.order_product_id, SUM(op.qty) AS total, SUM(pp.qty) AS packaged FROM {uc_order_products} AS op LEFT JOIN {uc_packaged_products} AS pp ON op.order_product_id = pp.order_product_id WHERE op.order_id = %d GROUP BY op.order_product_id HAVING SUM(pp.qty) IS NULL OR SUM(op.qty) > SUM(pp.qty)", $order_id);
+    $result = db_query("SELECT op.order_product_id, CAST(SUM(op.qty) / COUNT(pp.qty) AS UNSIGNED) AS total, SUM(pp.qty) AS packaged FROM {uc_order_products} AS op LEFT JOIN {uc_packaged_products} AS pp ON op.order_product_id = pp.order_product_id WHERE op.order_id = %d AND op.data LIKE '%%%s%%' GROUP BY op.order_product_id HAVING SUM(pp.qty) IS NULL OR CAST(SUM(op.qty) / COUNT(pp.qty) AS UNSIGNED) > SUM(pp.qty)", $order_id, 's:9:"shippable";s:1:"1";');
     if (db_num_rows($result)) {
       $output .= l(t('Put products into packages to make shipments.'), 'admin/store/orders/'. $order_id .'/packages/new');
     }
@@ -783,7 +787,7 @@ function uc_shipping_shipment_view($order_id, $sid) {
   $origin = uc_order_address($shipment, 'o');
   $destination = uc_order_address($shipment, 'd');
   $output .= '<div class="order-pane pos-left"><div class="order-pane-title">'. t('Pickup Address:') .'</div>'. $origin .'</div>';
-  $output .= '<div class="order-pane pos-left"><div class="order-pane-title">'. t('Delviery Address:') .'</div>'. $destination .'</div>';
+  $output .= '<div class="order-pane pos-left"><div class="order-pane-title">'. t('Delivery Address:') .'</div>'. $destination .'</div>';
   $output .= '<div class="order-pane abs-left"><div class="order-pane-title">'. t('Schedule:') .'</div>';
   $rows = array();
   $rows[] = array(t('Ship date:'), format_date($shipment->ship_date, 'custom', 'D, '. variable_get('uc_date_format_default', 'm/d/Y')));

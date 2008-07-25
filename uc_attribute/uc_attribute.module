@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.11.2.9 2008/05/16 20:30:51 rszrama Exp $
+// $Id: uc_attribute.module,v 1.11.2.10 2008/07/25 20:56:50 rszrama Exp $
 
 /**
  * @file
@@ -346,7 +346,7 @@ function uc_attribute_admin_settings() {
       'adjustment' => t('Display price adjustment'),
       'total' => t('Display total price'),
     ),
-    '#description' => t('Formats the price in the attribute selection form when the customer adds a product to their cart. The total price will only be displayed on products with only one non-text attribute.'),
+    '#description' => t('Formats the price in the attribute selection form when the customer adds a product to their cart. The total price will only be displayed on products with only one price affecting attribute.'),
   );
 
   return system_settings_form($form);
@@ -365,7 +365,7 @@ function uc_attribute_admin() {
 
   $display_types = _uc_attribute_display_types();
 
-  $result = pager_query("SELECT a.*, COUNT(ao.oid) AS options FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid, a.name, a.ordering". tablesort_sql($header), 30);
+  $result = pager_query("SELECT a.*, COUNT(ao.oid) AS options FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid, a.name, a.ordering". tablesort_sql($header), 30, 0, "SELECT COUNT(aid) FROM {uc_attributes}");
   while ($attr = db_fetch_object($result)) {
     $ops = array(
       l(t('edit'), 'admin/store/products/attributes/'. $attr->aid .'/edit'),
@@ -1211,7 +1211,7 @@ function uc_product_adjustments_form($nid) {
         '#value' => $cells,
       );
       $form['table']['body'][$i]['combo_array'] = array(
-        '#type' => 'hidden',
+        '#type' => 'value',
         '#value' => $serial_array,
       );
       $form['table']['body'][$i]['model'] = array(
@@ -1463,7 +1463,7 @@ function _uc_attribute_alter_form($product) {
   if ($node = node_load($nid)) {
     // Load all product attributes for the given nid.
     $result = db_query("SELECT * FROM {uc_product_attributes} WHERE nid = %d ORDER BY ordering", $nid);
-    $total_attributes = db_num_rows(db_query("SELECT * FROM {uc_product_attributes} WHERE nid = %d AND default_option != 0 ORDER BY ordering", $product['nid']['#value']));
+    $priced_attributes = uc_attribute_priced_attributes($nid);
 
     // Loop through each product attribute and generate its form element.
     while ($relation = db_fetch_object($result)) {
@@ -1474,8 +1474,8 @@ function _uc_attribute_alter_form($product) {
       foreach ($attribute->options as $option) {
         switch (variable_get('uc_attribute_option_price_format', 'adjustment')) {
           case 'total':
-            $display_price = ', '. uc_currency_format(($node->sell_price + $option->price) * $qty);
-            if ($total_attributes == 1) {
+            $display_price = in_array($relation->aid, $priced_attributes) ? ', '. uc_currency_format(($node->sell_price + $option->price) * $qty) : '';
+            if (count($priced_attributes) == 1) {
               break;
             }
           case 'adjustment':
@@ -1492,7 +1492,7 @@ function _uc_attribute_alter_form($product) {
       if (count($attribute->options) && $attribute->display > 0) {
         if ($attribute->required) {
           if ($attribute->display == 1) {
-            $options = array('' => 'Please select') + $options;
+            $options = array('' => t('Please select')) + $options;
           }
           unset($relation->default_option);
         }
@@ -1527,5 +1527,22 @@ function _uc_attribute_display_types() {
     1 => t('Select box'),
     2 => t('Radio buttons'),
   );
+}
+
+/**
+ * Get the price affecting attributes for a product
+ *
+ * @param $nid
+ *   The nid of a product.
+ * @return
+ *   Array of attribute ids that have price affecting options.
+ */
+function uc_attribute_priced_attributes($nid) {
+  $attributes = db_query("SELECT DISTINCT (pa.aid) FROM {uc_product_attributes} AS pa INNER JOIN {uc_attribute_options} AS ao ON ao.aid = pa.aid INNER JOIN {uc_product_options} AS po ON (po.oid = ao.oid AND po.nid = pa.nid) WHERE pa.nid = %d AND po.price <> 0 AND pa.display <> 0", $nid);
+  $aids = array();
+  while ($attribute = db_fetch_array($attributes)) {
+    $aids[] = $attribute['aid'];
+  }
+  return $aids;
 }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.5.2.9 2008/05/16 20:30:51 rszrama Exp $
+// $Id: uc_usps.module,v 1.5.2.10 2008/07/25 20:56:51 rszrama Exp $
 
 /**
  * @file
@@ -465,18 +465,21 @@ function uc_usps_rate_request($packages, $origin, $destination) {
   $services_count = 0;
 
   foreach ($packages as $package) {
-    $request .= '<Package ID="' . $services_count . '">' .
-      '<Service>ALL</Service>' .
-      '<ZipOrigination>' . substr($origin->postal_code, 0, 5) . '</ZipOrigination>' .
-      '<ZipDestination>' . substr($destination->postal_code, 0, 5) . '</ZipDestination>' .
-      '<Pounds>' . intval($package->pounds) . '</Pounds>' .
-      '<Ounces>' . number_format($package->ounces, 1, '.', '') . '</Ounces>' .
-      '<Container>' . $package->container . '</Container>' .
-      '<Size>' . $package->size . '</Size>' .
-      '<Machinable>' . ($package->machinable ? 'True' : 'False') . '</Machinable>' .
-      '</Package>';
+    $qty = $package->qty;
+    for ($i = 0; $i < $qty; $i++) {
+      $request .= '<Package ID="' . $services_count . '">' .
+        '<Service>ALL</Service>' .
+        '<ZipOrigination>' . substr($origin->postal_code, 0, 5) . '</ZipOrigination>' .
+        '<ZipDestination>' . substr($destination->postal_code, 0, 5) . '</ZipDestination>' .
+        '<Pounds>' . intval($package->pounds) . '</Pounds>' .
+        '<Ounces>' . number_format($package->ounces, 1, '.', '') . '</Ounces>' .
+        '<Container>' . $package->container . '</Container>' .
+        '<Size>' . $package->size . '</Size>' .
+        '<Machinable>' . ($package->machinable ? 'True' : 'False') . '</Machinable>' .
+        '</Package>';
 
-    $services_count++;
+      $services_count++;
+    }
   }
   $request .= '</RateV3Request>';
 
@@ -497,14 +500,17 @@ function uc_usps_intl_rate_request($packages, $origin, $destination) {
   $shipto_country = uc_get_country_data(array('country_id' => $destination->country));
 
   foreach ($packages as $package) {
-    $request .= '<Package ID="' . $services_count . '">' .
-      '<Pounds>' . intval($package->pounds) . '</Pounds>' .
-      '<Ounces>' . ceil($package->ounces) . '</Ounces>' .
-      '<MailType>Package</MailType>' .
-      '<Country>'.$shipto_country[0]['country_name'].'</Country>' .
-      '</Package>';
+    $qty = $package->qty;
+    for ($i = 0; $i < $qty; $i++) {
+      $request .= '<Package ID="' . $services_count . '">' .
+        '<Pounds>' . intval($package->pounds) . '</Pounds>' .
+        '<Ounces>' . ceil($package->ounces) . '</Ounces>' .
+        '<MailType>Package</MailType>' .
+        '<Country>'.$shipto_country[0]['country_name'].'</Country>' .
+        '</Package>';
 
-    $services_count++;
+      $services_count++;
+    }
   }
   $request .= '</IntlRateRequest>';
 
@@ -578,58 +584,58 @@ function _uc_usps_package_products($products, &$addresses) {
         $product->pkg_qty = 1;
       }
       $num_of_pkgs = (int)($product->qty / $product->pkg_qty);
-
-      $package = drupal_clone($product);
-      $package->description = $product->model;
-      $weight = $product->weight * $product->pkg_qty;
-      switch ($product->weight_units) {
-        case 'g':
-          $weight = $weight / 1000;
-        case 'kg':
-          $weight = $weight * 2.2;
-        case 'lb':
-          $package->pounds = floor($weight);
-          $package->ounces = 16 * ($weight - $package->pounds);
-        break;
-        case 'oz':
-          $package->pounds = floor($weight / 16);
-          $package->ounces = $weight % 16;
-        break;
+      if ($num_of_pkgs) {
+        $package = drupal_clone($product);
+        $package->description = $product->model;
+        $weight = $product->weight * $product->pkg_qty;
+        switch ($product->weight_units) {
+          case 'g':
+            $weight = $weight / 1000;
+          case 'kg':
+            $weight = $weight * 2.2;
+          case 'lb':
+            $package->pounds = floor($weight);
+            $package->ounces = 16 * ($weight - $package->pounds);
+          break;
+          case 'oz':
+            $package->pounds = floor($weight / 16);
+            $package->ounces = $weight % 16;
+          break;
+        }
+        $package->container = $product->usps['container'];
+        $length_conversion = uc_length_conversion($product->length_units, 'in');
+        $package->length = max($product->length, $product->width) * $length_conversion;
+        $package->width = min($product->length, $product->width) * $length_conversion;
+        $package->height = $product->height * $length_conversion;
+        if ($package->length < $package->width) {
+          list($package->length, $package->width) = array($package->width, $package->length);
+        }
+        $package->girth = 2 * $package->width + 2 * $package->height;
+        $package->size = $package->length + $package->girth;
+        if ($package->size <= 84) {
+          $package->size = 'REGULAR';
+        }
+        else if ($package->size <= 108) {
+          $package->size = 'LARGE';
+        }
+        else if ($package->size <= 130) {
+          $package->size = 'OVERSIZE';
+        }
+        else {
+          $package->size = 'GI-HUGE-IC'; // Too big for the U.S. Postal service.
+        }
+        $package->machinable = (
+          $package->length >= 6 && $package->length <= 34 &&
+          $package->width >= 0.25 && $package->width <= 17 &&
+          $package->height >= 3.5 && $package->height >= 17 &&
+          ($package->pounds == 0 ? $package->ounces >= 6 : true) &&
+          $package->pounds <= 35 &&
+          ($package->pounds == 35 ? $package->ounces == 0 : true)
+        );
+        $package->price = $product->price * $product->pkg_qty;
+        $package->qty = $num_of_pkgs;
+        $packages[$key][] = $package;
       }
-      $package->container = $product->usps['container'];
-      $length_conversion = uc_length_conversion($product->length_units, 'in');
-      $package->length = max($product->length, $product->width) * $length_conversion;
-      $package->width = min($product->length, $product->width) * $length_conversion;
-      $package->height = $product->height * $length_conversion;
-      if ($package->length < $package->width) {
-        list($package->length, $package->width) = array($package->width, $package->length);
-      }
-      $package->girth = 2 * $package->width + 2 * $package->height;
-      $package->size = $package->length + $package->girth;
-      if ($package->size <= 84) {
-        $package->size = 'REGULAR';
-      }
-      else if ($package->size <= 108) {
-        $package->size = 'LARGE';
-      }
-      else if ($package->size <= 130) {
-        $package->size = 'OVERSIZE';
-      }
-      else {
-        $package->size = 'GI-HUGE-IC'; // Too big for the U.S. Postal service.
-      }
-      $package->machinable = (
-        $package->length >= 6 && $package->length <= 34 &&
-        $package->width >= 0.25 && $package->width <= 17 &&
-        $package->height >= 3.5 && $package->height >= 17 &&
-        ($package->pounds == 0 ? $package->ounces >= 6 : true) &&
-        $package->pounds <= 35 &&
-        ($package->pounds == 35 ? $package->ounces == 0 : true)
-      );
-      $package->price = $product->price * $product->pkg_qty;
-      $package->qty = $num_of_pkgs;
-      $packages[$key][] = $package;
-
       $remaining_qty = $product->qty % $product->pkg_qty;
       if ($remaining_qty) {
         $package = drupal_clone($product);
@@ -715,7 +721,7 @@ function _uc_usps_services() {
     12 => t('U.S.P.S. First Class Postcard Stamped'),
     13 => t('U.S.P.S. Express Mail Flat-Rate Envelope'),
     16 => t('U.S.P.S. Priority Mail Flat-Rate Envelope'),
-    17 => t('U.S.P.S. Priority Mail Flat-Rate Box')
+    17 => t('U.S.P.S. Priority Mail Flat-Rate Box'),
   );
 }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_workflow.inc,v 1.1.2.4 2008/04/23 19:38:07 rszrama Exp $
+// $Id: uc_cart_workflow.inc,v 1.1.2.5 2008/07/25 20:56:47 rszrama Exp $
 
 /**
  * @file
@@ -48,10 +48,23 @@ function uc_cart_event_info() {
 
 function uc_cart_condition_product_class($order, $settings) {
   $result = FALSE;
+  $types = array();
   foreach ($order->products as $product) {
-    if ($product->type == $settings['class']) {
-      $result = TRUE;
-      break;
+    // Ignore "blank line" custom products.
+    if ($product->nid) {
+      // Cache product types to avoid extra queries.
+      if (!isset($types[$product->nid])) {
+        if (isset($product->type)) {
+          $types[$product->nid] = $product->type;
+        }
+        else {
+          $types[$product->nid] = db_result(db_query("SELECT type FROM {node} WHERE nid = %d", $product->nid));
+        }
+      }
+      if ($types[$product->nid] == $settings['class']) {
+        $result = TRUE;
+        break;
+      }
     }
   }
 

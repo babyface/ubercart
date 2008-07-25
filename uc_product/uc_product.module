@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.13.2.11 2008/06/04 20:33:21 rszrama Exp $
+// $Id: uc_product.module,v 1.13.2.12 2008/07/25 20:56:51 rszrama Exp $
 
 /**
  * @file
@@ -236,6 +236,20 @@ function uc_product_access($op, $node) {
  * Set up default imagefield and imagecache settings.
  */
 function uc_product_enable() {
+  $node_types = node_get_types('types');
+  $product_classes = array('product');
+  $result = db_query("SELECT pcid, name, description FROM {uc_product_classes}");
+  while ($product_class = db_fetch_object($result)) {
+    $product_classes[] = $product_class->pcid;
+  }
+  foreach ($node_types as $type => $info) {
+    if ($info->module == 'node' && in_array($type, $product_classes)) {
+      $info->module = 'uc_product';
+      $info->custom = 0;
+      node_type_save($info);
+    }
+  }
+
   if (module_exists('imagefield')) {
     $result = db_query("SELECT field_name FROM {node_field} WHERE field_name = 'field_image_cache' AND type = 'image'");
     if (!db_num_rows($result)) {
@@ -262,7 +276,7 @@ function uc_product_enable() {
       ),
     );
     foreach (module_invoke_all('product_types') as $type) {
-      $result = db_query("SELECT * FROM {node_field_instance} WHERE field_name = 'field_imagecache' and type_name = '%s'", $type);
+      $result = db_query("SELECT * FROM {node_field_instance} WHERE field_name = 'field_image_cache' and type_name = '%s'", $type);
       if (!db_num_rows($result)) {
         db_query("INSERT INTO {node_field_instance} VALUES ('field_image_cache', '%s', -2, 'Image', 'image', '%s', '%s', '')", $type, serialize($widget_settings), serialize($display_settings));
       }
@@ -298,13 +312,8 @@ function uc_product_enable() {
     content_clear_type_cache();
   }
   if (module_exists('imagecache')) {
-    $presets = array('product', 'product_list', 'uc_thumbnail');
-    $preset_keys = array();
-    foreach ($presets as $preset) {
-      $preset_keys[$preset] = 0;
-    }
-    $presets = $preset_keys;
-    $result = db_query("SELECT * FROM {imagecache_preset} WHERE presetname IN ('". implode("','", $presets) ."')");
+    $presets = array('product' => 0, 'product_list' => 0, 'uc_thumbnail' => 0);
+    $result = db_query("SELECT * FROM {imagecache_preset} WHERE presetname IN ('". implode("','", array_keys($presets)) ."')");
     while ($preset = db_fetch_array($result)) {
       $presets[$preset['presetname']] = $preset['presetid'];
     }
@@ -326,13 +335,27 @@ function uc_product_enable() {
           case 'product_list':
             db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:3:"100";s:6:"height";s:3:"100";}');
           break;
-          case 'thumbnail':
+          case 'uc_thumbnail':
             db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"35";s:6:"height";s:2:"35";}');
           break;
         }
       }
     }
     cache_clear_all('imagecache:presets', 'cache');
+  }
+}
+
+function uc_product_disable() {
+  $product_types = node_get_types('types');
+  // node_type_rebuild() deletes disabled modules' node types. Give these
+  // node types to node.module to prevent this. Get them back during
+  // hook_enable().
+  foreach ($product_types as $type) {
+    if ($type->module == 'uc_product') {
+      $type->module = 'node';
+      $type->custom = 1;
+      node_type_save($type);
+    }
   }
 }
 
@@ -351,8 +374,7 @@ function uc_product_node_info($reset = false) {
     $types['product'] = array(
       'name' => t('Product'),
       'module' => 'uc_product',
-      'description' => t('This node displays the representation of a product for sale on the website. It includes
-        all the unique information that can be attributed to a specific model number.'),
+      'description' => t('This node displays the representation of a product for sale on the website. It includes all the unique information that can be attributed to a specific model number.'),
       'title_label' => $title_label,
       'body_label' => $body_label,
     );
@@ -1498,14 +1520,16 @@ function uc_product_product_class($pcid, $op) {
   switch ($op) {
     case 'insert':
       db_query("UPDATE {node_type} SET module = 'uc_product', custom = 0 WHERE type = '%s'", $pcid);
-      $result = db_query("SELECT vid, nid FROM {node} WHERE type = '%s'", $pcid);
+      $result = db_query("SELECT n.vid, n.nid, p.unique_hash FROM {node} AS n LEFT JOIN {uc_products} AS p ON n.vid = p.vid WHERE n.type = '%s'", $pcid);
       while ($node = db_fetch_object($result)) {
-        $node->weight_units = variable_get('uc_weight_unit', 'lb');
-        $node->length_units = variable_get('uc_length_unit', 'in');
-        $node->pkg_qty = 1;
-        $node->default_qty = 1;
-        $node->shippable = 1;
-        uc_product_insert($node);
+        if (!$node->unique_hash) {
+          $node->weight_units = variable_get('uc_weight_unit', 'lb');
+          $node->length_units = variable_get('uc_length_unit', 'in');
+          $node->pkg_qty = 1;
+          $node->default_qty = 1;
+          $node->shippable = 1;
+          uc_product_insert($node);
+        }
       }
     break;
   }
@@ -1515,21 +1539,36 @@ function uc_product_product_class($pcid, $op) {
  * Menu Callbacks                                                             *
  ******************************************************************************/
 
+// Displays a sortable, paged table list of products on the site.
 function uc_product_default() {
+  $table_nids = array();
+
+  // Redirect to /products if we have excess URL arguments.
+  if (arg(1) != '') {
+    drupal_goto('products');
+  }
+
+  // Get the header info from TAPIr.
   $header = tapir_get_header('uc_product_table', array());
+
+  // Generate our ORDER BY clause if the table has been sorted.
   $order = substr(tablesort_sql($header), 10);
+
+  // Otherwise supply a default as a TAPIr workaround.
   if (empty($order)) {
     $order = 'p.ordering, n.title';
   }
-  $table_nids = array();
-  $result = pager_query(db_rewrite_sql("SELECT n.nid FROM {node} AS n RIGHT JOIN {uc_products} AS p ON n.vid = p.vid WHERE n.status = 1 ORDER BY ". $order), variable_get('uc_product_nodes_per_page', 10), 0, null);
+
+  // Fetch the product info from the database for display.
+  $result = pager_query(db_rewrite_sql("SELECT n.nid FROM {node} AS n RIGHT JOIN {uc_products} AS p ON n.vid = p.vid WHERE n.status = 1 ORDER BY ". $order), variable_get('uc_product_nodes_per_page', 10), 0, NULL);
   while ($node = db_fetch_object($result)) {
     $table_nids[] = $node->nid;
   }
-  $table_args = array('nids' => $table_nids);
-  $output = tapir_get_table('uc_product_table', $table_args);
-  $output .= theme('pager');
-  return $output;
+
+  $args = array('nids' => $table_nids);
+
+  // Generate the output from TAPIr with a pager.
+  return tapir_get_table('uc_product_table', $args) . theme('pager');
 }
 
 /**
@@ -1557,6 +1596,7 @@ function uc_product_image_defaults($checks) {
   if (module_exists('uc_manufacturer')) {
     $presets[] = 'manufacturer';
   }
+  $presets = drupal_map_assoc($presets);
 
   if (!$field_check) {
     db_query("INSERT INTO {node_field} (field_name, type, global_settings, required, multiple, db_storage) VALUES ('field_image_cache', 'image', '%s', 0, 1, 0)", 'a:0:{}');
@@ -2173,9 +2213,12 @@ function uc_product_class_form_submit($form_id, $form_values) {
   node_types_rebuild();
   menu_rebuild();
   if ($is_new && module_exists('imagefield')) {
-    $result = db_query("SELECT field_name FROM {node_field} WHERE field_name = 'field_image_cache' AND type = 'image'");
-    if (db_num_rows($result)) {
-      drupal_execute('_content_admin_field_add_existing', array('type_name' => $pcid, 'field_name' => 'field_image_cache'), $pcid);
+    $info = content_types($pcid);
+    if (!isset($info['fields']['field_image_cache'])) {
+      $result = db_query("SELECT field_name FROM {node_field} WHERE field_name = 'field_image_cache' AND type = 'image'");
+      if (db_num_rows($result)) {
+        drupal_execute('_content_admin_field_add_existing', array('type_name' => $pcid, 'field_name' => 'field_image_cache'), $pcid);
+      }
     }
   }
 
@@ -2192,8 +2235,8 @@ function uc_product_class_delete_confirm($class_id) {
   $products = db_fetch_object($result);
   $form['pcid'] = array('#type' => 'value', '#value' => $class_id);
   $form['#redirect'] = 'admin/store/products/classes';
-  $output = confirm_form($form, t('Be very sure you want to delete the %type product class. ', array('%type' => $class_id)), 'admin/store/products/classes',
-    format_plural($products->number, 'There is @count node of this type. It will be converted to the Product node type. ', 'There are @count nodes of this type. They will be converted to the Product node type'),
+  $output = confirm_form($form, t('Be very sure you want to delete the %type product class. It will become a standard node type.', array('%type' => $class_id)), 'admin/store/products/classes',
+    format_plural($products->number, 'There is @count node of this type.', 'There are @count nodes of this type.'),
     t('Continue'), t('Cancel'));
 
   return $output;
@@ -2204,12 +2247,10 @@ function uc_product_class_delete_confirm($class_id) {
  */
 function uc_product_class_delete_confirm_submit($form_id, $form_values) {
   if ($form_values['confirm']) {
-    db_query("UPDATE {node} SET type = 'product' WHERE type = '%s'", $form_values['pcid']);
-
-    node_type_delete($form_values['pcid']);
-    $t_args = array('%name' => $form_values['pcid']);
-    drupal_set_message(t('The content type %name has been deleted.', $t_args));
-    watchdog('menu', t('Deleted content type %name.', $t_args), WATCHDOG_NOTICE);
+    $type = node_get_types('type', $form_values['pcid']);
+    $type->module = 'node';
+    $type->custom = 1;
+    node_type_save($type);
 
     db_query("DELETE FROM {uc_product_classes} WHERE pcid = '%s'", $form_values['pcid']);
     module_invoke_all('product_class', $form_values['pcid'], 'delete');

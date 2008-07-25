@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.14.2.11 2008/06/04 20:33:19 rszrama Exp $
+// $Id: uc_catalog.module,v 1.14.2.12 2008/07/25 20:56:48 rszrama Exp $
 
 /**
  * @file
@@ -864,7 +864,7 @@ function theme_uc_catalog_browse($tid = 0) {
   }
   $product_types = module_invoke_all('product_types');
 
-  $sql = "SELECT DISTINCT(n.nid), n.sticky, n.title, n.created, p.model, p.ordering
+  $sql = "SELECT DISTINCT(n.nid), n.sticky, n.title, n.created, p.model, p.sell_price, p.ordering
     FROM {node} n
       INNER JOIN {term_node} tn ON n.nid = tn.nid
       INNER JOIN {uc_products} AS p ON n.vid = p.vid

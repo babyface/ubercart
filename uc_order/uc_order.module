@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.11 2008/06/04 20:33:21 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.12 2008/07/25 20:56:48 rszrama Exp $
 
 /**
  * @file
@@ -330,7 +330,7 @@ function uc_order_token_values($type, $object = NULL) {
       }
       $values['order-id'] = $order->order_id;
       $values['order-uid'] = $order->uid;
-      $values['order-url'] = url('user/'. $order->uid .'/order/'. $order->order_id, NULL, NULL, TRUE);;
+      $values['order-url'] = url('user/'. $order->uid .'/order/'. $order->order_id, NULL, NULL, TRUE);
       $values['order-link'] = l($order->order_id, $values['order-url']);
       $values['order-admin-url'] = url('admin/store/orders/'. $order->order_id, NULL, NULL, TRUE);
       $admin_url = url('admin/store/orders/'. $order->order_id, NULL, NULL, TRUE);

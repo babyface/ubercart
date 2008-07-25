@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.install,v 1.8.2.8 2008/06/04 20:33:19 rszrama Exp $
+// $Id: uc_catalog.install,v 1.8.2.9 2008/07/25 20:56:48 rszrama Exp $
 
 function uc_catalog_install() {
   $t = get_t();
@@ -15,7 +15,7 @@ function uc_catalog_install() {
     db_query("INSERT INTO {vocabulary_node_types} (vid, type) VALUES (%d, 'product')", $vid);
   }
   variable_set('uc_catalog_vid', $vid);
-  variable_set('uc_catalog_name', t('Catalog'));
+  variable_set('uc_catalog_name', $t('Catalog'));
 
 
   switch ($GLOBALS['db_type']) {

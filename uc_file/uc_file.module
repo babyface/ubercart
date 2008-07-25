@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.1.2.10 2008/06/04 20:33:19 rszrama Exp $
+// $Id: uc_file.module,v 1.1.2.11 2008/07/25 20:56:51 rszrama Exp $
 
 /**
  * @file
@@ -956,7 +956,7 @@ function _email_file_download($user, $order, $file_users) {
   $body = check_markup($body, variable_get('uc_file_download_notification_format', 3), FALSE);
 
   //drupal_set_message("Mail Sent<br/>key: $key, <br/>to: $to, <br/>subject: $subject, <br/>body: $body, <br/>from: $from, <br/>");
-  return drupal_mail($key, $to, $subject, $body, $from, uc_notify_headers());
+  return drupal_mail($key, $to, $subject, $body, $from, array('Content-Type' => 'text/html; charset=UTF-8; format=flowed'));
 }
 
 /**

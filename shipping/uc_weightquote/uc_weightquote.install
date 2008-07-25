@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.install,v 1.4.2.5 2008/04/23 19:38:06 rszrama Exp $
+// $Id: uc_weightquote.install,v 1.4.2.6 2008/07/25 20:56:49 rszrama Exp $
 
 function uc_weightquote_install() {
   switch ($GLOBALS['db_type']) {
@@ -55,12 +55,12 @@ function uc_weightquote_update_1() {
   return $ret;
 }
 
-function uc_freightquote_update_2() {
+function uc_weightquote_update_2() {
   $ret = array();
   switch ($GLOBALS['db_type']) {
     case 'pgsql':
-      db_change_column($ret, 'uc_weightquote_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => true, 'default' => 0));
-      db_change_column($ret, 'uc_weightquote_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_weightquote_products', 'vid', 'vid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_weightquote_products', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));
     break;
   }
   return $ret;

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.4.2.9 2008/06/04 20:33:17 rszrama Exp $
+// $Id: uc_paypal.module,v 1.4.2.10 2008/07/25 20:56:50 rszrama Exp $
 
 /**
  * @file
@@ -332,7 +332,7 @@ function uc_paypal_wpp_charge($order_id, $amount, $data) {
   if (is_null($cc_type)) {
     $cc_type = _uc_paypal_card_type($order->payment_details['cc_number']);
     if ($cc_type === FALSE) {
-      drupal_set_message(t('The credit card type did not pass validation.', 'error'));
+      drupal_set_message(t('The credit card type did not pass validation.'), 'error');
       watchdog('uc_paypal', t('Could not figure out cc type: !number / !type', array('!number' => $order->payment_details['cc_number'], '!type' => $order->payment_details['cc_type'])), WATCHDOG_ERROR);
       return array('success' => FALSE);
     }
@@ -393,7 +393,7 @@ function uc_paypal_wpp_charge($order_id, $amount, $data) {
   $nvp_response = uc_paypal_api_request($nvp_request, variable_get('uc_paypal_wpp_server', 'https://api-3t.sandbox.paypal.com/nvp'));
 
   if ($nvp_response['ACK'] != 'Success') {
-    $message = t('<b>Payment failed.</b><br><b>!severity:</b> !error', array('!severity' => check_plain($nvp_response['L_SEVERITYCODE0']), '!error' => check_plain($nvp_response['L_LONGMESSAGE0'])));
+    $message = t('<b>Payment failed.</b><br><b>!severity:</b> !error', array('!severity' => check_plain($nvp_response['L_SEVERITYCODE0']), '!error' => check_plain($nvp_response['L_ERRORCODE0'] .'. '. $nvp_response['L_LONGMESSAGE0'])));
     $message .= '<br>'. t('<b>Address:</b> !avscode', array('!avscode' => _uc_paypal_avscode_message($nvp_response['AVSCODE'])));
     if (variable_get('uc_credit_cvv_enabled', TRUE)) {
       $message .= '<br>'. t('<b>CVV2:</b> !cvvmatch', array('!cvvmatch' => _uc_paypal_cvvmatch_message($nvp_response['CVV2MATCH'])));
@@ -1232,7 +1232,7 @@ function uc_paypal_wps_form($order) {
     // Transaction information
     'currency_code' => variable_get('uc_paypal_wps_currency', 'USD'),
     'handling_cart' => uc_currency_format($shipping, FALSE, FALSE, '.'),
-    'invoice' => $order->order_id,
+    'invoice' => $order->order_id .'-'. time(),
     'tax_cart' => uc_currency_format($tax, FALSE, FALSE, '.'),
 
     // Shopping cart specific variables

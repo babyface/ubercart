@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cybersource.module,v 1.3.2.4 2008/04/23 19:38:03 rszrama Exp $
+// $Id: uc_cybersource.module,v 1.3.2.5 2008/07/25 20:56:50 rszrama Exp $
 
 /**
  * @file
@@ -141,7 +141,7 @@ function uc_cybersource_charge($order_id, $amount, $data) {
     $cc_type = _uc_cybersource_card_type($order->payment_details['cc_number']);
     if ($cc_type === FALSE) {
       drupal_set_message(t('The credit card type did not pass validation.', 'error'));
-      watchdog('uc_paypal', t('Could not figure out cc type: !number / !type', array('!number' => $order->payment_details['cc_number'], '!type' => $order->payment_details['cc_type'])), WATCHDOG_ERROR);
+      watchdog('uc_paypal', t('Could not figure out cc type: @number / @type', array('@number' => $order->payment_details['cc_number'], '@type' => $order->payment_details['cc_type'])), WATCHDOG_ERROR);
       return array('success' => FALSE);
     }
   }
