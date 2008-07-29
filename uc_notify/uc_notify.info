@@ -1,4 +1,4 @@
-; $Id: uc_notify.info,v 1.5.2.1 2008/07/25 20:56:51 rszrama Exp $
+; $Id: uc_notify.info,v 1.5.2.2 2008/07/29 22:22:43 rszrama Exp $
 name = Notify
 description = Send checkout and order email notifications to customers and administrators.
 dependencies = uc_store uc_order token

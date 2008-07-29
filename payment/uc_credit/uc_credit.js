@@ -1,4 +1,4 @@
-// $Id: uc_credit.js,v 1.3.2.1 2008/04/23 19:38:03 rszrama Exp $
+// $Id: uc_credit.js,v 1.3.2.2 2008/07/29 22:22:39 rszrama Exp $
 
 $(document).ready(
   function () {

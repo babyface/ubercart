@@ -1,4 +1,4 @@
-; $Id: uc_cart.info,v 1.6.2.1 2008/01/07 20:56:41 rszrama Exp $
+; $Id: uc_cart.info,v 1.6.2.2 2008/07/29 22:22:42 rszrama Exp $
 name = Cart
 description = REQUIRED. Controls the shopping cart for an Ubercart e-commerce site.
 dependencies = uc_store uc_order uc_product workflow_ng

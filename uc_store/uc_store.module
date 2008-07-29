@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.13.2.11 2008/07/25 20:56:50 rszrama Exp $
+// $Id: uc_store.module,v 1.13.2.12 2008/07/29 22:22:46 rszrama Exp $
 
 /**
  * @file
@@ -2914,23 +2914,20 @@ function uc_store_send_report() {
 function uc_referer_check($urls) {
   $http_referer = uc_referer_uri();
 
-  // Always return true if we have no referer; covers the case of page refreshes.
+  // Always return true if we have no referer; covers the case of page refreshes
+  // and switching from HTTP to HTTPS. This bypasses the two-time check below...
+  // is it safe?
   if (empty($http_referer)) {
     return TRUE;
   }
 
   // Check the user didn't shamelessly two-time us with another site.
-  if (substr($http_referer, 7, strlen($_SERVER['SERVER_NAME'])) != $_SERVER['SERVER_NAME']) {
+  if (parse_url($http_referer, PHP_URL_HOST) != $_SERVER['SERVER_NAME']) {
     return FALSE;
   }
 
-  // Accept mixed input.
-  if (!is_array($urls)) {
-    $urls = array($urls);
-  }
-
   // The check itself.
-  foreach ($urls as $url) {
+  foreach ((array) $urls as $url) {
     if (substr($http_referer, -strlen($url)) == $url) {
       return TRUE;
     }
@@ -2947,5 +2944,10 @@ function uc_referer_uri() {
   else {
     return referer_uri();
   }
+}
+
+// Returns the current version of Ubercart.
+function uc_version() {
+  return '1.3';
 }
 

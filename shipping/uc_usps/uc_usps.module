@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.5.2.10 2008/07/25 20:56:51 rszrama Exp $
+// $Id: uc_usps.module,v 1.5.2.11 2008/07/29 22:22:41 rszrama Exp $
 
 /**
  * @file
@@ -303,10 +303,10 @@ function uc_usps_quote($products, $details) {
           foreach ($package->postage as $postage) {
             $attr = $postage->attributes();
             if ($attr['classid'] === 0 || $attr['classid'] === '0') {
-              if ($postage->mailservice[0]->data() == "First Class Mail Parcel") {
+              if ($postage->mailservice[0]->data() == "First-Class Mail Parcel") {
                 $attr['classid'] = 'zeroParcel';
               }
-              else if ($postage->mailservice[0]->data() == "First Class Mail Flat") {
+              else if ($postage->mailservice[0]->data() == "First-Class Mail Flat") {
                 $attr['classid'] = 'zeroFlat';
               }
               else {
@@ -599,7 +599,7 @@ function _uc_usps_package_products($products, &$addresses) {
           break;
           case 'oz':
             $package->pounds = floor($weight / 16);
-            $package->ounces = $weight % 16;
+            $package->ounces = $weight - $package->pounds * 16;
           break;
         }
         $package->container = $product->usps['container'];
@@ -652,7 +652,7 @@ function _uc_usps_package_products($products, &$addresses) {
           break;
           case 'oz':
             $package->pounds = floor($weight / 16);
-            $package->ounces = $weight % 16;
+            $package->ounces = $weight - $package->pounds * 16;
           break;
         }
         $package->container = $product->usps['container'];
@@ -708,9 +708,9 @@ function _uc_usps_pkg_types() {
  */
 function _uc_usps_services() {
   return array(
-    'zero' => t('U.S.P.S. First Class Mail'),
-    'zeroFlat' => t('U.S.P.S. First Class Flat'),
-    'zeroParcel' => t('U.S.P.S. First Class Parcel'),
+    'zero' => t('U.S.P.S. First-Class Mail'),
+    'zeroFlat' => t('U.S.P.S. First-Class Flat'),
+    'zeroParcel' => t('U.S.P.S. First-Class Parcel'),
     1 => t('U.S.P.S. Priority Mail'),
     2 => t('U.S.P.S. Express Mail PO to PO'),
     3 => t('U.S.P.S. Express Mail PO to Addressee'),
@@ -718,7 +718,7 @@ function _uc_usps_services() {
     5 => t('U.S.P.S. Bound Printed Matter'),
     6 => t('U.S.P.S. Media Mail'),
     7 => t('U.S.P.S. Library'),
-    12 => t('U.S.P.S. First Class Postcard Stamped'),
+    12 => t('U.S.P.S. First-Class Postcard Stamped'),
     13 => t('U.S.P.S. Express Mail Flat-Rate Envelope'),
     16 => t('U.S.P.S. Priority Mail Flat-Rate Envelope'),
     17 => t('U.S.P.S. Priority Mail Flat-Rate Box'),

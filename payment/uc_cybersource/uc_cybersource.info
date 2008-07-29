@@ -1,4 +1,4 @@
-; $Id: uc_cybersource.info,v 1.3.2.1 2008/01/07 20:56:38 rszrama Exp $
+; $Id: uc_cybersource.info,v 1.3.2.2 2008/07/29 22:22:39 rszrama Exp $
 name = "CyberSource"
 description = "Enable to process payments using CyberSource Silent Order POST."
 dependencies = uc_payment uc_credit

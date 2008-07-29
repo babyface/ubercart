@@ -1,0 +1,5 @@
+; $Id: uc_stock.info,v 1.3.4.2 2008/07/29 22:22:46 rszrama Exp $
+name = Stock
+description = Manage stock levels of your ubercart products
+dependencies = uc_product uc_reports workflow_ng
+package = "Ubercart - extra"

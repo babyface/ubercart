@@ -1,4 +1,4 @@
-// $Id: uc_product.js,v 1.5.2.3 2008/05/16 20:30:52 rszrama Exp $
+// $Id: uc_product.js,v 1.5.2.4 2008/07/29 22:22:44 rszrama Exp $
 
 // Functions used on the product view page.
 

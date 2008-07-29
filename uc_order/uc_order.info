@@ -1,4 +1,4 @@
-; $Id: uc_order.info,v 1.5.2.1 2008/01/07 20:56:44 rszrama Exp $
+; $Id: uc_order.info,v 1.5.2.2 2008/07/29 22:22:44 rszrama Exp $
 name = Order
 description = REQUIRED. Receive and manage orders through your website.
 dependencies = token workflow_ng ubrowser

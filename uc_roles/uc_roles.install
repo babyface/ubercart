@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.install,v 1.1.2.7 2008/07/25 20:56:51 rszrama Exp $
+// $Id: uc_roles.install,v 1.1.2.8 2008/07/29 22:22:46 rszrama Exp $
 
 function uc_roles_install() {
   switch ($GLOBALS['db_type']) {

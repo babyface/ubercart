@@ -1,4 +1,4 @@
-; $Id: uc_quote.info,v 1.3.2.1 2008/01/16 21:56:50 rszrama Exp $
+; $Id: uc_quote.info,v 1.3.2.2 2008/07/29 22:22:40 rszrama Exp $
 name = Shipping Quotes
 description = Retrieve and display quotes for shipping products.
 dependencies = uc_store uc_order uc_cart uc_product workflow_ng

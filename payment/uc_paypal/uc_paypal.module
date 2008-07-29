@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.4.2.10 2008/07/25 20:56:50 rszrama Exp $
+// $Id: uc_paypal.module,v 1.4.2.11 2008/07/29 22:22:40 rszrama Exp $
 
 /**
  * @file
@@ -418,10 +418,9 @@ function uc_paypal_wpp_charge($order_id, $amount, $data) {
       'uid' => $user->uid,
     );
 
-    db_query("INSERT INTO {uc_payment_paypal_ipn} VALUES (%d, '%s', '%s', '%s', "
-            ."'%s', '%s', '%s', %d)", $order->order_id,
-            check_plain($nvp_response['TRANSACTIONID']), 'web_accept',
-            $amount, 'Completed', '', $order->primary_email, time());
+    db_query("INSERT INTO {uc_payment_paypal_ipn} VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d)",
+      $order->order_id, check_plain($nvp_response['TRANSACTIONID']),
+      'web_accept', $amount, 'Completed', '', $order->primary_email, time());
   }
 
   uc_order_comment_save($order_id, $user->uid, $message, 'admin');
@@ -1120,9 +1119,11 @@ function uc_paypal_ec_submit_form_submit($form_id, $form_values) {
   list($desc, $subtotal) = _uc_paypal_product_details($order->products);
 
   $shipping = 0;
-  foreach ($order->line_items as $item) {
-    if ($item['type'] == 'shipping') {
-      $shipping += $item['amount'];
+  if (is_array($order->line_items)) {
+    foreach ($order->line_items as $item) {
+      if ($item['type'] == 'shipping') {
+        $shipping += $item['amount'];
+      }
     }
   }
 
@@ -1346,12 +1347,14 @@ function _uc_paypal_product_details($items) {
   $desc = '';
   $subtotal = 0;
 
-  foreach ($items as $item) {
-     if (!empty($desc)) {
-      $desc .= ' / ';
-     }
-     $desc .= $item->qty .'x '. $item->title;
-     $subtotal += $item->qty * $item->price;
+  if (!empty($items)) {
+    foreach ($items as $item) {
+       if (!empty($desc)) {
+        $desc .= ' / ';
+       }
+       $desc .= $item->qty .'x '. $item->title;
+       $subtotal += $item->qty * $item->price;
+    }
   }
 
   return array($desc, $subtotal);

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.install,v 1.4.2.6 2008/04/23 19:38:04 rszrama Exp $
+// $Id: uc_flatrate.install,v 1.4.2.7 2008/07/29 22:22:40 rszrama Exp $
 
 function uc_flatrate_install() {
   switch ($GLOBALS['db_type']) {

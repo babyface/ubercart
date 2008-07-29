@@ -1,0 +1,5 @@
+; $Id: uc_roles.info,v 1.1.2.1 2008/07/29 22:22:46 rszrama Exp $
+name = Roles
+description = Assign permanent or expirable roles based on product purchases.
+dependencies = uc_product
+package = "Ubercart - core (optional)"

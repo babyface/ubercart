@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.install,v 1.5.2.4 2008/04/23 19:38:04 rszrama Exp $
+// $Id: uc_paypal.install,v 1.5.2.5 2008/07/29 22:22:40 rszrama Exp $
 
 /**
  * Implementation of hook_install().

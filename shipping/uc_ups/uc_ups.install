@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.install,v 1.4.2.4 2008/04/23 19:38:05 rszrama Exp $
+// $Id: uc_ups.install,v 1.4.2.5 2008/07/29 22:22:41 rszrama Exp $
 
 function uc_ups_install() {
   switch ($GLOBALS['db_type']) {

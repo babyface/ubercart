@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.14.2.13 2008/07/25 20:56:47 rszrama Exp $
+// $Id: uc_cart.module,v 1.14.2.14 2008/07/29 22:22:42 rszrama Exp $
 
 /**
  * @file
@@ -445,16 +445,16 @@ function uc_cart_form_alter($form_id, &$form) {
     }
 
     // Compare the referer to checkout page URLs.
-    if (uc_referer_check('cart/checkout')) {
+    if (uc_referer_check('cart/checkout') && uc_referer_uri() != '') {
       $form['#action'] = url($_GET['q'], "destination=cart/checkout");
     }
-    elseif (uc_referer_check('cart/checkout/complete')) {
+    elseif (uc_referer_check(array('cart/checkout/review', 'cart/checkout/complete')) && uc_referer_uri() != '') {
       $form['#action'] = url($_GET['q'], "destination=user");
     }
   }
 
   if ($form_id == 'user_login' || $form_id == 'user_login_block') {
-    $form['#submit'] = array_merge(array('uc_cart_user_login_form_submit' => array()), $form['#submit']);
+    $form['#submit'] = array_merge(array('uc_cart_user_login_form_submit' => array()), (array) $form['#submit']);
   }
 }
 
@@ -1656,15 +1656,6 @@ function uc_cart_checkout_review_form() {
 }
 
 function uc_cart_checkout_review_form_submit($form_id, $form_values) {
-
-  $order = uc_order_load($_SESSION['cart_order']);
-  
-  if ($order === FALSE || uc_order_status_data($order->order_status, 'state') != 'in_checkout' || !uc_referer_check('cart/checkout/review')) {
-    unset($_SESSION['cart_order']);
-    return 'cart/checkout/';
-  }
-
-  
   switch ($form_values['op']) {
     case t('Back'):
       cache_clear_all();
@@ -1674,6 +1665,7 @@ function uc_cart_checkout_review_form_submit($form_id, $form_values) {
     case variable_get('uc_checkout_submit_button', t('Submit order')):
       // Invoke hook_order($op = 'submit') to test to make sure the order can
       // be completed... used for auto payment in uc_credit.module.
+      $order = uc_order_load($_SESSION['cart_order']);
       $pass = module_invoke_all('order', 'submit', $order, NULL);
 
       foreach ($pass as $result) {
@@ -1704,6 +1696,13 @@ function uc_cart_checkout_complete() {
   }
 
   $order = uc_order_load(intval($_SESSION['cart_order']));
+
+  if (empty($order)) {
+    // Display messages to customers and the administrator if the order was lost.
+    drupal_set_message(t("We're sorry.  An error occurred while processing your order that prevents us from completing it at this time. Please contact us and we will resolve the issue as soon as possible."), 'error');
+    watchdog('uc_cart', t('An empty order made it to checkout! Cart order ID: @cart_order', array('@cart_order' => $_SESSION['cart_order'])), WATCHDOG_ERROR);
+    drupal_goto('cart');
+  }
 
   $output = uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
 

@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.4.2.9 2008/05/16 20:30:49 rszrama Exp $
+// $Id: uc_payment.js,v 1.4.2.10 2008/07/29 22:22:40 rszrama Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
@@ -85,7 +85,10 @@ function render_line_items() {
 }
 
 function remove_line_item(key) {
-  li_titles[key] = '';
+  delete li_titles[key];
+  delete li_values[key];
+  delete li_weight[key];
+  delete li_summed[key];
   render_line_items();
 }
 
