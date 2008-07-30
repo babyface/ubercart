@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.11.2.11 2008/07/29 22:22:47 rszrama Exp $
+// $Id: uc_taxes.module,v 1.11.2.12 2008/07/30 21:16:06 rszrama Exp $
 
 /**
  * @file
@@ -20,10 +20,17 @@ function uc_taxes_help($section) {
   $output = '';
   switch ($section) {
     case 'admin/store/settings/taxes':
+      $menu_item = menu_get_item(NULL, 'admin/build/workflow-ng');
+      if (!empty($menu_item)) {
+        $workflow_ng_ui = url('admin/build/workflow-ng');
+      }
+      else {
+        $workflow_ng_ui = url('admin/workflow-ng/configurations');
+      }
       $output .= t('After setting up tax rates and rules on this page, go to the
   <a href="!link">Workflow-ng configurations</a> to add
   conditions to the taxes. Especially important are the geographic area
-  conditions for the delivery address.', array('!link' => url('admin/build/workflow-ng')));
+  conditions for the delivery address.', array('!link' => $workflow_ng_ui));
     break;
   }
   return $output;

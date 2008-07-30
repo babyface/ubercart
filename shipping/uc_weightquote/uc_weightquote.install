@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.install,v 1.4.2.7 2008/07/29 22:22:41 rszrama Exp $
+// $Id: uc_weightquote.install,v 1.4.2.8 2008/07/30 21:16:06 rszrama Exp $
 
 function uc_weightquote_install() {
   switch ($GLOBALS['db_type']) {
@@ -26,7 +26,7 @@ function uc_weightquote_install() {
 function uc_weightquote_uninstall() {
   db_query("DROP TABLE {uc_weightquote_products}");
   variable_del('uc_weightquote_base_rate');
-  variable_del('uc_weightqutoe_product_default');
+  variable_del('uc_weightquote_product_default');
 }
 
 function uc_weightquote_update_1() {

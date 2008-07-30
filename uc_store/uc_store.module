@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.13.2.12 2008/07/29 22:22:46 rszrama Exp $
+// $Id: uc_store.module,v 1.13.2.13 2008/07/30 21:16:06 rszrama Exp $
 
 /**
  * @file
@@ -490,6 +490,7 @@ function uc_store_footer() {
       else {
         $message = db_result(db_query("SELECT message FROM {uc_store_footers} WHERE path_hash = '%s'", md5($path)));
         if (!$message) {
+          unset($messages['none']);
           $message = $messages[array_rand($messages)];
           db_query("INSERT INTO {uc_store_footers} (path_hash, message) VALUES ('%s', '%s')", md5($path), $message);
         }
