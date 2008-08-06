@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.2 2008/07/21 13:18:31 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.3 2008/08/06 13:41:20 islandusurper Exp $
 
 /**
  * @file
@@ -100,6 +100,8 @@ function ca_predicate_meta_form($form_state, $pid) {
       drupal_set_message(t('That predicate does not exist.'), 'error');
       drupal_goto('admin/settings/ca');
     }
+
+    drupal_set_title($predicate['#title']);
   }
 
   $form['predicate_pid'] = array(

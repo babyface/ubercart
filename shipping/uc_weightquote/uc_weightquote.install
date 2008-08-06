@@ -1,32 +1,44 @@
 <?php
-// $Id: uc_weightquote.install,v 1.5 2008/07/10 12:41:00 islandusurper Exp $
+// $Id: uc_weightquote.install,v 1.5.2.1 2008/08/06 13:41:23 islandusurper Exp $
+
+function uc_weightquote_schema() {
+  $schema = array();
+
+  $schema['uc_weightquote_products'] = array(
+    'fields' => array(
+      'vid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'rate' => array(
+        'type' => 'float',
+        'not null' => TRUE,
+        'default' => 0.0,
+      ),
+    ),
+    'primary key' => array('vid'),
+  );
+
+  return $schema;
+}
 
 function uc_weightquote_install() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      db_query("CREATE TABLE {uc_weightquote_products} (
-        `vid` mediumint(9) unsigned NOT NULL default 0,
-        `nid` mediumint(9) unsigned NOT NULL default 0,
-        `rate` float NOT NULL default '0',
-        PRIMARY KEY (`vid`)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
-    break;
-    case 'pgsql':
-      db_query("CREATE TABLE {uc_weightquote_products} (
-        vid int_unsigned NOT NULL default 0,
-        nid int_unsigned NOT NULL default 0,
-        rate float NOT NULL default 0,
-        PRIMARY KEY (vid)
-      );");
-    break;
-  }
+  drupal_install_schema('uc_weightquote');
 }
 
 function uc_weightquote_uninstall() {
-  db_query("DROP TABLE {uc_weightquote_products}");
+  drupal_uninstall_schema('uc_weight_quote');
+
   variable_del('uc_weightquote_base_rate');
-  variable_del('uc_weightqutoe_product_default');
+  variable_del('uc_weightquote_product_default');
 }
 
 function uc_weightquote_update_1() {
@@ -55,12 +67,12 @@ function uc_weightquote_update_1() {
   return $ret;
 }
 
-function uc_freightquote_update_2() {
+function uc_weightquote_update_2() {
   $ret = array();
   switch ($GLOBALS['db_type']) {
     case 'pgsql':
-      db_change_column($ret, 'uc_weightquote_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => true, 'default' => 0));
-      db_change_column($ret, 'uc_weightquote_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_weightquote_products', 'vid', 'vid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_weightquote_products', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));
     break;
   }
   return $ret;

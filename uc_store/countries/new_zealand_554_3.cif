@@ -1,5 +1,5 @@
 <?php
-// $Id: new_zealand_554_3.cif,v 1.1.2.2 2008/07/21 13:18:37 islandusurper Exp $
+// $Id: new_zealand_554_3.cif,v 1.1.2.3 2008/08/06 13:41:27 islandusurper Exp $
 
 function new_zealand_install() {
   db_query("INSERT INTO {uc_countries} VALUES (554, 'New Zealand', 'NZ', 'NZL', 3)");

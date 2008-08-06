@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.1 2008/07/11 21:41:23 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.2 2008/08/06 13:41:24 islandusurper Exp $
 
 /**
  * @file
@@ -162,12 +162,27 @@ function uc_cart_menu() {
 
 function uc_cart_enable() {
   if (module_exists('imagecache')) {
-    $result = db_query("SELECT presetid FROM {imagecache_preset} WHERE presetname = 'cart'");
-    if (!db_fetch_object($result)) {
-      db_query("INSERT INTO {imagecache_preset} (presetname) VALUES ('cart')");
-      $id = db_last_insert_id('imagecache_preset', 'presetid');
-      db_query("INSERT INTO {imagecache_action} (presetid, weight, data) VALUES (%d, 0, '%s')", $id, 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"50";s:6:"height";s:2:"50";}');
-      cache_clear_all('imagecache:presets', 'cache');
+    $preset_name = 'cart';
+    $preset = imagecache_preset_by_name($preset_name);
+    if (empty($preset)) {
+      // No preset of that name, so make a new one.
+      $preset = imagecache_preset_save(array('presetname' => $preset_name));
+    }
+
+    $actions = imagecache_preset_actions($preset);
+    if (empty($actions)) {
+      // The preset has no actions, so scale the image.
+      $action = array(
+        'action' => 'scale',
+        'presetid' => $preset['presetid'],
+        'weight' => 0,
+        'data' => array(
+          'width' => '50',
+          'height' => '50',
+          'upscale' => 0,
+        ),
+      );
+      imagecache_action_save($action);
     }
   }
 }
@@ -438,31 +453,7 @@ function uc_cart_user($op, &$edit, &$user, $category = NULL) {
       }
     case 'login':
       // Add items from an anonymous cart to a user's permanent cart on login.
-
-      // Get the current contents of the cart.
-      $items = uc_cart_get_contents($user->uid);
-
-      // Update the cart so the ID is switched from the session to user ID.
-      db_query("UPDATE {uc_cart_products} SET cart_id = %d WHERE cart_id = '%s'", $user->uid, session_id());
-
-      // If there were items before the update, we need to re-add them all to
-      // take care of item consolidation.
-      if (count($items) > 0) {
-        // Store again what items these are.
-        $items = uc_cart_get_contents($user->uid, 'rebuild');
-
-        // Remove from the table all the items in the cart.
-        // Should be a function call instead of a single query. -RS
-        db_query("DELETE FROM {uc_cart_products} WHERE cart_id = %d", $user->uid);
-
-        // Reset the cart item cache.
-        uc_cart_get_contents($user->uid, 'rebuild');
-
-        // Loop through what the items should be and re-add them to the cart.
-        foreach ($items as $key => $item) {
-          uc_cart_add_item($item->nid, $item->qty, $item->data, $user->uid, FALSE, FALSE);
-        }
-      }
+      uc_cart_login_update($user->uid, session_id());
       break;
   }
 }
@@ -474,20 +465,21 @@ function uc_cart_form_alter(&$form, $form_state, $form_id) {
   // Redirect shopper back to checkout page if they go to login from there.
   if ($form_id == 'user_login' || $form_id == 'user_edit' || $form_id == 'user_register') {
     if ($_SESSION['checkout-redirect'] == TRUE) {
-      $form['#action'] = url($_GET['q'], array('query' => "destination=cart/checkout"));
+      $form['#action'] = url($_GET['q'], array('query' => 'destination=cart/checkout'));
       return;
     }
 
-    // Grab the referer if possible.
-    $referer = referer_uri();
+    // Compare the referer to checkout page URLs.
+    if (uc_referer_check('cart/checkout') && uc_referer_uri() != '') {
+      $form['#action'] = url($_GET['q'], array('query' => 'destination=cart/checkout'));
+    }
+    elseif (uc_referer_check(array('cart/checkout/review', 'cart/checkout/complete')) && uc_referer_uri() != '') {
+      $form['#action'] = url($_GET['q'], array('query' => 'destination=user'));
+    }
+  }
 
-    // Compare it for checkout page URLs.
-    if (substr($referer, -13, 13) == 'cart/checkout') {
-      $form['#action'] = url($_GET['q'], "destination=cart/checkout");
-    }
-    elseif (substr($referer, -22, 22) == 'cart/checkout/complete') {
-      $form['#action'] = url($_GET['q'], "destination=user");
-    }
+  if ($form_id == 'user_login' || $form_id == 'user_login_block') {
+    $form['#submit'] = array_merge(array('uc_cart_user_login_form_submit'), (array) $form['#submit']);
   }
 }
 
@@ -597,6 +589,40 @@ function uc_cart_checkout_pane() {
 /*******************************************************************************
  * Callback Functions, Forms, and Tables
  ******************************************************************************/
+
+// When a user logs in, update their cart items before the session changes.
+function uc_cart_user_login_form_submit($form, &$form_state) {
+  global $user;
+  uc_cart_login_update($user->uid, session_id());
+}
+
+// Updates a user's cart to include items from their anonymous session.
+function uc_cart_login_update($uid, $sess_id) {
+  // Get the current contents of the cart.
+  $items = uc_cart_get_contents($uid);
+
+  // Update the cart so the ID is switched from the session to user ID.
+  db_query("UPDATE {uc_cart_products} SET cart_id = %d WHERE cart_id = '%s'", $uid, $sess_id);
+
+  // If there were items before the update, we need to re-add them all to
+  // take care of item consolidation.
+  if (count($items) > 0) {
+    // Store again what items these are.
+    $items = uc_cart_get_contents($uid, 'rebuild');
+
+    // Remove from the table all the items in the cart.
+    // Should be a function call instead of a single query. -RS
+    db_query("DELETE FROM {uc_cart_products} WHERE cart_id = %d", $uid);
+
+    // Reset the cart item cache.
+    uc_cart_get_contents($uid, 'rebuild');
+
+    // Loop through what the items should be and re-add them to the cart.
+    foreach ($items as $key => $item) {
+      uc_cart_add_item($item->nid, $item->qty, $item->data, $uid, FALSE, FALSE);
+    }
+  }
+}
 
 // Displays the cart settings overview page.
 function uc_cart_cart_settings_overview() {
@@ -1415,8 +1441,7 @@ function uc_cart_checkout_form() {
   $order = uc_order_load($_SESSION['cart_order']);
 
   // Check the referer URI to clear order details and prevent identity theft.
-  $referer = referer_uri();
-  if (substr($referer, -20, 20) == 'cart/checkout/review' || substr($referer, -13, 13) == 'cart/checkout') {
+  if (uc_referer_check('cart/checkout', 'cart/checkout/review')) {
     if ($order == FALSE || uc_order_status_data($order->order_status, 'state') != 'in_checkout') {
       unset($_SESSION['cart_order']);
       $order = NULL;
@@ -1587,7 +1612,7 @@ function uc_cart_checkout_form_submit($form, &$form_state) {
 function uc_cart_checkout_review() {
   $form = drupal_get_form('uc_cart_checkout_review_form');
 
-  if ($_SESSION['do_review'] !== TRUE && substr(referer_uri(), -13) != 'cart/checkout') {
+  if ($_SESSION['do_review'] !== TRUE && !uc_referer_check('cart/checkout')) {
     drupal_goto('cart/checkout');
   }
   unset($_SESSION['do_review']);
@@ -1736,6 +1761,13 @@ function uc_cart_checkout_complete() {
 
   $order = uc_order_load(intval($_SESSION['cart_order']));
 
+  if (empty($order)) {
+    // Display messages to customers and the administrator if the order was lost.
+    drupal_set_message(t("We're sorry.  An error occurred while processing your order that prevents us from completing it at this time. Please contact us and we will resolve the issue as soon as possible."), 'error');
+    watchdog('uc_cart', t('An empty order made it to checkout! Cart order ID: @cart_order', array('@cart_order' => $_SESSION['cart_order'])), WATCHDOG_ERROR);
+    drupal_goto('cart');
+  }
+
   $output = uc_cart_complete_sale($order, variable_get('uc_new_customer_login', FALSE));
 
   // Add a comment to let sales team know this came in through the site.
@@ -1766,9 +1798,13 @@ function uc_cart_checkout_complete() {
  */
 function uc_cart_complete_sale($order, $login = FALSE) {
   global $user;
+
   // Logic to create new user if necessary:
   if ($order->uid == 0) {
+    // Check for an existing user account with the e-mail address from checkout.
     $result = db_query("SELECT uid FROM {users} WHERE mail = '%s'", $order->primary_email);
+
+    // If it was found, update the order.
     if ($account = db_fetch_object($result)) {
       $order->uid = $account->uid;
       db_query("UPDATE {uc_orders} SET uid = %d WHERE order_id = %d", $order->uid, $order->order_id);
@@ -1965,11 +2001,11 @@ function uc_cart_add_item($nid, $qty = 1, $data = NULL, $cid = NULL, $msg = TRUE
             }
             $redirect = variable_get('uc_add_item_redirect', 'cart');
             if ($redirect != '<none>') {
-              $_SESSION['last_url'] = referer_uri();
+              $_SESSION['last_url'] = uc_referer_uri();
               return $redirect;
             }
             else {
-              return referer_uri();
+              return uc_referer_uri();
             }
           }
         }
@@ -2008,11 +2044,11 @@ function uc_cart_add_item($nid, $qty = 1, $data = NULL, $cid = NULL, $msg = TRUE
 
     $redirect = variable_get('uc_add_item_redirect', 'cart');
     if ($redirect != '<none>') {
-      $_SESSION['last_url'] = referer_uri();
+      $_SESSION['last_url'] = uc_referer_uri();
       return $redirect;
     }
     else {
-      return referer_uri();
+      return uc_referer_uri();
     }
   }
 }

@@ -1,4 +1,4 @@
-; $Id: uc_stock.info,v 1.3.2.2 2008/07/21 13:18:37 islandusurper Exp $
+; $Id: uc_stock.info,v 1.3.2.3 2008/08/06 13:41:27 islandusurper Exp $
 name = Stock
 description = Manage stock levels of your Ubercart products
 dependencies[] = ca

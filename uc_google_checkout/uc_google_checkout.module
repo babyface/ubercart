@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.2 2008/07/21 13:18:35 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.3 2008/08/06 13:41:34 islandusurper Exp $
 
 /******************************************************************************
  * Drupal hooks                                                               *
@@ -9,15 +9,13 @@ function uc_google_checkout_help($section) {
   $output = '';
   switch ($section) {
     case 'admin/store/settings/google_checkout':
-      switch (variable_get('uc_google_checkout_mode', 'sandbox')) {
-        case 'checkout':
-          $checkout_url = 'http://checkout.google.com';
-        break;
-        case 'sandbox':
-          $checkout_url = 'http://sandbox.google.com/checkout';
-        break;
+      if (variable_get('uc_google_checkout_mode', 'checkout') == 'checkout') {
+        $checkout_url = 'http://checkout.google.com';
       }
-      $output .= t('In the <a href="!checkout_url/sell">Google Checkout Merchant Center</a>, enter %url as the callback URL for this site. This will allow Übercart to communicate with Google Checkout.', array('!checkout_url' => $checkout_url, '%url' => url('google_checkout', NULL, NULL, TRUE)));
+      else {
+        $checkout_url = 'http://sandbox.google.com/checkout';
+      }
+      $output .= t('In the <a href="!checkout_url/sell">Google Checkout Merchant Center</a>, enter %url as the callback URL for this site. This will allow Ubercart to communicate with Google Checkout.', array('!checkout_url' => $checkout_url, '%url' => url('google_checkout', NULL, NULL, TRUE)));
     break;
   }
   return $output;
@@ -27,19 +25,44 @@ function uc_google_checkout_menu($may_cache) {
   $items = array();
 
   if ($may_cache) {
-    $items[] = array('path' => 'admin/store/settings/google_checkout',
+    $items[] = array(
+      'path' => 'admin/store/settings/google_checkout',
       'title' => t('Google Checkout settings'),
-      'access' => user_access('administer store'),
+      'description' => t('Set merchant ID and key for Google Checkout.'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('uc_google_checkout_settings'),
-      'description' => t('Set merchant ID and key for Google Checkout.'),
+      'access' => user_access('administer store'),
       'type' => MENU_NORMAL_ITEM,
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/google_checkout/account',
+      'title' => t('Account'),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/google_checkout/shipping',
+      'title' => t('Shipping'),
+      'description' => t('Calculate shipping charges for orders through Google Checkout.'),
+      'callback' => 'drupal_get_form',
+      'callback arguments' => array('uc_google_checkout_shipping_settings'),
+      'access' => user_access('administer store'),
+      'type' => MENU_LOCAL_TASK,
+    );
+    $items[] = array(
+      'path' => 'admin/store/settings/google_checkout/taxes',
+      'title' => t('Taxes'),
+      'description' => t('Calculate taxes for orders through Google Checkout.'),
+      'callback' => 'drupal_get_form',
+      'callback arguments' => array('uc_google_checkout_taxes_settings'),
+      'access' => user_access('administer store'),
+      'type' => MENU_LOCAL_TASK,
     );
   }
   else {
-    $items[] = array('path' => 'google_checkout',
-      'access' => true,
+    $items[] = array(
+      'path' => 'google_checkout',
       'callback' => 'uc_google_checkout_callback',
+      'access' => true,
       'type' => MENU_CALLBACK,
     );
     if (is_numeric(arg(3))) {
@@ -71,17 +94,20 @@ function uc_google_checkout_form_alter($form_id, &$form) {
     $form['google_checkout']['gc_salable'] = array('#type' => 'checkbox',
       '#title' => t('Conforms to Google Checkout content policies.'),
       '#default_value' => isset($node->gc_salable) ? $node->gc_salable : TRUE,
-      '#description' => t('To be a Google Checkout approved merchant, 95% of the listed items must follow the published Content Policies. More information can be found <a href="!url">here</a>.', array('!url' => $policy_url)),
+      '#description' => t('To be a Google Checkout approved merchant, your items must conform to the Google Checkout content policies found <a href="!url">here</a>.', array('!url' => $policy_url)),
     );
   }
   else if ($form_id == 'uc_payment_methods_form') {
-    // Make sure no one enables this for Übercart checkout.
+    // Make sure no one enables this for Ubercart checkout.
     $form['pmtable']['google_checkout']['uc_payment_method_google_checkout_checkout']['#disabled'] = TRUE;
     $form['pmtable']['google_checkout']['uc_payment_method_google_checkout_checkout']['#value'] = FALSE;
   }
   else if ($form_id == 'uc_payment_by_order_form') {
     // Don't use Google Checkout for manual payments either.
     unset($form['payments']['new']['method']['#options']['google_checkout']);
+  }
+  else if ($form_id == 'uc_order_view_update_form') {
+    $form['#submit']['uc_google_checkout_notify_update'] = array();
   }
 }
 
@@ -130,6 +156,20 @@ function uc_google_checkout_cart_pane() {
   return $panes;
 }
 
+function uc_google_checkout_order_pane() {
+  $panes[] = array(
+    'id' => 'email_allowed',
+    'callback' => 'uc_google_checkout_pane_email_allowed',
+    'title' => t('Marketing preferences'),
+    'desc' => t("Display the customer's preferences about mass-marketing."),
+    'class' => 'pos-left',
+    'weight' => 4,
+    'show' => array('view', 'customer'),
+  );
+
+  return $panes;
+}
+
 function uc_google_checkout_order($op, &$arg1, $arg2) {
   switch ($op) {
     case 'load':
@@ -147,8 +187,12 @@ function uc_google_checkout_order($op, &$arg1, $arg2) {
       }
       switch ($arg2) {
         case 'canceled':
-          uc_google_checkout_cancel_order($arg1);
-          drupal_set_message(t('Cancel order request sent to Google Checkout. The order will be updated momentarily.'));
+          if (uc_google_checkout_cancel_order($arg1)) {
+            drupal_set_message(t('Cancel order request sent to Google Checkout. The order will be updated momentarily.'));
+          }
+          else {
+            drupal_set_message(t('Order is not canceled in Google Checkout.'));
+          }
         return FALSE;
       }
     break;
@@ -212,7 +256,8 @@ function uc_google_checkout_shipment($op, $shipment) {
           }
         }
         if ($xml_data) {
-          $request = '<?xml version="1.0" encoding="UTF-8"?>'. "\n";
+          $request = '<?xml version="1.0" encoding="UTF-8"?>';
+          $request .= "\n";
           $request .= '<ship-items xmlns="http://checkout.google.com/schema/2" google-order-number="'. $google_order_number .'">';
           $request .= '<item-shipping-information-list>';
           $request .= $xml_data;
@@ -231,7 +276,8 @@ function uc_google_checkout_shipment($op, $shipment) {
             $reset_ids[] = check_plain($product->nid .'|'. $product->model);
           }
         }
-        $request = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $request = '<?xml version="1.0" encoding="UTF-8"?>';
+        $request .= "\n";
         $request .= '<reset-items-shipping-information xmlns="http://checkout.google.com/schema/2" google-order-number="'. $google_order_number .'">';
         $request .= '<item-ids>';
         foreach (array_unique($reset_ids) as $item_id) {
@@ -273,6 +319,19 @@ function uc_google_checkout_settings() {
     '#description' => t('Used to sign cart information. Keep it secret, keep it safe.'),
   );
 
+  $form['messages'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Customer messages'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['messages']['uc_google_checkout_order_cancel_reason'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Reason for canceling order'),
+    '#description' => t('This message will be sent with the cancelation notice through Google Checkout. Any comment given when the order is canceled will be sent as a separate message. This message uses <a href="!url">global and order tokens</a>.', array('!url' => 'admin/store/help/tokens')),
+    '#default_value' => variable_get('uc_google_checkout_order_cancel_reason', t('Order canceled. See order comments at [order-url] for more information.')),
+  );
+
   $form['button'] = array(
     '#type' => 'fieldset',
     '#title' => t('Button settings'),
@@ -307,7 +366,7 @@ function uc_google_checkout_settings() {
   $form['sandbox']['uc_google_checkout_mode'] = array(
     '#type' => 'radios',
     '#title' => t('Test Mode'),
-    '#default_value' => variable_get('uc_google_checkout_mode', 'sandbox'),
+    '#default_value' => variable_get('uc_google_checkout_mode', 'checkout'),
     '#options' => array('sandbox' => t('On'), 'checkout' => t('Off')),
   );
   $form['sandbox']['uc_google_test_merchant_id'] = array(
@@ -327,16 +386,204 @@ function uc_google_checkout_settings() {
   return system_settings_form($form);
 }
 
+function uc_google_checkout_shipping_settings() {
+  $form = array(
+    '#tree' => TRUE
+  );
+
+  $services = uc_google_checkout_shipping_services();
+
+  foreach ($services as $key => $title) {
+    $shipping_settings = variable_get('uc_google_checkout_shipping_'. $key, array());
+    $form['services'][$key]['enable'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => $shipping_settings['enable'],
+    );
+    $form['services'][$key]['title'] = array(
+      '#type' => 'markup',
+      '#value' => $title,
+    );
+    $form['services'][$key]['default'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $shipping_settings['default'],
+      '#size' => 10,
+      '#field_prefix' => '$',
+    );
+    $form['services'][$key]['pickup'] = array(
+      '#type' => 'select',
+      '#default_value' => $shipping_settings['pickup'],
+      '#options' => array(
+        'REGULAR_PICKUP' => t('Regular pickup'),
+        'SPECIAL_PICKUP' => t('Special pickup'),
+        'DROP_OFF' => t('Drop off'),
+      ),
+    );
+    $form['services'][$key]['fixed_charge'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $shipping_settings['fixed_charge'],
+      '#size' => 10,
+      '#field_prefix' => '$',
+    );
+    $form['services'][$key]['percent_adjustment'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $shipping_settings['percent_adjustment'],
+      '#size' => 5,
+      '#field_suffix' => t('%'),
+    );
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
+
+  return $form;
+}
+
+function theme_uc_google_checkout_shipping_settings($form) {
+  $header = array(t('Enable'), t('Service'), t('Default price'), t('Pickup type'), t('Handling charge'), t('Percentage markup/discount'));
+
+  $companies = uc_google_checkout_shipping_companies();
+  $company = '';
+  $rows = array();
+  foreach (element_children($form['services']) as $key) {
+    $row = array();
+    $temp = explode('_', $key, 2);
+    if ($company != $temp[0]) {
+      $company = $temp[0];
+      $rows[] = array(array('data' => '<strong>'. $companies[$company] .'</strong>', 'colspan' => 6));
+    }
+    foreach (array('enable', 'title', 'default', 'pickup', 'fixed_charge', 'percent_adjustment') as $field) {
+      $row[] = drupal_render($form['services'][$key][$field]);
+    }
+    $rows[] = $row;
+  }
+  $output = theme('table', $header, $rows) . drupal_render($form);
+
+  return $output;
+}
+
+function uc_google_checkout_shipping_settings_validate($form_id, $form_values) {
+  foreach ($form_values['services'] as $key => $service) {
+    if ($service['enable'] && empty($service['default'])) {
+      form_set_error('services]['. $key .'][default', t('A default shipping cost is required.'));
+    }
+    if (!empty($service['default']) && (!is_numeric($service['default']) || $service['default'] < 0)) {
+      form_set_error('services]['. $key .'][default', t('The default shipping cost should be a positive number.'));
+    }
+    if (!empty($service['fixed_charge']) && !is_numeric($service['fixed_charge'])) {
+      form_set_error('services]['. $key .'][fixed_charge', t('The fixed charge should be a number.'));
+    }
+    if (!empty($service['percent_adjustment']) && !is_numeric($service['percent_adjustment'])) {
+      form_set_error('services]['. $key .'][percent_adjustment', t('The percent adjustment should be a number.'));
+    }
+  }
+}
+
+function uc_google_checkout_shipping_settings_submit($form_id, $form_values) {
+  foreach ($form_values['services'] as $key => $service) {
+    variable_set('uc_google_checkout_shipping_'. $key, $service);
+  }
+  drupal_set_message(t('The configuration options have been saved.'));
+}
+
+function uc_google_checkout_taxes_settings() {
+  $form = array(
+    '#tree' => TRUE,
+  );
+
+  $result = db_query("SELECT zone, rate, tax_shipping FROM {uc_gc_taxes} ORDER BY zone");
+  while ($tax = db_fetch_object($result)) {
+    $form['taxes'][$tax->zone]['delete'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => FALSE,
+    );
+    $form['taxes'][$tax->zone]['zone'] = array(
+      '#type' => 'value',
+      '#value' => $tax->zone,
+    );
+    $form['taxes'][$tax->zone]['rate'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $tax->rate,
+      '#size' => 8
+    );
+    $form['taxes'][$tax->zone]['tax_shipping'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => $tax->tax_shipping,
+    );
+  }
+
+  $form['taxes']['new']['delete'] = array(
+    '#type' => 'checkbox',
+    '#disabled' => TRUE,
+  );
+  $form['taxes']['new']['zone'] = uc_zone_select('');
+  $form['taxes']['new']['rate'] = array(
+    '#type' => 'textfield',
+    '#default_value' => '',
+    '#size' => 8
+  );
+  $form['taxes']['new']['tax_shipping'] = array(
+    '#type' => 'checkbox',
+    '#default_value' => FALSE,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save taxes'),
+  );
+
+  return $form;
+}
+
+function theme_uc_google_checkout_taxes_settings($form) {
+  $header = array(t('Delete'), uc_get_field_name('zone'), t('Rate'), t('Tax shipping?'));
+
+  $rows = array();
+  foreach (element_children($form['taxes']) as $zone) {
+    $row = array();
+    $row[] = drupal_render($form['taxes'][$zone]['delete']);
+    if ($zone == 'new') {
+      $row[] = drupal_render($form['taxes'][$zone]['zone']);
+    }
+    else {
+      $row[] = $form['taxes'][$zone]['zone']['#value'];
+    }
+    //$form['taxes'][$zone]['zone']['#printed'] = TRUE;
+    $row[] = drupal_render($form['taxes'][$zone]['rate']);
+    $row[] = drupal_render($form['taxes'][$zone]['tax_shipping']);
+    $rows[] = $row;
+  }
+
+  $output = theme('table', $header, $rows);
+  $output .= drupal_render($form);
+
+  return $output;
+}
+
+function uc_google_checkout_taxes_settings_submit($form_id, $form_values) {
+  foreach ($form_values['taxes'] as $zone => $tax_values) {
+    if ($zone == 'new' && $tax_values['zone'] && $tax_values['rate']) {
+      db_query("DELETE FROM {uc_gc_taxes} WHERE zone = '%s'", $tax_values['zone']);
+      db_query("INSERT INTO {uc_gc_taxes} (zone, rate, tax_shipping) VALUES ('%s', %f, %d)", uc_get_zone_code($tax_values['zone']), $tax_values['rate'], $tax_values['tax_shipping']);
+    }
+    else if ($tax_values['delete']) {
+      db_query("DELETE FROM {uc_gc_taxes} WHERE zone = '%s'", $tax_values['zone']);
+    }
+    else {
+      db_query("UPDATE {uc_gc_taxes} SET rate = %f, tax_shipping = %d WHERE zone = '%s'", $tax_values['rate'], $tax_values['tax_shipping'], $tax_values['zone']);
+    }
+  }
+}
+
 function uc_google_checkout_cart_form() {
-  switch (variable_get('uc_google_checkout_mode', 'sandbox')) {
-    case 'checkout':
-      $merchant_id = variable_get('uc_google_merchant_id', '');
-      $checkout_url = 'http://checkout.google.com';
-    break;
-    case 'sandbox':
-      $merchant_id = variable_get('uc_google_test_merchant_id', '');
-      $checkout_url = 'http://sandbox.google.com/checkout';
-    break;
+  if (variable_get('uc_google_checkout_mode', 'checkout') == 'checkout') {
+    $merchant_id = variable_get('uc_google_merchant_id', '');
+    $checkout_url = 'http://checkout.google.com';
+  }
+  else {
+    $merchant_id = variable_get('uc_google_test_merchant_id', '');
+    $checkout_url = 'http://sandbox.google.com/checkout';
   }
   if (!$merchant_id) {
     watchdog('uc_google_checkout', t('Google Checkout is enabled, but no Merchant ID found.'), WATCHDOG_ERROR, 'admin/store/settings/google_checkout');
@@ -418,16 +665,15 @@ function uc_google_checkout_cart_form_submit($form_id, $form_values) {
 }
 
 function uc_google_checkout_cart_request($order) {
-  switch (variable_get('uc_google_checkout_mode', 'sandbox')) {
-    case 'checkout':
-      $merchant_id = variable_get('uc_google_merchant_id', '');
-    break;
-    case 'sandbox':
-      $merchant_id = variable_get('uc_google_test_merchant_id', '');
-    break;
+  if (variable_get('uc_google_checkout_mode', 'checkout') == 'checkout') {
+    $merchant_id = variable_get('uc_google_merchant_id', '');
+  }
+  else {
+    $merchant_id = variable_get('uc_google_test_merchant_id', '');
   }
 
-  $output = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+  $output = '<?xml version="1.0" encoding="UTF-8"?>';
+  $output .= "\n";
 
   if (count($order->products)) {
     $output .= '<checkout-shopping-cart xmlns="http://checkout.google.com/schema/2">';
@@ -438,6 +684,7 @@ function uc_google_checkout_cart_request($order) {
       $output .= '<item-name>'. check_plain($product->model) .'</item-name>';
       $output .= '<item-description>'. check_plain($product->title) .'</item-description>';
       $output .= '<unit-price currency="'. variable_get('uc_currency_code', 'USD') .'">'. $product->price .'</unit-price>';
+      $output .= '<item-weight unit="LB" value="'. $product->weight * uc_weight_conversion($product->weight_units, 'lb') .'" />';
       $output .= '<quantity>'. $product->qty .'</quantity>';
       $output .= '<merchant-item-id>'. $product->nid .'|'. $product->model .'</merchant-item-id>';
       $output .= '</item>';
@@ -450,11 +697,92 @@ function uc_google_checkout_cart_request($order) {
     $output .= '</shopping-cart>';
     $output .= '<checkout-flow-support>';
     $output .= '<merchant-checkout-flow-support>';
+
+    $companies = uc_google_checkout_shipping_companies();
+    $services = uc_google_checkout_shipping_services();
+    $shipping_options = '';
+    foreach ($services as $key => $title) {
+      $settings = variable_get('uc_google_checkout_shipping_'. $key, array());
+      if ($settings['enable']) {
+        $shipping_options .= '<carrier-calculated-shipping-option>';
+        $shipping_options .= '<price currency="'. variable_get('uc_currency_code', 'USD') .'">'. $settings['default'] .'</price>';
+        $temp = explode('_', $key, 2);
+        $shipping_options .= '<shipping-company>'. $companies[$temp[0]] .'</shipping-company>';
+        $shipping_options .= '<carrier-pickup>'. $settings['pickup'] .'</carrier-pickup>';
+        $shipping_options .= '<shipping-type>'. $services[$key] .'</shipping-type>';
+        if ($settings['fixed_charge']) {
+          $shipping_options .= '<additional-fixed-charge currency="'. variable_get('uc_currency_code', 'USD') .'">'. number_format($settings['fixed_charge'], 2, '.', '') .'</additional-fixed-charge>';
+        }
+        if ($settings['percent_adjustment']) {
+          $shipping_options .= '<additional-variable-charge-percent>'. (float)$settings['percent_adjustment'] .'</additional-variable-charge-percent>';
+        }
+        $shipping_options .= '</carrier-calculated-shipping-option>';
+      }
+    }
+    if ($shipping_options) {
+      $output .= '<shipping-methods>';
+      $output .= '<carrier-calculated-shipping>';
+      $output .= '<carrier-calculated-shipping-options>';
+      $output .= $shipping_options;
+      $output .= '</carrier-calculated-shipping-options>';
+
+      $address = variable_get('uc_quote_store_default_address', new stdClass());
+      if (empty($address)) {
+        $address->city = variable_get('uc_store_city', NULL);
+        $address->zone = uc_get_zone_code(variable_get('uc_store_zone', NULL));
+        $address->postal_code = variable_get('uc_store_postal_code', NULL);
+        $address->country = uc_store_default_country();
+      }
+      $country = uc_get_country_data(array('country_id' => $address->country));
+      $address->country_code = $country[0]['country_iso_code_2'];
+      $output .= '<shipping-packages>';
+      $output .= '<shipping-package>';
+      $output .= '<ship-from id="here">';
+      $output .= '<city>'. $address->city .'</city>';
+      $output .= '<region>'. $address->zone .'</region>';
+      $output .= '<country-code>'. $address->country_code .'</country-code>';
+      $output .= '<postal-code>'. $address->postal_code .'</postal-code>';
+      $output .= '</ship-from>';
+      $output .= '</shipping-package>';
+      $output .= '</shipping-packages>';
+
+      $output .= '</carrier-calculated-shipping>';
+      $output .= '</shipping-methods>';
+    }
+
+    $tax_table = '';
+    $result = db_query("SELECT zone, rate, tax_shipping FROM {uc_gc_taxes}");
+    while ($tax = db_fetch_object($result)) {
+      $tax_table .= '<default-tax-rule>';
+      if ($tax->tax_shipping) {
+        $tax_table .= '<shipping-taxed>true</shipping-taxed>';
+      }
+      $tax_table .= '<rate>'. (float)$tax->rate .'</rate>';
+
+      $tax_table .= '<tax-area>';
+      $tax_table .= '<us-state-area>';
+      $tax_table .= '<state>'. $tax->zone .'</state>';
+      $tax_table .= '</us-state-area>';
+      $tax_table .= '</tax-area>';
+
+      $tax_table .= '</default-tax-rule>';
+    }
+
+    if ($tax_table) {
+      $output .= '<tax-tables>';
+      $output .= '<default-tax-table>';
+      $output .= '<tax-rules>';
+      $output .= $tax_table;
+      $output .= '</tax-rules>';
+      $output .= '</default-tax-table>';
+      $output .= '</tax-tables>';
+    }
+
     $output .= '<edit-cart-url>'. url('cart', NULL, NULL, TRUE) .'</edit-cart-url>';
     if (($page = variable_get('uc_continue_shopping_url', '')) != '<none>') {
       $output .= '<continue-shopping-url>'. url($page, NULL, NULL, TRUE) .'</continue-shopping-url>';
     }
-    $output .= '<platform-id>'. $merchant_id .'</platform-id>';
+    $output .= '<platform-id>218752253180456</platform-id>';
     $output .= '</merchant-checkout-flow-support>';
     $output .= '</checkout-flow-support>';
     $output .= '</checkout-shopping-cart>';
@@ -464,15 +792,13 @@ function uc_google_checkout_cart_request($order) {
 }
 
 function uc_google_checkout_headers() {
-  switch (variable_get('uc_google_checkout_mode', 'sandbox')) {
-    case 'checkout':
-      $merchant_id = variable_get('uc_google_merchant_id', '');
-      $merchant_key = variable_get('uc_google_merchant_key', '');
-    break;
-    case 'sandbox':
-      $merchant_id = variable_get('uc_google_test_merchant_id', '');
-      $merchant_key = variable_get('uc_google_test_merchant_key', '');
-    break;
+  if (variable_get('uc_google_checkout_mode', 'checkout') == 'checkout') {
+    $merchant_id = variable_get('uc_google_merchant_id', '');
+    $merchant_key = variable_get('uc_google_merchant_key', '');
+  }
+  else {
+    $merchant_id = variable_get('uc_google_test_merchant_id', '');
+    $merchant_key = variable_get('uc_google_test_merchant_key', '');
   }
   $headers = array();
   $authorization = $merchant_id .':'. $merchant_key;
@@ -487,15 +813,13 @@ function uc_google_checkout_headers() {
 function uc_google_checkout_send_request($api, $request) {
   require_once(drupal_get_path('module', 'uc_google_checkout') .'/includes/xmlparser.php');
 
-  switch (variable_get('uc_google_checkout_mode', 'sandbox')) {
-    case 'checkout':
-      $merchant_id = variable_get('uc_google_merchant_id', '');
-      $checkout_url = 'https://checkout.google.com';
-    break;
-    case 'sandbox':
-      $merchant_id = variable_get('uc_google_test_merchant_id', '');
-      $checkout_url = 'https://sandbox.google.com/checkout';
-    break;
+  if (variable_get('uc_google_checkout_mode', 'checkout') == 'checkout') {
+    $merchant_id = variable_get('uc_google_merchant_id', '');
+    $checkout_url = 'https://checkout.google.com';
+  }
+  else {
+    $merchant_id = variable_get('uc_google_test_merchant_id', '');
+    $checkout_url = 'https://sandbox.google.com/checkout';
   }
 
   // Google's XML parser doesn't like named entities apparently.
@@ -531,6 +855,20 @@ function uc_google_checkout_send_request($api, $request) {
   // End of ugly hack.
 
   return $response;
+}
+
+function uc_google_checkout_pane_email_allowed($op, $arg1) {
+  switch ($op) {
+    case 'customer':
+    case 'view':
+      if ($arg1->data['email_allowed']) {
+        $output = t('Customer will accept marketing emails.');
+      }
+      else {
+        $output = t('Customer does not want marketing emails.');
+      }
+    return $output;
+  }
 }
 
 /**
@@ -748,15 +1086,13 @@ function uc_google_checkout_terminal_form_submit($form_id, $form_values) {
 function uc_google_checkout_callback() {
   require_once(drupal_get_path('module', 'uc_google_checkout') .'/includes/xmlparser.php');
 
-  switch (variable_get('uc_google_checkout_mode', 'sandbox')) {
-    case 'checkout':
-      $merchant_id = variable_get('uc_google_merchant_id', '');
-      $merchant_key = variable_get('uc_google_merchant_key', '');
-    break;
-    case 'sandbox':
-      $merchant_id = variable_get('uc_google_test_merchant_id', '');
-      $merchant_key = variable_get('uc_google_test_merchant_key', '');
-    break;
+  if (variable_get('uc_google_checkout_mode', 'checkout') == 'checkout') {
+    $merchant_id = variable_get('uc_google_merchant_id', '');
+    $merchant_key = variable_get('uc_google_merchant_key', '');
+  }
+  else {
+    $merchant_id = variable_get('uc_google_test_merchant_id', '');
+    $merchant_key = variable_get('uc_google_test_merchant_key', '');
   }
 
   //watchdog('google', check_plain($_SERVER['PHP_AUTH_USER']), WATCHDOG_NOTICE);
@@ -838,6 +1174,19 @@ function uc_google_checkout_new_order($xml) {
       $order->primary_email = $billing_address['email']['VALUE'];
     }
 
+    if ($new_order['buyer-marketing-preferences']['email-allowed']['VALUE'] == 'true') {
+      $order->data['email_allowed'] = TRUE;
+      if (module_exists('simplenews')) {
+        simplenews_subscribe_user($order->primary_email, variable_get('uc_google_checkout_simplenews_tid', 0), TRUE);
+      }
+    }
+    else {
+      $order->data['email_allowed'] = FALSE;
+      if (module_exists('simplenews')) {
+        simplenews_unsubscribe_user($order->primary_email, variable_get('uc_google_checkout_simplenews_tid', 0), FALSE);
+      }
+    }
+
     $order->payment_method = 'google_checkout';
 
     uc_order_line_item_add($order_id, 'tax', t('Total tax'), $new_order['order-adjustment']['total-tax']['VALUE']);
@@ -854,7 +1203,7 @@ function uc_google_checkout_new_order($xml) {
     // API's cart) so we must empty the customer's manually.
     uc_cart_empty($cart_id);
     // Add a comment to let sales team know this came in through the site.
-    uc_order_comment_save($order->order_id, 0, t('Order created through Google Checkout.'), 'admin');
+    uc_order_comment_save($order->order_id, 0, t('Order created through Google Checkout (#@gco_order).', array('@gco_order' => $new_order['google-order-number']['VALUE'])), 'admin');
 
     db_query("INSERT INTO {uc_gc_orders} (order_id, gc_order_number, gc_total) VALUES (%d, %d, %f)", $order_id, $new_order['google-order-number']['VALUE'], $new_order['order-total']['VALUE']);
 
@@ -948,6 +1297,7 @@ function uc_google_checkout_order_state_change($xml) {
           $message = t('Order %order canceled by Google: %reason', array('%order' => $order_id, '%reason' => $change['reason']['VALUE']));
           uc_order_comment_save($order_id, 0, $message, 'admin', 'canceled');
         case 'CANCELLED':
+          uc_order_comment_save($order_id, 0, t('Order canceled.'), 'order', 'canceled');
           uc_order_update_status($order_id, 'canceled');
         break;
         default:
@@ -986,7 +1336,8 @@ function uc_google_checkout_charge($order_id, $amount) {
   $google_order_number = uc_google_checkout_get_google_number($order_id);
   $output = '';
 
-  $output .= '<?xml version="1.0" encoding="UTF-8"?>'. "\n";
+  $output .= '<?xml version="1.0" encoding="UTF-8"?>';
+  $output .= "\n";
   $output .= '<charge-order xmlns="http://checkout.google.com/schema/2" google-order-number="'. $google_order_number .'">';
   $output .= '<amount currency="'. variable_get('uc_currency_code', 'USD') .'">'. $amount .'</amount>';
   $output .= '</charge-order>';
@@ -1015,7 +1366,8 @@ function uc_google_checkout_refund($order_id, $amount, $reason, $comment = '') {
   $google_order_number = uc_google_checkout_get_google_number($order_id);
   $output = '';
 
-  $output .= '<?xml version="1.0" encoding="UTF-8"?>'. "\n";
+  $output .= '<?xml version="1.0" encoding="UTF-8"?>';
+  $output .= "\n";
   $output .= '<refund-order xmlns="http://checkout.google.com/schema/2" google-order-number="'. $google_order_number .'">';
   $output .= '<amount currency="'. variable_get('uc_currency_code', 'USD') .'">'. $amount .'</amount>';
   $output .= '<comment>'. check_plain($comment) .'</comment>';
@@ -1043,11 +1395,46 @@ function uc_google_checkout_refund_order($xml) {
   }
 }
 
+function uc_google_checkout_notify_update($form_id, $form_values) {
+  $order = uc_order_load($form_values['order_id']);
+  if ($order !== FALSE && isset($form_values['order_comment']) && strlen($form_values['order_comment'])) {
+    $request = uc_google_checkout_buyer_message_request($form_values['order_id'], $form_values['order_comment']);
+    $response = uc_google_checkout_send_request('request', $request);
+  }
+}
+
+function uc_google_checkout_buyer_message_request($order_id, $message) {
+  $google_order_number = uc_google_checkout_get_google_number($order_id);
+  $output = '<?xml version="1.0" encoding="UTF-8"?>';
+  $output .= "\n";
+  $output .= '<send-buyer-message xmlns="http://checkout.google.com/schema/2" google-order-number="'. $google_order_number .'">';
+  $output .= '<message>'. check_plain($message) .'</message>';
+  $output .= '<send-email>'. (module_exists('uc_notify') && variable_get('uc_notify_order_update_enabled', TRUE) ? 'true' : 'false') .'</send-email>';
+  $output .= '</send-buyer-message>';
+
+  return $output;
+}
+
+function uc_google_checkout_cancel_order($order) {
+  $request = '<?xml version="1.0" encoding="UTF-8"?>';
+  $request .= "\n";
+  $request .= '<cancel-order xmlns="http://checkout.google.com/schema/2" google-order-number="'. $order->google_order_number .'">';
+  $request .= '<reason>'. token_replace_multiple(variable_get('uc_google_checkout_order_cancel_reason', t('Order canceled. See order comments at [order-url] for more information.')), array('global' => NULL, 'order' => $order)) .'</reason>';
+  $request .= '</cancel-order>';
+
+  if ($response = uc_google_checkout_send_request('request', $request)){
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
 function uc_google_checkout_notification_acknowledgement($serial_number) {
   drupal_set_header('HTTP/1.1 200 OK');
-  print '<?xml version="1.0" encoding="UTF-8"?>' . "\n" .
-        '<notification-acknowledgment xmlns="http://checkout.google.com/schema/2"
-          serial-number="'. $serial_number .'" />';
+  print '<?xml version="1.0" encoding="UTF-8"?>';
+  print "\n";
+  print '<notification-acknowledgment xmlns="http://checkout.google.com/schema/2" serial-number="'. $serial_number .'" />';
   exit();
 }
 
@@ -1066,4 +1453,49 @@ function uc_google_checkout_get_order($google_order_number) {
 
 function uc_google_checkout_get_google_number($order_id) {
   return db_result(db_query("SELECT gc_order_number FROM {uc_gc_orders} WHERE order_id = %d", $order_id));
+}
+
+function uc_google_checkout_shipping_services() {
+  return array_merge(uc_google_checkout_fedex_services(), uc_google_checkout_ups_services(), uc_google_checkout_usps_services());
+}
+
+function uc_google_checkout_fedex_services() {
+  return array(
+    'fedex_ground' => 'Ground',
+    'fedex_home' => 'Home Delivery',
+    'fedex_express' => 'Express Saver',
+    'fedex_first' => 'First Overnight',
+    'fedex_priority' => 'Priority Overnight',
+    'fedex_standard' => 'Standard Overnight',
+    'fedex_2day' => '2Day',
+  );
+}
+
+function uc_google_checkout_ups_services() {
+  return array(
+    'ups_next_day' => 'Next Day Air',
+    'ups_next_day_am' => 'Next Day Air Early AM',
+    'ups_next_day_saver' => 'Next Day Air Saver',
+    'ups_2nd_day' => '2nd Day Air',
+    'ups_2nd_day_am' => '2nd Day Air AM',
+    'ups_3_day' => '3 Day Select',
+    'ups_ground' => 'Ground',
+  );
+}
+
+function uc_google_checkout_usps_services() {
+  return array(
+    'usps_express' => 'Express Mail',
+    'usps_priority' => 'Priority Mail',
+    'usps_parcel' => 'Parcel Post',
+    'usps_media' => 'Media Mail',
+  );
+}
+
+function uc_google_checkout_shipping_companies() {
+  return array(
+    'fedex' => 'FedEx',
+    'ups' => 'UPS',
+    'usps' => 'USPS',
+  );
 }

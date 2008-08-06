@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_pack.install,v 1.2.2.2 2008/07/21 13:18:32 islandusurper Exp $
+// $Id: uc_payment_pack.install,v 1.2.2.3 2008/08/06 13:41:21 islandusurper Exp $
 
 function uc_payment_pack_schema() {
   $schema = array();

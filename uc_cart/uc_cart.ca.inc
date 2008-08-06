@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.ca.inc,v 1.1.2.2 2008/07/21 13:18:34 islandusurper Exp $
+// $Id: uc_cart.ca.inc,v 1.1.2.3 2008/08/06 13:41:24 islandusurper Exp $
 
 /**
  * @file

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.install,v 1.4.2.2 2008/07/21 13:18:33 islandusurper Exp $
+// $Id: uc_recurring.install,v 1.4.2.3 2008/08/06 13:41:22 islandusurper Exp $
 
 /**
  * @file

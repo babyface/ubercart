@@ -1,4 +1,4 @@
-; $Id: uc_recurring.info,v 1.2.2.2 2008/07/21 13:18:33 islandusurper Exp $
+; $Id: uc_recurring.info,v 1.2.2.3 2008/08/06 13:41:22 islandusurper Exp $
 name = Recurring Fees
 description = Assign recurring fees to products and manage them. Should be used with a payment service that implements a recurring fee handler.
 dependencies[] = uc_payment

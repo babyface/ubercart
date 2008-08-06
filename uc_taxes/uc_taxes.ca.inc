@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.ca.inc,v 1.1.2.2 2008/07/21 13:18:38 islandusurper Exp $
+// $Id: uc_taxes.ca.inc,v 1.1.2.3 2008/08/06 13:41:28 islandusurper Exp $
 
 /**
  * @file
@@ -29,18 +29,17 @@ function uc_taxes_ca_entity() {
  */
 function uc_taxes_ca_trigger() {
   $triggers = array();
-  $taxes = uc_taxes_get_rates();
-  foreach ($taxes as $tax) {
-    $triggers['calculate_tax_'. $tax->id] = array(
-      '#title' => t('Calculate @name', array('@name' => $tax->name)),
-      '#category' => 'uc_taxes',
-      '#arguments' => array(
-        'order' => array('#entity' => 'order', '#title' => t('Order')),
-        'tax' => array('#entity' => 'tax', '#title' => t('Tax rule')),
-        'user' => array('#entity' => 'user', '#title' => t('User account')),
-      ),
-    );
-  }
+
+  $triggers['calculate_taxes'] = array(
+    '#title' => t('Calculate taxes'),
+    '#category' => 'uc_taxes',
+    '#arguments' => array(
+      'order' => array('#entity' => 'order', '#title' => t('Order')),
+      'tax' => array('#entity' => 'tax', '#title' => t('Tax rule')),
+      'user' => array('#entity' => 'user', '#title' => t('User account')),
+    ),
+  );
+
   return $triggers;
 }
 
@@ -49,14 +48,19 @@ function uc_taxes_ca_trigger() {
  */
 function uc_taxes_ca_action() {
   $actions = array();
-  $actions['uc_taxes_action_apply_tax'] = array(
-    '#title' => t('Charge a tax'),
-    '#category' => t('Taxes'),
-    '#arguments' => array(
-      'order' => array('#entity' => 'order', '#title' => t('Order')),
-      'tax' => array('#entity' => 'tax', '#title' => t('Tax')),
-    ),
-  );
+
+  $taxes = uc_taxes_get_rates();
+  foreach ($taxes as $tax) {
+    $actions['uc_taxes_action_apply_tax_'. $tax->id] = array(
+      '#title' => t('Charge a tax'),
+      '#category' => t('Taxes'),
+      '#arguments' => array(
+        'order' => array('#entity' => 'order', '#title' => t('Order')),
+        'tax' => array('#entity' => 'tax', '#title' => t('Tax')),
+      ),
+    );
+  }
+
   return $actions;
 }
 
@@ -116,11 +120,11 @@ function uc_taxes_ca_predicate() {
     $predicates['uc_taxes_'. $tax->id] = array(
       '#title' => $tax->name,
       '#class' => 'uc_taxes',
-      '#trigger' => 'calculate_tax_'. $tax->id,
+      '#trigger' => 'calculate_taxes',
       '#status' => 1,
       '#actions' => array(
         array(
-          '#name' => 'uc_taxes_action_apply_tax',
+          '#name' => 'uc_taxes_action_apply_tax_'. $tax->id,
           '#title' => t('Apply @tax', array('@tax' => $tax->name)),
           '#argument_map' => array(
             'order' => 'order',

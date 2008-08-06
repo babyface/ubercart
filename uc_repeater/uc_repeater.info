@@ -1,5 +1,0 @@
-; $Id: uc_repeater.info,v 1.4 2007/11/05 20:32:00 rszrama Exp $
-name = Repeater
-description = Allows a multisite setup to share changes to the catalog.
-dependencies = uc_importer
-package = Ubercart - extra

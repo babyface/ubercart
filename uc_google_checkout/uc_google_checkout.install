@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.install,v 1.1.2.2 2008/07/21 13:18:35 islandusurper Exp $
+// $Id: uc_google_checkout.install,v 1.1.2.3 2008/08/06 13:41:34 islandusurper Exp $
 
 function uc_google_checkout_install() {
   switch ($GLOBALS['db_type']) {
@@ -33,6 +33,12 @@ function uc_google_checkout_install() {
         PRIMARY KEY (`order_id`),
         KEY `gc_order_number` (`gc_order_number`(20))
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
+      db_query("CREATE TABLE {uc_gc_taxes} (
+        `zone` varchar(2) NOT NULL default '',
+        `rate` float NOT NULL default 0.0,
+        `tax_shipping` tinyint(1) NOT NULL default 0,
+        PRIMARY KEY (`zone`(2))
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
     break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_gc_products} (
@@ -63,6 +69,12 @@ function uc_google_checkout_install() {
         PRIMARY KEY (order_id)
       );");
       db_query("CREATE INDEX {uc_gc_orders}_gc_order_number_idx ON {uc_gc_orders} (gc_order_number (20))");
+      db_query("CREATE TABLE {uc_gc_taxes} (
+        zone varchar(2) NOT NULL default '',
+        rate float NOT NULL default 0.0,
+        tax_shipping integer NOT NULL default 0,
+        PRIMARY KEY (zone(2))
+      );");
     break;
   }
   $t = get_t();
@@ -75,4 +87,30 @@ function uc_google_checkout_uninstall() {
   variable_del('uc_google_merchant_id');
   variable_del('uc_google_merchant_key');
   db_query("UPDATE {uc_order_statuses} SET locked = 0 WHERE order_status_id = 'in_google_checkout' OR order_status_id = 'chargeable'");
+}
+
+function uc_google_checkout_update_1() {
+  $ret = array();
+
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("CREATE TABLE {uc_gc_taxes} (
+        `zone` varchar(2) NOT NULL default '',
+        `rate` float NOT NULL default 0.0,
+        `tax_shipping` tinyint(1) NOT NULL default 0,
+        PRIMARY KEY (`zone`(2))
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
+    break;
+    case 'pgsql':
+      $ret[] = update_sql("CREATE TABLE {uc_gc_taxes} (
+        zone varchar(2) NOT NULL default '',
+        rate float NOT NULL default 0.0,
+        tax_shipping integer NOT NULL default 0,
+        PRIMARY KEY (zone(2))
+      );");
+    break;
+  }
+
+  return $ret;
 }

@@ -1,4 +1,4 @@
-; $Id: uc_reports.info,v 1.2.2.2 2008/07/21 13:18:36 islandusurper Exp $
+; $Id: uc_reports.info,v 1.2.2.3 2008/08/06 13:41:26 islandusurper Exp $
 name = Reports
 description = View reports about your store's sales, customers, and products.
 dependencies[] = uc_order

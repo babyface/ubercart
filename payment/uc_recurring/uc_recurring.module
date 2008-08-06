@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.module,v 1.7.2.2 2008/07/21 13:18:33 islandusurper Exp $
+// $Id: uc_recurring.module,v 1.7.2.3 2008/08/06 13:41:22 islandusurper Exp $
 
 /**
  * @file
@@ -649,7 +649,7 @@ function uc_recurring_admin_charge_form() {
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Charge'),
-    '#suffix' => l(t('Cancel'), referer_uri()),
+    '#suffix' => l(t('Cancel'), uc_referer_uri()),
   );
   return $form;
 }
@@ -727,7 +727,7 @@ function uc_recurring_admin_edit_form() {
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
-    '#suffix' => l(t('Cancel'), referer_uri()),
+    '#suffix' => l(t('Cancel'), uc_referer_uri()),
   );
 
   return $form;
@@ -755,7 +755,7 @@ function uc_recurring_admin_delete_form() {
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Delete'),
-    '#suffix' => l(t('Cancel'), referer_uri()),
+    '#suffix' => l(t('Cancel'), uc_referer_uri()),
   );
   return $form;
 }

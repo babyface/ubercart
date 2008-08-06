@@ -1,11 +1,9 @@
 <?php
-// $Id: uc_credit.module,v 1.5.2.1 2008/07/11 21:41:21 islandusurper Exp $
+// $Id: uc_credit.module,v 1.5.2.2 2008/08/06 13:41:21 islandusurper Exp $
 
 /**
  * @file
  * Defines the credit card payment method and hooks in payment gateways.
- *
- * Development sponsored by the Ubercart project.  http://www.ubercart.org
  */
 
 /*******************************************************************************
@@ -310,8 +308,11 @@ function uc_payment_method_credit($op, &$arg1) {
         'cc_type' => check_plain($_POST['cc_type']),
         'cc_owner' => check_plain($_POST['cc_owner']),
         'cc_number' => check_plain($_POST['cc_number']),
+        'cc_start_month' => check_plain($_POST['cc_start_month']),
+        'cc_start_year' => check_plain($_POST['cc_start_year']),
         'cc_exp_month' => check_plain($_POST['cc_exp_month']),
         'cc_exp_year' => check_plain($_POST['cc_exp_year']),
+        'cc_issue' => check_plain($_POST['cc_issue']),
         'cc_cvv' => check_plain($_POST['cc_cvv']),
         'cc_bank' => check_plain($_POST['cc_bank']),
       );
@@ -355,17 +356,29 @@ function uc_payment_method_credit($op, &$arg1) {
         $return = FALSE;
       }
 
-      // Validate the CC number if that's turned on.
-      if (variable_get('uc_credit_validate_numbers', TRUE) || !ctype_digit($cc_data['cc_number'])) {
-        if (!_valid_card_number($cc_data['cc_number'])) {
-          drupal_set_message(t('You have entered an invalid credit card number.'), 'error');
-          $return = FALSE;
-        }
+      // Validate the CC number if that's turned on/check for non-digits.
+      if ((variable_get('uc_credit_validate_numbers', TRUE) && !_valid_card_number($cc_data['cc_number']))
+        || !ctype_digit($cc_data['cc_number'])) {
+        drupal_set_message(t('You have entered an invalid credit card number.'), 'error');
+        $return = FALSE;
+      }
+
+      // Validate the start date (if entered).
+      if (variable_get('uc_credit_start_enabled', FALSE) && !_valid_card_start($cc_data['cc_start_month'], $cc_data['cc_start_year'])) {
+        drupal_set_message(t('The start date you entered is invalid.'), 'error');
+        $return = FALSE;
       }
 
       // Validate the card expiration date.
       if (!_valid_card_expiration($cc_data['cc_exp_month'], $cc_data['cc_exp_year'])) {
         drupal_set_message(t('The credit card you entered has expired.'), 'error');
+        $return = FALSE;
+      }
+
+      // Validate the issue number (if entered).  With issue numbers, '01' is
+      // different from '1', but is_numeric() is still appropriate.
+      if (variable_get('uc_credit_issue_enabled', FALSE) && !_valid_card_issue($cc_data['cc_issue'])) {
+        drupal_set_message(t('The issue number you entered is invalid.'), 'error');
         $return = FALSE;
       }
 
@@ -407,7 +420,13 @@ function uc_payment_method_credit($op, &$arg1) {
         $review[] = array('title' => t('Card Owner'), 'data' => check_plain($arg1->payment_details['cc_owner']));
       }
       $review[] = array('title' => t('Card Number'), 'data' => uc_credit_display_number($arg1->payment_details['cc_number']));
+      if (variable_get('uc_credit_start_enabled', FALSE)) {
+        $review[] = array('title' => t('Start Date'), 'data' => $arg1->payment_details['cc_start_month'] .'/'. $arg1->payment_details['cc_start_year']);
+      }
       $review[] = array('title' => t('Expiration'), 'data' => $arg1->payment_details['cc_exp_month'] .'/'. $arg1->payment_details['cc_exp_year']);
+      if (variable_get('uc_credit_issue_enabled', FALSE)) {
+        $review[] = array('title' => t('Issue Number'), 'data' => user_access('view cc numbers') ? $arg1->payment_details['cc_issue'] : str_repeat('-', strlen($arg1->payment_details['cc_issue'])));
+      }
       if (variable_get('uc_credit_cvv_enabled', TRUE)) {
         $review[] = array('title' => t('CVV'), 'data' => user_access('view cc numbers') ? $arg1->payment_details['cc_cvv'] : str_repeat('-', strlen($arg1->payment_details['cc_cvv'])));
       }
@@ -443,9 +462,23 @@ function uc_payment_method_credit($op, &$arg1) {
         $output .= '<tr><td>'. t('Card Number:') .' </td><td>'. uc_credit_display_number($arg1->payment_details['cc_number']) .'</td></tr>';
 
         if (variable_get('uc_credit_debug', FALSE)) {
+          if (variable_get('uc_credit_start_enabled', FALSE)) {
+            $start = $arg1->payment_details['cc_start_month'] .'/'. $arg1->payment_details['cc_start_year'];
+            if (strlen($start) > 1) {
+              $output .= '<tr><td>'. t('Start Date:') .' </td><td>'. $start .'</td></tr>';
+            }
+          }
+
           $exp = $arg1->payment_details['cc_exp_month'] .'/'. $arg1->payment_details['cc_exp_year'];
           if (strlen($exp) > 1) {
             $output .= '<tr><td>'. t('Expiration:') .' </td><td>'. $exp .'</td></tr>';
+          }
+
+          if (variable_get('uc_credit_issue_enabled', FALSE)) {
+            $issue = $arg1->payment_details['cc_issue'];
+            if (strlen($issue) > 0) {
+              $output .= '<tr><td>'. t('Issue Number:') .' </td><td>'. $issue .'</td></tr>';
+            }
           }
 
           if (variable_get('uc_credit_cvv_enabled', TRUE)) {
@@ -609,6 +642,16 @@ function uc_payment_method_credit($op, &$arg1) {
         '#type' => 'checkbox',
         '#title' => t('Enable card owner text field on checkout form.'),
         '#default_value' => variable_get('uc_credit_owner_enabled', FALSE),
+      );
+      $form['cc_fields']['uc_credit_start_enabled'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Enable card start date on checkout form.'),
+        '#default_value' => variable_get('uc_credit_start_enabled', FALSE),
+      );
+      $form['cc_fields']['uc_credit_issue_enabled'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Enable card issue number text field on checkout form.'),
+        '#default_value' => variable_get('uc_credit_issue_enabled', FALSE),
       );
       $form['cc_fields']['uc_credit_bank_enabled'] = array(
         '#type' => 'checkbox',
@@ -809,11 +852,42 @@ function uc_payment_method_credit_form($form_state, $order) {
     '#default_value' => $_SESSION['clear_cc'] ? '' : $default_num,
     '#attributes' => array('autocomplete' => 'off'),
     '#size' => 20,
-    '#maxlength' => 16,
+    '#maxlength' => 19,
   );
+
+  if (variable_get('uc_credit_start_enabled', FALSE)) {
+    $form['cc_start_month'] = uc_select_month(t('Start Month'), $order->payment_details['cc_start_month']);
+    $form['cc_start_year'] = uc_select_year(t('Start Year'), $order->payment_details['cc_start_year'], date('Y') - 10, date('Y'));
+  }
 
   $form['cc_exp_month'] = uc_select_month(t('Expiration Month'), $order->payment_details['cc_exp_month']);
   $form['cc_exp_year'] = uc_select_year(t('Expiration Year'), $order->payment_details['cc_exp_year']);
+
+  if (variable_get('uc_credit_issue_enabled', FALSE)) {
+    // Setup the default Issue Number on the credit card form.
+    if (!_valid_card_issue($order->payment_details['cc_issue'])) {
+      // Display the Issue Number as is if it does not validate so it can be corrected.
+      $default_card_issue = $order->payment_details['cc_issue'];
+    }
+    elseif (!empty($order->payment_details['cc_issue'])) {
+      if (user_access('view cc numbers')) {
+        // Display the full number to those with access.
+        $default_card_issue = $order->payment_details['cc_issue'];
+      }
+      else {
+        // Otherwise mask it with dashes.
+        $default_card_issue = str_repeat('-', strlen($order->payment_details['cc_issue']));
+      }
+    }
+    $form['cc_issue'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Issue Number'),
+      '#default_value' => $default_card_issue,
+      '#attributes' => array('autocomplete' => 'off'),
+      '#size' => 2,
+      '#maxlength' => 2,
+    );
+  }
 
   if (variable_get('uc_credit_cvv_enabled', TRUE)) {
     // Setup the default CVV  on the credit card form.
@@ -861,8 +935,11 @@ function uc_payment_method_credit_form($form_state, $order) {
 function theme_uc_payment_method_credit_form($form) {
   // Comment out this function to just straight display the form.
   $form['cc_number']['#title'] = '';
+  $form['cc_start_month']['#title'] = '';
+  $form['cc_start_year']['#title'] = '';
   $form['cc_exp_month']['#title'] = '';
   $form['cc_exp_year']['#title'] = '';
+  $form['cc_issue']['#title'] = '';
 
   if (arg(1) == 'checkout') {
     $path = base_path() . drupal_get_path('module', 'uc_credit');
@@ -883,9 +960,18 @@ function theme_uc_payment_method_credit_form($form) {
     }
     $output .= '<tr><td class="field-label">'. t('Card Number:') .'</td><td>'
              . drupal_render($form['cc_number']) .'</td></tr>';
+    if (variable_get('uc_credit_start_enabled', FALSE)) {
+      $output .= '<tr><td class="field-label">'. t('Start Date:') .'</td><td>'
+               . drupal_render($form['cc_start_month']) .' '. drupal_render($form['cc_start_year'])
+                .' '. t('(if present)') .'</td></tr>';
+    }
     $output .= '<tr><td class="field-label">'. t('Expiration Date:') .'</td><td>'
              . drupal_render($form['cc_exp_month']) .' '
              . drupal_render($form['cc_exp_year']) .'</td></tr>';
+    if (variable_get('uc_credit_issue_enabled', FALSE)) {
+      $output .= '<tr><td class="field-label">'. t('Issue Number:') .'</td><td>'
+               . drupal_render($form['cc_issue']) .' '. t('(if present)').'</td></tr>';
+    }
     if (variable_get('uc_credit_cvv_enabled', TRUE)) {
       $form['cc_cvv']['#title'] = '';
       $output .= '<tr><td class="field-label">'. t('CVV:') .'</td><td>'. drupal_render($form['cc_cvv'])
@@ -1227,6 +1313,33 @@ function _valid_card_number($number) {
 }
 
 /**
+ * Validates a start date on a card.
+ *
+ * @param $month
+ *   The 1 or 2-digit numeric representation of the month, i.e. 1, 6, 12.
+ * @param $year
+ *   The 4-digit numeric representation of the year, i.e. 2008.
+ * @return
+ *   TRUE for cards whose start date is in the past, FALSE otherwise.
+ */
+function _valid_card_start($month, $year) {
+  if (empty($month) || empty($year)) {
+    return FALSE;
+  }
+
+  if ($year > date('Y')) {
+    return FALSE;
+  }
+  else if ($year == date('Y')) {
+    if ($month > date('n')) {
+      return FALSE;
+    }
+  }
+
+  return TRUE;
+}
+
+/**
  * Validates an expiration date on a card.
  *
  * @param $month
@@ -1247,6 +1360,15 @@ function _valid_card_expiration($month, $year) {
   }
 
   return TRUE;
+}
+
+// Validates an issue number on a card; returns TRUE or FALSE.
+function _valid_card_issue($issue) {
+  if (empty($issue) || (is_numeric($issue) && $issue > 0)) {
+    return TRUE;
+  }
+
+  return FALSE;
 }
 
 /**

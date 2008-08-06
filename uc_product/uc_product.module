@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.3 2008/07/23 14:03:32 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.4 2008/08/06 13:41:26 islandusurper Exp $
 
 /**
  * @file
@@ -108,11 +108,9 @@ function uc_product_menu() {
     );
   }
 
-  $items['admin/store/settings/products/defaults/%'] = array(
-    'title' => 'Imagecache default settings',
+  $items['admin/store/settings/products/defaults'] = array(
     'access arguments' => array('administer products'),
     'page callback' => 'uc_product_image_defaults',
-    'page arguments' => array(5),
     'type' => MENU_CALLBACK,
   );
   $items['admin/store/products/classes/%uc_product_class'] = array(
@@ -244,98 +242,49 @@ function uc_product_enable() {
     }
   }
 
-  if (module_exists('imagefield')) {
-    $result = db_query("SELECT field_name FROM {node_field} WHERE field_name = 'field_image_cache' AND type = 'image'");
-    if (!db_num_rows($result)) {
-      db_query("INSERT INTO {node_field} (field_name, type, global_settings, required, multiple, db_storage) VALUES ('field_image_cache', 'image', '%s', 0, 1, 0)", 'a:0:{}');
-    }
-    $image_path = file_create_path();
-    $widget_settings = array(
-      'max_resolution' => '0',
-      'image_path' => $image_path,
-      'custom_alt' => 1,
-      'custom_title' => 1,
-      'teaser_preset' => null,
-      'body_preset' => null,
-    );
-    $display_settings = array(
-      'label' => array(
-        'format' => 'hidden',
-      ),
-      'teaser' => array(
-        'format' => 'hidden',
-      ),
-      'full' => array(
-        'format' => 'hidden',
-      ),
-    );
-    foreach (module_invoke_all('product_types') as $type) {
-      $result = db_query("SELECT * FROM {node_field_instance} WHERE field_name = 'field_image_cache' and type_name = '%s'", $type);
-      if (!db_num_rows($result)) {
-        db_query("INSERT INTO {node_field_instance} VALUES ('field_image_cache', '%s', -2, 'Image', 'image', '%s', '%s', '')", $type, serialize($widget_settings), serialize($display_settings));
-      }
-      switch ($GLOBALS['db_type']) {
-        case 'mysql':
-        case 'mysqli':
-          db_query("CREATE TABLE IF NOT EXISTS {content_field_image_cache} (
-            `vid` int(10) unsigned NOT NULL default '0',
-            `delta` int(10) unsigned NOT NULL default '0',
-            `nid` int(10) unsigned NOT NULL default '0',
-            `field_image_cache_fid` int(11) NOT NULL default '0',
-            `field_image_cache_title` varchar(255) NOT NULL default '',
-            `field_image_cache_alt` varchar(255) NOT NULL default '',
-            PRIMARY KEY  (`vid`,`delta`)
-          ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
-        break;
-        case 'pgsql':
-          $result = db_query("SELECT relname FROM pg_class WHERE relname = '{content_field_image_cache}'");
-          if (!db_num_rows($result)) {
-            db_query('CREATE TABLE {content_field_image_cache} (
-              "vid" int_unsigned NOT NULL default \'0\',
-              "delta" int_unsigned NOT NULL default \'0\',
-              "nid" int_unsigned NOT NULL default \'0\',
-              "field_image_cache_fid" integer NOT NULL default \'0\',
-              "field_image_cache_title" varchar(255) NOT NULL,
-              "field_image_cache_alt" varchar(255) NOT NULL,
-              PRIMARY KEY  ("vid","delta")
-            );');
-          }
-        break;
-      }
-    }
-    content_clear_type_cache();
+  if (module_exists('filefield')) {
+    uc_product_add_default_image_field();
   }
+
   if (module_exists('imagecache')) {
-    $presets = array('product' => 0, 'product_list' => 0, 'uc_thumbnail' => 0);
-    $result = db_query("SELECT * FROM {imagecache_preset} WHERE presetname IN ('". implode("','", array_keys($presets)) ."')");
-    while ($preset = db_fetch_array($result)) {
-      $presets[$preset['presetname']] = $preset['presetid'];
-    }
-    //drupal_set_message('<pre>'. print_r($presets, true) .'</pre>');
-    foreach ($presets as $name => $id) {
-      if ($id == 0) {
-        $id = db_next_id('{imagecache_preset}_presetid');
-        db_query("INSERT INTO {imagecache_preset} (presetid, presetname) VALUES (%d, '%s')", $id, $name);
+    $presets = array('product', 'product_list', 'uc_thumbnail');
+    foreach ($presets as $preset_name) {
+      $preset = imagecache_preset_by_name($preset_name);
+      if (empty($preset)) {
+        // No preset of that name, so make a new one.
+        $preset = imagecache_preset_save(array('presetname' => $preset_name));
       }
-    }
-    $result = db_query("SELECT ia.actionid, ip.presetid, ip.presetname FROM {imagecache_preset} AS ip LEFT JOIN {imagecache_action} AS ia ON ip.presetid = ia.presetid WHERE ip.presetname IN ('". implode("','", array_keys($presets)) ."')");
-    $presets = array();
-    while ($preset = db_fetch_array($result)) {
-      if (is_null($preset['actionid'])) {
-        switch ($preset['presetname']) {
+
+      $actions = imagecache_preset_actions($preset);
+      if (empty($actions)) {
+        // The preset has no actions, so scale the image.
+        $action = array(
+          'action' => 'imagecache_scale',
+          'presetid' => $preset['presetid'],
+          'weight' => 0,
+          'data' => array(
+            'upscale' => 0,
+          ),
+        );
+        switch ($preset_name) {
           case 'product':
-            db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:3:"100";s:6:"height";s:3:"100";}');
-          break;
           case 'product_list':
-            db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:3:"100";s:6:"height";s:3:"100";}');
+            $action['data']['width'] = '100';
+            $action['data']['height'] = '100';
           break;
           case 'uc_thumbnail':
-            db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"35";s:6:"height";s:2:"35";}');
+            $action['data']['width'] = '35';
+            $action['data']['height'] = '35';
           break;
+          default:
+            // Do not save the action and get the next preset.
+            // Continue thinks swtich() is a loop, so continue it and the
+            // foreach().
+          continue 2;
         }
+        imagecache_action_save($action);
       }
     }
-    cache_clear_all('imagecache:presets', 'cache');
   }
 }
 
@@ -1104,14 +1053,15 @@ function uc_product_product_types() {
  * @see uc_product_image_defaults
  */
 function uc_product_store_status() {
-  if (!module_exists('imagefield') || !module_exists('imagecache')) {
-    $description = t('To automatically configure core image support, <a href="!url">enable</a> the <a href="http://drupal.org/project/cck">Content</a>, <a href="http://drupal.org/project/imagefield">CCK Image field</a>, and <a href="http://drupal.org/project/imagecache">Imagecache</a> modules. This action is not required.', array('!url' => url('admin/build/modules')));
+  if (!module_exists('filefield') || !module_exists('imagecache')) {
+    $description = t('To automatically configure core image support, <a href="!url">enable</a> the <a href="http://drupal.org/project/cck">Content</a>, <a href="http://drupal.org/project/imagefield">CCK Image field</a>, and <a href="http://drupal.org/project/imagecache">Imagecache</a> modules.', array('!url' => url('admin/build/modules')));
   }
   else {
-    $result = db_query("SELECT field_name, type FROM {node_field} WHERE field_name = 'field_image_cache' AND type = 'image'");
-    $field_check = (bool) db_num_rows($result);
-    $result = db_query("SELECT field_name, type_name FROM {node_field_instance} WHERE field_name = 'field_image_cache' AND type_name = 'product'");
-    $product_field_check = (bool) db_num_rows($result);
+    module_load_include('inc', 'content', 'includes/content.crud');
+    // Check for filefields on products.
+    $instances = content_field_instance_read(array('field_name' => 'field_image_cache', 'type_name' => 'product'));
+    $field_check = (bool) count($instances);
+
     $presets = array('product', 'product_list', 'uc_thumbnail');
     if (module_exists('uc_catalog')) {
       $presets[] = 'uc_category';
@@ -1122,39 +1072,47 @@ function uc_product_store_status() {
     if (module_exists('uc_manufacturer')) {
       $presets[] = 'manufacturer';
     }
-    $result = db_query("SELECT presetid, presetname FROM {imagecache_preset} WHERE presetname IN ('". implode("','", $presets) ."')");
-    $preset_check = (db_num_rows($result) == count($presets));
-    $actions = array();
-    $good_presets = array();
-    while ($preset_id = db_fetch_array($result)) {
-      $good_presets[] = $preset_id['presetname'];
-      $actions[$preset_id['presetid']] = db_result(db_query("SELECT actionid FROM {imagecache_action} WHERE presetid = %d", $preset_id['presetid']));
+    sort($presets);
+
+    $preset_check = 1;
+    $action_check = 1;
+    foreach ($presets as $preset_name) {
+      $preset = imagecache_preset_by_name($preset_name);
+      if (empty($preset)) {
+        $preset_check = 0;
+        $action_check = 0;
+        break;
+      }
+      else {
+        $actions = imagecache_preset_actions($preset);
+        if (empty($actions)) {
+          $action_check = 0;
+          break;
+        }
+      }
     }
-    $missing_presets = array_diff($presets, $good_presets);
-    $action_check = (count(array_filter($actions)) == count($presets));
-    if ($field_check && $product_field_check && $preset_check && $action_check) {
+
+    if ($field_check && $preset_check && $action_check) {
+      $status = 'ok';
       $description = t('Product image support has been automatically configured by Ubercart.');
     }
     else {
-      $checks = ($field_check << 3) + ($product_field_check << 2) + ($preset_check << 1) + $action_check;
-      $description = t('<a href="!url">Click here</a> to automatically configure the following items for core image support:', array('!url' => url('admin/store/settings/products/defaults/'. $checks)));
+      $status = 'warning';
+      $description = t('<a href="!url">Click here</a> to automatically configure the following items for core image support:', array('!url' => url('admin/store/settings/products/defaults')));
       if (!$field_check) {
-        $items[] = t('The Image field has not been created for CCK.');
-      }
-      if (!$product_field_check) {
-        $items[] = t("The Image field has not been attached to Product nodes.");
+        $items[] = t('The Image file field has not been created for products.');
       }
       if (!$preset_check) {
-        $items[] = t('The expected Imagecache presets ("!presets") have not been created.', array('!presets' => implode('", "', $missing_presets)));
+        $items[] = t('Some or all of the expected Imagecache presets ("!presets") have not been created. Ubercart will not display images in certain places.', array('!presets' => implode('", "', $presets)));
       }
       if (!$action_check) {
-        $items[] = t('The Imagecache presets do not contain actions to perform on images. Images may be displayed in their original formats.');
+        $items[] = t('Some Imagecache presets do not contain actions to perform on images. Images may be displayed in their original formats.');
       }
       $description .= theme('item_list', $items) . t('(This action is not required and should not be taken if you do not need images or have implemented your own image support.)');
     }
   }
 
-  return array(array('status' => 'ok', 'title' => t('Images'), 'desc' => $description));
+  return array(array('status' => $status, 'title' => t('Images'), 'desc' => $description));
 }
 
 /**
@@ -1250,11 +1208,8 @@ function uc_product_product_class($pcid, $op) {
  *   at least one action.
  * @see uc_product_store_status
  */
-function uc_product_image_defaults($checks) {
-  $field_check = $checks & 8;
-  $product_field_check = $checks & 4;
-  $preset_check = $checks & 2;
-  $action_check = $checks & 1;
+function uc_product_image_defaults() {
+  uc_product_add_default_image_field();
 
   $presets = array('product', 'product_list', 'uc_thumbnail');
   if (module_exists('uc_catalog')) {
@@ -1263,111 +1218,52 @@ function uc_product_image_defaults($checks) {
   if (module_exists('uc_cart')) {
     $presets[] = 'cart';
   }
-  if (module_exists('uc_manufacturer')) {
-    $presets[] = 'manufacturer';
-  }
 
-  if (!$field_check) {
-    db_query("INSERT INTO {node_field} (field_name, type, global_settings, required, multiple, db_storage) VALUES ('field_image_cache', 'image', '%s', 0, 1, 0)", 'a:0:{}');
-    content_clear_type_cache();
-  }
-  if (!$product_field_check) {
-    $widget_settings = array(
-      'max_resolution' => '0',
-      'image_path' => '',
-      'custom_alt' => 1,
-      'custom_title' => 1,
-      'teaser_preset' => null,
-      'body_preset' => null,
-    );
-    $display_settings = array(
-      'label' => array(
-        'format' => 'hidden',
-      ),
-      'teaser' => array(
-        'format' => 'hidden',
-      ),
-      'full' => array(
-        'format' => 'hidden',
-      ),
-    );
-    foreach (module_invoke_all('product_types') as $type) {
-      db_query("INSERT INTO {node_field_instance} VALUES ('field_image_cache', '%s', -2, 'Image', 'image', '%s', '%s', '')", $type, serialize($widget_settings), serialize($display_settings));
+  foreach ($presets as $preset_name) {
+    $preset = imagecache_preset_by_name($preset_name);
+    if (empty($preset)) {
+      // No preset of that name, so make a new one.
+      $preset = imagecache_preset_save(array('presetname' => $preset_name));
     }
-    switch ($GLOBALS['db_type']) {
-      case 'mysql':
-      case 'mysqli':
-        db_query("CREATE TABLE IF NOT EXISTS {content_field_image_cache} (
-          `vid` int(10) unsigned NOT NULL default '0',
-          `delta` int(10) unsigned NOT NULL default '0',
-          `nid` int(10) unsigned NOT NULL default '0',
-          `field_image_cache_fid` int(11) NOT NULL default '0',
-          `field_image_cache_title` varchar(255) NOT NULL default '',
-          `field_image_cache_alt` varchar(255) NOT NULL default '',
-          PRIMARY KEY  (`vid`,`delta`)
-        ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
-      break;
-      case 'pgsql':
-        db_query("CREATE TABLE {content_field_image_cache} (
-          vid int_unsigned NOT NULL default '0',
-          delta int_unsigned NOT NULL default '0',
-          nid int_unsigned NOT NULL default '0',
-          field_image_cache_fid integer NOT NULL default '0',
-          field_image_cache_title varchar(255) NOT NULL default '',
-          field_image_cache_alt varchar(255) NOT NULL,
-          PRIMARY KEY (vid,delta)
-        );");
-      break;
-    }
-    content_clear_type_cache();
-  }
-  if (!$preset_check) {
-    $result = db_query("SELECT * FROM {imagecache_preset} WHERE presetname IN ('". implode("','", $presets) ."')");
-    $preset_keys = array();
-    foreach ($presets as $preset) {
-      $preset_keys[$preset] = 0;
-    }
-    $presets = $preset_keys;
-    while ($preset = db_fetch_array($result)) {
-      $presets[$preset['presetname']] = $preset['presetid'];
-    }
-    //drupal_set_message('<pre>'. print_r($presets, true) .'</pre>');
-    foreach ($presets as $name => $id) {
-      if ($id == 0) {
-        $id = db_next_id('{imagecache_preset}_presetid');
-        db_query("INSERT INTO {imagecache_preset} (presetid, presetname) VALUES (%d, '%s')", $id, $name);
+
+    $actions = imagecache_preset_actions($preset);
+    if (empty($actions)) {
+      // The preset has no actions, so scale the image.
+      $action = array(
+        'action' => 'imagecache_scale',
+        'presetid' => $preset['presetid'],
+        'weight' => 0,
+        'data' => array(
+          'upscale' => 0,
+        ),
+      );
+      switch ($preset_name) {
+        case 'product':
+        case 'product_list':
+          $action['data']['width'] = '100';
+          $action['data']['height'] = '100';
+        break;
+        case 'cart':
+          $action['data']['width'] = '50';
+          $action['data']['height'] = '50';
+        break;
+        case 'uc_category':
+          $action['data']['width'] = '96';
+          $action['data']['height'] = '96';
+        break;
+        case 'uc_thumbnail':
+          $action['data']['width'] = '35';
+          $action['data']['height'] = '35';
+        break;
+        default:
+          // Do not save the action and get the next preset.
+          // Continue thinks swtich() is a loop, so continue it and the
+          // foreach().
+        continue 2;
       }
+      imagecache_action_save($action);
     }
   }
-  if (!$action_check) {
-    $result = db_query("SELECT ia.actionid, ip.presetid, ip.presetname FROM {imagecache_preset} AS ip LEFT JOIN {imagecache_action} AS ia ON ip.presetid = ia.presetid WHERE ip.presetname IN ('". implode("','", array_keys($presets)) ."')");
-    $presets = array();
-    while ($preset = db_fetch_array($result)) {
-      if (is_null($preset['actionid'])) {
-        switch ($preset['presetname']) {
-          case 'product':
-            db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:3:"100";s:6:"height";s:3:"100";}');
-          break;
-          case 'product_list':
-            db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:3:"100";s:6:"height";s:3:"100";}');
-          break;
-          case 'uc_thumbnail':
-            db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"35";s:6:"height";s:2:"35";}');
-          break;
-          case 'uc_category':
-            db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"96";s:6:"height";s:2:"96";}');
-          break;
-          case 'cart':
-            db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"50";s:6:"height";s:2:"50";}');
-          break;
-          case 'manufacturer':
-            db_query("INSERT INTO {imagecache_action} (actionid, presetid, weight, data) VALUES (%d, %d, 0, '%s')", db_next_id('{imagecache_action}_actionid'), $preset['presetid'], 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"80";s:6:"height";s:2:"80";}');
-          break;
-        }
-      }
-    }
-  }
-  cache_clear_all('imagecache:presets', 'cache');
   drupal_goto('admin/store');
 }
 
@@ -2152,7 +2048,7 @@ function uc_product_get_picture($node_id, $format = 'product') {
       $img = '<a href="'. check_url(file_create_url($path)) .'" class="thickbox" rel="field_image_cache">'. $img .'</a>';
     }
     else {
-      $img = l($img, 'node/'. $product->nid, array(), null, null, false, true);
+      $img = l($img, 'node/'. $product->nid, array('html' => TRUE));
     }
   }
   return $img;
@@ -2449,4 +2345,64 @@ function uc_product_feature_save($data) {
   }
 
   return 'node/'. $data['nid'] .'/edit/features';
+}
+
+function uc_product_add_default_image_field() {
+  module_load_include('inc', 'content', 'includes/content.crud');
+  $label = t('Image');
+  $field = array (
+    'label' => $label,
+    'field_name' => 'field_image_cache',
+    'type' => 'filefield',
+    'widget_type' => 'filefield_widget',
+    'file_extensions' => 'gif jpg jpeg png bmp',
+    'required' => '0',
+    'multiple' => '1',
+    'list_default' => '0',
+    'force_list_default' => '1',
+    'module' => 'filefield',
+    'widget_module' => 'filefield',
+    'columns' => array (
+      'fid' => array (
+        'type' => 'int',
+        'not null' => false,
+      ),
+      'list' => array (
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => false,
+      ),
+      'data' => array (
+        'type' => 'text',
+        'serialize' => true,
+      ),
+    ),
+    'display_settings' => array (
+      'label' => array (
+        'format' => 'hidden',
+      ),
+      'teaser' => array (
+        'format' => 'hidden',
+      ),
+      'full' => array (
+        'format' => 'hidden',
+      ),
+      4 => array (
+        'format' => 'hidden',
+      ),
+    ),
+  );
+  foreach (module_invoke_all('product_types') as $type) {
+    $field['type_name'] = $type;
+    $instances = content_field_instance_read(array('field_name' => 'field_image_cache', 'type_name' => $type));
+    if (sizeof($instances) < 1) {
+      // Only add the field if it doesn't exist. Don't overwrite any changes.
+      if (content_field_instance_create($field)) {
+        drupal_set_message(t('Created field %label.', array('%label' => $label)));
+      }
+      else {
+        drupal_set_message(t('There was a problem creating field %label.', array('%label' => $label)));
+      }
+    }
+  }
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.inc,v 1.1.2.2 2008/07/21 13:18:32 islandusurper Exp $
+// $Id: ca.inc,v 1.1.2.3 2008/08/06 13:41:20 islandusurper Exp $
 
 /**
  * @file: This files includes some test conditions and actions.

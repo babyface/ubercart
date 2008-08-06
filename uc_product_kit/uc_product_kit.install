@@ -1,38 +1,69 @@
 <?php
-// $Id: uc_product_kit.install,v 1.11 2008/07/10 12:41:03 islandusurper Exp $
+// $Id: uc_product_kit.install,v 1.11.2.1 2008/08/06 13:41:26 islandusurper Exp $
+
+/**
+ * @file
+ * Install file for uc_product_kit
+ */
+
+function uc_product_kit_schema() {
+  $schema['uc_product_kits'] = array(
+    'fields' => array(
+      'vid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'product_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'mutable' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'qty' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'discount' => array(
+        'type' => 'float',
+        'not null' => TRUE,
+        'default' => 0.0,
+      ),
+      'ordering' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('vid', 'product_id'),
+  );
+
+  return $schema;
+}
 
 function uc_product_kit_install() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      db_query("CREATE TABLE {uc_product_kits} (
-        `vid` mediumint(9) NOT NULL default 0,
-        `nid` mediumint(9) NOT NULL default 0,
-        `product_id` mediumint(9) NOT NULL,
-        `mutable` tinyint(1) NOT NULL default 0,
-        `qty` smallint(6) NOT NULL,
-        `discount` float NOT NULL default 0.0,
-        `ordering` smallint NOT NULL default 0,
-        PRIMARY KEY  (`vid`, `product_id`)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
-    break;
-    case 'pgsql':
-      db_query("CREATE TABLE {uc_product_kits} (
-        vid integer NOT NULL default 0,
-        nid integer NOT NULL default 0,
-        product_id integer NOT NULL default 0,
-        mutable smallint NOT NULL default 0,
-        qty smallint NOT NULL default 0,
-        discount float NOT NULL default 0.0,
-        ordering smallint NOT NULL default 0,
-        PRIMARY KEY  (vid, product_id)
-      );");
-    break;
-  }
+  drupal_install_schema('uc_product_kit');
 }
 
 function uc_product_kit_uninstall() {
-  db_query("DROP TABLE {uc_product_kits}");
+  drupal_uninstall_schema('uc_product_kit');
   variable_del('uc_product_kit_mutable');
 }
 
@@ -113,7 +144,7 @@ function uc_product_kit_update_5() {
       $ret[] = update_sql("ALTER TABLE {uc_product_kits} DROP data");
     break;
     case 'pgsql':
-      $ret[] = update_sql("ALTER TABLE {uc_product_kits} DROP data");    
+      $ret[] = update_sql("ALTER TABLE {uc_product_kits} DROP data");
     break;
   }
   return $ret;

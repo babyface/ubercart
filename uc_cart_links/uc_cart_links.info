@@ -1,4 +1,4 @@
-; $Id: uc_cart_links.info,v 1.2.2.2 2008/07/21 13:18:34 islandusurper Exp $
+; $Id: uc_cart_links.info,v 1.2.2.3 2008/08/06 13:41:24 islandusurper Exp $
 name = Cart Links
 description = Create specialized links to purchase products from other nodes.
 dependencies[] = uc_cart

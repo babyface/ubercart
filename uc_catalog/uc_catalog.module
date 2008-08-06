@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.1 2008/07/11 21:41:24 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.2 2008/08/06 13:41:24 islandusurper Exp $
 
 /**
  * @file
@@ -130,12 +130,27 @@ function uc_catalog_perm() {
  */
 function uc_catalog_enable() {
   if (module_exists('imagecache')) {
-    $result = db_query("SELECT presetid FROM {imagecache_preset} WHERE presetname = 'uc_category'");
-    if (!db_fetch_object($result)) {
-      db_query("INSERT INTO {imagecache_preset} (presetname) VALUES ('category')");
-      $id = db_last_insert_id('imagecache_preset', 'presetid');
-      db_query("INSERT INTO {imagecache_action} (presetid, weight, data) VALUES (%d, 0, '%s')", $id, 'a:4:{s:8:"function";s:5:"scale";s:3:"fit";s:6:"inside";s:5:"width";s:2:"96";s:6:"height";s:2:"96";}');
-      cache_clear_all('imagecache:presets', 'cache');
+    $preset_name = 'uc_category';
+    $preset = imagecache_preset_by_name($preset_name);
+    if (empty($preset)) {
+      // No preset of that name, so make a new one.
+      $preset = imagecache_preset_save(array('presetname' => $preset_name));
+    }
+
+    $actions = imagecache_preset_actions($preset);
+    if (empty($actions)) {
+      // The preset has no actions, so scale the image.
+      $action = array(
+        'action' => 'scale',
+        'presetid' => $preset['presetid'],
+        'weight' => 0,
+        'data' => array(
+          'width' => '96',
+          'height' => '96',
+          'upscale' => 0,
+        ),
+      );
+      imagecache_action_save($action);
     }
   }
 }
@@ -817,7 +832,7 @@ function theme_uc_catalog_browse($tid = 0) {
   }
   $product_types = module_invoke_all('product_types');
 
-  $sql = "SELECT DISTINCT(n.nid), n.sticky, n.title, n.created, p.model, p.ordering
+  $sql = "SELECT DISTINCT(n.nid), n.sticky, n.title, n.created, p.model, p.sell_price, p.ordering
     FROM {node} n
       INNER JOIN {term_node} tn ON n.nid = tn.nid
       INNER JOIN {uc_products} AS p ON n.vid = p.vid

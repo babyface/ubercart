@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.install,v 1.2.2.3 2008/07/23 14:03:31 islandusurper Exp $
+// $Id: uc_file.install,v 1.2.2.4 2008/08/06 13:41:25 islandusurper Exp $
 
 function uc_file_schema() {
   $schema = array();

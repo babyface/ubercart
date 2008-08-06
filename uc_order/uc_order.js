@@ -1,4 +1,4 @@
-// $Id: uc_order.js,v 1.9 2008/07/10 12:41:02 islandusurper Exp $
+// $Id: uc_order.js,v 1.9.2.1 2008/08/06 13:41:25 islandusurper Exp $
 
 var customer_select = '';
 var add_product_browser = '';
@@ -85,7 +85,7 @@ function apply_address(type, address_str) {
   if ($('#edit-' + type + '-country').val() != address['country']) {
     $('#edit-' + type + '-country').val(address['country']);
     try {
-      uc_update_zone_select('#edit-' + type + '-country', address['zone']);
+      uc_update_zone_select('edit-' + type + '-country', address['zone']);
     }
     catch (err) {}
   }

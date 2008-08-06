@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.1 2008/07/11 21:41:27 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.2 2008/08/06 13:41:27 islandusurper Exp $
 
 /**
  * @file
@@ -416,6 +416,11 @@ function uc_store_perm() {
  * Implementation of hook_footer().
  */
 function uc_store_footer() {
+  // Exit if the store footer is turned off.
+  if (variable_get('uc_footer_message', 0) === 'none') {
+    return;
+  }
+
   // Figure out what page is being viewed.
   $path = drupal_get_normal_path($_GET['q']);
   $parts = explode('/', $path);
@@ -443,6 +448,7 @@ function uc_store_footer() {
       else {
         $message = db_result(db_query("SELECT message FROM {uc_store_footers} WHERE path_hash = '%s'", md5($path)));
         if (!$message) {
+          unset($messages['none']);
           $message = $messages[array_rand($messages)];
           db_query("INSERT INTO {uc_store_footers} (path_hash, message) VALUES ('%s', '%s')", md5($path), $message);
         }
@@ -457,7 +463,16 @@ function uc_store_footer() {
  */
 function uc_store_exit() {
   // Save the current request for tracking paths on subsequent page requests.
-  // $_SESSION['uc_referer_uri'] = $_GET['q'];
+  // When HTTP_REFERER is set, the session version is not; and vice versa.
+  if (referer_uri() == '') {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') ? 'https' : 'http';
+    $_SESSION['uc_referer_uri'] = $protocol .'://'. $_SERVER['SERVER_NAME'] . base_path() . $_GET['q'];
+  }
+  else {
+    if (isset($_SESSION['uc_referer_uri'])) {
+      unset($_SESSION['uc_referer_uri']);
+    }
+  }
 
   // Save the timestamp of the last access.
   // $_SESSION['uc_last_access'] = time();
@@ -1372,6 +1387,7 @@ function _store_footer_options() {
     2 => t('<a href="!url">Drupal e-commerce</a> provided by Ubercart.', $url),
     3 => t('Supported by Ubercart, an <a href="!url">open source e-commerce suite</a>.', $url),
     4 => t('Powered by Ubercart, the <a href="!url">free shopping cart software</a>.', $url),
+    'none' => t('(Do not display a message in the footer.)'),
   );
 }
 
@@ -2842,5 +2858,47 @@ function uc_store_send_report() {
   }
 
   watchdog('uc_store', 'Reported the following version info to Ubercart.org: !data', array('!data' => '<pre>'. print_r($data, TRUE) .'</pre>'));
+}
+
+// Checks referers to see if they are in the allowed list.
+function uc_referer_check($urls) {
+  $http_referer = uc_referer_uri();
+
+  // Always return true if we have no referer; covers the case of page refreshes
+  // and switching from HTTP to HTTPS. This bypasses the two-time check below...
+  // is it safe?
+  if (empty($http_referer)) {
+    return TRUE;
+  }
+
+  // Check the user didn't shamelessly two-time us with another site.
+  $referer = parse_url($http_referer);
+  if ($referer['host'] != $_SERVER['SERVER_NAME']) {
+    return FALSE;
+  }
+
+  // The check itself.
+  foreach ((array) $urls as $url) {
+    if (substr($http_referer, -strlen($url)) == $url) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+// Provides a more reliable referrer for Ubercart.
+function uc_referer_uri() {
+  if (referer_uri() == '') {
+    return $_SESSION['uc_referer_uri'];
+  }
+  else {
+    return referer_uri();
+  }
+}
+
+// Returns the current version of Ubercart.
+function uc_version() {
+  return '1.3';
 }
 
