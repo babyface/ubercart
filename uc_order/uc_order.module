@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.1 2008/07/11 21:41:25 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.2 2008/08/14 21:08:48 islandusurper Exp $
 
 /**
  * @file
@@ -1758,7 +1758,7 @@ function uc_order_edit_products($order) {
           'nid' => intval($_POST['nid']),
           'attributes' => $_POST['attributes'],
         );
-        $product->data = module_invoke_all('add_to_cart_data', $form_state);
+        $product->data = module_invoke_all('add_to_cart_data', $form_state['values']);
         $attributes = array();
         $product->options = _uc_cart_product_get_options($product);
         foreach ($product->options as $option) {

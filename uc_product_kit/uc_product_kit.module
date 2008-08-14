@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.1 2008/08/06 13:41:26 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.2 2008/08/14 21:08:48 islandusurper Exp $
 
 /**
  * @file
@@ -365,7 +365,7 @@ function uc_product_kit_form(&$node) {
       );
       $form['base']['items'][$i]['ordering'] = array('#type' => 'weight',
         '#title' => t('Ordering'),
-        '#default_value' => $product->ordering,
+        '#default_value' => isset($product->ordering) ? $product->ordering : 0,
       );
       $item = node_load($i);
       $form['base']['items'][$i]['discount'] = array('#type' => 'textfield',
@@ -514,7 +514,7 @@ function theme_uc_product_kit_add_to_cart($node) {
  */
 function uc_product_kit_add_to_cart_form($form_state, $node) {
   $form = array();
-  $form['#base'] = 'uc_product_kit_add_to_cart_form';
+  $form['#submit'][] = 'uc_product_kit_add_to_cart_form_submit';
   $form['nid'] = array('#type' => 'value', '#value' => $node->nid, );
   $form['products'] = array('#tree' => true);
   foreach ($node->products as $i => $product) {
@@ -621,6 +621,7 @@ function uc_product_kit_store_status() {
 function uc_product_kit_add_to_cart($nid, $qty, $kit_data) {
   $node = node_load($nid);
   if ($node->type == 'product_kit') {
+    dpm($kit_data);
     $unique = uniqid('', true);
     foreach ($node->products as $product) {
       $data = array('kit_id' => $node->nid, 'unique_id' => $unique, 'module' => 'uc_product_kit');

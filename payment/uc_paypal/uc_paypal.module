@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.5.2.2 2008/08/06 13:41:21 islandusurper Exp $
+// $Id: uc_paypal.module,v 1.5.2.3 2008/08/14 21:08:47 islandusurper Exp $
 
 /**
  * @file
@@ -1107,7 +1107,7 @@ function uc_paypal_ec_submit_form_submit($form, &$form_state) {
     $taxes = uc_taxes_calculate($order);
     if (is_array($taxes)) {
       foreach ($taxes as $tax_item) {
-        $tax += $tax_item['amount'];
+        $tax += $tax_item->amount;
       }
     }
   }
@@ -1157,7 +1157,7 @@ function uc_paypal_wps_form($form_state, $order) {
     $taxes = uc_taxes_calculate($order);
     if (is_array($taxes)) {
       foreach ($taxes as $tax_item) {
-        $tax += $tax_item['amount'];
+        $tax += $tax_item->amount;
       }
     }
   }

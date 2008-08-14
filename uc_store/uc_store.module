@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.2 2008/08/06 13:41:27 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.3 2008/08/14 21:08:48 islandusurper Exp $
 
 /**
  * @file
@@ -466,7 +466,7 @@ function uc_store_exit() {
   // When HTTP_REFERER is set, the session version is not; and vice versa.
   if (referer_uri() == '') {
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') ? 'https' : 'http';
-    $_SESSION['uc_referer_uri'] = $protocol .'://'. $_SERVER['SERVER_NAME'] . base_path() . $_GET['q'];
+    $_SESSION['uc_referer_uri'] = $protocol .'://'. $_SERVER['SERVER_NAME'] . $GLOBALS['base_path'] . $_GET['q'];
   }
   else {
     if (isset($_SESSION['uc_referer_uri'])) {

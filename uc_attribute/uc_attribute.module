@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.1 2008/07/11 21:41:23 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.2 2008/08/14 21:08:47 islandusurper Exp $
 
 /**
  * @file
@@ -282,12 +282,13 @@ function uc_attribute_nodeapi(&$node, $op, $arg3 = null, $arg4 = null) {
 /**
  * Stores the customer's choices in the cart.
  */
-function uc_attribute_add_to_cart_data($form_state) {
+function uc_attribute_add_to_cart_data($form_values) {
+  dpm($form_values);
   $combination = array();
-  if (!isset($form_state['values']['attributes'])) {
+  if (!isset($form_values['attributes'])) {
     return array('attributes' => array(), 'model' => null);
   }
-  foreach ($form_state['values']['attributes'] as $aid => $value) {
+  foreach ($form_values['attributes'] as $aid => $value) {
     if (is_numeric($value)) {
       $combination[$aid] = $value;
     }
@@ -296,7 +297,7 @@ function uc_attribute_add_to_cart_data($form_state) {
   $model = db_result($result);
   // drupal_set_message('Attributes to add to order Array(aid => oid):<pre>'. print_r($form_state['values']['attributes'], true) . $model .'</pre>');
   // Preserve the 'attributes' key to allow other modules to add to the data field.
-  return array('attributes' => $form_state['values']['attributes'], 'model' => $model);
+  return array('attributes' => $form_values['attributes'], 'model' => $model);
 }
 
 /**

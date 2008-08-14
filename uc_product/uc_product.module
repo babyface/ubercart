@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.4 2008/08/06 13:41:26 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.5 2008/08/14 21:08:48 islandusurper Exp $
 
 /**
  * @file
@@ -987,7 +987,7 @@ function uc_catalog_buy_it_now_form_validate($form, &$form_state) {
 }
 
 function uc_catalog_buy_it_now_form_submit($form, &$form_state) {
-  $form_state['redirect'] = uc_cart_add_item($form_state['values']['nid'], 1,  module_invoke_all('add_to_cart_data', $form_state));
+  $form_state['redirect'] = uc_cart_add_item($form_state['values']['nid'], 1,  module_invoke_all('add_to_cart_data', $form_state['values']));
 }
 
 /******************************************************************************
@@ -1171,8 +1171,8 @@ function uc_product_update_cart_item($nid, $data = array(), $qty, $cid = NULL) {
 /**
  * Implementation of hook_add_to_cart_data().
  */
-function uc_product_add_to_cart_data($form_state) {
-  $node = node_load($form_state['values']['nid']);
+function uc_product_add_to_cart_data($form_values) {
+  $node = node_load($form_values['nid']);
   return array('shippable' => $node->shippable);
 }
 
@@ -1713,17 +1713,10 @@ function uc_product_class_form_submit($form_id, &$form_state) {
   }
 
   node_types_rebuild();
-  menu_rebuild();
-  if ($is_new && module_exists('imagefield')) {
-    $info = content_types($pcid);
-    if (!isset($info['fields']['field_image_cache'])) {
-      $result = db_query("SELECT COUNT(field_name) FROM {node_field} WHERE field_name = 'field_image_cache' AND type = 'image'");
-      if (db_result($result)) {
-        $state['values'] = array('type_name' => $pcid, 'field_name' => 'field_image_cache');
-        drupal_execute('_content_admin_field_add_existing', $state, $pcid);
-      }
-    }
+  if ($is_new && module_exists('filefield')) {
+    uc_product_add_default_image_field($pcid);
   }
+  menu_rebuild();
 
   $form_state['redirect'] = 'admin/store/products/classes';
 }
@@ -1876,7 +1869,7 @@ function uc_product_add_to_cart_form_validate($form, &$form_state) {
  * Submit handler for uc_product_add_to_cart_form.
  */
 function uc_product_add_to_cart_form_submit($form, &$form_state) {
-  $form_state['redirect'] = uc_cart_add_item($form_state['values']['nid'], $form_state['values']['qty'],  module_invoke_all('add_to_cart_data', $form_state));
+  $form_state['redirect'] = uc_cart_add_item($form_state['values']['nid'], $form_state['values']['qty'],  module_invoke_all('add_to_cart_data', $form_state['values']));
 }
 
 /**
@@ -2347,7 +2340,7 @@ function uc_product_feature_save($data) {
   return 'node/'. $data['nid'] .'/edit/features';
 }
 
-function uc_product_add_default_image_field() {
+function uc_product_add_default_image_field($type = NULL) {
   module_load_include('inc', 'content', 'includes/content.crud');
   $label = t('Image');
   $field = array (
@@ -2392,7 +2385,15 @@ function uc_product_add_default_image_field() {
       ),
     ),
   );
-  foreach (module_invoke_all('product_types') as $type) {
+
+  if ($type) {
+    // Accept single or multiple types as input.
+    $types = (array) $type;
+  }
+  else {
+    $types = module_invoke_all('product_types');
+  }
+  foreach ($types as $type) {
     $field['type_name'] = $type;
     $instances = content_field_instance_read(array('field_name' => 'field_image_cache', 'type_name' => $type));
     if (sizeof($instances) < 1) {

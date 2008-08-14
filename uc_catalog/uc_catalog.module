@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.2 2008/08/06 13:41:24 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.3 2008/08/14 21:08:47 islandusurper Exp $
 
 /**
  * @file
@@ -253,8 +253,7 @@ function uc_catalog_taxonomy($op, $type, $object = null) {
           if ($file = file_save_upload($field_name)) {
             $file->filepath = str_replace('\\', '/', $file->filepath);
             $image_path = file_create_path();
-            $file = file_copy($file, $image_path .'/'. $file->filename);
-            if ($file) {
+            if (file_copy($file, $image_path .'/'. $file->filename)) {
               file_set_status($file, 1);
               if (image_get_info($file->filepath)) {
                 db_query("INSERT INTO {uc_catalog_images} (fid, tid, filename, filepath, filemime, filesize) VALUES (%d, %d, '%s', '%s', '%s', %d)",
@@ -281,9 +280,10 @@ function uc_catalog_taxonomy($op, $type, $object = null) {
           }
           else if ($file = file_save_upload($field_name)) {
             $file->filepath = str_replace('\\', '/', $file->filepath);
-            $file = file_copy($file, file_create_path() .'/'. $file->filename);
-            if ($file) {
+            dpm($file);
+            if (file_copy($file, file_create_path() .'/'. $file->filename)) {
               file_set_status($file, 1);
+              dpm($file);
               if (image_get_info($file->filepath)) {
                 db_query("DELETE FROM {uc_catalog_images} WHERE tid = %d", $object['tid']);
                 db_query("INSERT INTO {uc_catalog_images} (fid, tid, filename, filepath, filemime, filesize) VALUES (%d, %d, '%s', '%s', '%s', %d)",

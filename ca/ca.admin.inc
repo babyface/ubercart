@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.3 2008/08/06 13:41:20 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.4 2008/08/14 21:08:47 islandusurper Exp $
 
 /**
  * @file
@@ -247,7 +247,7 @@ function ca_predicate_delete_form($form_state, $pid) {
   return confirm_form($form, t('Are you sure you want to !op this predicate?', array('!op' => is_numeric($pid) ? t('delete') : t('reset'))), 'admin/settings/ca', $description);
 }
 
-function ca_predicate_delete_form_submit($form_id, &$form_state) {
+function ca_predicate_delete_form_submit($form, &$form_state) {
   ca_delete_predicate($form_state['values']['predicate_pid']);
 
   drupal_set_message(t('Predicate %title !op.', array('%title' => $form_state['values']['predicate_title'], '!op' => is_numeric($form_state['values']['predicate_pid']) ? t('deleted') : t('reset'))));

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.2 2008/08/06 13:41:24 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.3 2008/08/14 21:08:47 islandusurper Exp $
 
 /**
  * @file
@@ -1895,7 +1895,7 @@ function uc_cart_complete_sale($order, $login = FALSE) {
   // Clear our the session variables used to force the cart workflow.
   unset($_SESSION['cart_order'], $_SESSION['do_complete'], $_SESSION['new_user']);
 
-  ca_pull_trigger('checkout_complete', $order, $user->uid == 0 ? $account : $user);
+  ca_pull_trigger('uc_checkout_complete', $order, $user->uid == 0 ? $account : $user);
 
   return $output;
 }

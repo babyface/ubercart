@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.install,v 1.9.2.1 2008/08/06 13:41:24 islandusurper Exp $
+// $Id: uc_catalog.install,v 1.9.2.2 2008/08/14 21:08:47 islandusurper Exp $
 
 function uc_catalog_schema() {
   $schema = array();
@@ -64,17 +64,6 @@ function uc_catalog_install() {
   }
   variable_set('uc_catalog_vid', $vid);
   variable_set('uc_catalog_name', $t('Catalog'));
-
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      // Initially allow everyone to view the catalog.
-      db_query("UPDATE {permission} SET perm = CONCAT_WS(', ', perm, 'view catalog')");
-    case 'pgsql':
-      // Initially allow everyone to view the catalog.
-      db_query("UPDATE {permission} SET perm = perm || ', view catalog'");
-    break;
-  }
 
   drupal_install_schema('uc_catalog');
 }

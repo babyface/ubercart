@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_links.module,v 1.2.2.3 2008/08/06 13:41:24 islandusurper Exp $
+// $Id: uc_cart_links.module,v 1.2.2.4 2008/08/14 21:08:47 islandusurper Exp $
 
 /**
  * @file
@@ -188,10 +188,10 @@ function uc_cart_links_process($arg1) {
   $actions = explode('-', drupal_strtolower($arg1));
 
   foreach ($actions as $action) {
-    switch (drupal_drupal_substr($action, 0, 1)) {
+    switch (drupal_substr($action, 0, 1)) {
       // Set the ID of the cart link.
       case 'i':
-        $id = drupal_drupal_substr($action, 1);
+        $id = drupal_substr($action, 1);
         break;
 
       // Add a product to the cart.
