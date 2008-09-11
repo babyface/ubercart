@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.2 2008/08/14 21:08:48 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.3 2008/09/11 14:43:46 islandusurper Exp $
 
 /**
  * @file
@@ -408,7 +408,7 @@ function uc_order_perm() {
 
 function uc_order_can_view_order($order_user) {
   global $user;
-  return user_access('view all orders') || $user->uid == $order_user->uid;
+  return user_access('view all orders') || ($user->uid && $user->uid == $order_user->uid);
 }
 
 function uc_order_access_order_log() {
@@ -429,9 +429,6 @@ function uc_order_user($op, &$edit, &$account, $category = NULL) {
         );
         return array(t('Orders') => $items);
       }
-      else {
-        return NULL;
-      }
   }
 }
 
@@ -448,6 +445,21 @@ function uc_order_mail($key, &$message, $params) {
       $message['from'] = uc_store_email_from();
       $message['subject'] = _user_mail_text('welcome_subject', $variables);
       $message['body'][] = _user_mail_text('welcome_body', $variables);
+    break;
+    case 'action-mail':
+      // Assemble an email message from the conditional actions settings.
+      $message['headers']['Content-Type'] = 'text/html; charset=UTF-8; format=flowed';
+      $message['from'] = $params['from'];
+
+      // Newlines are not allowed in subjects. Maybe drupal_mail_send() should do this?
+      $message['subject'] = str_replace(
+        array("\r\n", "\r", "\n"),
+        ' ',
+        check_plain(token_replace_multiple($params['subject'], $params['replacements']))
+      );
+
+      $body = token_replace_multiple($params['message'], $params['replacements']);
+      $message['body'] = check_markup($body, $params['format']);
     break;
   }
 }
@@ -651,6 +663,14 @@ function uc_order_line_item() {
   return $items;
 }
 
+/**
+ * Implementation of hook_uc_message().
+ */
+function uc_order_uc_message() {
+  $messages['order_update_email'] = t("[order-first-name] [order-last-name],\n\nYour order number [order-link] at [store-name] has been updated.\n\nOrder status: [order-status]\n\nOrder comment:\n[order-last-comment]\n\nBrowse to the following page to login to your account and view your order details:\n[site-login]\n\n\nThanks again,\n\n[store-name]\n[site-slogan]");
+
+  return $messages;
+}
 
 /*******************************************************************************
  * Callback Functions, Forms, and Tables
@@ -1525,10 +1545,6 @@ function uc_order_search_form_submit($form, &$form_state) {
 function uc_order_history($user) {
   drupal_set_title(t('My order history'));
 
-  $breadcrumb = drupal_get_breadcrumb();
-  $breadcrumb[] = l(t('My account'), 'user/'. $user->uid);
-  drupal_set_breadcrumb($breadcrumb);
-
   $header = array(
     array('data' => t('Date'), 'field' => 'o.created', 'sort' => 'desc'),
     array('data' => t('Order #'), 'field' => 'o.order_id'),
@@ -1565,7 +1581,7 @@ function uc_order_history($user) {
 function uc_order_view($order, $view = 'view') {
   if ($view == 'customer') {
     $breadcrumb = drupal_get_breadcrumb();
-    $breadcrumb[] = l(t('Order history'), 'user/'. arg(1) .'/orders');
+    $breadcrumb[2] = l(t('Order history'), 'user/'. arg(1) .'/orders');
     drupal_set_breadcrumb($breadcrumb);
   }
 
@@ -2740,7 +2756,7 @@ function uc_order_update_status($order_id, $status) {
     }
 
     // Otherwise perform the update and log the changes.
-    db_query("UPDATE {uc_orders} SET order_status = '%s' WHERE order_id = %d", $status, $order_id);
+    db_query("UPDATE {uc_orders} SET order_status = '%s', modified = %d WHERE order_id = %d", $status, time(), $order_id);
     module_invoke_all('order', 'update', $order, $status);
 
     $change = array(t('Order status') => array('old' => $order->order_status, 'new' => $status));
@@ -2903,6 +2919,8 @@ function uc_order_load_invoice($order, $op = 'view', $template = 'customer') {
     return $invoice[$order->order_id][$template];
   }
 
+  $thank_you_message = FALSE;
+
   $file = drupal_get_path('module', 'uc_order') .'/templates/'. $template .'.itpl.php';
   if (file_exists($file)) {
     switch ($op) {
@@ -2915,7 +2933,6 @@ function uc_order_load_invoice($order, $op = 'view', $template = 'customer') {
       case 'view':
       case 'print':
         $business_header = TRUE;
-        $thank_you_message = $thank_you_message === TRUE ? TRUE : FALSE;
         $shipping_method = TRUE;
         break;
     }

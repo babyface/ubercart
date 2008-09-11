@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.1 2008/08/06 13:41:22 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.2 2008/09/11 14:43:45 islandusurper Exp $
 
 /**
  * @file
@@ -1024,9 +1024,9 @@ function uc_cart_pane_quotes($items) {
   // If a previous quote gets loaded, make sure it gets saved again.
   // Also, make sure the previously checked option is checked by default.
   uc_add_js('$(function() {
-    setQuoteCallbacks("'. urlencode($prod_string) .'");
+    setQuoteCallbacks("'. drupal_urlencode($prod_string) .'");
     $("#uc-cart-pane-quotes").submit(function() {
-      quoteCallback("'. urlencode($prod_string) .'");
+      quoteCallback("'. drupal_urlencode($prod_string) .'");
       return false;
     });
   })', 'inline');
@@ -1101,7 +1101,7 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2) {
       // Also, make sure the previously checked option is checked by default.
       uc_add_js('
         Drupal.behaviors.getQuotes = function (context) {
-          setQuoteCallbacks("'. urlencode($prod_string) .'", context);
+          setQuoteCallbacks("'. drupal_urlencode($prod_string) .'", context);
         };
         $(function() {
         var quoteButton = $("input:radio[@name=quote-option]").click(function() {
@@ -1119,7 +1119,7 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2) {
         }).filter("[@value='. $default .']").click();
         var quoteDiv = $("#quote");
         if (quoteDiv.length && $("#quote input[@name=quote-form]").length == 0) {
-          quoteDiv.append("<input type=\"hidden\" name=\"quote-form\" value=\"" + encodeURIComponent(quoteDiv.html()) + "\" />");
+          quoteDiv.append("<input type=\"hidden\" name=\"quote-form\" value=\"" + Drupal.encodeURIComponent(quoteDiv.html()) + "\" />");
         }
       });', 'inline');
 
@@ -1256,7 +1256,7 @@ function uc_order_pane_quotes($op, $arg1) {
         $("input:radio[@name=quote-option]").filter("[@value='. $default .']").attr("checked", "checked");
         var quoteDiv = $("#quote");
         if (quoteDiv.length && $("#quote input[@name=quote-form]").length == 0) {
-          quoteDiv.append("<input type=\"hidden\" name=\"quote-form\" value=\"" + encodeURIComponent(quoteDiv.html()) + "\" />");
+          quoteDiv.append("<input type=\"hidden\" name=\"quote-form\" value=\"" + Drupal.encodeURIComponent(quoteDiv.html()) + "\" />");
         }
       })', 'inline');
       return $form;
@@ -1386,10 +1386,6 @@ function uc_quote_request_quotes() {
   print_r($_POST);
   print '</pre>'; */
 
-  $details = $_POST['details'];
-  if (!isset($details['country'])) {
-    $details['country'] = variable_get('uc_store_country', 840);
-  }
   $products = array();
   foreach (explode('|', urldecode($_POST['products'])) as $item) {
     $props = explode('^', $item);
@@ -1421,9 +1417,14 @@ function uc_quote_request_quotes() {
   $fake_order = new stdClass();
   $fake_order->uid = $_POST['uid'];
   $fake_order->products = $products;
-  foreach ($details as $key => $value) {
-    $field = 'delivery_'. $key;
-    $fake_order->$field = $value;
+  foreach ($_POST['details'] as $type => $address) {
+    foreach ($address as $key => $value) {
+      if ($key == 'country' AND $value == '') {
+        $value = variable_get('uc_store_country', 840);
+      }
+      $field = $type .'_'. $key;
+      $fake_order->$field = $value;
+    }
   }
   // Consider the total to be from products only, because line items are
   // mostly non-existent at this point.

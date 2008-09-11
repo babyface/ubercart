@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.5.2.2 2008/08/06 13:41:21 islandusurper Exp $
+// $Id: uc_credit.module,v 1.5.2.3 2008/09/11 14:43:45 islandusurper Exp $
 
 /**
  * @file
@@ -121,8 +121,33 @@ function uc_credit_form_alter(&$form, &$form_state, $form_id) {
  * Implementation of hook_cron().
  */
 function uc_credit_cron() {
-  // Mask stored credit card numbers when in debug mode after the specified
-  // length of time has elapsed.
+  // Clear the data
+  $time = strtotime(variable_get('uc_cart_anon_duration', '4') .' '. variable_get('uc_cart_anon_unit', 'hours') .' ago');
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("DELETE upc.* FROM {uc_orders} AS uo LEFT JOIN {uc_payment_credit} AS upc ON uo.order_id = upc.order_id WHERE uo.modified <= %d AND uo.order_status = '%s'",
+        $time, uc_order_state_default('in_checkout'));
+    break;
+    case 'pgsql':
+      db_query("DELETE FROM {uc_payment_credit} WHERE order_id IN (SELECT order_id FROM {uc_orders} WHERE modified <= %d AND order_status = '%s')",
+        $time, uc_order_state_default('in_checkout'));
+    break;
+  }
+  // Mask old stored credit card numbers.
+  $time = strtotime(variable_get('uc_credit_number_duration', '1') .' '. variable_get('uc_credit_number_unit', 'years') .' ago');
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("DELETE upc.* FROM {uc_orders} AS uo LEFT JOIN {uc_payment_credit} AS upc ON uo.order_id = upc.order_id WHERE uo.modified <= %d AND uo.order_status = '%s'",
+        $time, variable_get('uc_credit_clear_status', uc_order_state_default('completed')));
+    break;
+    case 'pgsql':
+      db_query("DELETE FROM {uc_payment_credit} WHERE order_id IN (SELECT order_id FROM {uc_orders} WHERE modified <= %d AND order_status = '%s')",
+        $time, variable_get('uc_credit_clear_status', uc_order_state_default('completed')));
+    break;
+  }
+
   if (variable_get('uc_credit_debug', FALSE)) {
     $time = strtotime(variable_get('uc_credit_number_duration', '1') .' '. variable_get('uc_credit_number_unit', 'years') .' ago');
     $key = uc_credit_encryption_key();
@@ -778,7 +803,8 @@ function uc_credit_settings_form_submit($form, &$form_state) {
           watchdog('uc_credit', $message, WATCHDOG_ERROR);
         }
         else {
-          fwrite($file, md5(time()));
+          // Replacement key generation suggested by Barry Jaspan for increased security.
+          fwrite($file, md5(drupal_get_token(serialize($_REQUEST) . serialize($_SERVER) . time())));
           fclose($file);
 
           drupal_set_message(t('Credit card encryption key file generated. Card data will now be encrypted.'));
@@ -985,7 +1011,7 @@ function theme_uc_payment_method_credit_form($form) {
     }
     $output .= '</table>';
   }
-  elseif (arg(2) == 'orders') {
+  else {
     $output = '<table class="order-edit-table"><tbody style="border-top: 0px;">';
     if (variable_get('uc_credit_type_enabled', FALSE)) {
       $form['cc_type']['#title'] = '';

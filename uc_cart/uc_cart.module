@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.3 2008/08/14 21:08:47 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.4 2008/09/11 14:43:46 islandusurper Exp $
 
 /**
  * @file
@@ -612,7 +612,7 @@ function uc_cart_login_update($uid, $sess_id) {
 
     // Remove from the table all the items in the cart.
     // Should be a function call instead of a single query. -RS
-    db_query("DELETE FROM {uc_cart_products} WHERE cart_id = %d", $uid);
+    db_query("DELETE FROM {uc_cart_products} WHERE cart_id = '%s'", $uid);
 
     // Reset the cart item cache.
     uc_cart_get_contents($uid, 'rebuild');
@@ -1441,7 +1441,7 @@ function uc_cart_checkout_form() {
   $order = uc_order_load($_SESSION['cart_order']);
 
   // Check the referer URI to clear order details and prevent identity theft.
-  if (uc_referer_check('cart/checkout', 'cart/checkout/review')) {
+  if (uc_referer_check(array('cart/checkout', 'cart/checkout/review'))) {
     if ($order == FALSE || uc_order_status_data($order->order_status, 'state') != 'in_checkout') {
       unset($_SESSION['cart_order']);
       $order = NULL;
@@ -1452,6 +1452,7 @@ function uc_cart_checkout_form() {
   }
   else {
     unset($_SESSION['cart_order']);
+    $order = NULL;
   }
 
   $form['panes'] = array('#tree' => TRUE);

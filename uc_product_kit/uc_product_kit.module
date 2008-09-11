@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.2 2008/08/14 21:08:48 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.3 2008/09/11 14:43:46 islandusurper Exp $
 
 /**
  * @file
@@ -9,6 +9,10 @@
  *
  * Coded by: Lyle Mantooth
  */
+
+define('UC_PRODUCT_KIT_UNMUTABLE_NO_LIST', -1);
+define('UC_PRODUCT_KIT_UNMUTABLE_WITH_LIST', 0);
+define('UC_PRODUCT_KIT_MUTABLE', 1);
 
 /******************************************************************************
  * Drupal Hooks                                                               *
@@ -291,7 +295,11 @@ function uc_product_kit_form_alter(&$form, &$form_state, $form_id) {
     $form['uc_product_kit_mutable'] = array(
       '#type' => 'radios',
       '#title' => t('How are product kits handled by the cart?'),
-      '#options' => array(t('As a unit. Customers may only change how many kits they are buying.'), t('As individual products. Customers may add or remove kit components at will.')),
+      '#options' => array(
+        UC_PRODUCT_KIT_UNMUTABLE_NO_LIST => t('As a unit. Customers may only change how many kits they are buying. Do not list component products.'),
+        UC_PRODUCT_KIT_UNMUTABLE_WITH_LIST => t('As a unit. Customers may only change how many kits they are buying. List component products.'),
+        UC_PRODUCT_KIT_MUTABLE => t('As individual products. Customers may add or remove kit components at will.'),
+      ),
       '#default_value' => variable_get('uc_product_kit_mutable', 0),
       '#weight' => -5,
     );
@@ -339,8 +347,12 @@ function uc_product_kit_form(&$node) {
   );
   $form['base']['mutable'] = array('#type' => 'radios',
     '#title' => t('How is this product kit handled by the cart?'),
-    '#options' => array(t('As a unit. Customers may only change how many kits they are buying.'), t('As individual products. Customers may add or remove kit components at will.')),
-    '#default_value' => isset($node->mutable) ? $node->mutable : variable_get('uc_product_kit_mutable', 0),
+    '#options' => array(
+      UC_PRODUCT_KIT_UNMUTABLE_NO_LIST => t('As a unit. Customers may only change how many kits they are buying. Do not list component products.'),
+      UC_PRODUCT_KIT_UNMUTABLE_WITH_LIST => t('As a unit. Customers may only change how many kits they are buying. List component products.'),
+      UC_PRODUCT_KIT_MUTABLE => t('As individual products. Customers may add or remove kit components at will.'),
+    ),
+    '#default_value' => isset($node->mutable) ? $node->mutable : variable_get('uc_product_kit_mutable', UC_PRODUCT_KIT_UNMUTABLE_WITH_LIST),
   );
   $form['base']['products'] = array('#type' => 'select',
     '#multiple' => true,
@@ -551,6 +563,8 @@ function uc_product_kit_add_to_cart_form($form_state, $node) {
  * correct quantities.
  */
 function uc_product_kit_add_to_cart_form_submit($form, &$form_state) {
+  $node = node_load($form_state['values']['nid']);
+  drupal_set_message(t('<strong>@product-title</strong> added to <a href="!url">your shopping cart</a>.', array('@product-title' => $node->title, '!url' => url('cart'))));
   $form_state['redirect'] = uc_cart_add_item($form_state['values']['nid'], $form_state['values']['qty'], $form_state['values']);
 }
 
@@ -609,10 +623,13 @@ function uc_product_kit_product_types() {
 }
 
 function uc_product_kit_store_status() {
-  if (module_exists('imagefield')) {
-    $result = db_query("SELECT field_name FROM {node_field_instance} WHERE field_name = 'field_image_cache' AND widget_type = 'image' AND type_name = 'product_kit'");
-    if (!db_num_rows($result)) {
-      return array(array('status' => 'ok', 'title' => t('Images'), 'desc' => t('Product kits do not have an image field. You may add the existing <em>field_image_cache</em> at the <a href="!url">Add field page</a>.', array('!url' => url('admin/content/types/product-kit/add_field')))));
+  if (module_exists('filefield')) {
+    module_load_include('inc', 'content', 'includes/content.crud');
+    // Check for filefields on products.
+    $instances = content_field_instance_read(array('field_name' => 'field_image_cache', 'type_name' => 'product_kit'));
+
+    if (!count($instances)) {
+      return array(array('status' => 'warning', 'title' => t('Images'), 'desc' => t('Product kits do not have an image field. You may add the existing <em>field_image_cache</em> at the <a href="!url">Add field page</a>.', array('!url' => url('admin/content/types/product-kit/add_field')))));
     }
   }
 
@@ -621,11 +638,11 @@ function uc_product_kit_store_status() {
 function uc_product_kit_add_to_cart($nid, $qty, $kit_data) {
   $node = node_load($nid);
   if ($node->type == 'product_kit') {
-    dpm($kit_data);
+    //dpm($kit_data);
     $unique = uniqid('', true);
     foreach ($node->products as $product) {
       $data = array('kit_id' => $node->nid, 'unique_id' => $unique, 'module' => 'uc_product_kit');
-      uc_cart_add_item($product->nid, $product->qty * $qty, $data +  module_invoke_all('add_to_cart_data', $kit_data['products'][$product->nid]), null, true, false);
+      uc_cart_add_item($product->nid, $product->qty * $qty, $data +  module_invoke_all('add_to_cart_data', $kit_data['products'][$product->nid]), null, false, false);
     }
     if ($check_redirect) {
       if (isset($_GET['destination'])) {
@@ -641,7 +658,7 @@ function uc_product_kit_add_to_cart($nid, $qty, $kit_data) {
         return uc_referer_uri();
       }
     }
-    return array(array('success' => false, 'silent' => true, $message => ''));
+    return array(array('success' => false, 'silent' => true, 'message' => ''));
   }
 }
 
@@ -651,7 +668,7 @@ function uc_product_kit_add_to_cart($nid, $qty, $kit_data) {
 function uc_product_kit_cart_item($op, &$item) {
   switch ($op) {
     case 'load':
-      if (isset($item->data['kit_id']) && ($kit = node_load($item->data['kit_id'])) && !$kit->mutable) {
+      if (isset($item->data['kit_id']) && ($kit = node_load($item->data['kit_id'])) && $kit->mutable != UC_PRODUCT_KIT_MUTABLE) {
         $kit_discount = $kit->products[$item->nid]->discount;
         if ($kit_discount !== '') {
           if ($kit_discount < 0) {
@@ -686,7 +703,7 @@ function uc_product_kit_cart_display($item) {
   $unique_id = $item->data['unique_id'];
   $kit = node_load($item->data['kit_id']);
   //print '<pre>'. print_r($kit, true) .'</pre>';
-  if ($kit->mutable) {
+  if ($kit->mutable == UC_PRODUCT_KIT_MUTABLE) {
     return uc_product_cart_display($item);
   }
   else {
@@ -696,7 +713,9 @@ function uc_product_kit_cart_display($item) {
       $element['nid'] = array('#type' => 'value', '#value' => $kit->nid);
       $element['module'] = array('#type' => 'value', '#value' => 'uc_product_kit');
       $element['remove'] = array('#type' => 'checkbox');
-      $element['options'] = array('#value' => '<div class="item-list"><ul class="cart-options">'."\n");
+      if ($kit->mutable == UC_PRODUCT_KIT_UNMUTABLE_WITH_LIST) {
+        $element['options'] = array('#value' => '<div class="item-list"><ul class="cart-options">'."\n");
+      }
       $element['title'] = array('#value' => l($kit->title, 'node/'. $kit->nid));
       $element['#total'] = 0;
       $element['qty'] = array(
@@ -722,7 +741,9 @@ function uc_product_kit_cart_display($item) {
     else {
       $title = $item->title;
     }
-    $elements[$unique_id]['options']['#value'] .= '<li>'. $item->qty .' x '. $title ." <em>$op_names</em></li>\n";
+    if ($kit->mutable == UC_PRODUCT_KIT_UNMUTABLE_WITH_LIST) {
+      $elements[$unique_id]['options']['#value'] .= '<li>'. $item->qty .' x '. $title ." <em>$op_names</em></li>\n";
+    }
     $elements[$unique_id]['#total'] += $item->price * $item->qty;
     $elements[$unique_id]['data'][$item->nid] = $item;
     $products[$unique_id][] = $item->nid;

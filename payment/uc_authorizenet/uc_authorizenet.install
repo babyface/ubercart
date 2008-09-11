@@ -1,0 +1,51 @@
+<?php
+// $Id: uc_authorizenet.install,v 1.1.2.1 2008/09/11 14:43:45 islandusurper Exp $
+
+/**
+ * @file
+ * Handles installing, uninstalling, and updating Authorize.net settings.
+ */
+
+function uc_authorizenet_uninstall() {
+  // Delete related variables all at once.
+  db_query("DELETE FROM {variables} WHERE name LIKE 'uc_authnet_%%'");
+}
+
+function uc_authorizenet_update_1() {
+  // Update variable values to the new names that match the API documentation.
+  variable_set('uc_authnet_api_login_id', variable_get('authnet_aim_login_id', ''));
+  variable_del('authnet_aim_login_id');
+
+  variable_set('uc_authnet_api_transaction_key', variable_get('authnet_aim_transaction_key', ''));
+  variable_del('authnet_aim_transaction_key');
+
+  $mode = variable_get('authnet_aim_transaction_mode', 'live_test');
+  if ($mode == 'production') {
+    $mode = 'live';
+  }
+  elseif ($mode == 'test') {
+    $mode = 'developer_test';
+  }
+  variable_set('uc_authnet_aim_txn_mode', $mode);
+  variable_del('authnet_aim_transaction_mode');
+
+  if (variable_get('authnet_aim_transaction_type', 'capture') == 'capture') {
+    variable_set('uc_authnet_aim_txn_type', 'AUTH_CAPTURE');
+  }
+  else {
+    variable_set('uc_authnet_aim_txn_type', 'AUTH_ONLY');
+  }
+  variable_del('authnet_aim_transaction_type');
+
+  variable_del('authnet_aim_delimiter');
+
+  if (variable_get('authnet_aim_customer_notification', 'FALSE') == 'TRUE') {
+    variable_set('uc_authnet_aim_customer_email', TRUE);
+  }
+  variable_del('authnet_aim_customer_notification');
+
+  variable_del('authnet_aim_merchant_notification');
+
+  return array();
+}
+

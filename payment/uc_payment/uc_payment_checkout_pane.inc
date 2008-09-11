@@ -1,12 +1,14 @@
 <?php
-// $Id: uc_payment_checkout_pane.inc,v 1.5 2008/07/10 12:40:57 islandusurper Exp $
+// $Id: uc_payment_checkout_pane.inc,v 1.5.2.1 2008/09/11 14:43:45 islandusurper Exp $
 
 function uc_checkout_pane_payment($op, &$arg1, $arg2) {
   switch ($op) {
     case 'view':
+      // Add the default payment message as a JS variable.
+      uc_add_js("var def_payment_msg = '". addslashes(variable_get('uc_default_payment_msg', t('Continue with checkout to complete payment.'))) ."';", 'inline');
+
       if (variable_get('uc_payment_show_order_total_preview', TRUE)) {
         uc_add_js('misc/progress.js');
-        uc_add_js("var def_payment_msg = '". addslashes(variable_get('uc_default_payment_msg', t('Continue with checkout to complete payment.'))) ."';", 'inline');
 
         $contents['current_total'] = array(
           '#type' => 'hidden',
@@ -18,8 +20,6 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
         );
         uc_add_js("\$(document).ready(function() { show_progressBar('#line-items-div'); } );", 'inline');
       }
-
-      $description = t('Select a payment method from the following options.');
 
       $methods = _payment_method_list();
 
@@ -36,6 +36,13 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
         else {
           $default = (count($options) == 1 || !isset($arg1->payment_method)) ? key($options) : $arg1->payment_method;
         }
+      }
+
+      if (count($options) > 1) {
+        $description = t('Select a payment method from the following options.');
+      }
+      else {
+        $description = '';
       }
 
       $contents['payment_method'] = array(

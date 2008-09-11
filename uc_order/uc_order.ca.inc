@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.3 2008/08/06 13:41:25 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.4 2008/09/11 14:43:46 islandusurper Exp $
 
 /**
  * @file
@@ -46,6 +46,54 @@ function uc_order_ca_trigger() {
   );
 
   return $triggers;
+}
+
+/**
+ * Implementation of hook_ca_predicate().
+ */
+function uc_order_ca_predicate() {
+  $predicates = array();
+
+  $predicates['uc_order_update_email_customer'] = array(
+    '#title' => t('Email order update'),
+    '#description' => t('Notify the customer when the order status is changed.'),
+    '#class' => 'order',
+    '#status' => 1,
+    '#trigger' => 'uc_order_status_update',
+    '#conditions' => array(
+      '#operator' => 'AND',
+      '#conditions' => array(
+        array(
+          '#name' => 'uc_order_status_condition',
+          '#title' => t('If the order status is not still In Checkout.'),
+          '#argument_map' => array(
+            'order' => 'order',
+          ),
+          '#settings' => array(
+            'negate' => TRUE,
+            'order_status' => 'in_checkout',
+          ),
+        ),
+      ),
+    ),
+    '#actions' => array(
+      array(
+        '#name' => 'uc_order_send_customer_email',
+        '#title' => t('Send an email to the customer'),
+        '#argument_map' => array(
+          'order' => 'order',
+        ),
+        '#settings' => array(
+          'from' => uc_store_email_from(),
+          'subject' => t('Order #[order-id] Update'),
+          'message' => uc_get_message('order_update_email'),
+          'format' => 1,
+        ),
+      ),
+    ),
+  );
+
+  return $predicates;
 }
 
 /**
@@ -193,6 +241,14 @@ function uc_order_ca_action() {
       'order' => $order_arg,
     ),
   );
+  $actions['uc_order_send_customer_email'] = array(
+    '#title' => t('Send an email to the customer'),
+    '#category' => t('Order'),
+    '#callback' => 'uc_order_action_send_customer_email',
+    '#arguments' => array(
+      'order' => $order_arg,
+    ),
+  );
 
   return $actions;
 }
@@ -226,7 +282,7 @@ function uc_order_condition_check_order_status_form($form_state, $settings = arr
   return $form;
 }
 
-function uc_order_condition_check_order_status_submit($form_id, &$form_state) {
+function uc_order_condition_check_order_status_submit($form, &$form_state) {
   return array('order_status' => $form_state['values']['order_status']);
 }
 
@@ -274,7 +330,7 @@ function uc_order_condition_total_form($form_state, $settings = array()) {
   return $form;
 }
 
-function uc_order_condition_total_submit($form_id, &$form_state) {
+function uc_order_condition_total_submit($form, &$form_state) {
   $array = array(
     'order_total_comparison' => $form_state['values']['order_total_comparison'],
     'order_total_value' => $form_state['values']['order_total_value'],
@@ -298,13 +354,13 @@ function uc_order_condition_delivery_postal_code_form($form_state, $settings = a
     '#default_value' => $settings['pattern'],
     '#description' => t('Specify a postal code or postal code pattern. Use "*" as a wild card to specify a range of postal codes.<br /><b>Example:</b> In the US, 402* represents all areas from 40200 to 40299.'),
     '#size' => 15,
-    '#required' => TRUE,
+    // '#required' => TRUE,
   );
 
   return $form;
 }
 
-function uc_order_condition_delivery_postal_code_submit($form_id, &$form_state) {
+function uc_order_condition_delivery_postal_code_submit($form, &$form_state) {
   return array('pattern' => $form_state['values']['pattern']);
 }
 
@@ -325,13 +381,13 @@ function uc_order_condition_delivery_zone_form($form_state, $settings = array())
     '#options' => $options,
     '#default_value' => $settings['zones'],
     '#multiple' => TRUE,
-    '#required' => TRUE,
+    // '#required' => TRUE,
   );
 
   return $form;
 }
 
-function uc_order_condition_delivery_zone_submit($form_id, &$form_state) {
+function uc_order_condition_delivery_zone_submit($form, &$form_state) {
   return array('zones' => $form_state['values']['zones']);
 }
 
@@ -344,12 +400,12 @@ function uc_order_condition_delivery_country_form($form_state, $settings = array
   $form['countries'] = uc_country_select(uc_get_field_name('country'));
   $form['countries']['#default_value'] = $settings['countries'];
   $form['countries']['#multiple'] = TRUE;
-  $form['countries']['#required'] = TRUE;
+  // $form['countries']['#required'] = TRUE;
 
   return $form;
 }
 
-function uc_order_condition_delivery_country_submit($form_id, &$form_state) {
+function uc_order_condition_delivery_country_submit($form, &$form_state) {
   return array('countries' => $form_state['values']['countries']);
 }
 
@@ -369,13 +425,13 @@ function uc_order_condition_billing_postal_code_form($form_state, $settings = ar
     '#default_value' => $settings['pattern'],
     '#description' => t('Specify a postal code or postal code pattern. Use "*" as a wild card to specify a range of postal codes.<br /><b>Example:</b> In the US, 402* represents all areas from 40200 to 40299.'),
     '#size' => 15,
-    '#required' => TRUE,
+    // '#required' => TRUE,
   );
 
   return $form;
 }
 
-function uc_order_condition_billing_postal_code_submit($form_id, &$form_state) {
+function uc_order_condition_billing_postal_code_submit($form, &$form_state) {
   return array('pattern' => $form_state['values']['pattern']);
 }
 
@@ -396,13 +452,13 @@ function uc_order_condition_billing_zone_form($form_state, $settings = array()) 
     '#options' => $options,
     '#default_value' => $settings['zones'],
     '#multiple' => TRUE,
-    '#required' => TRUE,
+    // '#required' => TRUE,
   );
 
   return $form;
 }
 
-function uc_order_condition_billing_zone_submit($form_id, &$form_state) {
+function uc_order_condition_billing_zone_submit($form, &$form_state) {
   return array('zones' => $form_state['values']['zones']);
 }
 
@@ -415,12 +471,12 @@ function uc_order_condition_billing_country_form($form_state, $settings = array(
   $form['countries'] = uc_country_select(uc_get_field_name('country'));
   $form['countries']['#default_value'] = $settings['countries'];
   $form['countries']['#multiple'] = TRUE;
-  $form['countries']['#required'] = TRUE;
+  // $form['countries']['#required'] = TRUE;
 
   return $form;
 }
 
-function uc_order_condition_billing_country_submit($form_id, &$form_state) {
+function uc_order_condition_billing_country_submit($form, &$form_state) {
   return array('countries' => $form_state['values']['countries']);
 }
 
@@ -477,7 +533,7 @@ function uc_order_condition_has_products_form($form_state, $settings = array('re
   return $form;
 }
 
-function uc_order_condition_has_products_submit($form_id, &$form_state) {
+function uc_order_condition_has_products_submit($form, &$form_state) {
   return array(
     'required' => $form_state['values']['required'],
     'forbidden' => $form_state['values']['forbidden'],
@@ -552,7 +608,7 @@ function uc_order_condition_count_products_form($form_state, $settings = array()
   return $form;
 }
 
-function uc_order_condition_count_products_submit($form_id, &$form_state) {
+function uc_order_condition_count_products_submit($form, &$form_state) {
   return array(
     'products' => $form_state['values']['products'],
     'product_count_value' => $form_state['values']['product_count_value'],
@@ -638,7 +694,7 @@ function uc_order_condition_products_weight_form($form_state, $settings = array(
   return $form;
 }
 
-function uc_order_condition_products_weight_submit($form_id, &$form_state) {
+function uc_order_condition_products_weight_submit($form, &$form_state) {
   return array(
     'products' => $form_state['values']['products'],
     'product_weight_value' => $form_state['values']['product_weight_value'],
@@ -678,7 +734,7 @@ function uc_order_action_update_status_form($form_state, $settings = array()) {
   return $form;
 }
 
-function uc_order_action_update_status_submit($form_id, &$form_state) {
+function uc_order_action_update_status_submit($form, &$form_state) {
   return array('order_status' => $form_state['values']['order_status']);
 }
 
@@ -711,7 +767,84 @@ function uc_order_action_add_comment_form($form_state, $settings = array()) {
   return $form;
 }
 
-function uc_order_action_add_comment_submit($form_id, &$form_state) {
+function uc_order_action_add_comment_submit($form, &$form_state) {
   return array('comment_type' => $form_state['values']['comment_type'], 'comment' => $form_state['values']['comment']);
+}
+
+/**
+ * Send an email to the customer.
+ *
+ * The subject and message fields take order and user token replacements. The
+ * "To" field is populated by $order->primary_email.
+ */
+function uc_order_action_send_customer_email($order, $settings) {
+  $account = user_load(array('uid' => $order->uid));
+  $language = user_preferred_language($account);
+
+  // Token replacements for the subject and body
+  $settings['replacements'] = array(
+    'global' => NULL,
+    'order' => $order,
+    'user' => $account,
+  );
+
+  $sent = drupal_mail('uc_order', 'action-mail', $order->primary_email, $language, $settings, $settings['from']);
+
+  if ($sent['result']) {
+    $changes[] = t('Customer notified of order update.');
+  }
+  else {
+    $changes[] = t('Email notification to @email failed.', array('@email' => $order->primary_email));
+  }
+  uc_order_log_changes($order->order_id, $changes);
+}
+
+function uc_order_action_send_customer_email_form($form_state, $settings = array()) {
+  $form['from'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Sender'),
+    '#default_value' => isset($settings['from']) ? $settings['from'] : variable_get('site_mail', ini_get('sendmail_from')),
+    '#description' => t('The "From" address.'),
+    '#required' => TRUE,
+  );
+  $form['subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $settings['subject'],
+  );
+  $form['message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Message'),
+    '#default_value' => $settings['message'],
+  );
+  $form['format'] = filter_form($settings['format']);
+
+  $form['token_help'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Replacement patterns'),
+    '#description' => t('You can make use of the replacement patterns in the subject and message body.'),
+  );
+  foreach (array('global', 'order', 'user') as $name) {
+    $form['token_help'][$name] = array(
+      '#type' => 'fieldset',
+      '#title' => t('@name replacement patterns', array('@name' => drupal_ucfirst($name))),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['token_help'][$name]['content'] = array(
+      '#value' => theme('token_help', $name),
+    );
+  }
+
+  return $form;
+}
+
+function uc_order_action_send_customer_email_submit($form, &$form_state) {
+  return array(
+    'from' => $form_state['values']['from'],
+    'subject' => $form_state['values']['subject'],
+    'message' => $form_state['values']['message'],
+    'format' => $form_state['values']['format'],
+  );
 }
 

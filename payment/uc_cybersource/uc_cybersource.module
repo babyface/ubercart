@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cybersource.module,v 1.4.2.1 2008/07/11 21:41:21 islandusurper Exp $
+// $Id: uc_cybersource.module,v 1.4.2.2 2008/09/11 14:43:45 islandusurper Exp $
 
 /**
  * @file
@@ -196,7 +196,7 @@ function uc_cybersource_charge($order_id, $amount, $data) {
 
     $data = '';
     while (list($key, $value) = each($request)) {
-      $data .= $key .'='. urlencode(ereg_replace(',', '', $value)) .'&';
+      $data .= $key .'='. drupal_urlencode(ereg_replace(',', '', $value)) .'&';
     }
     $data = substr($data, 0, -1);
 

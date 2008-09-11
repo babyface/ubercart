@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.module,v 1.12.2.4 2008/08/06 13:41:27 islandusurper Exp $
+// $Id: uc_stock.module,v 1.12.2.5 2008/09/11 14:43:47 islandusurper Exp $
 
 /**
  * @file
@@ -254,7 +254,7 @@ function uc_stock_report() {
 
   $csv_rows[] = array(t('SKU'), t('Product'), t('Stock'), t('Threshold'));
 
-  $sql = "SELECT s.nid, sku, title, stock, threshold FROM {uc_product_stock} as s LEFT JOIN {node} as n ON s.nid = n.nid WHERE active = 1";
+  $sql = "SELECT s.nid, sku, title, stock, threshold FROM {uc_product_stock} as s LEFT JOIN {node} as n ON s.nid = n.nid WHERE active = 1 AND title <> ''";
   if (arg(4) == 'threshold') {
     $sql .= ' AND threshold >= stock';
   }

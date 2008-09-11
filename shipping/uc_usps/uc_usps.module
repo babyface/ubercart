@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.6.2.3 2008/08/06 13:41:23 islandusurper Exp $
+// $Id: uc_usps.module,v 1.6.2.4 2008/09/11 14:43:45 islandusurper Exp $
 
 /**
  * @file
@@ -470,7 +470,7 @@ function uc_usps_rate_request($packages, $origin, $destination) {
   }
   $request .= '</RateV3Request>';
 
-  $request = 'API=RateV3&XML='. urlencode($request);
+  $request = 'API=RateV3&XML='. drupal_urlencode($request);
   return $request;
 }
 
@@ -500,7 +500,7 @@ function uc_usps_intl_rate_request($packages, $origin, $destination) {
   }
   $request .= '</IntlRateRequest>';
 
-  $request = 'API=IntlRate&XML='. urlencode($request);
+  $request = 'API=IntlRate&XML='. drupal_urlencode($request);
   return $request;
 }
 

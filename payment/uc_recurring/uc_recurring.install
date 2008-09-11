@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.install,v 1.4.2.3 2008/08/06 13:41:22 islandusurper Exp $
+// $Id: uc_recurring.install,v 1.4.2.4 2008/09/11 14:43:45 islandusurper Exp $
 
 /**
  * @file
@@ -74,6 +74,12 @@ function uc_recurring_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'fee_handler' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
       'next_charge' => array(
         'description' => t('The timestamp when the next charge should be performed.'),
         'type' => 'int',
@@ -147,4 +153,25 @@ function uc_recurring_uninstall() {
 
   db_query("DELETE FROM {variable} WHERE name LIKE 'uc_recurring_%%'");
   cache_clear_all('variables', 'cache');
+}
+
+function uc_recurring_update_1() {
+  $ret = array();
+
+  $fee_schema = array(
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'default' => '',
+  );
+
+  // Add a column to store the recurring fee handler with the user subscription.
+  db_add_field($ret, 'uc_recurring_users', 'fee_handler', $fee_schema);
+
+  // Update existing rows if uc_recurring is the current handler.
+  if (variable_get('uc_recurring_handler', 'uc_recurring') == 'uc_recurring') {
+    $ret[] = update_sql("UPDATE {uc_recurring_users} SET fee_handler = 'uc_recurring'");
+  }
+
+  return $ret;
 }

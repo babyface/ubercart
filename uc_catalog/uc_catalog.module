@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.3 2008/08/14 21:08:47 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.4 2008/09/11 14:43:46 islandusurper Exp $
 
 /**
  * @file
@@ -280,10 +280,10 @@ function uc_catalog_taxonomy($op, $type, $object = null) {
           }
           else if ($file = file_save_upload($field_name)) {
             $file->filepath = str_replace('\\', '/', $file->filepath);
-            dpm($file);
+            //dpm($file);
             if (file_copy($file, file_create_path() .'/'. $file->filename)) {
               file_set_status($file, 1);
-              dpm($file);
+              //dpm($file);
               if (image_get_info($file->filepath)) {
                 db_query("DELETE FROM {uc_catalog_images} WHERE tid = %d", $object['tid']);
                 db_query("INSERT INTO {uc_catalog_images} (fid, tid, filename, filepath, filemime, filesize) VALUES (%d, %d, '%s', '%s', '%s', %d)",
@@ -523,8 +523,8 @@ function uc_catalog_store_status() {
     );
 
     $excluded = 0;
-    $result = db_query("SELECT DISTINCT * FROM {node} AS n LEFT JOIN {term_node} AS tn ON n.nid = tn.nid LEFT JOIN {vocabulary_node_types} AS vnt ON n.type = vnt.type WHERE n.type <> 'image' AND tn.tid IS NULL AND vnt.vid = %d", $cat_id);
-    if (db_fetch_object($result)) {
+    $result = db_query("SELECT COUNT(DISTINCT n.nid) FROM {node} AS n LEFT JOIN {term_node} AS tn ON n.nid = tn.nid LEFT JOIN {vocabulary_node_types} AS vnt ON n.type = vnt.type WHERE n.type <> 'image' AND tn.tid IS NULL AND vnt.vid = %d", $cat_id);
+    if ($excluded = db_result($result)) {
       $statuses[] = array('status' => 'warning', 'title' => t('Unlisted products'),
         'desc' => format_plural($excluded, 'There is @count product not listed in the catalog.', 'There are @count products not listed in the catalog.')
           . t(' Products are listed by assigning a category from the Product Catalog vocabulary to them. ')

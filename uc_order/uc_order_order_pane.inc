@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_order_pane.inc,v 1.5.2.1 2008/07/11 21:41:25 islandusurper Exp $
+// $Id: uc_order_order_pane.inc,v 1.5.2.2 2008/09/11 14:43:46 islandusurper Exp $
 
 /**
  * @file
@@ -624,6 +624,12 @@ function uc_order_view_update_form($form_state, $order) {
     '#options' => $options,
     '#attributes' => array('style' => 'display: inline;'),
     '#weight' => -10,
+  );
+
+  $form['controls']['notify'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Send e-mail notification on update.'),
+    '#weight' => 0,
   );
 
   $form['controls']['submit'] = array(

@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.4 2008/08/14 21:08:47 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.5 2008/09/11 14:43:44 islandusurper Exp $
 
 /**
  * @file
@@ -183,6 +183,7 @@ function ca_predicate_meta_form($form_state, $pid) {
 }
 
 function ca_predicate_meta_form_submit($form, &$form_state) {
+  $form_state['redirect'] = 'admin/settings/ca';
   $save = FALSE;
 
   // Load the original predicate.
@@ -208,6 +209,9 @@ function ca_predicate_meta_form_submit($form, &$form_state) {
     variable_set('ca_predicates_pid', $predicate['#pid'] + 1);
     $predicate['#conditions'] = array();
     $predicate['#actions'] = array();
+
+    // For new predicates, redirect to the conditions tab.
+    $form_state['redirect'] = 'admin/settings/ca/'. $predicate['#pid'] .'/edit/conditions';
   }
 
   // Check to see if any changes were made and save if necessary.
@@ -216,8 +220,6 @@ function ca_predicate_meta_form_submit($form, &$form_state) {
   }
 
   drupal_set_message(t('Predicate meta data saved.'));
-
-  $form_state['redirect'] = 'admin/settings/ca';
 }
 
 // Form to reset a modified module defined predicate to its original state.

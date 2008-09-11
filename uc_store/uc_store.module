@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.3 2008/08/14 21:08:48 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.4 2008/09/11 14:43:47 islandusurper Exp $
 
 /**
  * @file
@@ -17,23 +17,23 @@
  * uc_length_conversion().
  */
 define('KG_TO_KG', 1);
-define('KG_TO_G', 1000);
+define('KG_TO_G',  1000);
 define('KG_TO_LB', 2.204622621849);
 define('KG_TO_OZ', 35.27396194958);
 
-define('G_TO_G', 1);
-define('G_TO_KG', 0.001);
-define('G_TO_LB', 0.002204622622);
-define('G_TO_OZ', 0.03527396195);
+define('G_TO_G',   1);
+define('G_TO_KG',  0.001);
+define('G_TO_LB',  0.002204622622);
+define('G_TO_OZ',  0.03527396195);
 
 define('LB_TO_LB', 1);
 define('LB_TO_OZ', 16);
 define('LB_TO_KG', 0.45359237);
-define('LB_TO_G', 453.59237);
+define('LB_TO_G',  453.59237);
 
 define('OZ_TO_OZ', 1);
 define('OZ_TO_LB', 0.0625);
-define('OZ_TO_G', 28.349523125);
+define('OZ_TO_G',  28.349523125);
 define('OZ_TO_KG', 0.028349523);
 
 define('IN_TO_IN', 1);
@@ -636,11 +636,13 @@ function uc_store_customers($message = NULL, $query = NULL, $count_query = NULL,
 
   while ($customer = db_fetch_object($result)) {
     $icons = l(uc_store_get_icon('admin/store/customers', TRUE),
-               'user/'. $customer->uid, array('title' => t('View user details.')),
-               NULL, NULL, FALSE, TRUE)
+               'user/'. $customer->uid,
+               array('html' => TRUE, 'attributes' => array('title' => t('View user details.')))
+             )
            . l(uc_store_get_icon('admin/store/orders', TRUE),
                'admin/store/customers/orders/'. $customer->uid,
-               array('title' => t("View customer's order.")), NULL, NULL, FALSE, TRUE);
+               array('html' => TRUE, 'attributes' => array('title' => t("View customer's order.")))
+             );
     if ($address == 'shipping') {
       $name = ucfirst($customer->delivery_last_name) .', '
             . ucfirst($customer->delivery_first_name);
@@ -690,14 +692,18 @@ function uc_store_customer_orders($uid) {
   while ($order = db_fetch_object($result)) {
     $icons = l(uc_store_get_icon('file:order_view'),
                'admin/store/orders/'. $order->order_id,
-               array('title' => t("View order !order_id.",
-                     array('!order_id' => $order->order_id))),
-               NULL, NULL, FALSE, TRUE)
+               array('html' => TRUE, 'attributes' => array('title' => t("View order !order_id.", array('!order_id' => $order->order_id))))
+             )
            . l(uc_store_get_icon('file:order_edit'),
                'admin/store/orders/'. $order->order_id .'/edit',
-               array('title' => t("Edit order !order_id.",
-                     array('!order_id' => $order->order_id))),
-               NULL, NULL, FALSE, TRUE);
+               array('html' => TRUE, 'attributes' =>
+                 array(
+                   'title' => t("Edit order !order_id.",
+                     array('!order_id' => $order->order_id)
+                   )
+                 )
+               )
+             );
     $bname = ucfirst($order->billing_first_name) .' '
            . ucfirst($order->billing_last_name);
     $sname = ucfirst($order->delivery_first_name) .' '
@@ -1335,6 +1341,15 @@ function uc_store_store_settings_form() {
   }
   $form['uc_store_zone'] = uc_zone_select(uc_get_field_name('zone'), variable_get('uc_store_zone', NULL), NULL, $country_id);
   $form['uc_store_postal_code'] = uc_textfield(uc_get_field_name('postal_code'), variable_get('uc_store_postal_code', NULL), FALSE, NULL, 10);
+
+  $form['uc_notify_store_help_page'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Store help page'),
+    '#description' => t('The Drupal page for the store help link.'),
+    '#default_value' => variable_get('uc_notify_store_help_page', ''),
+    '#size' => 32,
+    '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q='),
+  );
 
   return system_settings_form($form);
 }
@@ -2775,7 +2790,7 @@ function theme_tapir_table($form) {
   }
 
   // Loop through the row data and create rows with the data in the right order.
-  foreach ($form['#value']['rows'] as $data) {
+  foreach ((array) $form['#value']['rows'] as $data) {
     $row = array();
 
     $attributes = array();

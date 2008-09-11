@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, getTax; -*-
-// $Id: uc_quote.js,v 1.5 2008/07/10 12:40:58 islandusurper Exp $
+// $Id: uc_quote.js,v 1.5.2.1 2008/09/11 14:43:45 islandusurper Exp $
 
 var page;
 var details;
@@ -65,12 +65,20 @@ function quoteCallback(products) {
   details["uid"] = $("input[@name*=uid]").val();
   //details["details[zone]"] = $("select[@name*=delivery_zone] option:selected").val();
   //details["details[country]"] = $("select[@name*=delivery_country] option:selected").val();
+
   $("select[@name*=delivery_]").each(function(i) {
-    details["details[" + $(this).attr("name").split("delivery_")[1].replace(/]/, "") + "]"] = $(this).val();
+    details["details[delivery][" + $(this).attr("name").split("delivery_")[1].replace(/]/, "") + "]"] = $(this).val();
   });
   $("input[@name*=delivery_]").each(function(i) {
-    details["details[" + $(this).attr("name").split("delivery_")[1].replace(/]/, "") + "]"] = $(this).val();
+    details["details[delivery][" + $(this).attr("name").split("delivery_")[1].replace(/]/, "") + "]"] = $(this).val();
   });
+  $("select[@name*=billing_]").each(function(i) {
+    details["details[billing][" + $(this).attr("name").split("billing_")[1].replace(/]/, "") + "]"] = $(this).val();
+  });
+  $("input[@name*=billing_]").each(function(i) {
+    details["details[billing][" + $(this).attr("name").split("billing_")[1].replace(/]/, "") + "]"] = $(this).val();
+  });
+
   if (!!products) {
     details["products"] = products;
   }
@@ -184,7 +192,7 @@ function displayQuote(data) {
   else {
     quoteDiv.find("input:radio").eq(0).click().attr("checked", "checked").end();
     var quoteForm = quoteDiv.html();
-    quoteDiv.append("<input type=\"hidden\" name=\"quote-form\" value=\"" + encodeURIComponent(quoteForm) + "\" />");
+    quoteDiv.append("<input type=\"hidden\" name=\"quote-form\" value=\"" + Drupal.encodeURIComponent(quoteForm) + "\" />");
   }
 
   /* if (page == "checkout") {

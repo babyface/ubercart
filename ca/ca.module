@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.module,v 1.1.2.4 2008/08/14 21:08:47 islandusurper Exp $
+// $Id: ca.module,v 1.1.2.5 2008/09/11 14:43:44 islandusurper Exp $
 
 /**
  * @file
@@ -629,6 +629,91 @@ function ca_load_trigger($trigger = 'all') {
 }
 
 /**
+ * Loads conditions defined in modules via hook_ca_condition().
+ *
+ * @param $condition
+ *   Defaults to 'all'; may instead be the name of the condition to load.
+ * @return
+ *   An array of data for the specified condition or an array of all the
+ *     condition data if 'all' was specified.  Returns FALSE if a specified
+ *     condition is non-existent.
+ */
+function ca_load_condition($condition = 'all') {
+  static $conditions;
+
+  // Load the conditions defined in enabled modules to a cached variable.
+  if (empty($conditions)) {
+    $conditions = module_invoke_all('ca_condition');
+  }
+
+  // Return the whole array if the trigger specified is 'all'.
+  if ($condition === 'all') {
+    return $conditions;
+  }
+
+  // If the specified trigger is non-existent, return FALSE.
+  if (!isset($conditions[$condition])) {
+    return FALSE;
+  }
+
+  return $conditions[$condition];
+}
+
+/**
+ * Returns an array of conditions available for the specified trigger.
+ *
+ * @param $trigger
+ *   The name of a trigger to find conditions for; if left empty, the function
+ *     returns conditions for the previously specified trigger.
+ * @return
+ *   A nested array of names/titles for the conditions available for the
+ *     trigger; in the format required by select elements in FAPI.
+ */
+function ca_load_trigger_conditions($trigger = NULL) {
+  static $options = array();
+
+  if (!empty($trigger)) {
+    // Load the specified trigger.
+    $trigger = ca_load_trigger($trigger);
+    $trigger_entities = array();
+
+    // Organize trigger arguments by entity.
+    foreach ($trigger['#arguments'] as $argument) {
+      $trigger_entities[$argument['#entity']] = $argument;
+    }
+
+    // Load and loop through all the conditions defined by modules.
+    $conditions = ca_load_condition();
+
+    foreach ($conditions as $name => $condition) {
+      // Check through each argument needed for the condition.
+      foreach ($condition['#arguments'] as $argument) {
+        $entity = $argument['#entity'];
+        // If the condition requires an entity the trigger doesn't provide,
+        // then skip to the next condition.
+        if (!$trigger_entities[$entity]) {
+          continue 2;
+        }
+      }
+
+      // Getting this far means that all of the condition's arguments have
+      // the same entity types as the trigger's. Add it to the options,
+      // and group them by category for usability.
+      $options[$condition['#category']][$name] = $condition['#title'];
+    }
+
+    // Alphabetically sort the groups and their options.
+    foreach ($options as $group => $conditions) {
+      asort($conditions);
+      $options[$group] = $conditions;
+    }
+    ksort($options);
+  }
+
+  return $options;
+}
+
+/**
  * Loads a predicate by its ID.
  *
  * @param $pid
@@ -710,7 +795,7 @@ function ca_conditions_form($form_state, $pid = 'uc_payment_received') {
   }
 
   // Initialize the conditions available for this predicate.
-  ca_predicate_condition_options($predicate['#trigger']);
+  ca_load_trigger_conditions($predicate['#trigger']);
 
   // Add the predicate ID to the form array.
   $form['pid'] = array(
@@ -821,7 +906,8 @@ function _ca_conditions_form_tree($condition, &$condition_data) {
 
     $form[$level]['condition'] = array(
       '#type' => 'select',
-      '#options' => ca_predicate_condition_options(),
+      '#title' => t('Available conditions'),
+      '#options' => ca_load_trigger_conditions(),
     );
     $form[$level]['add_condition'] = array(
       '#type' => 'submit',
@@ -943,61 +1029,63 @@ function ca_conditions_form_remove_condition_group_submit($form, &$form_state) {
 
 // Submit handler for button to add a condition to a condition group.
 function ca_conditions_form_add_condition_submit($form, &$form_state) {
-  capm($form_state['values']['conditions']);
+  // Store the key of the group we're adding a condition to.
+  $add_key = $form_state['clicked_button']['#array_parents'][2];
 
   // Load the predicate.
   $predicate = ca_load_predicate($form_state['values']['pid']);
 
-  capm($predicate['#conditions']);
+  //drupal_set_message('Add condition '. $form_state['values']['conditions']['conditions'][$add_key]['condition'] .' to group '. $add_key);
+  //capm($form_state['values']['conditions']);
+  //capm($predicate['#conditions']);
 
-  $group = $form_state['clicked_button']['#array_parents'][2];
+  // Get the conditions array from the form values.
+  $conditions = $form_state['values']['conditions'];
 
-  drupal_set_message('Add condition '. $form_state['values']['conditions']['conditions'][$group]['condition'] .' to group '. $group);
-}
+  unset($predicate['#conditions']);
 
-function ca_predicate_condition_options($trigger = NULL) {
-  static $options = array();
+  // Set the operator for the various conditions groups.
+  $predicate['#conditions']['#operator'] = isset($conditions['operator']) ? $conditions['operator'] : 'AND';
 
-  if ($trigger) {
-    $trigger = ca_load_trigger($trigger);
-    $trigger_entities = array();
-    // Organize trigger arguments by entity.
-    foreach ($trigger['#arguments'] as $arg) {
-      $trigger_entities[$arg['#entity']] = $arg;
+  // Loop through conditions groups on the form and add them to the predicate.
+  foreach ((array) $conditions['conditions'] as $key => $value) {
+    $group = array('#operator' => $value['operator'], '#conditions' => array());
+
+    foreach ((array) $value['conditions'] as $condition) {
+      $group['#conditions'][] = array(
+        '#name' => $condition['name'],
+        '#title' => $condition['title'],
+        '#argument_map' => array('order' => 'order'),
+        '#settings' => $condition['settings'],
+      );
     }
 
-    $conditions = module_invoke_all('ca_condition');
-    foreach ($conditions as $name => $condition) {
-      $args_match = TRUE;
-      foreach ($condition['#arguments'] as $arg) {
-        $entity = $arg['#entity'];
-        // If the condition requires an entity the trigger doesn't provide,
-        // then skip to the next condition.
-        if (!$trigger_entities[$entity]) {
-          continue 2;
-        }
+    if ($key == $add_key) {
+      $name = $form_state['values']['conditions']['conditions'][$add_key]['condition'];
+      $data = ca_load_condition($name);
+
+      if ($data) {
+        $group['#conditions'][] = array(
+          '#name' => $name,
+          '#title' => $data['#title'],
+          '#argument_map' => array('order' => 'order'),
+          '#settings' => array(),
+        );
+
+        drupal_set_message(t('%title condition added.', array('%title' => $data['#title'])));
       }
-
-      // Getting this far means that all of the condition's arguments have
-      // the same entity types as the trigger's. Add it to the options,
-      // and group them by category for usability.
-      $options[$condition['#category']][$name] = $condition['#title'];
+      else {
+        drupal_set_message(t('That condition is not available.'), 'error');
+      }
     }
 
-    // Alphabetically sort the groups and their options.
-    foreach ($options as $group => $conditions) {
-      asort($conditions);
-      $options[$group] = $conditions;
-    }
-    ksort($options);
+    // Add the conditions group to the predicate.
+    $predicate['#conditions']['#conditions'][] = $group;
   }
 
-  return $options;
-}
+  //capm($predicate['#conditions']);
 
-// Quickie test function. :)
-function capm($var) {
-  drupal_set_message('<pre>'. print_r($var, TRUE) .'</pre>');
+  ca_save_predicate($predicate);
 }
 
 function _ca_convert_configurations() {
@@ -1089,5 +1177,10 @@ function _ca_convert_conditions($condition_tree) {
   }
 
   return $ca_condition;
+}
+
+// Quickie test function. :)
+function capm($var) {
+  drupal_set_message('<pre>'. print_r($var, TRUE) .'</pre>');
 }
 

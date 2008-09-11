@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.5 2008/08/14 21:08:48 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.6 2008/09/11 14:43:46 islandusurper Exp $
 
 /**
  * @file
@@ -171,7 +171,9 @@ function uc_product_perm() {
       }
       $perms[] = 'create '. $name .'products';
       $perms[] = 'edit own '. $name .'products';
-      $perms[] = 'edit '. $name .'products';
+      $perms[] = 'edit all '. $name .'products';
+      $perms[] = 'delete own '. $name .'products';
+      $perms[] = 'delete all '. $name .'products';
     }
   }
   return $perms;
@@ -193,8 +195,11 @@ function uc_product_access($op, $node, $account) {
     case 'create':
       return user_access('create '. $type .'products', $account);
     case 'update':
+    if (user_access('edit all'. $type .'products', $account) || (user_access('edit own '. $type .'products', $account) && ($account->uid == $node->uid))) {
+      return TRUE;
+    }
     case 'delete':
-    if (user_access('edit '. $type .'products', $account) || (user_access('edit own '. $type .'products', $account) && ($account->uid == $node->uid))) {
+    if (user_access('delete all'. $type .'products', $account) || (user_access('delete own '. $type .'products', $account) && ($account->uid == $node->uid))) {
       return TRUE;
     }
   }
@@ -411,6 +416,8 @@ function uc_product_forms($form_id, $args) {
  * @see uc_product_form_validate
  */
 function uc_product_form(&$node) {
+  $type = node_get_types('type', $node);
+
   $location = array();
   $location[] = menu_get_item('admin');
   $location[] = menu_get_item('admin/store');
@@ -421,6 +428,9 @@ function uc_product_form(&$node) {
     $breadcrumb[] = l($item['title'], $item['path']);
   }
   drupal_set_breadcrumb($breadcrumb);
+
+  $type = node_get_types('type', $node);
+
   $sign_flag = variable_get('uc_sign_after_amount', FALSE);
   $currency_sign = variable_get('uc_currency_sign', '$');
 
@@ -432,15 +442,11 @@ function uc_product_form(&$node) {
     '#description' => t('Name of the product.')
   );
 
-  $form['body_filter']['body'] = array('#type' => 'textarea',
-    '#title' => t('Description'),
-    '#required' => FALSE,
-    '#default_value' => $node->body,
-    '#rows' => 20,
-    '#description' => t('Enter the product description used for product teasers and pages.'),
-  );
-  $form['body_filter']['format'] = filter_form($node->format);
-  $form['body_filter']['#weight'] = -4;
+  if ($type->has_body) {
+    $form['body_field'] = node_body_field($node, $type->body_label, $type->min_word_count);
+    $form['body_field']['body']['#description'] = t('Enter the product description used for product teasers and pages.');
+    $form['body_field']['#weight'] = -4;
+  }
 
   $form['base'] = array('#type' => 'fieldset',
     '#title' => t('Product information'),
@@ -914,6 +920,7 @@ function uc_product_table($form_state, $args = array()) {
 
   $table['columns'] = uc_product_table_header();
 
+  $table['rows'] = array();
   foreach ($args['nids'] as $nid) {
     $data = array();
     $node = node_load($nid);
@@ -932,6 +939,17 @@ function uc_product_table($form_state, $args = array()) {
       }
       $table['rows'][] = $data;
     }
+  }
+
+  if (empty($table['rows'])) {
+    $table['rows'][] = array(
+      'name' => array(
+        'cell' => array(
+          'data' => t('No products available.'),
+          'colspan' => count($table['columns']),
+        ),
+      ),
+    );
   }
 
   $form['table'] = array(
@@ -1134,7 +1152,7 @@ function uc_product_cart_display($item) {
   }
 
   $element['title'] = array(
-    '#value' => l($item->title, 'node/'. $node->nid),
+    '#value' => node_access('view', $node) ? l($item->title, 'node/'. $node->nid) : check_plain($item->title),
   );
   $element['#total'] = $item->price * $item->qty;
   $element['data'] = array('#type' => 'hidden', '#value' => serialize($item->data));
@@ -1163,7 +1181,7 @@ function uc_product_update_cart_item($nid, $data = array(), $qty, $cid = NULL) {
 
   // Rebuild the items hash
   uc_cart_get_contents(NULL, 'rebuild');
-  if (!substr(request_uri(), 'cart', -4)) {
+  if (!strpos(request_uri(), 'cart', -4)) {
     drupal_set_message(t('Your item(s) have been updated.'));
   }
 }

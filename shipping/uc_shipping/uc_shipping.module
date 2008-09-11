@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.6.2.2 2008/07/21 13:18:33 islandusurper Exp $
+// $Id: uc_shipping.module,v 1.6.2.3 2008/09/11 14:43:45 islandusurper Exp $
 
 /**
  * @file
@@ -24,7 +24,8 @@ function uc_shipping_menu() {
     'title' => 'Packages',
     'page callback' => 'uc_shipping_order_packages',
     'page arguments' => array(3),
-    'access arguments' => array('fulfill orders'),
+    'access callback' => 'uc_shipping_order_access',
+    'access arguments' => array(3),
     'weight' => 6,
     'type' => MENU_LOCAL_TASK,
   );
@@ -32,35 +33,40 @@ function uc_shipping_menu() {
     'title' => 'New packages',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_shipping_new_package', 3),
-    'access arguments' => array('fulfill orders'),
+    'access callback' => 'uc_shipping_order_access',
+    'access arguments' => array(3),
     'type' => MENU_CALLBACK,
   );
   $items['admin/store/orders/%uc_order/packages/%uc_shipping_package/edit'] = array(
     'title' => 'Edit package',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_shipping_package_edit', 3, 5),
-    'access arguments' => array('fulfill orders'),
+    'access callback' => 'uc_shipping_order_access',
+    'access arguments' => array(3),
     'type' => MENU_CALLBACK,
   );
   $items['admin/store/orders/%uc_order/packages/%uc_shipping_package/cancel'] = array(
     'title' => 'Cancel package shipment',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_shipping_package_cancel_confirm', 3, 5),
-    'access arguments' => array('fulfill orders'),
+    'access callback' => 'uc_shipping_order_access',
+    'access arguments' => array(3),
     'type' => MENU_CALLBACK,
   );
   $items['admin/store/orders/%uc_order/packages/%uc_shipping_package/delete'] = array(
     'title' => 'Delete package',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_shipping_package_delete_confirm', 3, 5),
-    'access arguments' => array('fulfill orders'),
+    'access callback' => 'uc_shipping_order_access',
+    'access arguments' => array(3),
     'type' => MENU_CALLBACK,
   );
   $items['admin/store/orders/%uc_order/shipments'] = array(
     'title' => 'Shipments',
     'page callback' => 'uc_shipping_order_shipments',
     'page arguments' => array(3),
-    'access arguments' => array('fulfill orders'),
+    'access callback' => 'uc_shipping_order_access',
+    'access arguments' => array(3),
     'weight' => 7,
     'type' => MENU_LOCAL_TASK,
   );
@@ -68,7 +74,8 @@ function uc_shipping_menu() {
     'title' => 'New shipment',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_shipping_new_shipment', 3),
-    'access arguments' => array('fulfill orders'),
+    'access callback' => 'uc_shipping_order_access',
+    'access arguments' => array(3),
     'type' => MENU_CALLBACK,
   );
   $items['admin/store/orders/%uc_order/shipments/%uc_shipping_shipment'] = array(
@@ -76,7 +83,8 @@ function uc_shipping_menu() {
     'title arguments' => array(5),
     'page callback' => 'uc_shipping_shipment_view',
     'page arguments' => array(3, 5),
-    'access arguments' => array('fulfill orders'),
+    'access callback' => 'uc_shipping_order_access',
+    'access arguments' => array(3),
     'type' => MENU_CALLBACK,
   );
   $items['admin/store/orders/%uc_order/shipments/%uc_shipping_shipment/view'] = array(
@@ -88,28 +96,32 @@ function uc_shipping_menu() {
     'title' => 'Edit',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_shipping_shipment_edit', 3, 5),
-    'access arguments' => array('fulfill orders'),
+    'access callback' => 'uc_shipping_order_access',
+    'access arguments' => array(3),
     'type' => MENU_LOCAL_TASK,
   );
   $items['admin/store/orders/%uc_order/shipments/%uc_shipping_shipment/cancel'] = array(
     'title' => 'Cancel shipment',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_shipping_shipment_cancel_confirm', 3, 5),
-    'access arguments' => array('fulfill orders'),
+    'access callback' => 'uc_shipping_order_access',
+    'access arguments' => array(3),
     'type' => MENU_CALLBACK,
   );
   $items['admin/store/orders/%uc_order/shipments/%uc_shipping_shipment/delete'] = array(
     'title' => 'Delete shipment',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_shipping_shipment_delete_confirm', 3, 5),
-    'access arguments' => array('fulfill orders'),
+    'access callback' => 'uc_shipping_order_access',
+    'access arguments' => array(3),
     'type' => MENU_CALLBACK,
   );
   $items['admin/store/orders/%uc_order/ship'] = array(
     'title' => 'Ship packages',
     'page callback' => 'uc_shipping_make_shipment',
     'page arguments' => array(3),
-    'access arguments' => array('fulfill orders'),
+    'access callback' => 'uc_shipping_order_access',
+    'access arguments' => array(3),
     'type' => MENU_CALLBACK,
   );
 
@@ -118,6 +130,10 @@ function uc_shipping_menu() {
 
 function uc_shipping_shipment_page_title($shipment) {
   return t('Shipment !id', array('!id' => $shipment->sid));
+}
+
+function uc_shipping_order_access($order) {
+  return user_access('fulfill orders') && uc_order_is_shippable($order);
 }
 
 /**
@@ -629,7 +645,7 @@ function uc_shipping_order_shipments($order) {
     $rows[] = array(array('data' => t('No shipments have been made for this order.'), 'colspan' => 10));
   }
   $output = theme('table', $header, $rows);
-  $packages = db_fetch_object(db_query("SELECT COUNT(*) FROM {uc_packages} WHERE order_id = %d AND sid IS NULL", $order->order_id));
+  $packages = db_result(db_query("SELECT COUNT(*) FROM {uc_packages} WHERE order_id = %d AND sid IS NULL", $order->order_id));
   if ($packages) {
     $output .= l(t('Make a new shipment'), 'admin/store/orders/'. $order->order_id .'/shipments/new');
   }

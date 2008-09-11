@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_reports.module,v 1.11.2.3 2008/08/06 13:41:26 islandusurper Exp $
+// $Id: uc_reports.module,v 1.11.2.4 2008/09/11 14:43:47 islandusurper Exp $
 
 /**
  * @file
@@ -349,6 +349,9 @@ function uc_reports_sales_summary() {
   $order_statuses = _uc_reports_order_statuses();
   $format = variable_get('uc_date_format_default', 'm/d/Y');
 
+  $month_start = gmmktime(0, 0, 0, date('n'), 1, date('Y')) - $timezone_offset;
+  $month_end = gmmktime(23, 59, 59, date('n'), date('t'), date('Y')) - $timezone_offset;
+
   $today_start = gmmktime(0, 0, 0, date('n'), date('j'), date('Y')) - $timezone_offset;
   $today_end = gmmktime(23, 59, 59, date('n'), date('j'), date('Y')) - $timezone_offset;
 
@@ -379,6 +382,14 @@ function uc_reports_sales_summary() {
   $month = _uc_reports_get_sales($today_start, 'month');
   $month_title = format_date($today_start, 'custom', 'M Y');
 
+  // Add the month-to-date details to the report table.
+  $rows[] = array(
+    l(t('Month-to-date, @month', array('@month' => $month_title)), 'admin/store/orders/search/results/0/0/0/0/0/0/'. $month_start .'/'. $month_end),
+    $month['total'],
+    uc_currency_format($month['income']),
+    uc_currency_format($month['average']),
+  );
+
   // Calculate the daily averages for the month.
   $daily_orders = round($month['total'] / format_date(time(), 'custom', 'j'), 2);
   $daily_revenue = round($month['income'] / format_date(time(), 'custom', 'j'), 2);
@@ -395,7 +406,7 @@ function uc_reports_sales_summary() {
     t('Daily average for @month', array('@month' => $month_title)),
     $daily_orders,
     uc_currency_format($daily_revenue),
-    uc_currency_format($daily_average),
+    '',
   );
 
   // Store the number of days remaining in the month.
@@ -809,7 +820,7 @@ function uc_reports_sales_custom_form_submit($form, &$form_state) {
     $start_date,
     $end_date,
     $form_state['values']['length'],
-    urlencode(implode(',', array_keys($form_state['values']['status']))),
+    drupal_urlencode(implode(',', array_keys($form_state['values']['status']))),
     $form_state['values']['detail'],
   );
 

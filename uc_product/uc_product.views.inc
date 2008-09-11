@@ -292,49 +292,6 @@ function uc_product_views_tables_alter(&$tables) {
 }
 
 /**
- * Return a formatted add to cart form to display in the View.
- */
-function uc_product_views_handler_add_to_cart_link($fieldinfo, $fielddata, $value, $data) {
-  $types = module_invoke_all('node_info');
-  $product = node_load($data->nid);
-  $module = $types[$product->type]['module'];
-  if (theme_get_function($module .'_add_to_cart')) {
-    return theme($module .'_add_to_cart', $product);
-  }
-  else {
-    return theme('uc_product_add_to_cart', $product);
-  }
-}
-
-/**
- * Return a formatted buy it now button to display in the View.
- */
-function uc_product_views_handler_buy_it_now_button($fieldinfo, $fielddata, $value, $data) {
-  $product = node_load($data->nid);
-  return drupal_get_form('uc_catalog_buy_it_now_form_'. $data->nid, $product);
-}
-
-/**
- * Filter out nodes that are not products.
- */
-function uc_product_views_handler_filter_product($op, $filter, $filterinfo, &$query) {
-  $types = module_invoke_all('product_types');
-
-  switch ($op) {
-    case 'handler':
-      switch ($filter['value'][0]) {
-        case '0':
-          $query->add_where("node.type NOT IN ('". implode("','", $types) ."')");
-        break;
-        case '1':
-          $query->add_where("node.type IN ('". implode("','", $types) ."')");
-        break;
-      }
-    break;
-  }
-}
-
-/**
  * Implementation of hook_default_view_views().
  */
 function uc_product_views_default_views() {
