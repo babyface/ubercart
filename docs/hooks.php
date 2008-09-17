@@ -1,5 +1,5 @@
 <?php
-// $Id: hooks.php,v 1.1.4.2 2008/07/29 22:22:39 rszrama Exp $
+// $Id: hooks.php,v 1.1.4.3 2008/09/17 21:38:37 rszrama Exp $
 
 /**
  * @file
@@ -71,6 +71,58 @@ function hook_add_to_cart($nid, $qty, $data) {
 function hook_add_to_cart_data($form_values) {
   $node = node_load($form_values['nid']);
   return array('module' => 'uc_product', 'shippable' => $node->shippable);
+}
+
+/**
+ * Calculate tax line items for an order.
+ *
+ * @param $order
+ *   An order object or an order id.
+ * @return
+ *   An array of tax line items keyed by a module-specific id.
+ */
+function hook_calculate_tax($order) {
+  global $user;
+  if (is_numeric($order)) {
+    $order = uc_order_load($order);
+    $account = user_load(array('uid' => $order->uid));
+  }
+  else if ((int)$order->uid) {
+    $account = user_load(array('uid' => intval($order->uid)));
+  }
+  else {
+    $account = $user;
+  }
+  if (!is_object($order)) {
+    return array();
+  }
+  if (empty($order->delivery_postal_code)) {
+    $order->delivery_postal_code = $order->billing_postal_code;
+  }
+  if (empty($order->delivery_zone)) {
+    $order->delivery_zone = $order->billing_zone;
+  }
+  if (empty($order->delivery_country)) {
+    $order->delivery_country = $order->billing_country;
+  }
+  if (is_array($order->line_items)) {
+    foreach ($order->line_items as $i => $line) {
+      if (substr($line['type'], 0, 4) == 'tax_' && substr($line['type'], 5) != 'subtotal') {
+        unset($order->line_items[$i]);
+      }
+    }
+  }
+  $_SESSION['taxes'] = array();
+  $taxes = uc_taxes_get_rates();
+  foreach ($taxes as $tax) {
+    // Gotta pass a fake line_item entity for the data to be saved to $_SESSION.
+    workflow_ng_invoke_event('calculate_tax_'. $tax->id, $order, $tax, $account, array());
+    //$order->line_items[] = array('type' => 'tax', 'amount' => $_SESSION['taxes'][$tax->id]['amount']);
+  }
+  $order->taxes = $_SESSION['taxes'];
+  unset($_SESSION['taxes']);
+  //array_unshift($order->taxes, array('id' => 'subtotal', 'name' => t('Subtotal excluding taxes'), 'amount' => $amount, 'weight' => -10));
+  return $order->taxes;
 }
 
 /**
@@ -1055,7 +1107,7 @@ function hook_update_cart_item($nid, $data = array(), $qty, $cid = NULL) {
 
   // Rebuild the items hash
   uc_cart_get_contents(NULL, 'rebuild');
-  if (!substr(request_uri(), 'cart', -4)) {
+  if (!strpos(request_uri(), 'cart', -4)) {
     drupal_set_message(t('Your item(s) have been updated.'));
   }
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.13.2.13 2008/07/29 22:22:44 rszrama Exp $
+// $Id: uc_product.module,v 1.13.2.14 2008/09/17 21:38:41 rszrama Exp $
 
 /**
  * @file
@@ -423,6 +423,8 @@ function uc_product_forms($saved_args) {
  * @see uc_product_form_validate
  */
 function uc_product_form(&$node) {
+  $type = node_get_types('type', $node);
+
   $location = array();
   $location[] = menu_get_item(null, 'admin');
   $location[] = menu_get_item(null, 'admin/store');
@@ -444,15 +446,17 @@ function uc_product_form(&$node) {
     '#description' => t('Name of the product.')
   );
 
-  $form['body_filter']['body'] = array('#type' => 'textarea',
-    '#title' => t('Description'),
-    '#required' => FALSE,
-    '#default_value' => $node->body,
-    '#rows' => 20,
-    '#description' => t('Enter the product description used for product teasers and pages.'),
-  );
-  $form['body_filter']['format'] = filter_form($node->format);
-  $form['body_filter']['#weight'] = -4;
+  if ($type->has_body) {
+    $form['body_filter']['body'] = array('#type' => 'textarea',
+      '#title' => t('Description'),
+      '#required' => FALSE,
+      '#default_value' => $node->body,
+      '#rows' => 20,
+      '#description' => t('Enter the product description used for product teasers and pages.'),
+    );
+    $form['body_filter']['format'] = filter_form($node->format);
+    $form['body_filter']['#weight'] = -4;
+  }
 
   $form['base'] = array('#type' => 'fieldset',
     '#title' => t('Product information'),
@@ -1474,7 +1478,7 @@ function uc_product_cart_display($item) {
   }
 
   $element['title'] = array(
-    '#value' => l($item->title, 'node/'. $node->nid),
+    '#value' => node_access('view', $node) ? l($item->title, 'node/'. $node->nid) : check_plain($item->title),
   );
   $element['#total'] = $item->price * $item->qty;
   $element['data'] = array('#type' => 'hidden', '#value' => serialize($item->data));
@@ -1503,9 +1507,6 @@ function uc_product_update_cart_item($nid, $data = array(), $qty, $cid = NULL) {
 
   // Rebuild the items hash
   uc_cart_get_contents(NULL, 'rebuild');
-  if (!substr(request_uri(), 'cart', -4)) {
-    drupal_set_message(t('Your item(s) have been updated.'));
-  }
 }
 
 /**

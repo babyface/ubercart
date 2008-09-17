@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.install,v 1.4.4.2 2008/07/29 22:22:40 rszrama Exp $
+// $Id: uc_recurring.install,v 1.4.4.3 2008/09/17 21:38:39 rszrama Exp $
 
 function uc_recurring_install() {
   switch ($GLOBALS['db_type']) {
@@ -17,6 +17,7 @@ function uc_recurring_install() {
       db_query("CREATE TABLE {uc_recurring_users} (
         rfid mediumint(9) NOT NULL,
         uid mediumint(9) NOT NULL,
+        fee_handler varchar(255) NOT NULL,
         next_charge int(11) NOT NULL,
         fee_amount decimal(10,2) NOT NULL,
         regular_interval varchar(255) NOT NULL,
@@ -30,7 +31,7 @@ function uc_recurring_install() {
       break;
     case 'pgsql':
       db_query("CREATE TABLE {uc_recurring_products} (
-     	  pfid integer NOT NULL default 0,
+        pfid integer NOT NULL default 0,
         model varchar(255) NOT NULL default '',
         fee_amount decimal(10,2) NOT NULL default 0.0,
         initial_charge varchar(255) NOT NULL default '',
@@ -58,16 +59,38 @@ function uc_recurring_install() {
 function uc_recurring_uninstall() {
   switch ($GLOBALS['db_type']) {
     case 'mysql':
-    case 'mysqli':	
-	    db_query("DROP TABLE IF EXISTS {uc_recurring_products}");
-	    db_query("DROP TABLE IF EXISTS {uc_recurring_users}");
-	    break;
+    case 'mysqli':
+      db_query("DROP TABLE IF EXISTS {uc_recurring_products}");
+      db_query("DROP TABLE IF EXISTS {uc_recurring_users}");
+      break;
     case 'pgsql':
-	    db_query("DROP TABLE {uc_recurring_products}");
-	    db_query("DROP TABLE {uc_recurring_users}");
-	    break;
-  }	
+      db_query("DROP TABLE {uc_recurring_products}");
+      db_query("DROP TABLE {uc_recurring_users}");
+      break;
+  }
 
   db_query("DELETE FROM {variable} WHERE name LIKE 'uc_recurring_%%'");
   cache_clear_all('variables', 'cache');
+}
+
+function uc_recurring_update_1() {
+  $ret = array();
+
+  // Add a column to store the recurring fee handler with the user subscription.
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_recurring_users} ADD fee_handler VARCHAR(255) NOT NULL AFTER uid");
+      break;
+    case 'pgsql':
+      db_add_column($ret, 'uc_recurring_users', 'fee_handler', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      break;
+  }
+
+  // Update existing rows if uc_recurring is the current handler.
+  if (variable_get('uc_recurring_handler', 'uc_recurring') == 'uc_recurring') {
+    $ret[] = update_sql("UPDATE {uc_recurring_users} SET fee_handler = 'uc_recurring'");
+  }
+
+  return $ret;
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.4.2.12 2008/07/29 22:22:40 rszrama Exp $
+// $Id: uc_payment.module,v 1.4.2.13 2008/09/17 21:38:38 rszrama Exp $
 
 /**
  * @file
@@ -759,24 +759,21 @@ function uc_payment_delete_confirm_form($order_id, $receipt_id) {
     '#type' => 'hidden',
     '#value' => $receipt_id,
   );
-  $form['cancel'] = array(
-    '#type' => 'submit',
-    '#value' => t('Cancel'),
-  );
   $form['delete'] = array(
     '#type' => 'submit',
     '#value' => t('Delete'),
+    '#suffix' => l(t('Cancel'), 'admin/store/orders/'. $order_id .'/payments'),
   );
 
   return $form;
 }
 
 function uc_payment_delete_confirm_form_submit($form_id, $form_values) {
-  if ($form_values['op'] == t('Delete')) {
-    uc_payment_delete($form_values['receipt_id']);
-    drupal_set_message(t('Payment deleted.'));
-  }
-  drupal_goto('admin/store/orders/'. $form_values['order_id'] .'/payments');
+  // Delete the payment.
+  uc_payment_delete($form_values['receipt_id']);
+  drupal_set_message(t('Payment deleted.'));
+
+  return 'admin/store/orders/'. $form_values['order_id'] .'/payments';
 }
 
 /**

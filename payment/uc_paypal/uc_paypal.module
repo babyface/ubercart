@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.4.2.11 2008/07/29 22:22:40 rszrama Exp $
+// $Id: uc_paypal.module,v 1.4.2.12 2008/09/17 21:38:39 rszrama Exp $
 
 /**
  * @file
@@ -333,7 +333,7 @@ function uc_paypal_wpp_charge($order_id, $amount, $data) {
     $cc_type = _uc_paypal_card_type($order->payment_details['cc_number']);
     if ($cc_type === FALSE) {
       drupal_set_message(t('The credit card type did not pass validation.'), 'error');
-      watchdog('uc_paypal', t('Could not figure out cc type: !number / !type', array('!number' => $order->payment_details['cc_number'], '!type' => $order->payment_details['cc_type'])), WATCHDOG_ERROR);
+      watchdog('uc_paypal', t('Could not figure out cc type: @number / @type', array('@number' => $order->payment_details['cc_number'], '@type' => $order->payment_details['cc_type'])), WATCHDOG_ERROR);
       return array('success' => FALSE);
     }
   }
@@ -393,10 +393,10 @@ function uc_paypal_wpp_charge($order_id, $amount, $data) {
   $nvp_response = uc_paypal_api_request($nvp_request, variable_get('uc_paypal_wpp_server', 'https://api-3t.sandbox.paypal.com/nvp'));
 
   if ($nvp_response['ACK'] != 'Success') {
-    $message = t('<b>Payment failed.</b><br><b>!severity:</b> !error', array('!severity' => check_plain($nvp_response['L_SEVERITYCODE0']), '!error' => check_plain($nvp_response['L_ERRORCODE0'] .'. '. $nvp_response['L_LONGMESSAGE0'])));
-    $message .= '<br>'. t('<b>Address:</b> !avscode', array('!avscode' => _uc_paypal_avscode_message($nvp_response['AVSCODE'])));
+    $message = t('<b>Payment failed.</b><br><b>@severity:</b> @error', array('@severity' => $nvp_response['L_SEVERITYCODE0'], '@error' => $nvp_response['L_ERRORCODE0'] .'. '. $nvp_response['L_LONGMESSAGE0']));
+    $message .= '<br>'. t('<b>Address:</b> @avscode', array('@avscode' => _uc_paypal_avscode_message($nvp_response['AVSCODE'])));
     if (variable_get('uc_credit_cvv_enabled', TRUE)) {
-      $message .= '<br>'. t('<b>CVV2:</b> !cvvmatch', array('!cvvmatch' => _uc_paypal_cvvmatch_message($nvp_response['CVV2MATCH'])));
+      $message .= '<br>'. t('<b>CVV2:</b> !cvvmatch', array('@cvvmatch' => _uc_paypal_cvvmatch_message($nvp_response['CVV2MATCH'])));
     }
     $result = array(
       'success' => FALSE,
@@ -405,14 +405,14 @@ function uc_paypal_wpp_charge($order_id, $amount, $data) {
     );
   }
   else {
-    $message = t('<b>!amount !currency !action successfully through PayPal.</b>', array('!amount' => uc_currency_format($nvp_response['AMT'], FALSE), '!currency' => $nvp_response['CURRENCYCODE'], '!action' => variable_get('uc_paypal_wpp_payment_action', 'Sale') == 'Sale' ? t('captured') : t('authorized')));
-    $message .= '<br>'. t('<b>Address:</b> !avscode', array('!avscode' => _uc_paypal_avscode_message($nvp_response['AVSCODE'])));
+    $message = t('<b>@amount @currency @action successfully through PayPal.</b>', array('@amount' => uc_currency_format($nvp_response['AMT'], FALSE), '@currency' => $nvp_response['CURRENCYCODE'], '@action' => variable_get('uc_paypal_wpp_payment_action', 'Sale') == 'Sale' ? t('captured') : t('authorized')));
+    $message .= '<br>'. t('<b>Address:</b> @avscode', array('@avscode' => _uc_paypal_avscode_message($nvp_response['AVSCODE'])));
     if (variable_get('uc_credit_cvv_enabled', TRUE)) {
-      $message .= '<br>'. t('<b>CVV2:</b> !cvvmatch', array('!cvvmatch' => _uc_paypal_cvvmatch_message($nvp_response['CVV2MATCH'])));
+      $message .= '<br>'. t('<b>CVV2:</b> @cvvmatch', array('@cvvmatch' => _uc_paypal_cvvmatch_message($nvp_response['CVV2MATCH'])));
     }
     $result = array(
       'success' => TRUE,
-      'comment' => t('PayPal transaction ID: !transactionid', array('!transactionid' => $nvp_response['TRANSACTIONID'])),
+      'comment' => t('PayPal transaction ID: @transactionid', array('@transactionid' => $nvp_response['TRANSACTIONID'])),
       'message' => $message,
       'data' => check_plain($nvp_response['TRANSACTIONID']),
       'uid' => $user->uid,
@@ -436,7 +436,7 @@ function uc_payment_method_paypal_wps($op, &$arg1) {
       if (empty($txn_id)) {
         $txn_id = t('Unknown');
       }
-      return t('Transaction ID:<br>!txn_id', array('!txn_id' => $txn_id));
+      return t('Transaction ID:<br>@txn_id', array('@txn_id' => $txn_id));
 
     case 'settings':
       $form['uc_paypal_wps_email'] = array(
@@ -537,7 +537,7 @@ function uc_payment_method_paypal_ec($op, &$arg1) {
       if (empty($txn_id)) {
         $txn_id = t('Unknown');
       }
-      return t('Transaction ID:<br>!txn_id', array('!txn_id' => $txn_id));
+      return t('Transaction ID:<br>@txn_id', array('@txn_id' => $txn_id));
 
     case 'settings':
       $form['redirect'] = array(
@@ -552,7 +552,7 @@ function uc_paypal_ipn($order_id = 0) {
   if (variable_get('uc_paypal_wps_debug_ipn', FALSE)) {
     $debug = '<pre>'. print_r($_POST, TRUE) .'</pre>';
   }
-  watchdog('uc_paypal', t('Receiving IPN at URL for order !order_id.', array('!order_id' => check_plain($order_id))) . $debug);
+  watchdog('uc_paypal', t('Receiving IPN at URL for order @order_id.', array('@order_id' => $order_id)) . $debug);
 
   if (!isset($_POST['invoice'])) {
     watchdog('uc_paypal', t('IPN attempted with invalid order ID.'), WATCHDOG_ERROR);
@@ -641,7 +641,7 @@ function uc_paypal_ipn($order_id = 0) {
               time());
 
       /*if (variable_get('uc_paypal_wps_email', '') != $receiver_email) {
-        watchdog('uc_paypal', t('IPN received for an e-mail that is not your primary e-mail: !email', array('!email' => $receiver_email)));
+        watchdog('uc_paypal', t('IPN received for an e-mail that is not your primary e-mail: @email', array('@email' => $receiver_email)));
       }*/
 
       switch ($payment_status) {
@@ -671,7 +671,7 @@ function uc_paypal_ipn($order_id = 0) {
 
         case 'Pending':
           uc_order_update_status($order_id, 'paypal_pending');
-          uc_order_comment_save($order_id, 0, t('Payment is pending at PayPal: !reason', array('!reason' => _uc_paypal_pending_message(check_plain($_POST['pending_reason'])))), 'admin');
+          uc_order_comment_save($order_id, 0, t('Payment is pending at PayPal: @reason', array('@reason' => _uc_paypal_pending_message($_POST['pending_reason']))), 'admin');
           break;
 
         // You, the merchant, refunded the payment.
@@ -682,7 +682,7 @@ function uc_paypal_ipn($order_id = 0) {
 
         case 'Reversed':
           watchdog('uc_paypal', t('PayPal has reversed a payment!'), WATCHDOG_ERROR);
-          uc_order_comment_save($order_id, 0, t('Payment has been reversed by PayPal: !reason', array('!reason' => _uc_paypal_reversal_message(check_plain($_POST['reason_code'])))), 'admin');
+          uc_order_comment_save($order_id, 0, t('Payment has been reversed by PayPal: @reason', array('@reason' => _uc_paypal_reversal_message($_POST['reason_code']))), 'admin');
           break;
 
         case 'Processed':
@@ -886,7 +886,7 @@ function uc_paypal_ec_checkout($form_id, $form_values) {
   $nvp_response = uc_paypal_api_request($nvp_request, variable_get('uc_paypal_wpp_server', 'https://api-3t.sandbox.paypal.com/nvp'));
 
   if ($nvp_response['ACK'] != 'Success') {
-    drupal_set_message(t('Error message from PayPal:<br>!message', array('!message' => $nvp_response['L_LONGMESSAGE0'])), 'error');
+    drupal_set_message(t('Error message from PayPal:<br>@message', array('@message' => $nvp_response['L_LONGMESSAGE0'])), 'error');
     drupal_goto('cart/checkout');
   }
 
@@ -1290,7 +1290,7 @@ function uc_paypal_wps_form($order) {
   else {
     // List the whole cart as a single item to account for fees/discounts
     $data['amount_1'] = uc_currency_format($order->order_total - $shipping - $tax, FALSE, FALSE, '.');
-    $data['item_name_1'] = t('Order #!order_id at !store', array('!order_id' => $order->order_id, '!store' => variable_get('uc_store_name', url('<front>', NULL, NULL, TRUE))));
+    $data['item_name_1'] = t('Order @order_id at @store', array('@order_id' => $order->order_id, '@store' => variable_get('uc_store_name', url('<front>', NULL, NULL, TRUE))));
     $data['on0_1'] = t('Product count');
     $data['os0_1'] = count($order->products);
   }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes_workflow.inc,v 1.1.2.6 2008/07/29 22:22:47 rszrama Exp $
+// $Id: uc_taxes_workflow.inc,v 1.1.2.7 2008/09/17 21:38:43 rszrama Exp $
 
 /**
  * @file
@@ -136,7 +136,7 @@ function uc_taxes_action_apply_tax_subtotal($order, $tax) {
  */
 function uc_taxes_configuration() {
   $configurations = array();
-  
+
   $taxes = uc_taxes_get_rates();
   foreach ($taxes as $tax) {
     $configurations['uc_taxes_'. $tax->id] = array(
@@ -158,5 +158,5 @@ function uc_taxes_configuration() {
  * Preserve each tax line item for future use.
  */
 function uc_taxes_save_line_item($line_item) {
-  $_SESSION['taxes'][$line_item->id] = array('id' => $line_item->id, 'name' => $line_item->name, 'amount' => $line_item->amount, 'weight' => $line_item->weight);
+  $_SESSION['taxes'][$line_item->id] = array('id' => 'uc_tax_'. $line_item->id, 'name' => $line_item->name, 'amount' => $line_item->amount, 'weight' => $line_item->weight);
 }

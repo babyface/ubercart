@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.1.2.12 2008/07/29 22:22:43 rszrama Exp $
+// $Id: uc_file.module,v 1.1.2.13 2008/09/17 21:38:40 rszrama Exp $
 
 /**
  * @file
@@ -369,6 +369,7 @@ function uc_file_feature_form($node, $feature) {
     '#default_value' => $default_filename,
     '#autocomplete_path' => '_autocomplete_file',
     '#description' => t('The file that can be downloaded when product is purchased (enter a path relative to the %dir directory).', array('%dir' => variable_get('uc_file_base_dir', NULL))),
+    '#maxlength' => 255,
   );
   $form['uc_file_description'] = array(
     '#type' => 'textfield',
@@ -409,7 +410,7 @@ function uc_file_feature_form_submit($form_id, $form_values) {
 
   //Insert or update uc_file_product table
   if (empty($form_values['pfid'])) {
-    $pfid = db_next_id('{uc_product_features}_pfid') + 1;
+    $pfid = db_next_id('{uc_product_features}_pfid');
   }
   else {
     $pfid = $form_values['pfid'];

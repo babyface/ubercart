@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, getTax; -*-
-// $Id: uc_quote.js,v 1.4.2.9 2008/07/29 22:22:40 rszrama Exp $
+// $Id: uc_quote.js,v 1.4.2.10 2008/09/17 21:38:39 rszrama Exp $
 
 var page;
 var details;
@@ -65,12 +65,20 @@ function quoteCallback(products) {
   details["uid"] = $("input[@name*=uid]").val();
   //details["details[zone]"] = $("select[@name*=delivery_zone] option:selected").val();
   //details["details[country]"] = $("select[@name*=delivery_country] option:selected").val();
+
   $("select[@name*=delivery_]").each(function(i) {
-    details["details[" + $(this).attr("name").split("delivery_")[1].replace(/]/, "") + "]"] = $(this).val();
+    details["details[delivery][" + $(this).attr("name").split("delivery_")[1].replace(/]/, "") + "]"] = $(this).val();
   });
   $("input[@name*=delivery_]").each(function(i) {
-    details["details[" + $(this).attr("name").split("delivery_")[1].replace(/]/, "") + "]"] = $(this).val();
+    details["details[delivery][" + $(this).attr("name").split("delivery_")[1].replace(/]/, "") + "]"] = $(this).val();
   });
+  $("select[@name*=billing_]").each(function(i) {
+    details["details[billing][" + $(this).attr("name").split("billing_")[1].replace(/]/, "") + "]"] = $(this).val();
+  });
+  $("input[@name*=billing_]").each(function(i) {
+    details["details[billing][" + $(this).attr("name").split("billing_")[1].replace(/]/, "") + "]"] = $(this).val();
+  });
+
   if (!!products) {
     details["products"] = products;
   }
@@ -94,10 +102,10 @@ function quoteCallback(products) {
   progress.setProgress(-1, Drupal.settings.uc_quote.progress_msg);
   $("#quote").empty().append(progress.element);
   $("#quote").addClass("solid-border");
-  // progress.startMonitoring(Drupal.settings['base_path'] + "shipping/quote", 0);
+  // progress.startMonitoring(Drupal.settings['base_path'] + "?q=shipping/quote", 0);
   $.ajax({
     type: "POST",
-    url: Drupal.settings['base_path'] + "cart/checkout/shipping/quote",
+    url: Drupal.settings['base_path'] + "?q=cart/checkout/shipping/quote",
     data: details,
     dataType: "json",
     success: displayQuote

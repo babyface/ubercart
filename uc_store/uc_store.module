@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.13.2.13 2008/07/30 21:16:06 rszrama Exp $
+// $Id: uc_store.module,v 1.13.2.14 2008/09/17 21:38:42 rszrama Exp $
 
 /**
  * @file
@@ -267,11 +267,7 @@ function uc_store_menu($may_cache) {
     );
   }
   else {
-    $base_path = base_path();
-    if (!variable_get('clean_url', 0)) {
-      $base_path .= '?q=';
-    }
-    uc_add_js(array('base_path' => $base_path), 'setting');
+    uc_add_js(array('base_path' => base_path()), 'setting');
 
     $items[] = array(
       'path' => 'uc_js_util/'. arg(1),
@@ -508,7 +504,7 @@ function uc_store_exit() {
   // When HTTP_REFERER is set, the session version is not; and vice versa.
   if (referer_uri() == '') {
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') ? 'https' : 'http';
-    $_SESSION['uc_referer_uri'] = $protocol .'://'. $_SERVER['SERVER_NAME'] . base_path() . $_GET['q'];
+    $_SESSION['uc_referer_uri'] = $protocol .'://'. $_SERVER['SERVER_NAME'] . $GLOBALS['base_path'] . $_GET['q'];
   }
   else {
     if (isset($_SESSION['uc_referer_uri'])) {
@@ -1574,7 +1570,7 @@ function uc_store_address_fields_form() {
     'street1' => array(t('Street address 1'), TRUE),
     'street2' => array(t('Street address 2'), TRUE),
     'city' => array(t('City'), TRUE),
-    'zone' => array(t('Zone'), TRUE),
+    'zone' => array(t('State/Province'), TRUE),
     'country' => array(t('Country'), TRUE),
     'postal_code' => array(t('Postal code'), TRUE),
     'address' => array(t('Address'), FALSE),
@@ -2118,7 +2114,7 @@ function uc_get_field_name($field) {
     'street1' => t('Street address 1'),
     'street2' => t('Street address 2'),
     'city' => t('City'),
-    'zone' => t('Zone'),
+    'zone' => t('State/Province'),
     'postal_code' => t('Postal code'),
     'country' => t('Country'),
   );
@@ -2627,7 +2623,7 @@ function uc_store_email_from() {
   if (variable_get('uc_store_email_include_name', TRUE)) {
     $store = variable_get('uc_store_name', '');
     if (!empty($store)) {
-      $email_from = $store .' <'. $email_from .'>';
+      $email_from = '"'. $store .'" <'. $email_from .'>';
     }
   }
 
@@ -2923,7 +2919,8 @@ function uc_referer_check($urls) {
   }
 
   // Check the user didn't shamelessly two-time us with another site.
-  if (parse_url($http_referer, PHP_URL_HOST) != $_SERVER['SERVER_NAME']) {
+  $referer = parse_url($http_referer);
+  if ($referer['host'] != $_SERVER['SERVER_NAME']) {
     return FALSE;
   }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.1.2.11 2008/07/29 22:22:46 rszrama Exp $
+// $Id: uc_roles.module,v 1.1.2.12 2008/09/17 21:38:42 rszrama Exp $
 
 /**
  * @file
@@ -684,7 +684,7 @@ function uc_roles_feature_form_submit($form_id, $form_values) {
 
   //Insert or update uc_roles_products table
   if ($form_values['pfid'] == 0) {
-    $pfid = db_next_id('{uc_product_features}_pfid') + 1;
+    $pfid = db_next_id('{uc_product_features}_pfid');
   }
   else {
     $pfid = $form_values['pfid'];

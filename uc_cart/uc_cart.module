@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.14.2.14 2008/07/29 22:22:42 rszrama Exp $
+// $Id: uc_cart.module,v 1.14.2.15 2008/09/17 21:38:40 rszrama Exp $
 
 /**
  * @file
@@ -441,15 +441,15 @@ function uc_cart_form_alter($form_id, &$form) {
   if ($form_id == 'user_login' || $form_id == 'user_edit' || $form_id == 'user_register') {
     if ($_SESSION['checkout-redirect'] == TRUE) {
       $form['#action'] = url($_GET['q'], "destination=cart/checkout");
-      return;
     }
-
-    // Compare the referer to checkout page URLs.
-    if (uc_referer_check('cart/checkout') && uc_referer_uri() != '') {
-      $form['#action'] = url($_GET['q'], "destination=cart/checkout");
-    }
-    elseif (uc_referer_check(array('cart/checkout/review', 'cart/checkout/complete')) && uc_referer_uri() != '') {
-      $form['#action'] = url($_GET['q'], "destination=user");
+    else {
+      // Compare the referer to checkout page URLs.
+      if (uc_referer_check('cart/checkout') && uc_referer_uri() != '') {
+        $form['#action'] = url($_GET['q'], "destination=cart/checkout");
+      }
+      elseif (uc_referer_check(array('cart/checkout/review', 'cart/checkout/complete')) && uc_referer_uri() != '') {
+        $form['#action'] = url($_GET['q'], "destination=user");
+      }
     }
   }
 
@@ -587,7 +587,7 @@ function uc_cart_login_update($uid, $sess_id) {
 
     // Remove from the table all the items in the cart.
     // Should be a function call instead of a single query. -RS
-    db_query("DELETE FROM {uc_cart_products} WHERE cart_id = %d", $uid);
+    db_query("DELETE FROM {uc_cart_products} WHERE cart_id = '%s'", $uid);
 
     // Reset the cart item cache.
     uc_cart_get_contents($uid, 'rebuild');
@@ -1376,7 +1376,7 @@ function uc_cart_checkout_form() {
   $order = uc_order_load($_SESSION['cart_order']);
 
   // Check the referer URI to clear order details and prevent identity theft.
-  if (uc_referer_check('cart/checkout', 'cart/checkout/review')) {
+  if (uc_referer_check(array('cart/checkout', 'cart/checkout/review'))) {
     if ($order == FALSE || uc_order_status_data($order->order_status, 'state') != 'in_checkout') {
       unset($_SESSION['cart_order']);
       $order = NULL;
@@ -1387,6 +1387,7 @@ function uc_cart_checkout_form() {
   }
   else {
     unset($_SESSION['cart_order']);
+    $order = NULL;
   }
 
   $form['panes'] = array('#tree' => TRUE);
@@ -1814,7 +1815,7 @@ function uc_cart_complete_sale($order, $login = FALSE) {
     $output .= '<p>'. strtr($show_message, $variables) .'</p>';
   }
   $output .= '<p>'. check_markup(variable_get('uc_msg_continue_shopping', uc_get_message('continue_shopping')),
-                      variable_get('uc_msg_order_submit_format', 3),
+                      variable_get('uc_msg_continue_shopping_format', 3),
                       FALSE) .'</p>';
 
   $output = token_replace_multiple($output, array('global' => NULL, 'order' => $order));
@@ -2100,7 +2101,7 @@ function uc_cart_product_is_shippable($product) {
 // matching the combinations in the $remove array.
 function uc_cart_filter_checkout_panes($panes, $remove = NULL) {
   if (is_array($remove)) {
-    for ($i = 0; $i < count($panes); $i++) {
+    for ($i = 0, $j = count($panes); $i < $j; $i++) {
       foreach ($remove as $key => $value) {
         if ($panes[$i][$key] == $value) {
           unset($panes[$i]);

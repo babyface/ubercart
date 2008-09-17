@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.4.2.13 2008/07/29 22:22:39 rszrama Exp $
+// $Id: uc_credit.module,v 1.4.2.14 2008/09/17 21:38:38 rszrama Exp $
 
 /**
  * @file
@@ -122,16 +122,12 @@ function uc_credit_cron() {
   switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
-      db_query("DELETE upc.* FROM {uc_orders} AS uo LEFT JOIN {uc_payment_credit} "
-              ."AS upc ON uo.order_id = upc.order_id WHERE uo.modified <= %d AND "
-              ."uo.order_status = '%s'", $time, uc_order_state_default('in_checkout'));
+      db_query("DELETE upc.* FROM {uc_orders} AS uo LEFT JOIN {uc_payment_credit} AS upc ON uo.order_id = upc.order_id WHERE uo.modified <= %d AND uo.order_status = '%s'",
+        $time, uc_order_state_default('in_checkout'));
     break;
     case 'pgsql':
-      db_query("DELETE FROM {uc_payment_credit} AS upc USING {uc_orders} AS o"
-              ." WHERE o.order_id = upc.order_id"
-              ." AND o.modified <= %d"
-              ." AND o.order_status = '%s'",
-              $time, uc_order_state_default('in_checkout'));
+      db_query("DELETE FROM {uc_payment_credit} WHERE order_id IN (SELECT order_id FROM {uc_orders} WHERE modified <= %d AND order_status = '%s')",
+        $time, uc_order_state_default('in_checkout'));
     break;
   }
   // Mask old stored credit card numbers.
@@ -139,17 +135,12 @@ function uc_credit_cron() {
   switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
-      db_query("DELETE upc.* FROM {uc_orders} AS uo LEFT JOIN {uc_payment_credit} "
-              ."AS upc ON uo.order_id = upc.order_id WHERE uo.modified <= %d AND "
-              ."uo.order_status = '%s'", $time,
-               variable_get('uc_credit_clear_status', uc_order_state_default('completed')));
+      db_query("DELETE upc.* FROM {uc_orders} AS uo LEFT JOIN {uc_payment_credit} AS upc ON uo.order_id = upc.order_id WHERE uo.modified <= %d AND uo.order_status = '%s'",
+        $time, variable_get('uc_credit_clear_status', uc_order_state_default('completed')));
     break;
     case 'pgsql':
-      db_query("DELETE FROM {uc_payment_credit} AS upc USING {uc_orders} AS o"
-              ." WHERE o.order_id = upc.order_id"
-              ." AND o.modified <= %d"
-              ." AND o.order_status = '%s'",
-              $time, variable_get('uc_credit_clear_status', uc_order_state_default('completed')));
+      db_query("DELETE FROM {uc_payment_credit} WHERE order_id IN (SELECT order_id FROM {uc_orders} WHERE modified <= %d AND order_status = '%s')",
+        $time, variable_get('uc_credit_clear_status', uc_order_state_default('completed')));
     break;
   }
 
@@ -178,6 +169,17 @@ function uc_credit_cron() {
     }
   }
 }
+
+/**
+ * Implementation of hook_exit().
+ */
+function uc_credit_exit() {
+  // Make sure sensitive checkout session data doesn't persist on other pages.
+  if (arg(1) != 'checkout' && isset($_SESSION['sescrd'])) {
+    unset($_SESSION['sescrd']);
+  }
+}
+
 
 /*******************************************************************************
  * Hook Functions (Ubercart)
@@ -811,7 +813,8 @@ function uc_credit_settings_form_submit($form_id, $form_values) {
           watchdog('uc_credit', $message, WATCHDOG_ERROR);
         }
         else {
-          fwrite($file, md5(time()));
+          // Replacement key generation suggested by Barry Jaspan for increased security.
+          fwrite($file, md5(drupal_get_token(serialize($_REQUEST) . serialize($_SERVER) . time())));
           fclose($file);
 
           $message = t('Credit card encryption key file generated. Card data will now be encrypted.');
@@ -830,8 +833,15 @@ function uc_credit_settings_form_submit($form_id, $form_values) {
 
 // Displays the credit card details form on the checkout screen.
 function uc_payment_method_credit_form($order) {
-  if (isset($_POST['payment-details-data']) && arg(0) == 'cart') {
+  // Normally the CC data is posted in via AJAX.
+  if (!empty($_POST['payment-details-data']) && arg(0) == 'cart') {
     $order->payment_details = uc_credit_cache('save', $_POST['payment-details-data']);
+  }
+
+  // But we have to accommodate failed checkout form validation here.
+  if (isset($_SESSION['sescrd'])) {
+    $order->payment_details = uc_credit_cache('save', $_SESSION['sescrd']);
+    unset($_SESSION['sescrd']);
   }
 
   $form['cc_policy'] = array('#value' => variable_get('uc_credit_policy', t('Your billing information must match the billing address for the credit card entered below or we will be unable to process your payment.')));
@@ -1020,7 +1030,7 @@ function theme_uc_payment_method_credit_form($form) {
     }
     $output .= '</table>';
   }
-  elseif (arg(2) == 'orders') {
+  else {
     $output = '<table class="order-edit-table"><tbody style="border-top: 0px;">';
     if (variable_get('uc_credit_type_enabled', FALSE)) {
       $form['cc_type']['#title'] = '';
@@ -1295,7 +1305,7 @@ function uc_credit_encrypt_existing() {
  * Caches CC details on a pageload for use in various functions.
  *
  * @param $op
- *   The cache operation to perform, either 'save' or 'load'.
+ *   The cache operation to perform; either 'save', 'load', or 'clear'.
  * @param $data
  *   The encrypted, serialized string containing the CC data.
  * @return
@@ -1317,6 +1327,9 @@ function uc_credit_cache($op, $data = NULL, $encrypted = TRUE) {
     else {
       $cc_cache = $data;
     }
+  }
+  elseif ($op == 'clear') {
+    $cc_cache = array();
   }
 
   return $cc_cache;

@@ -1,4 +1,4 @@
-// $Id: uc_product.js,v 1.5.2.4 2008/07/29 22:22:44 rszrama Exp $
+// $Id: uc_product.js,v 1.5.2.5 2008/09/17 21:38:41 rszrama Exp $
 
 // Functions used on the product view page.
 
@@ -34,7 +34,7 @@ function buffer_products(file_path) {
         }
 
         $('#edit-products').val(productsURL + '/' + this.value);
-        $.post(Drupal.settings['base_path'] + 'products/field_image_cache/' + this.value, {},
+        $.post(Drupal.settings['base_path'] + '?q=products/field_image_cache/' + this.value, {},
           function(contents) {
             if (contents != 'false') {
               $('#buffer-images').append('<img src="' + file_path + '/imagecache/uc_thumbnail/' + contents +'" />');

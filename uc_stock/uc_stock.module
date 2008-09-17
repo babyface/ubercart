@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.module,v 1.12.4.2 2008/07/29 22:22:46 rszrama Exp $
+// $Id: uc_stock.module,v 1.12.4.3 2008/09/17 21:38:42 rszrama Exp $
 
 /**
  * @file
@@ -133,7 +133,7 @@ function uc_stock_edit_form($nid) {
 
   $form['stock'] = array('#tree' => TRUE);
 
-  foreach ($skus as $id => $sku) {
+  foreach ((array) $skus as $id => $sku) {
     $stock = db_fetch_array(db_query("SELECT * FROM {uc_product_stock} WHERE sku = '%s'", $sku));
 
     $form['stock'][$id]['sku'] = array(
@@ -236,7 +236,7 @@ function uc_stock_report() {
 
   $csv_rows[] = array(t('SKU'), t('Product'), t('Stock'), t('Threshold'));
 
-  $sql = "SELECT s.nid, sku, title, stock, threshold FROM {uc_product_stock} as s LEFT JOIN {node} as n ON s.nid = n.nid WHERE active = 1";
+  $sql = "SELECT s.nid, sku, title, stock, threshold FROM {uc_product_stock} as s LEFT JOIN {node} as n ON s.nid = n.nid WHERE active = 1 AND title <> ''";
   if (arg(4) == 'threshold') {
     $sql .= ' AND threshold >= stock';
   }

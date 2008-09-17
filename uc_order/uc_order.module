@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.13 2008/07/29 22:22:44 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.14 2008/09/17 21:38:41 rszrama Exp $
 
 /**
  * @file
@@ -427,9 +427,6 @@ function uc_order_user($op, &$edit, &$account, $category = NULL) {
           'class' => 'member',
         );
         return array(t('Orders') => $items);
-      }
-      else {
-        return NULL;
       }
   }
 }
@@ -1513,11 +1510,7 @@ function uc_order_search_form_submit($form_id, $form_values) {
  *   The user ID whose orders you wish to list.
  */
 function uc_order_history($uid) {
-  drupal_set_title(t('My order history'));
-
-  $breadcrumb = drupal_get_breadcrumb();
-  $breadcrumb[] = l(t('My account'), 'user/'. arg(1));
-  drupal_set_breadcrumb($breadcrumb);
+  drupal_set_title(t('Order history'));
 
   $header = array(
     array('data' => t('Date'), 'field' => 'o.created', 'sort' => 'desc'),
@@ -1563,7 +1556,7 @@ function uc_order_view($order_id, $view = 'view') {
 
   if ($view == 'customer') {
     $breadcrumb = drupal_get_breadcrumb();
-    $breadcrumb[] = l(t('Order history'), 'user/'. arg(1) .'/orders');
+    $breadcrumb[2] = l(t('Order history'), 'user/'. arg(1) .'/orders');
     drupal_set_breadcrumb($breadcrumb);
   }
 
@@ -1597,7 +1590,7 @@ function uc_order_view($order_id, $view = 'view') {
   }
 
   if ($view == 'customer' && variable_get('uc_cust_view_order_invoices', TRUE)) {
-    uc_add_js("function open_invoice() { window.open(Drupal.settings['base_path'] + 'user/". arg(1) ."/order/". arg(3) ."/invoice/print', '". t('Invoice') ."', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=600,height=480,left=50,top=50'); }", 'inline');
+    uc_add_js("function open_invoice() { window.open(Drupal.settings['base_path'] + '?q=user/". arg(1) ."/order/". arg(3) ."/invoice/print', '". t('Invoice') ."', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=600,height=480,left=50,top=50'); }", 'inline');
     $contents = '<a href="#" onclick="open_invoice();">'
                . uc_store_get_icon('file:print') .' '
                . t('Click to open a window with a printable invoice.') .'</a>';
@@ -2757,7 +2750,7 @@ function uc_order_update_status($order_id, $status) {
     }
 
     // Otherwise perform the update and log the changes.
-    db_query("UPDATE {uc_orders} SET order_status = '%s' WHERE order_id = %d", $status, $order_id);
+    db_query("UPDATE {uc_orders} SET order_status = '%s', modified = %d WHERE order_id = %d", $status, time(), $order_id);
     module_invoke_all('order', 'update', $order, $status);
 
     $change = array(t('Order status') => array('old' => $order->order_status, 'new' => $status));

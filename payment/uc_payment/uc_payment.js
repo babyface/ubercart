@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.4.2.10 2008/07/29 22:22:40 rszrama Exp $
+// $Id: uc_payment.js,v 1.4.2.11 2008/09/17 21:38:38 rszrama Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
@@ -74,7 +74,7 @@ function render_line_items() {
   $('#order-total-throbber').attr('style', 'background-image: url(' + Drupal.settings['base_path'] + 'misc/throbber.gif); background-repeat: no-repeat; background-position: 100% -20px;').html('&nbsp;&nbsp;&nbsp;&nbsp;');
 
   // Post the line item data to a URL and get it back formatted for display.
-  $.post(Drupal.settings['base_path'] + 'cart/checkout/line_items', li_info,
+  $.post(Drupal.settings['base_path'] + '?q=cart/checkout/line_items', li_info,
     function(contents) {
       // Only display the changes if this was the last requested update.
       if (this_update.getTime() == line_update) {
@@ -122,7 +122,7 @@ function get_payment_details(path) {
     data = {};
   }
   // Make the post to get the details for the chosen payment method.
-  $.post(Drupal.settings['base_path'] + path, data,
+  $.post(Drupal.settings['base_path'] + '?q=' + path, data,
     function(details) {
       if (this_update.getTime() == payment_update) {
         // If the response was empty, throw up the default message.
@@ -147,7 +147,7 @@ function get_payment_details(path) {
  * Pop-up an info box for the credit card CVV.
  */
 function cvv_info_popup() {
-  var popup = window.open(Drupal.settings['base_path'] + 'cart/checkout/credit/cvv_info', 'CVV_Info', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=480,height=460,left=282,top=122');
+  var popup = window.open(Drupal.settings['base_path'] + '?q=cart/checkout/credit/cvv_info', 'CVV_Info', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=480,height=460,left=282,top=122');
 }
 
 /**

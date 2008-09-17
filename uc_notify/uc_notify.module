@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_notify.module,v 1.10.2.7 2008/07/29 22:22:43 rszrama Exp $
+// $Id: uc_notify.module,v 1.10.2.8 2008/09/17 21:38:41 rszrama Exp $
 
 /**
  * @file
@@ -375,8 +375,6 @@ function uc_notify_order_update($form_id, $form_values) {
 
     // Get the update e-mail body.
     $body = variable_get('uc_notify_order_update_body', uc_get_message('order_update_email'));
-    // Check the markup per the selected input format.
-    $body = check_markup($body, variable_get('uc_notify_order_update_format', 3), FALSE);
     // Convert tokens to their values.
     $body = token_replace_multiple($body, array('global' => NULL, 'order' => $order));
 
@@ -386,8 +384,8 @@ function uc_notify_order_update($form_id, $form_values) {
     $email_to = $order->primary_email;
     $headers = uc_notify_headers();
 
-    $sent = drupal_mail('order_comment', $order->primary_email, $subject,
-                        check_markup($body, variable_get('uc_checkout_status_format', 3), FALSE),
+    $sent = drupal_mail('order_comment', $order->primary_email, check_plain($subject),
+                        check_markup($body, variable_get('uc_notify_order_update_format', 3), FALSE),
                         uc_store_email_from(), uc_notify_headers());
 
     if ($sent) {

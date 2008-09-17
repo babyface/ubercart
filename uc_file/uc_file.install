@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.install,v 1.1.2.7 2008/07/29 22:22:43 rszrama Exp $
+// $Id: uc_file.install,v 1.1.2.8 2008/09/17 21:38:40 rszrama Exp $
 
 function uc_file_install() {
   switch ($GLOBALS['db_type']) {
@@ -82,7 +82,7 @@ function uc_file_uninstall() {
 
 function uc_file_update_1() {
   $ret = array();
-  
+
   switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
@@ -92,7 +92,7 @@ function uc_file_update_1() {
     case 'pgsql':
       break;
   }
-  
+
   return $ret;
 }
 
@@ -105,3 +105,14 @@ function uc_file_update_2() {
   }
   return $ret;
 }
+
+function uc_file_update_3() {
+  $ret = array();
+
+  // Fixes the db_next_id() + 1 error.
+  $pfid = db_result(db_query("SELECT MAX(pfid) FROM {uc_product_features}"));
+  $ret[] = update_sql("UPDATE {sequences} SET id = ". intval($pfid) ." WHERE name = '{uc_product_features}_pfid'");
+
+  return $ret;
+}
+

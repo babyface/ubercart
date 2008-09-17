@@ -1,10 +1,9 @@
-/* $Id: uc_product.css,v 1.8.2.4 2008/07/29 22:22:44 rszrama Exp $ */
+/* $Id: uc_product.css,v 1.8.2.5 2008/09/17 21:38:41 rszrama Exp $ */
 
 .product_image {
   float: right;
   clear: right;
   text-align: center;
-  border-left: 1px solid;
   padding-top: 4px;
   padding-left: 4px;
   margin-left: 4px;

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_workflow.inc,v 1.1.2.6 2008/07/29 22:22:40 rszrama Exp $
+// $Id: uc_payment_workflow.inc,v 1.1.2.7 2008/09/17 21:38:38 rszrama Exp $
 
 /**
  * @file
@@ -46,14 +46,14 @@ function uc_payment_configuration() {
 
   // Set the order status to "Completed" when checkout is complete, none
   // of the products are shippable, and the balance is less than or equal to 0.
-  $configurations['uc_checkout_complete'] = array(
+  $configurations['uc_checkout_complete_paid'] = array(
     '#type' => 'configuration',
-    '#label' => t('Update order status on completed checkout'),
-    '#event' => 'payment_entered',
+    '#label' => t('Update order status upon checkout completion with full payment'),
+    '#event' => 'checkout_complete',
     '#module' => 'uc_payment',
     '#active' => TRUE,
   );
-  $configurations['uc_checkout_complete'][] = array(
+  $configurations['uc_checkout_complete_paid'][] = array(
     '#type' => 'condition',
     '#name' => 'uc_payment_condition_balance',
     '#argument map' => array(
@@ -63,7 +63,7 @@ function uc_payment_configuration() {
       'balance_comparison' => 'less_equal',
     ),
   );
-  $configurations['uc_checkout_complete'][] = array(
+  $configurations['uc_checkout_complete_paid'][] = array(
     '#type' => 'condition',
     '#name' => 'uc_order_condition_is_shippable',
     '#argument map' => array(
@@ -71,7 +71,7 @@ function uc_payment_configuration() {
     ),
     '#negate' => TRUE,
   );
-  $configurations['uc_checkout_complete'][] = array(
+  $configurations['uc_checkout_complete_paid'][] = array(
     '#type' => 'action',
     '#name' => 'uc_order_action_update_status',
     '#argument map' => array(
