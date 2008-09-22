@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.install,v 1.10 2008/07/10 12:41:00 islandusurper Exp $
+// $Id: uc_attribute.install,v 1.10.2.1 2008/09/22 21:07:43 islandusurper Exp $
 
 function uc_attribute_schema() {
   $schema = array();
@@ -52,6 +52,7 @@ function uc_attribute_schema() {
     ),
     'primary key' => array('aid'),
   );
+
   $schema['uc_attribute_options'] = array(
     'description' => t('The available choices for each attribute.'),
     'fields' => array(
@@ -107,6 +108,7 @@ function uc_attribute_schema() {
     ),
     'primary key' => array('oid'),
   );
+
   $schema['uc_class_attributes'] = array(
     'description' => t('Attributes copied to a product of a certain class when it is created.'),
     'fields' => array(
@@ -157,6 +159,7 @@ function uc_attribute_schema() {
     ),
     'primary key' => array('pcid', 'aid'),
   );
+
   $schema['uc_class_attribute_options'] = array(
     'description' => t('The available choices for each attribute.'),
     'fields' => array(
@@ -206,12 +209,14 @@ function uc_attribute_schema() {
     ),
     'primary key' => array('pcid', 'oid'),
   );
+
   $schema['uc_product_attributes'] = array(
     'description' => t('Attributes copied to a product.'),
     'fields' => array(
       'nid' => array(
         'description' => t('The product node ID.'),
         'type' => 'int',
+        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
       ),
@@ -220,6 +225,7 @@ function uc_attribute_schema() {
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+        'default' => 0,
       ),
       'ordering' => array(
         'description' => t('Determines the sort order of attributes.'),
@@ -254,12 +260,14 @@ function uc_attribute_schema() {
     ),
     'primary key' => array('nid', 'aid'),
   );
+
   $schema['uc_product_options'] = array(
     'description' => t('The available choices for each attribute.'),
     'fields' => array(
       'nid' => array(
         'description' => t('The product node ID.'),
         'type' => 'int',
+        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
       ),
@@ -268,6 +276,7 @@ function uc_attribute_schema() {
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+        'default' => 0,
       ),
       'cost' => array(
         'description' => t("The adjustment to a product's cost with the chosen option."),
@@ -301,6 +310,7 @@ function uc_attribute_schema() {
     ),
     'primary key' => array('nid', 'oid'),
   );
+
   $schema['uc_product_adjustments'] = array(
     'description' => t("Changes to a product's SKU based on the possible combination of chosen options."),
     'fields' => array(
@@ -327,7 +337,7 @@ function uc_attribute_schema() {
       ),
     ),
     'indexes' => array(
-      'uc_product_adjustments_nid' => array('nid'),
+      'nid' => array('nid'),
     ),
   );
 
@@ -534,5 +544,58 @@ function uc_attribute_update_10() {
       db_add_column($ret, 'uc_attributes', 'description', 'varchar(255)', array('not null' => true, 'default' => ''));
     break;
   }
+  return $ret;
+}
+
+function uc_attribute_update_6000() {
+  $ret = array();
+
+  // Standardize database definitions during upgrade to Drupal 6.
+  // ID fields are unsigned, regular-sized ints.
+  // "Boolean" flags are unsigned tiny ints.
+  // Postgres tables will have the necessary default values, and MySQL
+  // doesn't need them, so the schema can just be mismatched for that.
+
+  // Some id columns are already auto-incremented, so we can't remove the
+  // primary key beforehand in MySQL. So we add it later for Postgres.
+
+  db_change_field($ret, 'uc_attributes', 'aid', 'aid', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE));
+  db_change_field($ret, 'uc_attributes', 'required', 'required', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'tiny', 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_attributes', 'display', 'display', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'tiny', 'not null' => TRUE, 'default' => 1));
+  if ($GLOBALS['db_type'] == 'pgsql') {
+    db_add_primary_key($ret, 'uc_attributes', array('aid'));
+  }
+
+  db_change_field($ret, 'uc_attribute_options', 'aid', 'aid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_attribute_options', 'oid', 'oid', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE));
+  if ($GLOBALS['db_type'] == 'pgsql') {
+    db_add_primary_key($ret, 'uc_attributes', array('oid'));
+  }
+
+  db_drop_primary_key($ret, 'uc_class_attributes');
+  db_change_field($ret, 'uc_class_attributes', 'aid', 'aid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('primary key' => array('pcid', 'aid')));
+  db_change_field($ret, 'uc_class_attributes', 'default_option', 'default_option', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_class_attributes', 'required', 'required', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'tiny', 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_class_attributes', 'display', 'display', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'tiny', 'not null' => TRUE, 'default' => 1));
+
+  db_drop_primary_key($ret, 'uc_class_attribute_options');
+  db_change_field($ret, 'uc_class_attribute_options', 'oid', 'oid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('primary key' => array('pcid', 'oid')));
+
+  db_drop_primary_key($ret, 'uc_product_attributes');
+  db_change_field($ret, 'uc_product_attributes', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_product_attributes', 'aid', 'aid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_product_attributes', 'default_option', 'default_option', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_product_attributes', 'required', 'required', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'tiny', 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_product_attributes', 'display', 'display', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'tiny', 'not null' => TRUE, 'default' => 1));
+  db_add_primary_key($ret, 'uc_product_attributes', array('nid', 'aid'));
+
+  db_drop_primary_key($ret, 'uc_product_options');
+  db_change_field($ret, 'uc_product_options', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_product_options', 'oid', 'oid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_add_primary_key($ret, 'uc_product_options', array('nid', 'oid'));
+
+  db_drop_primary_key($ret, 'uc_product_adjustments');
+  db_change_field($ret, 'uc_product_adjustments', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('nid' => array('nid'))));
+
   return $ret;
 }

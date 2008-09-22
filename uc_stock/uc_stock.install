@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.install,v 1.6.2.3 2008/08/06 13:41:27 islandusurper Exp $
+// $Id: uc_stock.install,v 1.6.2.4 2008/09/22 21:07:44 islandusurper Exp $
 
 /**
  * @file
@@ -9,22 +9,54 @@
 /**
  * Implementation of hook_schema().
  */
-
 function uc_stock_schema() {
   $schema = array();
 
   $schema['uc_product_stock'] = array(
-      'description' => t('Stock levels for Ubercart products'),
-      'fields' => array(
-           'sku' => array('description' => t('SKU of a product'), 'type' => 'varchar', 'length' => '255', 'not null' => TRUE),
-           'nid' => array('description' => t('Node ID of a product'), 'type' => 'int', 'size' => 'medium', 'not null' => TRUE, 'disp-width' => '9'),
-           'active' => array('description' => t(''), 'type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0, 'disp-width' => '2'),
-           'stock' => array('description' => t('Level of stock'), 'type' => 'int', 'size' => 'medium', 'not null' => TRUE, 'default' => 0, 'disp-width' => '11'),
-           'threshold' => array('description' => t('Threshold level'), 'type' => 'int', 'size' => 'medium', 'not null' => TRUE, 'default' => 0, 'disp-width' => '11')),
-      'primary key' => array('sku'),
-      'indexes' => array(
-           'nid' => array('nid')),
+    'description' => t('Stock levels for Ubercart products'),
+    'fields' => array(
+      'sku' => array(
+        'description' => t('SKU of a product'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'nid' => array(
+        'description' => t('Node ID of a product'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'active' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'stock' => array(
+        'description' => t('Level of stock'),
+        'type' => 'int',
+        'size' => 'medium',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'threshold' => array(
+        'description' => t('Threshold level'),
+        'type' => 'int',
+        'size' => 'medium',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
+    'primary key' => array('sku'),
   );
+
   return $schema;
 }
 
@@ -34,4 +66,14 @@ function uc_stock_install() {
 
 function uc_stock_uninstall() {
   drupal_uninstall_schema('uc_stock');
+}
+
+function uc_stock_update_6000() {
+  $ret = array();
+
+  db_drop_index($ret, 'uc_product_stock', 'nid');
+  db_change_field($ret, 'uc_product_stock', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('nid' => array('nid'))));
+  db_change_field($ret, 'uc_product_stock', 'active', 'active', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
 }

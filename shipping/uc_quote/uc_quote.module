@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.2 2008/09/11 14:43:45 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.3 2008/09/22 21:07:42 islandusurper Exp $
 
 /**
  * @file
@@ -42,7 +42,7 @@ function uc_quote_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
   $items['admin/store/settings/quotes/edit'] = array(
-    'title' => 'Edit',
+    'title' => 'Quote settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_quote_admin_settings'),
     'access arguments' => array('configure quotes'),
@@ -207,12 +207,7 @@ function uc_quote_form_alter(&$form, &$form_state, $form_id) {
     );
     $form['shipping']['default_address'] = array('#type' => 'fieldset',
       '#title' => t('Default product pickup address'),
-      '#description' => t("When delivering products to customers, the original
- location of the product must be known in order to accurately quote the shipping
- cost and set up a delivery. This form provides the default location for products,
- either individually or an entire manufacturer's line. If a product's individual
- pickup address is blank, &Uuml;bercart looks for the manufacturer's. If that is
- also blank, it uses the store's default pickup address, which can be set <a href=\"!here\">here</a>.",
+      '#description' => t("When delivering products to customers, the original location of the product must be known in order to accurately quote the shipping cost and set up a delivery. This form provides the default location for products, either individually or an entire manufacturer's line. If a product's individual pickup address is blank, &Uuml;bercart looks for the manufacturer's. If that is also blank, it uses the store's default pickup address, which can be set <a href=\"!here\">here</a>.",
          array('!here' => url('admin/store/settings/quotes'))),
       '#collapsible' => true,
       '#collapsed' => true,
@@ -525,17 +520,17 @@ function uc_quote_order($op, &$arg1, $arg2) {
       unset($_SESSION['quote']);
     break;
     case 'save':
-      db_query("DELETE FROM {uc_order_quotes} WHERE oid = %d", $arg1->order_id);
-      db_query("INSERT INTO {uc_order_quotes} (oid, method, accessorials, rate, quote_form) VALUES (%d, '%s', '%s', %f, '%s')",
+      db_query("DELETE FROM {uc_order_quotes} WHERE order_id = %d", $arg1->order_id);
+      db_query("INSERT INTO {uc_order_quotes} (order_id, method, accessorials, rate, quote_form) VALUES (%d, '%s', '%s', %f, '%s')",
         $arg1->order_id, $arg1->quote['method'], $arg1->quote['accessorials'], $arg1->quote['rate'], $arg1->quote['quote_form']);
     break;
     case 'load':
-      $quote = db_fetch_array(db_query("SELECT method, accessorials, rate, quote_form FROM {uc_order_quotes} WHERE oid = %d", $arg1->order_id));
+      $quote = db_fetch_array(db_query("SELECT method, accessorials, rate, quote_form FROM {uc_order_quotes} WHERE order_id = %d", $arg1->order_id));
       $arg1->quote = $quote;
       $arg1->quote['accessorials'] = strval($quote['accessorials']);
     break;
     case 'delete':
-      db_query("DELETE FROM {uc_order_quotes} WHERE oid = %d", $arg1->order_id);
+      db_query("DELETE FROM {uc_order_quotes} WHERE order_id = %d", $arg1->order_id);
     break;
   }
 }
@@ -581,56 +576,18 @@ function uc_quote_shipping_type() {
  * Display a summary of the shipping quote settings.
  */
 function uc_quote_overview() {
-  $sections = array();
-  $address = variable_get('uc_quote_store_default_address', new stdClass());
+  // Add some Ubercart specific JS for modifying summaries.
+  uc_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
+  uc_add_js('edit_icon_path = "/'. drupal_get_path('module', 'uc_store') .'/images/order_edit.gif";', 'inline');
 
-  $sections[] = array(
-    'edit' => 'admin/store/settings/quotes/edit',
-    'title' => t('Quote settings'),
-    'items' => array(
-      variable_get('uc_quote_log_errors', false) ?
-        t('Quote errors are submitted to watchdog.') :
-        t('Quote errors are not submitted to watchdog.'),
-      variable_get('uc_quote_display_debug', false) ?
-        t('Debugging information is displayed to administrators when quotes are generated.') :
-        t('Debugging information is not displayed to administrators when quotes are generated.'),
-      t('The default store shipping address is:<br />!address', array('!address' => uc_address_format(
-        $address->first_name,
-        $address->last_name,
-        $address->company,
-        $address->street1,
-        $address->street2,
-        $address->city,
-        $address->zone,
-        $address->postal_code,
-        $address->country)))
-    ),
-  );
+  $summaries = array();
 
-  $items = array();
+  // Load the form summaries for pages beneath this path.
+  $summaries = array_merge($summaries, summarize_child_form_pages('admin/store/settings/quotes/edit', FALSE, TRUE));
+  $summaries = array_merge($summaries, summarize_child_form_pages('admin/store/settings/quotes/methods', FALSE, TRUE));
 
-  $methods = array_filter(module_invoke_all('shipping_method'), '_uc_quote_method_enabled');
-  uasort($methods, '_uc_quote_type_sort');
-  foreach ($methods as $method) {
-    $items[] = l(t('@method is enabled.', array('@method' => $method['title'])), 'admin/store/settings/quotes/methods/'. $method['id']);
-  }
-
-  $sections[] = array(
-    'edit' => 'admin/store/settings/quotes/methods',
-    'title' => t('Quote methods'),
-    'items' => $items,
-  );
-
-  $types = uc_quote_shipping_type_options();
-  $default = variable_get('uc_store_shipping_type', 'small_package');
-  $types[$default] .= theme('item_list', array(t('Default')));
-  $sections[] = array(
-    'edit' => 'admin/store/settings/quotes/methods',
-    'title' => t('Shipping types'),
-    'items' => $types,
-  );
-
-  return theme('uc_settings_overview', $sections);
+  // Theme it all up in a summaries overview.
+  return theme('summary_overview', $summaries);
 }
 
 /**
@@ -648,39 +605,68 @@ function uc_quote_admin_settings() {
   $address = variable_get('uc_quote_store_default_address', new stdClass());
   $form = array();
 
-  $form['uc_quote_log_errors'] = array('#type' => 'checkbox',
+  $form['uc_quote_log_errors'] = array(
+    '#type' => 'checkbox',
     '#title' => t('Log errors during checkout to watchdog'),
-    '#default_value' => variable_get('uc_quote_log_errors', false),
+    '#summary callback' => 'summarize_checkbox',
+    '#summary arguments' => array(
+      t('Quote errors are submitted to watchdog.'),
+      t('Quote errors are not submitted to watchdog.'),
+    ),
+    '#default_value' => variable_get('uc_quote_log_errors', FALSE),
   );
-  $form['uc_quote_display_debug'] = array('#type' => 'checkbox',
+  $form['uc_quote_display_debug'] = array(
+    '#type' => 'checkbox',
     '#title' => t('Display debug information to administrators.'),
-    '#default_value' => variable_get('uc_quote_display_debug', false),
+    '#summary callback' => 'summarize_checkbox',
+    '#summary arguments' => array(
+      t('Debugging information is displayed to administrators when quotes are generated.'),
+      t('Debugging information is not displayed to administrators when quotes are generated.'),
+    ),
+    '#default_value' => variable_get('uc_quote_display_debug', FALSE),
   );
-  $form['uc_quote_require_quote'] = array('#type' => 'checkbox',
+  $form['uc_quote_require_quote'] = array(
+    '#type' => 'checkbox',
     '#title' => t('Prevent the customer from completing an order if a shipping quote is not selected.'),
-    '#default_value' => variable_get('uc_quote_require_quote', true),
+    '#summary callback' => 'summarize_checkbox',
+    '#summary arguments' => array(
+      t('Customers cannot complete checkout without selecting a shipping quote.'),
+      t('Customers can still checkout without selecting a shipping quote.'),
+    ),
+    '#default_value' => variable_get('uc_quote_require_quote', TRUE),
   );
-  $form['uc_quote_err_msg'] = array('#type' => 'fieldset',
+  $form['uc_quote_err_msg'] = array(
+    '#type' => 'fieldset',
     '#title' => t('Shipping quote error message'),
-    '#collapsible' => true,
-    '#collapsed' => true,
+    '#summary callback' => 'summarize_form',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
   );
-  $form['uc_quote_err_msg']['text'] = array('#type' => 'textarea',
+  $form['uc_quote_err_msg']['text'] = array(
+    '#type' => 'textarea',
     '#title' => t('Message text'),
     '#default_value' => variable_get('uc_quote_err_msg', t("There were problems getting a shipping quote. Please verify the delivery and product information and try again.\nIf this does not resolve the issue, please call in to complete your order.")),
   );
   $form['uc_quote_err_msg']['format'] = filter_form(variable_get('uc_quote_msg_format', FILTER_DEFAULT_FORMAT));
+  $form['uc_quote_err_msg']['format']['#summary callback'] = 'summarize_null';
 
-  $form['default_address'] = array('#type' => 'fieldset',
+  $form['default_address'] = array(
+    '#type' => 'fieldset',
     '#title' => t('Default pickup address'),
-    '#description' => t("When delivering products to customers, the original
- location of the product must be known in order to accurately quote the shipping
- cost and set up a delivery. This form provides the default location for products
- across the entire store. If a product's individual pickup address is blank,
- &Uuml;bercart looks for the manufacturer's. If that is also blank, it uses the
- store's default pickup address."),
-    '#collapsible' => true,
-    '#collapsed' => false,
+    '#description' => t("When delivering products to customers, the original location of the product must be known in order to accurately quote the shipping cost and set up a delivery. This form provides the default location for products across the entire store. If a product's individual pickup address is blank, &Uuml;bercart looks for the manufacturer's. If that is also blank, it uses the store's default pickup address."),
+    '#summary' => t('Default pickup address is: <br />!address', array('!address' => uc_address_format(
+      $address->first_name,
+      $address->last_name,
+      $address->company,
+      $address->street1,
+      $address->street2,
+      $address->city,
+      $address->zone,
+      $address->postal_code,
+      $address->country
+    ))),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
   );
   $form['default_address']['first_name'] = uc_textfield(uc_get_field_name('first_name'), $address->first_name, FALSE);
   $form['default_address']['last_name'] = uc_textfield(uc_get_field_name('last_name'), $address->last_name, FALSE);
@@ -743,7 +729,8 @@ function uc_quote_method_settings() {
   $form = array();
 
   $form['methods'] = array(
-    '#tree' => true
+    '#tree' => true,
+    '#summary callback' => 'summarize_form',
   );
 
   $enabled = variable_get('uc_quote_enabled', array());
@@ -751,8 +738,15 @@ function uc_quote_method_settings() {
   $methods = uc_quote_shipping_method_options();
   if (is_array($methods)) {
     foreach ($methods as $id => $title) {
+
+      $form['methods'][$id]['#summary callback'] = 'summarize_form';
       $form['methods'][$id]['uc_quote_enabled'] = array('#type' => 'checkbox',
         '#default_value' => $enabled[$id],
+        '#summary callback' => 'summarize_checkbox',
+        '#summary arguments' => array(
+          l(t('@method is enabled.', array('@method' => $title)), 'admin/store/settings/quotes/methods/'. $id),
+          '',
+        ),
       );
       $form['methods'][$id]['uc_quote_method_weight'] = array('#type' => 'weight',
         '#delta' => 5,
@@ -767,6 +761,7 @@ function uc_quote_method_settings() {
       '#title' => t('Type ordering'),
       '#description' => t('Determines which shipping methods are quoted at checkout when products of different shipping types are ordered. Lighter weights are chosen first.'),
       '#collapsible' => true,
+      '#summary callback' => 'summarize_null',
       '#tree' => true,
     );
     $weight = variable_get('uc_quote_type_weight', array());

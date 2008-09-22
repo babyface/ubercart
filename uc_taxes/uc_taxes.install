@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.install,v 1.10 2008/07/10 12:41:07 islandusurper Exp $
+// $Id: uc_taxes.install,v 1.10.2.1 2008/09/22 21:07:45 islandusurper Exp $
 
 function uc_taxes_schema() {
   $schema = array();
@@ -201,5 +201,14 @@ function uc_taxes_update_6() {
     $ret[] = update_sql("ALTER TABLE {uc_taxes} DROP type");
     $ret[] = update_sql("ALTER TABLE {uc_taxes} DROP conditions");
   }
+  return $ret;
+}
+
+function uc_taxes_update_6000() {
+  $ret = array();
+
+  db_drop_primary_key($ret, 'uc_taxes');
+  db_change_field($ret, 'uc_taxes', 'id', 'id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('id')));
+
   return $ret;
 }

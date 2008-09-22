@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.install,v 1.9 2008/07/10 12:41:06 islandusurper Exp $
+// $Id: uc_store.install,v 1.9.2.1 2008/09/22 21:07:45 islandusurper Exp $
 
 function uc_store_schema() {
   $schema = array();
@@ -40,10 +40,11 @@ function uc_store_schema() {
       ),
     ),
     'indexes' => array(
-      'uc_countries_country_name' => array('country_name'),
+      'country_name' => array('country_name'),
     ),
     'primary key' => array('country_id'),
   );
+
   $schema['uc_zones'] = array(
     'fields' => array(
       'zone_id' => array(
@@ -72,11 +73,12 @@ function uc_store_schema() {
       ),
     ),
     'indexes' => array(
-      'uc_zones_zone_code' => array('zone_code'),
-      'uc_zones_zone_country_id' => array('zone_country_id'),
+      'zone_code' => array('zone_code'),
+      'zone_country_id' => array('zone_country_id'),
     ),
     'primary key' => array('zone_id'),
   );
+
   $schema['uc_store_footers'] = array(
     'fields' => array(
       'path_hash' => array(
@@ -247,4 +249,18 @@ function uc_store_update_4() {
   variable_del('uc_store_prev_time');
 
   return array();
+}
+
+function uc_store_update_6000() {
+  $ret = array();
+
+  db_drop_primary_key($ret, 'uc_countries');
+  db_change_field($ret, 'uc_countries', 'country_id', 'country_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('country_id')));
+
+  db_drop_primary_key($ret, 'uc_zones');
+  db_drop_index($ret, 'uc_zones', 'zone_country_id');
+  db_change_field($ret, 'uc_zones', 'zone_id', 'zone_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('zone_id')));
+  db_change_field($ret, 'uc_zones', 'zone_country_id', 'zone_country_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('zone_country_id' => array('zone_country_id'))));
+
+  return $ret;
 }

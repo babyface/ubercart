@@ -1,5 +1,5 @@
 <?php
-// $Id: summaries.inc,v 1.1.2.3 2008/08/06 13:41:27 islandusurper Exp $
+// $Id: summaries.inc,v 1.1.2.4 2008/09/22 21:07:45 islandusurper Exp $
 
 /**
  * @file
@@ -28,7 +28,14 @@ function summarize_form($form) {
   foreach (element_children($form) as $key) {
     // Set the callback for the summary to the default if not specified.
     if (!isset($form[$key]['#summary callback'])) {
-      $form[$key]['#summary callback'] = 'summarize_element';
+
+      // watch out for those filter_form()s...
+      if(in_array('filter_form_validate', (array) $form[$key]['#element_validate'])) {
+        $form[$key]['#summary callback'] = 'summarize_null';
+      }
+      else {
+        $form[$key]['#summary callback'] = 'summarize_element';
+      }
     }
 
     // Setup the arguments array, always passing in the form array.
@@ -67,7 +74,7 @@ function summarize_form($form) {
  * @return
  *   A summary string for the element or a summary array for a fieldset.
  */
-function summarize_element($form, $title = TRUE) {
+function summarize_element($form, $title = FALSE) {
   // Check to see if the form array contained a #summary.
   if (isset($form['#summary'])) {
     // If so, decide whether to display it with or without the element's #title.
@@ -112,6 +119,10 @@ function summarize_element($form, $title = TRUE) {
   }
 }
 
+function summarize_null($form) {
+  return array();
+}
+
 function summarize_checkbox($form, $true, $false) {
   if ($form['#default_value']) {
     return $true;
@@ -129,15 +140,25 @@ function summarize_checkbox($form, $true, $false) {
  * @param $trim
  *   When set to TRUE, summary data will only be included in the return array
  *   when the summary actually has items.
+ * @param $only_parent
+ *   When set to TRUE, forms will only be included from the given $path,
+ *   no recursion will be done
  * @return
  *   An array of data representing a form page summary including keys for the
  *   page's 'path', and edit 'href', a summary 'title' and 'items'.
  */
-function summarize_child_form_pages($path, $trim = FALSE) {
+function summarize_child_form_pages($path, $trim = FALSE, $only_parent = FALSE) {
   $summaries = array();
 
   // Fetch and loop through any child menu items from the database.
-  $result = db_query("SELECT path FROM {menu_router} WHERE path LIKE '%s/%%' ORDER BY weight", $path);
+  $accessor = "LIKE '%s/%%'";
+
+  // If no_recur is TRUE, only look for the parent
+  if ($only_parent) {
+    $accessor = "= '%s'";
+  }
+
+  $result = db_query("SELECT path FROM {menu_router} WHERE path ". $accessor ." ORDER BY weight", $path);
 
   while ($row = db_fetch_array($result)) {
     $item = menu_get_item($row['path']);
@@ -186,7 +207,7 @@ function theme_summary_overview($summaries, $link = TRUE) {
 
     // Add a div for the header containing the title and edit link.
     $output .= '<div class="summary-header"><span class="summary-title">'
-             . $summary['title'] .'</span>';
+             . check_plain($summary['title']) .': </span>';
 
     if ($link) {
       $output .= ' <span class="summary-link">'. l(t('edit'), $summary['href'])

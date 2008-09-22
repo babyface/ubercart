@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.install,v 1.6.2.1 2008/07/11 21:41:21 islandusurper Exp $
+// $Id: uc_paypal.install,v 1.6.2.2 2008/09/22 21:07:42 islandusurper Exp $
 
 /**
  * @file
@@ -110,6 +110,16 @@ function uc_paypal_update_1() {
 
   $t = get_t();
   $ret[] = update_sql("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('paypal_pending', '". $t('PayPal pending') ."', 'payment_received', 7, 1);");
+
+  return $ret;
+}
+
+function uc_paypal_update_6000() {
+  $ret = array();
+
+  db_drop_index($ret, 'uc_payment_paypal_ipn', 'order_id');
+  db_change_field($ret, 'uc_payment_paypal_ipn', 'order_id', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('order_id' => array('order_id'))));
+  db_change_field($ret, 'uc_payment_paypal_ipn', 'received', 'received', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }

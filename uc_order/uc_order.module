@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.3 2008/09/11 14:43:46 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.4 2008/09/22 21:07:44 islandusurper Exp $
 
 /**
  * @file
@@ -680,74 +680,30 @@ function uc_order_uc_message() {
  * Display the order settings overview.
  */
 function uc_order_settings_overview() {
-  $items = array(
-    t('Displaying !number orders at a time on the order admin overview.', array('!number' => variable_get('uc_order_number_displayed', 30))),
-    t('Order logging is !status.', array('!status' => variable_get('uc_order_logging', TRUE) ? t('enabled') : t('disabled'))),
-    t('Addresses on order view pages are !status.', array('!status' => variable_get('uc_order_capitalize_addresses', TRUE) ? t('capitalized') : t('displayed as entered'))),
-  );
-  if (module_exists('ubrowser') && module_exists('uc_catalog')) {
-    $items[] = t('You are !status the uBrowser to add products to orders.', array('!status' => variable_get('uc_ubrowser_product_select', TRUE) ? t('using') : t('not using')));
-  }
-  $cust_template = variable_get('uc_cust_order_invoice_template', 'customer');
-  $items[] = t('Order invoice template: !template', array('!template' => $cust_template == '0' ? t('custom') : $cust_template));
-  $sections[] = array(
-    'edit' => 'admin/store/settings/orders/edit',
-    'title' => t('Order settings'),
-    'items' => $items,
-  );
+  // Add some Ubercart specific JS for modifying summaries.
+  uc_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
+  uc_add_js('edit_icon_path = "/'. drupal_get_path('module', 'uc_store') .'/images/order_edit.gif";', 'inline');
 
-  foreach (uc_order_status_list() as $status) {
-    $statuses[] = $status['title'];
-  }
-  $items = array();
-  $items[] = t('The following order statuses have been defined:')
-           . theme('item_list', $statuses);
-  $sections[] = array(
-    'edit' => 'admin/store/settings/orders/edit/workflow',
-    'title' => t('Order workflow'),
-    'items' => $items,
-  );
+  $summaries = array();
 
-  $items = array();
-  $panes = _order_pane_list();
-  foreach ($panes as $pane) {
-    foreach ($pane['show'] as $view) {
-      $lists[$view][$pane['id']]['title'] = $pane['title'];
-      $lists[$view][$pane['id']]['enabled'] = variable_get('uc_order_pane_'. $pane['id'] .'_show_'. $view, TRUE);
-      $lists[$view][$pane['id']]['weight'] = variable_get('uc_order_pane_'. $pane['id'] .'_weight_'. $view, $pane['weight']);
-    }
-  }
-  $titles = _get_order_screen_titles();
-  foreach ($lists as $view => $data) {
-    uasort($lists[$view], 'uc_weight_sort');
-  }
-  foreach ($lists as $view => $data) {
-    $title = t('Order panes on !screen screen', array('!screen' => $titles[$view]));
-    $pitems = array();
-    foreach ($data as $id => $pane_data) {
-      $pitems[] = t('!title is !status.', array('!title' => $pane_data['title'], '!status' => $pane_data['enabled'] ? t('enabled') : t('disabled')));
-    }
-    $items[] = $title . theme('item_list', $pitems);
-  }
+  // don't load admin/store/settings/orders/edit/workflow/create
+  $summaries = array_merge($summaries, summarize_child_form_pages('admin/store/settings/orders/edit/basic', FALSE, TRUE));
+  $summaries = array_merge($summaries, summarize_child_form_pages('admin/store/settings/orders/edit/workflow', FALSE, TRUE));
+  $summaries = array_merge($summaries, summarize_child_form_pages('admin/store/settings/orders/edit/panes', FALSE, TRUE));
 
-  $sections[] = array(
-    'edit' => 'admin/store/settings/orders/edit/panes',
-    'title' => t('Order panes'),
-    'items' => $items,
-  );
-
-  $output = theme('uc_settings_overview', $sections);
-
-  return $output;
+  // Theme it all up in a summaries overview.
+  return theme('summary_overview', $summaries);
 }
 
 /**
  * Generate the settings form for orders.
  */
 function uc_order_settings_form() {
+
   $form['admin'] = array(
     '#type' => 'fieldset',
     '#title' => t('Admin settings'),
+    '#summary callback' => 'summarize_form',
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
@@ -759,22 +715,38 @@ function uc_order_settings_form() {
     '#type' => 'select',
     '#title' => t('Number of orders on overview screen'),
     '#options' => $options,
+    '#summary' => t('Displaying @orders orders at a time on the admin overview', array('@orders' => variable_get('uc_order_number_displayed', 30))),
     '#default_value' => variable_get('uc_order_number_displayed', 30),
   );
   $form['admin']['uc_order_logging'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable order logging'),
+    '#summary callback' => 'summarize_checkbox',
+    '#summary arguments' => array(
+      t('Order logging is enabled.'),
+      t('Order logging is disabled.'),
+    ),
     '#default_value' => variable_get('uc_order_logging', TRUE),
   );
   $form['admin']['uc_order_capitalize_addresses'] = array(
     '#type' => 'checkbox',
     '#title' => t('Capitalize address on order screens'),
+    '#summary callback' => 'summarize_checkbox',
+    '#summary arguments' => array(
+      t('Addresses on order view pages are capitalized.'),
+      t('Addresses on order view pages are not capitalized.'),
+    ),
     '#default_value' => variable_get('uc_order_capitalize_addresses', TRUE),
   );
   if (module_exists('ubrowser') && module_exists('uc_catalog')) {
     $form['admin']['uc_ubrowser_product_select'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use the uBrowser product select on order edit screens'),
+      '#summary callback' => 'summarize_checkbox',
+      '#summary arguments' => array(
+        t('You are using the uBrowser to add products to orders.'),
+        t('You are not using the uBrowser to add products to orders.'),
+      ),
       '#default_value' => variable_get('uc_ubrowser_product_select', TRUE),
     );
   }
@@ -782,12 +754,18 @@ function uc_order_settings_form() {
   $form['customer'] = array(
     '#type' => 'fieldset',
     '#title' => t('Customer settings'),
+    '#summary callback' => 'summarize_form',
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
   $form['customer']['uc_cust_view_order_invoices'] = array(
     '#type' => 'checkbox',
     '#title' => t('Allow customers to view order invoices from their accounts.'),
+    '#summary callback' => 'summarize_checkbox',
+    '#summary arguments' => array(
+      t('Customers are allowed to view order invoices from their accounts.'),
+      t('Customers are not allowed to view order invoices from their accounts.'),
+    ),
     '#default_value' => variable_get('uc_cust_view_order_invoices', TRUE),
   );
   $form['customer']['uc_cust_order_invoice_template'] = array(
@@ -795,10 +773,40 @@ function uc_order_settings_form() {
     '#title' => t('Invoice template'),
     '#description' => t('Select the invoice template to use for your site.'),
     '#options' => uc_order_template_options(),
+    '#summary' => t('You are using the %template order invoice template.', array('%template' => variable_get('uc_cust_order_invoice_template', 'customer'))),
     '#default_value' => variable_get('uc_cust_order_invoice_template', 'customer'),
   );
 
   return system_settings_form($form);
+}
+
+/**
+ * Summarizes the order status settings.
+ *
+ * @param $form
+ *   The form passed from the summarizer
+ * @param $states
+ *   An array of order statuses
+ * @return
+ *   An array of summary information
+ *
+ * This function summarizes the order statuses that have been defined. It is
+ * organized under a parent node specifying that the following settings are
+ * order statuses.
+ */
+function _uc_order_states_summarize($form, $states) {
+  $statuses = $items = array();
+
+  foreach ($states as $state) {
+    $items[] = t('@state', array('@state' => $state['title']));
+  }
+
+  $statuses[] = array(
+    'data' => t('The following order statuses have been defined:'),
+    'children' => $items,
+  );
+
+  return $statuses;
 }
 
 // Display the order workflow form for order state and status customization.
@@ -811,11 +819,14 @@ function uc_order_workflow_form() {
     '#title' => t('Order states'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
+    '#summary callback' => 'summarize_null',
     '#theme' => 'uc_order_state_table',
     '#tree' => TRUE,
   );
 
   foreach ($states as $state) {
+
+    $form['order_states'][$state['id']]['#summary callback'] = 'summarize_form';
     $form['order_states'][$state['id']]['title'] = array(
       '#value' => $state['title'],
     );
@@ -845,6 +856,8 @@ function uc_order_workflow_form() {
     '#type' => 'fieldset',
     '#title' => t('Order statuses'),
     '#collapsible' => FALSE,
+    '#summary callback' => '_uc_order_states_summarize',
+    '#summary arguments' => array($states),
     '#theme' => 'uc_order_status_table',
     '#tree' => TRUE,
   );
@@ -982,6 +995,7 @@ function uc_order_status_create_form() {
     '#type' => 'textfield',
     '#title' => t('Order status ID'),
     '#description' => t('Must be a unique ID with no spaces.'),
+    '#summary callback' => 'summarize_null',
     '#size' => 32,
     '#maxlength' => 32,
     '#required' => TRUE,
@@ -991,6 +1005,7 @@ function uc_order_status_create_form() {
     '#type' => 'textfield',
     '#title' => t('Title'),
     '#description' => t('The order status title displayed to users.'),
+    '#summary callback' => 'summarize_null',
     '#size' => 32,
     '#maxlength' => 48,
     '#required' => TRUE,
@@ -1005,6 +1020,7 @@ function uc_order_status_create_form() {
     '#type' => 'select',
     '#title' => t('Order state'),
     '#description' => t('Set which order state this status is for.'),
+    '#summary callback' => 'summarize_null',
     '#options' => $options,
     '#default_value' => 'post_checkout',
   );
@@ -1052,6 +1068,39 @@ function uc_order_status_create_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/store/settings/orders/edit/workflow';
 }
 
+/**
+ * Summarizes the order panes settings.
+ *
+ * @param $form
+ *   The form passed from the summarizer
+ * @param $panes
+ *   An array of order panes
+ * @param $parent_name
+ *   The parent's displayed name
+ * @param $parent_id
+ *   The parent's machine-readable ID
+ * @return
+ *   An array of summary information
+ *
+ * This function summarizes the order panes that have been defined for each screen.
+ * Everything is then organized under a series of parent nodes correlating with the
+ * different screens, and specifying which panes are enabled on which screen.
+ */
+function _uc_order_panes_summarize($form, $panes, $parent_name, $parent_id) {
+  $items = array();
+
+  foreach ($panes as $name => $pane) {
+    $item[] = t('!title is !enabled.', array('!title' => $pane['title']['#value'], '!enabled' => $pane['uc_order_pane_'. $name .'_show_'. $parent_id]['#default_value'] ? t('enabled') : t('disabled')));
+  }
+
+  $items[] = array(
+    'data' => t('Order panes on %screen screen:', array('%screen' => $parent_name)),
+    'children' => $item,
+  );
+
+  return $items;
+}
+
 function uc_order_panes_form() {
   $panes = _order_pane_list();
 
@@ -1076,6 +1125,11 @@ function uc_order_panes_form() {
 
   $titles = _get_order_screen_titles();
   foreach ($form['panes'] as $view => $data) {
+
+    if (!is_array($form['panes'][$view])) {
+      continue;
+    }
+
     uasort($form['panes'][$view], 'uc_weight_sort');
     foreach ($data as $pane => $info) {
       unset($form['panes'][$view][$pane]['weight']);
@@ -1085,8 +1139,11 @@ function uc_order_panes_form() {
       '#pane_prefix' => 'uc_order_pane',
       '#type' => 'fieldset',
       '#title' => t('Order panes on !screen screen', array('!screen' => $titles[$view])),
+      '#summary callback' => '_uc_order_panes_summarize',
+      '#summary arguments' => array($data, $titles[$view], $view),
     );
     $form['panes'][$view] = array_merge($fieldset, $form['panes'][$view]);
+    $form['panes']['#summary callback'] = 'summarize_form';
   }
 
   return system_settings_form($form);

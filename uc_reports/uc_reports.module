@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_reports.module,v 1.11.2.4 2008/09/11 14:43:47 islandusurper Exp $
+// $Id: uc_reports.module,v 1.11.2.5 2008/09/22 21:07:44 islandusurper Exp $
 
 /**
  * @file
@@ -58,7 +58,8 @@ function uc_reports_menu() {
   $items['admin/store/settings/reports'] = array(
     'title' => 'Report settings',
     'description' => 'View the report settings.',
-    'page arguments' => array('uc_reports_settings_overview'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_reports_settings_form'),
     'access arguments' => array('administer store'),
     'type' => MENU_NORMAL_ITEM,
   );
@@ -828,7 +829,7 @@ function uc_reports_sales_custom_form_submit($form, &$form_state) {
 }
 
 // Form builder for the admin settings.
-function uc_reports_settings_overview() {
+function uc_reports_settings_form() {
   $form['uc_reports_table_size'] = array(
     '#type' => 'textfield',
     '#title' => t('Paged table size'),

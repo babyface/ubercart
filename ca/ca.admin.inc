@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.5 2008/09/11 14:43:44 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.6 2008/09/22 21:07:41 islandusurper Exp $
 
 /**
  * @file
@@ -146,14 +146,21 @@ function ca_predicate_meta_form($form_state, $pid) {
     $class = ltrim(substr($class, 6), ':');
   }
 
-  $form['predicate_class'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Class'),
-    '#description' => t('Classes let you categorize your predicates based on the type of functionality they provide.<br />Cannot be modified if defined by a module.'),
-    '#field_prefix' => is_numeric($pid)  ? 'custom:' : '',
-    '#default_value' => $class,
-    '#disabled' => !is_numeric($pid) ? TRUE : FALSE,
-  );
+  if (is_numeric($pid)) {
+    $form['predicate_class'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Class'),
+      '#description' => t('Classes let you categorize your predicates based on the type of functionality they provide.'),
+      '#field_prefix' => 'custom:',
+      '#default_value' => $class,
+    );
+  }
+  else {
+    $form['predicate_class'] = array(
+      '#type' => 'value',
+      '#value' => $class,
+    );
+  }
 
   $form['predicate_status'] = array(
     '#type' => 'radios',
@@ -255,5 +262,218 @@ function ca_predicate_delete_form_submit($form, &$form_state) {
   drupal_set_message(t('Predicate %title !op.', array('%title' => $form_state['values']['predicate_title'], '!op' => is_numeric($form_state['values']['predicate_pid']) ? t('deleted') : t('reset'))));
 
   $form_state['redirect'] = 'admin/settings/ca';
+}
+
+/**
+ * Builds a form for adding and editing actions on a predicate.
+ *
+ * @param $form_state
+ *   Used by FAPI; the current state of the form as it processes.
+ * @param $pid
+ *   The ID of the predicate whose actions are being modified.
+ * @param $title
+ *   TRUE or FALSE to specify whether or not to set the predicate's title to be
+ *     the title of the page.
+ * @return
+ *   The form array for the actions form.
+ */
+function ca_actions_form($form_state, $pid, $title = TRUE) {
+  // Locate the specified predicate.
+  $predicate = ca_load_predicate($pid);
+
+  // Return an empty form if the predicate does not exist.
+  if (empty($predicate)) {
+    return array();
+  }
+
+  // Include the JS for conditional actions forms.
+  drupal_add_js(drupal_get_path('module', 'ca') .'/ca.js');
+
+  // Display the title if appropriate.
+  if ($title) {
+    drupal_set_title($predicate['#title']);
+  }
+
+  // Load up any actions that could possibly be on this predicate.
+  $action_data = ca_load_action();
+
+  $form['pid'] = array(
+    '#type' => 'value',
+    '#value' => $pid,
+  );
+
+  $form['actions'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Actions'),
+    '#description' => t('These actions will be performed in order when this predicate passes the conditions evaluation.'),
+    '#tree' => TRUE,
+  );
+
+  // Loop through the actions and add them to the form if valid.
+  $i = 0;
+
+  foreach ($predicate['#actions'] as $key => $action) {
+    // Add it to the form if the action's callback exists.
+    $callback = $action_data[$action['#name']]['#callback'];
+
+    if (function_exists($callback)) {
+      $form['actions'][$i] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Action: @title', array('@title' => $action_data[$action['#name']]['#title'])),
+        '#description' => $action_data[$action['#name']]['#description'],
+        '#collapsible' => TRUE,
+        '#collapsed' => isset($_SESSION['ca_action_focus']) && $i == $_SESSION['ca_action_focus'] ? FALSE : TRUE,
+      );
+
+      $form['actions'][$i]['name'] = array(
+        '#type' => 'value',
+        '#value' => $action['#name'],
+      );
+
+      $form['actions'][$i]['title'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Title'),
+        '#default_value' => $action['#title'],
+      );
+
+      $form['actions'][$i]['argument_map'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Arguments'),
+        '#description' => t('Some triggers pass in multiple options for arguments related to a particular action, so you must specify which options to use in the fields below.'),
+        '#collapsible' => TRUE,
+      );
+
+      // Setup a variable to decide if we can collapse the arguments fieldset.
+      $collapsed = TRUE;
+
+      foreach ($action_data[$action['#name']]['#arguments'] as $key => $value) {
+        // Load the available arguments for each entity as received by the
+        // trigger when it was pulled.
+        $options = ca_load_trigger_arguments($predicate['#trigger'], $value['#entity']);
+
+        // If we have more than one option for any argument, do not collapse.
+        if (count($options) > 1) {
+          $collapsed = FALSE;
+        }
+
+        $form['actions'][$i]['argument_map'][$key] = array(
+          '#type' => 'select',
+          '#title' => check_plain($value['#title']),
+          '#options' => $options,
+          '#default_value' => $action['#argument_map'][$key],
+        );
+      }
+
+      $form['actions'][$i]['argument_map']['#collapsed'] = $collapsed;
+
+      // Add the action's form elements if any exist.
+      $callback .= '_form';
+
+      if (function_exists($callback)) {
+        $form['actions'][$i]['settings'] = $callback(array(), $action['#settings']);
+      }
+
+      $form['actions'][$i]['remove'] = array(
+        '#type' => 'submit',
+        '#value' => t('Remove this action'),
+        '#name' => 'ca_remove_action_'. $i,
+        '#submit' => array('ca_actions_form_remove_action_submit'),
+        '#attributes' => array('class' => 'ca-remove-confirm'),
+      );
+
+      $i++;
+    }
+  }
+
+  // Unset the session variable used to focus on the new action.
+  unset($_SESSION['ca_action_focus']);
+
+  $form['actions']['add_action'] = array(
+    '#type' => 'select',
+    '#title' => t('Available actions'),
+    '#options' => ca_load_trigger_actions($predicate['#trigger']),
+  );
+
+  $form['actions']['add'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add action'),
+    '#submit' => array('ca_actions_form_add_action_submit'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save changes'),
+    '#submit' => array('ca_actions_form_save_changes_submit'),
+  );
+
+  return $form;
+}
+
+// Remove action submit handler.
+function ca_actions_form_remove_action_submit($form, &$form_state) {
+  // Save the existing actions to preserve any changes.
+  ca_actions_form_update_actions($form_state['values']['pid'], $form_state['values']['actions']);
+
+  // Remove the appropriate action from the predicate and save it.
+  ca_remove_action($form_state['values']['pid'], $form_state['clicked_button']['#parents'][1]);
+
+  drupal_set_message(t('Action removed.'));
+}
+
+// Add action submit handler.
+function ca_actions_form_add_action_submit($form, &$form_state) {
+  // Save the existing actions to preserve any changes.
+  $predicate = ca_actions_form_update_actions($form_state['values']['pid'], $form_state['values']['actions']);
+
+  // Store the presumed key of the new action.
+  $_SESSION['ca_action_focus'] = count($predicate['#actions']);
+
+  // Add the specified action to the predicate.
+  ca_add_action($form_state['values']['pid'], $form_state['values']['actions']['add_action']);
+
+  drupal_set_message(t('Action added.'));
+}
+
+// Save changes submit handler.
+function ca_actions_form_save_changes_submit($form, &$form_state) {
+  // Save the existing actions to preserve any changes.
+  ca_actions_form_update_actions($form_state['values']['pid'], $form_state['values']['actions']);
+}
+
+/**
+ * Updates a predicate's actions based on the values from an actions form.
+ *
+ * @param $pid
+ *   The ID of the predicates whose actions should be updated.
+ * @param $data
+ *   The actions values from the form state that should be used to update the
+ *     predicate; normally $form_state['values']['actions'].
+ * @return
+ *   An array representing the full, updated predicate.
+ */
+function ca_actions_form_update_actions($pid, $data) {
+  $actions = array();
+
+  // Unset top level components we don't want to get in the way.
+  unset($data['add_action'], $data['add']);
+
+  // Loop through the actions from the form and add them to our temporary array.
+  foreach ((array) $data as $key => $value) {
+    $actions[] = array(
+      '#name' => $value['name'],
+      '#title' => $value['title'],
+      '#argument_map' => $value['argument_map'],
+      '#settings' => empty($value['settings']) ? array() : $value['settings'],
+    );
+  }
+
+  // Load the predicate as it is now.
+  $predicate = ca_load_predicate($pid);
+
+  // Update the actions and save the result.
+  $predicate['#actions'] = $actions;
+  ca_save_predicate($predicate);
+
+  return $predicate;
 }
 

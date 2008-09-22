@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.install,v 1.5 2008/07/10 12:40:58 islandusurper Exp $
+// $Id: uc_quote.install,v 1.5.2.1 2008/09/22 21:07:42 islandusurper Exp $
 
 function uc_quote_schema() {
   $schema = array();
@@ -38,37 +38,37 @@ function uc_quote_schema() {
       ),
       'first_name' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'last_name' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'company' => array(
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'street1' => array(
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'street2' => array(
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'city' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
@@ -81,7 +81,7 @@ function uc_quote_schema() {
       ),
       'postal_code' => array(
         'type' => 'varchar',
-        'length' => 10,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
@@ -94,7 +94,7 @@ function uc_quote_schema() {
       ),
       'phone' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
@@ -112,63 +112,61 @@ function uc_quote_schema() {
       ),
       'first_name' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'last_name' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'company' => array(
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'street1' => array(
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'street2' => array(
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'city' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'zone' => array(
         'type' => 'int',
-        'size' => 'medium',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
       ),
       'postal_code' => array(
         'type' => 'varchar',
-        'length' => 10,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'country' => array(
         'type' => 'int',
-        'size' => 'medium',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
       ),
       'phone' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
@@ -178,7 +176,7 @@ function uc_quote_schema() {
 
   $schema['uc_order_quotes'] = array(
     'fields' => array(
-      'oid' => array(
+      'order_id' => array(
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -208,7 +206,7 @@ function uc_quote_schema() {
       ),
     ),
     'unique keys' => array(
-      'oid_quote_method' => array('oid', 'method'),
+      'order_id_quote_method' => array('order_id', 'method'),
     ),
   );
 
@@ -378,5 +376,23 @@ function uc_quote_update_7() {
       $ret[] = update_sql("ALTER TABLE {uc_order_quotes} SET WITHOUT OIDS");
     break;
   }
+  return $ret;
+}
+
+function uc_quote_update_6000() {
+  $ret = array();
+
+  db_drop_primary_key($ret, 'uc_quote_shipping_types');
+  db_change_field($ret, 'uc_quote_shipping_types', 'id', 'id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('primary key' => array('id_type', 'id')));
+
+  db_drop_primary_key($ret, 'uc_quote_manufacturer_locations');
+  db_change_field($ret, 'uc_quote_manufacturer_locations', 'tid', 'tid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('primary key' => array('tid')));
+
+  db_drop_primary_key($ret, 'uc_quote_product_locations');
+  db_change_field($ret, 'uc_quote_product_locations', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('primary key' => array('nid')));
+
+  db_drop_unique_key($ret, 'uc_order_quotes', 'oid_quote_method');
+  db_change_field($ret, 'uc_order_quotes', 'oid', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('unique keys' => array('order_id_quote_method' => array('order_id', 'method'))));
+
   return $ret;
 }

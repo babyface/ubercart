@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.4 2008/09/11 14:43:46 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.5 2008/09/22 21:07:44 islandusurper Exp $
 
 /**
  * @file
@@ -36,11 +36,11 @@ function uc_order_ca_trigger() {
     '#arguments' => array(
       'order' => array(
         '#entity' => 'uc_order',
-        '#title' => t('Order'),
+        '#title' => t('Original order'),
       ),
       'updated_order' => array(
         '#entity' => 'uc_order',
-        '#label' => t('Updated order'),
+        '#title' => t('Updated order'),
       ),
     ),
   );
@@ -106,6 +106,7 @@ function uc_order_ca_condition() {
 
   $conditions['uc_order_status_condition'] = array(
     '#title' => t('Check the order status'),
+    '#description' => t('Returns TRUE if the current order status matches the status specified below.'),
     '#category' => t('Order'),
     '#callback' => 'uc_order_condition_check_order_status',
     '#arguments' => array(
@@ -115,6 +116,7 @@ function uc_order_ca_condition() {
 
   $conditions['uc_order_condition_total'] = array(
     '#title' => t('Check the order total'),
+    '#description' => t('Returns TRUE if the current order total is within the parameters below.'),
     '#category' => t('Order'),
     '#callback' => 'uc_order_condition_total',
     '#arguments' => array(

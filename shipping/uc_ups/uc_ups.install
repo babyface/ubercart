@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.install,v 1.5.2.1 2008/07/21 13:18:33 islandusurper Exp $
+// $Id: uc_ups.install,v 1.5.2.2 2008/09/22 21:07:42 islandusurper Exp $
 
 function uc_ups_schema() {
   $schema = array();
@@ -149,5 +149,15 @@ function uc_ups_update_6() {
       db_change_column($ret, 'uc_ups_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));
     break;
   }
+  return $ret;
+}
+
+function uc_ups_update_6000() {
+  $ret = array();
+
+  db_drop_primary_key($ret, 'uc_ups_products');
+  db_change_field($ret, 'uc_ups_products', 'vid', 'vid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('primary key' => array('vid')));
+  db_change_field($ret, 'uc_ups_products', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+
   return $ret;
 }

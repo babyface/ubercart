@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.module,v 1.1.2.5 2008/09/11 14:43:44 islandusurper Exp $
+// $Id: ca.module,v 1.1.2.6 2008/09/22 21:07:41 islandusurper Exp $
 
 /**
  * @file
@@ -16,13 +16,6 @@ require_once('ca.inc');
  * Implementation of hook_menu().
  */
 function ca_menu() {
-  $items['admin/settings/ca/test'] = array(
-    'title' => 'Conditions form test',
-    'description' => 'Preview the conditions form.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('ca_conditions_form'),
-    'access arguments' => array('administer conditional actions'),
-  );
   $items['admin/settings/ca/test/%'] = array(
     'title' => 'Conditions form test',
     'description' => 'Preview the conditions form.',
@@ -77,6 +70,16 @@ function ca_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('ca_conditions_form', 3),
     'access arguments' => array('administer conditional actions'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -5,
+  );
+  $items['admin/settings/ca/%/edit/actions'] = array(
+    'title' => 'Actions',
+    'description' => 'Edit the actions for a predicate.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ca_actions_form', 3),
+    'access arguments' => array('administer conditional actions'),
+    'file' => 'ca.admin.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 0,
   );
@@ -629,6 +632,38 @@ function ca_load_trigger($trigger = 'all') {
 }
 
 /**
+ * Returns an array of arguments received by a trigger formatted for use as FAPI
+ *   select element options.
+ *
+ * @param $trigger
+ *   The name of the trigger to load arguments for.
+ * @param $entity
+ *   The name of the entity type we must restrict our returned arguments to.
+ * @return
+ *   An array of arguments in FAPI options format.
+ */
+function ca_load_trigger_arguments($trigger, $entity) {
+  static $arguments = array();
+
+  // Load the arguments if we can't find a cached version.
+  if (!isset($arguments[$trigger][$entity])) {
+    $arguments[$trigger][$entity] = array();
+
+    // Load the trigger data.
+    $trigger_data = ca_load_trigger($trigger);
+
+    // Add the trigger's arguments to the options array if the entity matches.
+    foreach ((array) $trigger_data['#arguments'] as $key => $value) {
+      if ($value['#entity'] == $entity) {
+        $arguments[$trigger][$entity][$key] = $value['#title'];
+      }
+    }
+  }
+
+  return $arguments[$trigger][$entity];
+}
+
+/**
  * Loads conditions defined in modules via hook_ca_condition().
  *
  * @param $condition
@@ -669,7 +704,7 @@ function ca_load_condition($condition = 'all') {
  *   A nested array of names/titles for the conditions available for the
  *     trigger; in the format required by select elements in FAPI.
  */
-function ca_load_trigger_conditions($trigger = NULL) {
+function ca_load_trigger_conditions($trigger = '') {
   static $options = array();
 
   if (!empty($trigger)) {
@@ -714,6 +749,155 @@ function ca_load_trigger_conditions($trigger = NULL) {
 }
 
 /**
+ * Loads actions defined in modules via hook_ca_action().
+ *
+ * @param $action
+ *   Defaults to 'all'; may instead be the name of the action to load.
+ * @return
+ *   An array of data for the specified action or an array of all the action
+ *     data if 'all' was specified.  Returns FALSE if a specified action is
+ *     non-existent.
+ */
+function ca_load_action($action = 'all') {
+  static $actions;
+
+  // Load the actions defined in enabled modules to a cached variable.
+  if (empty($actions)) {
+    $actions = module_invoke_all('ca_action');
+  }
+
+  // Return the whole array if the trigger specified is 'all'.
+  if ($action === 'all') {
+    return $actions;
+  }
+
+  // If the specified trigger is non-existent, return FALSE.
+  if (!isset($actions[$action])) {
+    return FALSE;
+  }
+
+  return $actions[$action];
+}
+
+/**
+ * Returns an array of actions available for the specified trigger.
+ *
+ * @param $trigger
+ *   The name of a trigger to find actions for; if left empty, the function
+ *     returns conditions for the previously specified trigger.
+ * @return
+ *   A nested array of names/titles for the actions available for the trigger;
+ *     in the format required by select elements in FAPI.
+ */
+function ca_load_trigger_actions($trigger = '') {
+  static $options = array();
+
+  if (!empty($trigger)) {
+    // Load the specified trigger.
+    $trigger = ca_load_trigger($trigger);
+    $trigger_entities = array();
+
+    // Organize trigger arguments by entity.
+    foreach ($trigger['#arguments'] as $argument) {
+      $trigger_entities[$argument['#entity']] = $argument;
+    }
+
+    // Load and loop through all the actions defined by modules.
+    $actions = ca_load_action();
+
+    foreach ($actions as $name => $action) {
+      // Check through each argument needed for the condition.
+      foreach ($action['#arguments'] as $argument) {
+        $entity = $argument['#entity'];
+        // If the condition requires an entity the trigger doesn't provide,
+        // then skip to the next condition.
+        if (!$trigger_entities[$entity]) {
+          continue 2;
+        }
+      }
+
+      // Getting this far means that all of the condition's arguments have
+      // the same entity types as the trigger's. Add it to the options,
+      // and group them by category for usability.
+      $options[$action['#category']][$name] = $action['#title'];
+    }
+
+    // Alphabetically sort the groups and their options.
+    foreach ($options as $group => $actions) {
+      asort($actions);
+      $options[$group] = $actions;
+    }
+    ksort($options);
+  }
+
+  return $options;
+}
+
+/**
+ * Adds a new action to a predicate.
+ *
+ * @param $pid
+ *   The ID of the predicate to add the action to.
+ * @param $name
+ *   The name of the action to add.
+ * @return
+ *   An array representing the full, updated predicate.
+ */
+function ca_add_action($pid, $name) {
+  // Load the predicate as it is now.
+  $predicate = ca_load_predicate($pid);
+
+  // Load the action.
+  $action = ca_load_action($name);
+
+  // Abort if it did not exist.
+  if (empty($action)) {
+    return $predicate;
+  }
+
+  // Add the name to the action array so it's saved in the predicate.
+  $action['#name'] = $name;
+
+  // Add the action to the predicate's actions array.
+  $predicate['#actions'][] = $action;
+
+  // Save and return the updated predicate.
+  ca_save_predicate($predicate);
+
+  return $predicate;
+}
+
+/**
+ * Removes an action from a predicate.
+ *
+ * @param $pid
+ *   The ID of the predicate to remove the action from.
+ * @param $index
+ *   The index of the action to remove.
+ * @return
+ *   An array representing the full, updated predicate.
+ */
+function ca_remove_action($pid, $index) {
+  $actions = array();
+
+  // Load the predicate as it is now.
+  $predicate = ca_load_predicate($pid);
+
+  // Build a new actions array, leaving out the one marked for removal.
+  foreach ($predicate['#actions'] as $key => $action) {
+    if ($key != $index) {
+      $actions[] = $action;
+    }
+  }
+
+  // Update, save, and return the predicate.
+  $predicate['#actions'] = $actions;
+  ca_save_predicate($predicate);
+
+  return $predicate;
+}
+
+/**
  * Loads a predicate by its ID.
  *
  * @param $pid
@@ -736,6 +920,11 @@ function ca_load_predicate($pid) {
     if (!empty($predicates[$pid])) {
       $predicate = $predicates[$pid];
     }
+  }
+
+  // Add the pid to the predicate so it can be resaved later.
+  if (!empty($predicate)) {
+    $predicate['#pid'] = $pid;
   }
 
   return $predicate;
@@ -783,15 +972,18 @@ function ca_weight_sort($a, $b) {
 }
 
 // Builds a form for adding and editing conditions on a predicate.
-function ca_conditions_form($form_state, $pid = 'uc_payment_received') {
+function ca_conditions_form($form_state, $pid, $title = TRUE) {
   // Locate the specified predicate.
   $predicate = ca_load_predicate($pid);
-
-  drupal_set_title($predicate['#title']);
 
   // Return an empty form if the predicate does not exist.
   if (empty($predicate)) {
     return array();
+  }
+
+  // Display the title if appropriate.
+  if ($title) {
+    drupal_set_title($predicate['#title']);
   }
 
   // Initialize the conditions available for this predicate.
@@ -931,6 +1123,7 @@ function _ca_conditions_form_tree($condition, &$condition_data) {
     $form[0] = array(
       '#type' => 'fieldset',
       '#title' => t('Condition: @title', array('@title' => $condition_data[$condition['#name']]['#title'])),
+      '#description' => t('@description', array('@description' => $condition_data[$condition['#name']]['#description'])),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.install,v 1.4 2008/07/10 12:40:56 islandusurper Exp $
+// $Id: uc_credit.install,v 1.4.2.1 2008/09/22 21:07:41 islandusurper Exp $
 
 /**
  * @file
@@ -45,6 +45,9 @@ function uc_credit_update_2() {
 }
 
 function uc_credit_update_6000() {
-  db_query("DROP TABLE {uc_payment_credit}");
-}
+  $ret = array();
 
+  db_drop_table($ret, 'uc_payment_credit');
+
+  return $ret;
+}

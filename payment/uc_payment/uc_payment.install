@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.install,v 1.5 2008/07/10 12:40:57 islandusurper Exp $
+// $Id: uc_payment.install,v 1.5.2.1 2008/09/22 21:07:42 islandusurper Exp $
 
 function uc_payment_schema() {
   $schema = array();
@@ -50,7 +50,7 @@ function uc_payment_schema() {
       ),
     ),
     'indexes' => array(
-      'uc_payment_receipts_order_id' => array('order_id'),
+      'order_id' => array('order_id'),
     ),
     'primary key' => array('receipt_id'),
   );
@@ -129,6 +129,18 @@ function uc_payment_update_2() {
   }
 
   $ret[] = update_sql("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('payment_received', '". $t('Payment received') ."', 'payment_received', 10, 1);");
+
+  return $ret;
+}
+
+function uc_payment_update_6000() {
+  $ret = array();
+
+  db_drop_primary_key($ret, 'uc_payment_receipts');
+  db_drop_index($ret, 'uc_payment_receipts', 'order_id');
+  db_change_field($ret, 'uc_payment_receipts', 'receipt_id', 'receipt_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('receipt_id')));
+  db_change_field($ret, 'uc_payment_receipts', 'order_id', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('order_id' => array('order_id'))));
+  db_change_field($ret, 'uc_payment_receipts', 'uid', 'uid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.install,v 1.7 2008/07/10 12:41:00 islandusurper Exp $
+// $Id: uc_cart.install,v 1.7.2.1 2008/09/22 21:07:43 islandusurper Exp $
 
 /**
  * Ubercart uc_cart.module schema
@@ -38,7 +38,7 @@ function uc_cart_schema() {
       ),
     ),
     'indexes' => array(
-      'uc_cart_products_cart_id' => array('cart_id'),
+      'cart_id' => array('cart_id'),
     ),
   );
 
@@ -86,4 +86,18 @@ function uc_cart_uninstall() {
   variable_del('uc_msg_order_existing_user');
   variable_del('uc_msg_order_new_user');
   variable_del('uc_msg_continue_shopping');
+}
+
+function uc_cart_update_6000() {
+  $ret = array();
+
+  // Standardize database definitions during upgrade to Drupal 6.
+  // ID fields are unsigned, regular-sized ints.
+  // "Boolean" flags are unsigned tiny ints.
+  // Postgres tables will have the necessary default values, and MySQL
+  // doesn't need them, so the schema can just be mismatched for that.
+  db_change_field($ret, 'uc_cart_products', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_cart_products', 'qty', 'qty', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'small', 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
 }

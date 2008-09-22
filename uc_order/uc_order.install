@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.9.2.1 2008/07/11 21:41:25 islandusurper Exp $
+// $Id: uc_order.install,v 1.9.2.2 2008/09/22 21:07:44 islandusurper Exp $
 
 /**
  * Implementation of hook_schema().
@@ -48,49 +48,49 @@ function uc_order_schema() {
       'delivery_first_name' => array(
         'description' => t('The first name of the person receiving shipment.'),
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'delivery_last_name' => array(
         'description' => t('The last name of the person receiving shipment.'),
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'delivery_phone' => array(
         'description' => t('The phone number at the delivery location.'),
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'delivery_company' => array(
         'description' => t('The company at the delivery location.'),
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'delivery_street1' => array(
         'description' => t('The street address of the delivery location.'),
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'delivery_street2' => array(
         'description' => t('The second line of the street address.'),
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'delivery_city' => array(
         'description' => t('The city of the delivery location.'),
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
@@ -105,7 +105,7 @@ function uc_order_schema() {
       'delivery_postal_code' => array(
         'description' => t('The postal code of the delivery location.'),
         'type' => 'varchar',
-        'length' => 10,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
@@ -120,49 +120,49 @@ function uc_order_schema() {
       'billing_first_name' => array(
         'description' => t('The first name of the person paying for the order.'),
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'billing_last_name' => array(
         'description' => t('The last name of the person paying for the order.'),
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'billing_phone' => array(
         'description' => t('The phone number for the billing address.'),
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'billing_company' => array(
         'description' => t('The company of the billing address.'),
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'billing_street1' => array(
         'description' => t('The street address where the bill will be sent.'),
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'billing_street2' => array(
         'description' => t('The second line of the street address.'),
         'type' => 'varchar',
-        'length' => 64,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'billing_city' => array(
         'description' => t('The city where the bill will be sent.'),
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
@@ -177,7 +177,7 @@ function uc_order_schema() {
       'billing_postal_code' => array(
         'description' => t('The postal code where the bill will be sent.'),
         'type' => 'varchar',
-        'length' => 10,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
@@ -214,8 +214,8 @@ function uc_order_schema() {
       ),
     ),
     'indexes' => array(
-      'uc_orders_uid' => array('uid'),
-      'uc_orders_order_status' => array('order_status'),
+      'uid' => array('uid'),
+      'order_status' => array('order_status'),
     ),
     'primary key' => array('order_id'),
   );
@@ -255,7 +255,7 @@ function uc_order_schema() {
       ),
     ),
     'indexes' => array(
-      'uc_order_admin_comments_order_id' => array('order_id'),
+      'order_id' => array('order_id'),
     ),
     'primary key' => array('comment_id'),
   );
@@ -308,7 +308,7 @@ function uc_order_schema() {
       ),
     ),
     'indexes' => array(
-      'uc_order_comments_order_id' => array('order_id'),
+      'order_id' => array('order_id'),
     ),
     'primary key' => array('comment_id'),
   );
@@ -360,7 +360,7 @@ function uc_order_schema() {
       ),
     ),
     'indexes' => array(
-      'uc_order_line_items_order_id' => array('order_id'),
+      'order_id' => array('order_id'),
     ),
     'primary key' => array('line_item_id'),
   );
@@ -400,7 +400,7 @@ function uc_order_schema() {
       ),
     ),
     'indexes' => array(
-      'uc_order_log_order_id' => array('order_id'),
+      'order_id' => array('order_id'),
     ),
     'primary key' => array('order_log_id'),
   );
@@ -488,7 +488,7 @@ function uc_order_schema() {
       ),
     ),
     'indexes' => array(
-      'uc_order_products_order_id' => array('order_id'),
+      'order_id' => array('order_id'),
     ),
     'primary key' => array('order_product_id'),
   );
@@ -715,3 +715,88 @@ function uc_order_update_7() {
   return $ret;
 }
 
+function uc_order_update_6000() {
+  $ret = array();
+
+  // Standardize database definitions during upgrade to Drupal 6.
+  // ID fields are unsigned, regular-sized ints.
+  // "Boolean" flags are unsigned tiny ints.
+  // Postgres tables will have the necessary default values, and MySQL
+  // doesn't need them, so the schema can just be mismatched for that.
+
+  // Some id columns are already auto-incremented, so we can't remove the
+  // primary key beforehand in MySQL. So we add it later for Postgres.
+
+  db_drop_primary_key($ret, 'uc_orders');
+  db_drop_index($ret, 'uc_orders', 'uid');
+  db_change_field($ret, 'uc_orders', 'order_id', 'order_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('order_id')));
+  db_change_field($ret, 'uc_orders', 'uid', 'uid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('uid' => array('uid'))));
+  db_change_field($ret, 'uc_orders', 'delivery_first_name', 'delivery_first_name', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'delivery_last_name', 'delivery_last_name', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'delivery_phone', 'delivery_phone', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'delivery_company', 'delivery_company', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'delivery_street1', 'delivery_street1', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'delivery_street2', 'delivery_street2', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'delivery_city', 'delivery_city', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'delivery_zone', 'delivery_zone', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'medium', 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_orders', 'delivery_postal_code', 'delivery_postal_code', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'delivery_country', 'delivery_country', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'medium', 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_orders', 'billing_first_name', 'billing_first_name', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'billing_last_name', 'billing_last_name', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'billing_phone', 'billing_phone', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'billing_company', 'billing_company', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'billing_street1', 'billing_street1', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'billing_street2', 'billing_street2', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'billing_city', 'billing_city', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'billing_zone', 'billing_zone', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'medium', 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_orders', 'billing_postal_code', 'billing_postal_code', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  db_change_field($ret, 'uc_orders', 'billing_country', 'billing_country', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'medium', 'not null' => TRUE, 'default' => 0));
+
+  db_drop_index($ret, 'uc_order_admin_comments', 'order_id');
+  db_change_field($ret, 'uc_order_admin_comments', 'comment_id', 'comment_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE));
+  db_change_field($ret, 'uc_order_admin_comments', 'order_id', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('order_id' => array('order_id'))));
+  db_change_field($ret, 'uc_order_admin_comments', 'uid', 'uid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  if ($GLOBALS['db_type'] == 'pgsql') {
+    db_add_primary_key($ret, 'uc_order_admin_comments', array('comment_id'));
+  }
+
+  db_drop_index($ret, 'uc_order_comments', 'order_id');
+  db_change_field($ret, 'uc_order_comments', 'comment_id', 'comment_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE));
+  db_change_field($ret, 'uc_order_comments', 'order_id', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('order_id' => array('order_id'))));
+  db_change_field($ret, 'uc_order_comments', 'uid', 'uid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  if ($GLOBALS['db_type'] == 'pgsql') {
+    db_add_primary_key($ret, 'uc_order_comments', array('comment_id'));
+  }
+
+  db_drop_index($ret, 'uc_order_line_items', 'order_id');
+  db_change_field($ret, 'uc_order_line_items', 'line_item_id', 'line_item_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE));
+  db_change_field($ret, 'uc_order_line_items', 'order_id', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('order_id' => array('order_id'))));
+  if ($GLOBALS['db_type'] == 'pgsql') {
+    db_add_primary_key($ret, 'uc_order_line_items', array('line_item_id'));
+  }
+
+  db_drop_index($ret, 'uc_order_log', 'order_id');
+  db_change_field($ret, 'uc_order_log', 'order_log_id', 'order_log_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE));
+  db_change_field($ret, 'uc_order_log', 'order_id', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('order_id' => array('order_id'))));
+  db_change_field($ret, 'uc_order_log', 'uid', 'uid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  if ($GLOBALS['db_type'] == 'pgsql') {
+    db_add_primary_key($ret, 'uc_order_log', array('order_log_id'));
+  }
+
+  db_drop_index($ret, 'uc_order_products', 'order_id');
+  db_change_field($ret, 'uc_order_products', 'order_product_id', 'order_product_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE));
+  db_change_field($ret, 'uc_order_products', 'order_id', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('order_id' => array('order_id'))));
+  db_change_field($ret, 'uc_order_products', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_order_products', 'qty', 'qty', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'small', 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_order_products', 'cost', 'cost', array('type' => 'numeric', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_order_products', 'price', 'price', array('type' => 'numeric', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_order_products', 'weight', 'weight', array('type' => 'float', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  if ($GLOBALS['db_type'] == 'pgsql') {
+    db_add_primary_key($ret, 'uc_order_products', array('order_products_id'));
+  }
+
+  db_change_field($ret, 'uc_order_statuses', 'weight', 'weight', array('type' => 'int', 'size' => 'small', 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_order_statuses', 'locked', 'locked', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'tiny', 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
+}

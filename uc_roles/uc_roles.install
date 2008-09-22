@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.install,v 1.2.2.4 2008/08/06 13:41:27 islandusurper Exp $
+// $Id: uc_roles.install,v 1.2.2.5 2008/09/22 21:07:44 islandusurper Exp $
 
 /**
  * @file
@@ -26,6 +26,7 @@ function uc_roles_schema() {
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+        'default' => 0,
       ),
       'model' => array(
         'description' => t('The product identifier.'),
@@ -44,12 +45,10 @@ function uc_roles_schema() {
         'description' => t('How long this role is valid for.'),
         'type' => 'int',
         'size' => 'small',
-        'default' => NULL,
       ),
       'granularity' => array(
         'type' => 'varchar',
         'length' => 32,
-        'default' => NULL,
       ),
       'shippable' => array(
         'type' => 'int',
@@ -60,15 +59,16 @@ function uc_roles_schema() {
       'by_quantity' => array(
         'type' => 'int',
         'size' => 'tiny',
+        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
       ),
     ),
     'indexes' => array(
-      'uc_roles_products_pfid' => array('pfid'),
-      'uc_roles_products_nid' => array('nid'),
-      'uc_roles_products_model' => array('model'),
-      'uc_roles_products_rid' => array('rid'),
+      'pfid' => array('pfid'),
+      'nid' => array('nid'),
+      'model' => array('model'),
+      'rid' => array('rid'),
     ),
   );
 
@@ -82,10 +82,11 @@ function uc_roles_schema() {
         'default' => 0,
       ),
       'rid' => array(
+        'description' => t('The role id.'),
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'description' => t('The role id.'),
+        'default' => 0,
       ),
       'expiration' => array(
         'type' => 'int',
@@ -95,12 +96,11 @@ function uc_roles_schema() {
       'notified' => array(
         'type' => 'int',
         'size' => 'tiny',
-        'default' => NULL,
       ),
     ),
     'indexes' => array(
-      'uc_roles_expirations_uid' => array('uid'),
-      'uc_roles_expirations_rid' => array('rid'),
+      'uid' => array('uid'),
+      'rid' => array('rid'),
     ),
   );
 
@@ -171,6 +171,24 @@ function uc_roles_update_3() {
       $ret[] = update_sql("ALTER TABLE {uc_roles_products} ADD by_quantity boolean NOT NULL");
       break;
   }
+
+  return $ret;
+}
+
+function uc_roles_update_6000() {
+  $ret = array();
+
+  db_drop_index($ret, 'uc_roles_products', 'pfid');
+  db_drop_index($ret, 'uc_roles_products', 'nid');
+  db_drop_index($ret, 'uc_roles_products', 'rid');
+  db_change_field($ret, 'uc_roles_products', 'pfid', 'pfid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('pfid' => array('pfid'))));
+  db_change_field($ret, 'uc_roles_products', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('nid' => array('nid'))));
+  db_change_field($ret, 'uc_roles_products', 'rid', 'rid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('rid' => array('rid'))));
+
+  db_drop_index($ret, 'uc_roles_expirations', 'uid');
+  db_drop_index($ret, 'uc_roles_expirations', 'rid');
+  db_change_field($ret, 'uc_roles_expirations', 'uid', 'uid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('uid' => array('uid'))));
+  db_change_field($ret, 'uc_roles_expirations', 'rid', 'rid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('rid' => array('rid'))));
 
   return $ret;
 }

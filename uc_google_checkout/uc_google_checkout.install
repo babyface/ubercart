@@ -1,82 +1,108 @@
 <?php
-// $Id: uc_google_checkout.install,v 1.1.2.3 2008/08/06 13:41:34 islandusurper Exp $
+// $Id: uc_google_checkout.install,v 1.1.2.4 2008/09/22 21:07:48 islandusurper Exp $
+
+/**
+ * @file
+ * Install file for the Ubercart Google Checkout module.
+ */
+
+function uc_google_checkout_schema() {
+  $schema = array();
+
+  $schema['uc_gc_products'] = array(
+    'fields' => array(
+      'vid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'gc_salable' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+    ),
+    'primary key' => array('vid'),
+  );
+
+  $schema['uc_gc_orders'] = array(
+    'fields' => array(
+      'order_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'gc_order_number' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '0',
+      ),
+      'financial_state' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => 'REVIEWING',
+      ),
+      'fulfillment_state' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => 'NEW',
+      ),
+      'gc_total' => array(
+        'type' => 'numeric',
+        'precision' => 10,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0.0,
+      ),
+    ),
+    'indexes' => array(
+      'gc_order_number' => array(array('gc_order_number', 20)),
+    ),
+    'primary key' => array('order_id'),
+  );
+
+  $schema['uc_gc_taxes'] = array(
+    'fields' => array(
+      'zone' => array(
+        'type' => 'varchar',
+        'length' => 2,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'rate' => array(
+        'type' => 'float',
+        'not null' => TRUE,
+        'default' => 0.0,
+      ),
+      'tax_shipping' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array(array('zone', 2)),
+  );
+
+  return $schema;
+}
 
 function uc_google_checkout_install() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      db_query("CREATE TABLE {uc_gc_products} (
-        `vid` mediumint(9) unsigned NOT NULL default 0,
-        `nid` mediumint(9) unsigned NOT NULL default 0,
-        `gc_salable` tinyint NOT NULL default 1,
-        PRIMARY KEY (`vid`)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
-      db_query("CREATE TABLE {uc_gc_orders} (
-        `order_id` mediumint(9) unsigned NOT NULL default 0,
-        `gc_order_number` varchar(255) NOT NULL default '0',
-        `financial_state` enum(
-          'REVIEWING',
-          'CHARGEABLE',
-          'CHARGING',
-          'CHARGED',
-          'PAYMENT_DECLINED',
-          'CANCELLED',
-          'CANCELLED_BY_GOOGLE'
-        ) NOT NULL default 'REVIEWING',
-        `fulfillment_state` enum(
-          'NEW',
-          'PROCESSING',
-          'DELIVERED',
-          'WILL_NOT_DELIVER'
-        ) NOT NULL default 'NEW',
-        `gc_total` decimal(10,2) NOT NULL default 0.00,
-        PRIMARY KEY (`order_id`),
-        KEY `gc_order_number` (`gc_order_number`(20))
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
-      db_query("CREATE TABLE {uc_gc_taxes} (
-        `zone` varchar(2) NOT NULL default '',
-        `rate` float NOT NULL default 0.0,
-        `tax_shipping` tinyint(1) NOT NULL default 0,
-        PRIMARY KEY (`zone`(2))
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
-    break;
-    case 'pgsql':
-      db_query("CREATE TABLE {uc_gc_products} (
-        vid int_unsigned NOT NULL default 0,
-        nid int_unsigned NOT NULL default 0,
-        gc_salable smallint_unsigned NOT NULL default 1,
-        PRIMARY KEY (vid)
-      );");
-      db_query("CREATE TABLE {uc_gc_orders} (
-        order_id int_unsigned NOT NULL default 0,
-        gc_order_number varchar(255) NOT NULL default '0',
-        financial_state enum(
-          'REVIEWING',
-          'CHARGEABLE',
-          'CHARGING',
-          'CHARGED',
-          'PAYMENT_DECLINED',
-          'CANCELLED',
-          'CANCELLED_BY_GOOGLE'
-        ) NOT NULL default 'REVIEWING',
-        fulfillment_state enum(
-          'NEW',
-          'PROCESSING',
-          'DELIVERED',
-          'WILL_NOT_DELIVER'
-        ) NOT NULL default 'NEW',
-        gc_total decimal(10,2) NOT NULL default 0.00,
-        PRIMARY KEY (order_id)
-      );");
-      db_query("CREATE INDEX {uc_gc_orders}_gc_order_number_idx ON {uc_gc_orders} (gc_order_number (20))");
-      db_query("CREATE TABLE {uc_gc_taxes} (
-        zone varchar(2) NOT NULL default '',
-        rate float NOT NULL default 0.0,
-        tax_shipping integer NOT NULL default 0,
-        PRIMARY KEY (zone(2))
-      );");
-    break;
-  }
+  drupal_install_schema('uc_google_checkout');
+
   $t = get_t();
   db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('in_google_checkout', '". $t('In Google Checkout') ."', 'in_checkout', -7, 1);");
   db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('chargeable', '". $t('Chargeable') ."', 'post_checkout', 2, 1);");
@@ -111,6 +137,37 @@ function uc_google_checkout_update_1() {
       );");
     break;
   }
+
+  return $ret;
+}
+
+function uc_google_checkout_update_6000() {
+  $ret = array();
+
+  db_drop_primary_key($ret, 'uc_gc_products');
+  db_change_field($ret, 'uc_gc_products', 'vid', 'vid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('primary key' => array('vid')));
+  db_change_field($ret, 'uc_gc_products', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_gc_products', 'gc_salable', 'gc_salable', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'tiny', 'not null' => TRUE, 'default' => 1));
+
+  db_drop_primary_key($ret, 'uc_gc_orders');
+  db_change_field($ret, 'uc_gc_orders', 'order_id', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('primary key' => array('order_id')));
+
+  // Postgres 8.3 supports ENUM types, but not everybody uses that.
+  // Change to VARCHAR since it's just as good.
+  db_change_field($ret, 'uc_gc_orders', 'financial_state', 'financial_state',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => 'REVIEWING',
+    ));
+  db_change_field($ret, 'uc_gc_orders', 'fulfillment_state', 'fulfillment_state',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => 'NEW',
+    ));
 
   return $ret;
 }
