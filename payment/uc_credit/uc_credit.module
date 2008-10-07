@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.4.2.14 2008/09/17 21:38:38 rszrama Exp $
+// $Id: uc_credit.module,v 1.4.2.15 2008/10/07 15:47:56 rszrama Exp $
 
 /**
  * @file
@@ -35,8 +35,7 @@ function uc_credit_menu($may_cache) {
       $items[] = array(
         'path' => 'admin/store/orders/'. arg(3) .'/credit',
         'title' => t('Credit card terminal: Order @order_id', array('@order_id' => arg(3))),
-        'description' => t('Process a credit card payment for order @order_id.',
-                           array('@order_id' => arg(3))),
+        'description' => t('Process a credit card payment for order @order_id.', array('@order_id' => arg(3))),
         'callback' => 'uc_credit_terminal',
         'callback arguments' => array(arg(3)),
         'access' => user_access('process credit cards'),
@@ -69,6 +68,11 @@ function uc_credit_form_alter($form_id, &$form) {
       break;
 
     case 'uc_cart_checkout_form':
+      if (isset($_POST['cc_number'])) {
+        $order = new stdClass();
+        uc_payment_method_credit('cart-process', $order, TRUE);
+      }
+
       // Cache the CC details for use in other functions.
       if (isset($_SESSION['sescrd'])) {
         uc_credit_cache('save', $_SESSION['sescrd']);
@@ -331,7 +335,7 @@ function uc_credit_payment_method() {
  ******************************************************************************/
 
 // Callback function for the Credit Card payment method.
-function uc_payment_method_credit($op, &$arg1) {
+function uc_payment_method_credit($op, &$arg1, $silent = FALSE) {
   switch ($op) {
     case 'cart-details':
       $details = drupal_get_form('uc_payment_method_credit_form', $arg1);
@@ -387,45 +391,59 @@ function uc_payment_method_credit($op, &$arg1) {
 
       // Make sure an owner value was entered.
       if (variable_get('uc_credit_owner_enabled', FALSE) && empty($cc_data['cc_owner'])) {
-        drupal_set_message(t('Enter the owner name as it appears on the card.'), 'error');
+        if (!$silent) {
+          drupal_set_message(t('Enter the owner name as it appears on the card.'), 'error');
+        }
         $return = FALSE;
       }
 
       // Validate the CC number if that's turned on/check for non-digits.
       if ((variable_get('uc_credit_validate_numbers', TRUE) && !_valid_card_number($cc_data['cc_number']))
         || !ctype_digit($cc_data['cc_number'])) {
-        drupal_set_message(t('You have entered an invalid credit card number.'), 'error');
+        if (!$silent) {
+          drupal_set_message(t('You have entered an invalid credit card number.'), 'error');
+        }
         $return = FALSE;
       }
 
       // Validate the start date (if entered).
       if (variable_get('uc_credit_start_enabled', FALSE) && !_valid_card_start($cc_data['cc_start_month'], $cc_data['cc_start_year'])) {
-        drupal_set_message(t('The start date you entered is invalid.'), 'error');
+        if (!$silent) {
+          drupal_set_message(t('The start date you entered is invalid.'), 'error');
+        }
         $return = FALSE;
       }
 
       // Validate the card expiration date.
       if (!_valid_card_expiration($cc_data['cc_exp_month'], $cc_data['cc_exp_year'])) {
-        drupal_set_message(t('The credit card you entered has expired.'), 'error');
+        if (!$silent) {
+          drupal_set_message(t('The credit card you entered has expired.'), 'error');
+        }
         $return = FALSE;
       }
 
       // Validate the issue number (if entered).  With issue numbers, '01' is
       // different from '1', but is_numeric() is still appropriate.
       if (variable_get('uc_credit_issue_enabled', FALSE) && !_valid_card_issue($cc_data['cc_issue'])) {
-        drupal_set_message(t('The issue number you entered is invalid.'), 'error');
+        if (!$silent) {
+          drupal_set_message(t('The issue number you entered is invalid.'), 'error');
+        }
         $return = FALSE;
       }
 
       // Validate the CVV number if enabled.
       if (variable_get('uc_credit_cvv_enabled', TRUE) && !_valid_cvv($cc_data['cc_cvv'])) {
-        drupal_set_message(t('You have entered an invalid CVV number.'), 'error');
+        if (!$silent) {
+          drupal_set_message(t('You have entered an invalid CVV number.'), 'error');
+        }
         $return = FALSE;
       }
 
       // Validate the bank name if enabled.
       if (variable_get('uc_credit_bank_enabled', FALSE) && empty($cc_data['cc_bank'])) {
-        drupal_set_message(t('You must enter the issuing bank for that card.'), 'error');
+        if (!$silent) {
+          drupal_set_message(t('You must enter the issuing bank for that card.'), 'error');
+        }
         $return = FALSE;
       }
 

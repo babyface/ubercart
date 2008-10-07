@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.14 2008/09/17 21:38:41 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.15 2008/10/07 15:47:57 rszrama Exp $
 
 /**
  * @file
@@ -2510,7 +2510,7 @@ function uc_order_save($order) {
     return FALSE;
   }
 
-  db_query("UPDATE {uc_orders} SET uid = %d, order_status = '%s', order_total = %f, primary_email = '%s', "
+  db_query("UPDATE {uc_orders} SET host = '%s', uid = %d, order_status = '%s', order_total = %f, primary_email = '%s', "
           ."delivery_first_name = '%s', delivery_last_name = '%s', delivery_phone = '%s', "
           ."delivery_company = '%s', delivery_street1 = '%s', delivery_street2 = '%s', "
           ."delivery_city = '%s', delivery_zone = %d, delivery_postal_code = '%s', delivery_country = %d, "
@@ -2518,7 +2518,7 @@ function uc_order_save($order) {
           ."billing_company = '%s', billing_street1 = '%s', billing_street2 = '%s', "
           ."billing_city = '%s', billing_zone = %d, billing_postal_code = '%s', billing_country = %d, "
           ."payment_method = '%s', data = '%s', modified = %d WHERE order_id = %d",
-           $order->uid, $order->order_status, uc_order_get_total($order),
+           $_SERVER['REMOTE_ADDR'], $order->uid, $order->order_status, uc_order_get_total($order),
            $order->primary_email, $order->delivery_first_name, $order->delivery_last_name, $order->delivery_phone,
            $order->delivery_company, $order->delivery_street1, $order->delivery_street2,
            $order->delivery_city, $order->delivery_zone, $order->delivery_postal_code,

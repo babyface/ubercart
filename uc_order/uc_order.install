@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.8.2.8 2008/07/29 22:22:44 rszrama Exp $
+// $Id: uc_order.install,v 1.8.2.9 2008/10/07 15:47:57 rszrama Exp $
 
 /**
  * Implementation of hook_install().
@@ -38,6 +38,7 @@ function uc_order_install() {
         billing_country mediumint(9) NOT NULL,
         payment_method varchar(32) NOT NULL,
         data text,
+        host varchar(16) NOT NULL DEFAULT '',
         created int(11) NOT NULL,
         modified int(11) NOT NULL,
         PRIMARY KEY (order_id),
@@ -142,6 +143,7 @@ function uc_order_install() {
         billing_country integer NOT NULL default 0,
         payment_method varchar(32) NOT NULL default 0,
         data text NOT NULL default '',
+        host varchar(16) NOT NULL default '',
         created integer NOT NULL default 0,
         modified integer NOT NULL default 0,
         PRIMARY KEY (order_id)
@@ -377,6 +379,23 @@ function uc_order_update_7() {
     break;
     case 'pgsql':
       db_change_column($ret, 'uc_order_products', 'model', 'model', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+    break;
+  }
+
+  return $ret;
+}
+
+function uc_order_update_8() {
+
+  $ret = array();
+
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_orders} ADD host VARCHAR(16) NOT NULL DEFAULT ''");
+    break;
+    case 'pgsql':
+      db_add_column($ret, 'uc_orders', 'host', 'VARCHAR(16)', array('not null' => TRUE, 'default' => ''));
     break;
   }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.1.2.13 2008/09/17 21:38:40 rszrama Exp $
+// $Id: uc_file.module,v 1.1.2.14 2008/10/07 15:47:57 rszrama Exp $
 
 /**
  * @file
@@ -43,7 +43,7 @@ function uc_file_menu($may_cache) {
     $items[] = array(
       'path' => '_autocomplete_file',
       'callback' => '_autocomplete_filename',
-      'access' => user_access('administer products'),
+      'access' => user_access('administer product features'),
       'type' => MENU_CALLBACK,
     );
     $items[] = array(
@@ -865,6 +865,7 @@ function uc_file_user_downloads($uid) {
   $header = array(
     array('data' => t('Purchased'), 'field' => 'u.granted', 'sort' => 'desc'),
     array('data' => t('Filename'), 'field' => 'f.filename'),
+    array('data' => t('Size')),
     array('data' => t('Description'), 'field' => 'p.description'),
     array('data' => t('Downloads'), 'field' => 'u.accessed'),
   );
@@ -878,6 +879,8 @@ function uc_file_user_downloads($uid) {
 
   while ($file = db_fetch_object($files)) {
     $row = count($rows);
+    $file_path = variable_get('uc_file_base_dir', NULL) .'/'. $file->filename;
+    $bytesize = format_size(filesize($file_path));
     $expiration = _file_expiration_date($file->granted);
     $onclick = array('onclick' => 'uc_file_update_download('. $row .', '. $file->accessed .', '. ((empty($download_limit)) ? -1 : $download_limit) .');', 'id' => 'link-'. $row);
 
@@ -896,6 +899,7 @@ function uc_file_user_downloads($uid) {
     $rows[] = array(
       array('data' => format_date($file->granted, 'custom', variable_get('uc_date_format_default', 'm/d/Y')), 'class' => 'date-row', 'id' => 'date-'. $row),
       array('data' => $file_link, 'class' => 'filename-row', 'id' => 'filename-'. $row),
+      array('data' => $bytesize, 'class' => 'filename-row', 'id' => 'filesize-'. $row),
       array('data' => $file->description, 'class' => 'description-row', 'id' => 'description-'. $row),
       array('data' => $file->accessed, 'class' => 'download-row', 'id' => 'download-'. $row),
     );
@@ -974,6 +978,13 @@ function _email_file_download($user, $order, $file_users) {
  */
 function _file_download($fid, $key) {
   global $user;
+
+  // In case the $user doesn't exist (downloading with a Download Manager, or Anonymous) find the $user based on the URL given
+  if (!$user->uid) {
+    $user_id = db_result(db_query("SELECT uid FROM {uc_file_users} WHERE fid = %d and key = '%s'", $fid, $key));
+    $user = user_load(array('uid' => $user_id));
+  }
+
   $ip = $_SERVER['REMOTE_ADDR'];
   $message_admin = t('Please contact the site administrator if this message has been received in error.');
 
@@ -1058,6 +1069,8 @@ function _file_download_deny($uid = NULL, $message = NULL) {
 /**
  * Send the file's binary data to a user via HTTP and update the uc_file_users table.
  *
+ * Supports resume and download managers.
+ *
  * @param $file_user
  *   The file_user object from the uc_file_users
  * @param $ip
@@ -1071,6 +1084,7 @@ function _file_download_transfer($file_user, $ip, $fid) {
 
   if (!is_file($file_path)) {
     drupal_set_message(t('The file %filename could not be found. Please contact the site administrator.', array('%filename' => basename($file))), 'error');
+    watchdog('uc_file', t('%username failed to download the file %filename.', array('%username' => $message_user, '%filename' => basename($file))), WATCHDOG_NOTICE);
     drupal_not_found();
     exit();
   }
@@ -1080,28 +1094,117 @@ function _file_download_transfer($file_user, $ip, $fid) {
       $name = $module .'_file_transfer_alter';
       $file_path = $name($file_user, $ip, $fid, $file_path);
     }
-    $data = fopen($file_path, 'rb');
+
+    //Gather relevent info about file
+    $size = filesize($file_path);
+    $fileinfo = pathinfo($file_path);
+
+    // Workaround for IE filename bug with multiple periods / multiple dots in filename
+    // that adds square brackets to filename - eg. setup.abc.exe becomes setup[1].abc.exe
+    if (strstr($_SERVER['HTTP_USER_AGENT'], 'MSIE')) {
+      $filename = preg_replace('/\./', '%2e', $fileinfo['basename'], substr_count($fileinfo['basename'], '.') - 1);
+    }
+    else {
+      $filename = $fileinfo['basename'];
+    }
+
+    // Compatibility workaround for older versions of Drupal 5
+    if (function_exists('file_get_mimetype')) {
+      $mimetype = file_get_mimetype($filename); }
+    else {
+      // Set the Content-Type based on file extension.
+      $file_extension = strtolower($fileinfo['extension']);
+
+      switch ($file_extension) {
+        case 'exe':
+          $mimetype = 'application/octet-stream';
+          break;
+
+        case 'zip':
+          $mimetype = 'application/zip';
+          break;
+
+        case 'mp3':
+          $mimetype = 'audio/mpeg';
+          break;
+
+        case 'mpg':
+          $mimetype = 'video/mpeg';
+          break;
+
+        case 'avi':
+          $mimetype = 'video/x-msvideo';
+          break;
+
+        default:
+          $mimetype = 'application/force-download';
+      }
+    }
+
+    // Check if HTTP_RANGE is sent by browser (or download manager)
+    if (isset($_SERVER['HTTP_RANGE'])) {
+      list($size_unit, $range_orig) = explode('=', $_SERVER['HTTP_RANGE'], 2);
+
+      if ($size_unit == 'bytes') {
+        // Multiple ranges could be specified at the same time, but for simplicity only serve the first range
+        // See http://tools.ietf.org/id/draft-ietf-http-range-retrieval-00.txt
+        list($range, $extra_ranges) = explode(',', $range_orig, 2);
+      }
+      else {
+        $range = '';
+      }
+    }
+    else {
+      $range = '';
+    }
+
+    // Figure out download piece from range (if set)
+    list($seek_start, $seek_end) = explode('-', $range, 2);
+
+    // Set start and end based on range (if set), else set defaults and check for invalid ranges.
+    $seek_end = intval((empty($seek_end)) ? ($size - 1) : min(abs(intval($seek_end)), ($size - 1)));
+    $seek_start = intval((empty($seek_start) || $seek_end < abs(intval($seek_start))) ? 0 : max(abs(intval($seek_start)), 0));
 
     ob_end_clean();
-    $http_headers = array(
-      'Pragma: no-cache',
-      'Expires: 0',
-      'Cache-Control: no-cache, must-revalidate',
-      'Cache-Control: private',
-      'Content-Transfer-Encoding: binary',
-      'Content-Length:'. filesize($file_path),
-      'Content-Disposition: attachment; filename="'. basename($file) .'"',
-      'Content-Type: application/octet-stream'
-    );
-    foreach ($http_headers as $header) {
-      $header = preg_replace('/\r?\n(?!\t| )/', '', $header);
-      drupal_set_header($header);
+
+    // Start building the array of headers
+    $http_headers = array();
+
+    //Only send partial content header if downloading a piece of the file (IE workaround)
+    if ($seek_start > 0 || $seek_end < ($size - 1)) {
+      drupal_set_header('HTTP/1.1 206 Partial Content');
     }
 
-    while (!feof($data)) {
-      print fread($data, UC_FILE_BYTE_SIZE);
+    // Standard headers, including content-range and length
+    drupal_set_header('Pragma: public');
+    drupal_set_header('Cache-Control: cache, must-revalidate');
+    drupal_set_header('Accept-Ranges: bytes');
+    drupal_set_header('Content-Range: bytes '. $seek_start .'-'. $seek_end .'/'. $size);
+    drupal_set_header('Content-Type: '. $mimetype);
+    drupal_set_header('Content-Disposition: attachment; filename="'. $filename .'"');
+    drupal_set_header('Content-Length: '. ($seek_end - $seek_start + 1));
+
+    // Last-modified is required for content served dynamically
+    drupal_set_header('Last-modified: '. format_date(filemtime($file_path), 'large'));
+
+    // Etag header is required for Firefox3 and other managers
+    drupal_set_header('ETag: '. md5($file_path));
+
+    // Open the file and seek to starting byte
+    $fp = fopen($file_path, 'rb');
+    fseek($fp, $seek_start);
+
+    // Start buffered download
+    while (!feof($fp)) {
+      // Reset time limit for large files
+      set_time_limit(0);
+      print(fread($fp, 1024 * 8));
+      flush();
+      ob_flush();
     }
-    fclose($data);
+
+    // Finished serving the file, close the stream and log the download to the user table
+    fclose($fp);
     _user_table_action('download', $file_user, $ip);
     exit();
   }

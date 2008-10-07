@@ -1,4 +1,4 @@
-// $Id: uc_cart.js,v 1.7.2.4 2008/07/29 22:22:42 rszrama Exp $
+// $Id: uc_cart.js,v 1.7.2.5 2008/10/07 15:47:57 rszrama Exp $
 
 var copy_box_checked = false;
 
@@ -8,13 +8,18 @@ var copy_box_checked = false;
 $(document).ready(
   function() {
     $('.show-onload').show();
+
+    $('form#uc-cart-checkout-review-form input#edit-submit').click(function() {
+      $(this).clone().insertAfter(this).attr('disabled', true).after('<span id=\"submit-throbber\" style=\"background: url(' + Drupal.settings['base_path'] + 'misc/throbber.gif) no-repeat 100% -20px;\">&nbsp;&nbsp;&nbsp;&nbsp;</span>').end().hide();
+      $('#uc-cart-checkout-review-form #edit-back').attr('disabled', true);
+    });
   }
 );
 
 /**
  * When a customer clicks a Next button, expand the next pane, remove the
  * button, and don't let it collapse again.
- */                             
+ */
 function uc_cart_next_button_click(button, pane_id, current) {
   if (current !== 'false') {
     $('#' + current + '-pane legend a').click();
@@ -98,7 +103,7 @@ function apply_address(type, address_str) {
 
   eval('var address = ' + address_str + ';');
   var temp = type + '-' + type;
-  
+
   $('#edit-panes-' + temp + '-first-name').val(address.first_name).trigger('change');
   $('#edit-panes-' + temp + '-last-name').val(address.last_name).trigger('change');
   $('#edit-panes-' + temp + '-phone').val(address.phone).trigger('change');

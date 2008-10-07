@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.4.2.10 2008/07/29 22:22:42 rszrama Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.4.2.11 2008/10/07 15:47:57 rszrama Exp $
 
 /**
  * @file
@@ -124,7 +124,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
       return array('description' => $description, 'contents' => $contents);
 
     case 'process':
-      if (!valid_email_address($arg2['primary_email'])) {
+      if (!empty($arg2['primary_email']) && !valid_email_address($arg2['primary_email'])) {
         drupal_set_message(t('You must enter a valid e-mail address.'), 'error');
         return FALSE;
       }

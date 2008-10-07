@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.4.2.11 2008/07/29 22:22:41 rszrama Exp $
+// $Id: uc_ups.module,v 1.4.2.12 2008/10/07 15:47:57 rszrama Exp $
 
 /**
  * @file
@@ -71,7 +71,7 @@ function uc_ups_form_alter($form_id, &$form) {
     $ups['pkg_type'] = array('#type' => 'select',
       '#title' => t('Package type'),
       '#options' => _uc_ups_pkg_types(),
-      '#default_value' => $node->ups['pkg_type'] ? $node->ups['pkg_type'] : '04',
+      '#default_value' => $node->ups['pkg_type'] ? $node->ups['pkg_type'] : '02',
     );
     $form['shipping']['ups'] = $ups;
     if ($enabled['ups']) {
@@ -85,7 +85,7 @@ function uc_ups_form_alter($form_id, &$form) {
  */
 function uc_ups_product_alter_validate($form_id, $form_values) {
   $enabled = variable_get('uc_quote_enabled', array());
-  if ($form_values['shipping_type'] == 'small_package' || (empty($form_values['shipping_type']) && variable_get('uc_store_shipping_type', 'small_package') == 'small_package')) {
+  if ($form_values['shippable'] && ($form_values['shipping_type'] == 'small_package' || (empty($form_values['shipping_type']) && variable_get('uc_store_shipping_type', 'small_package') == 'small_package'))) {
     if ($form_values['ups']['pkg_type'] == '02' && (empty($form_values['length']) || empty($form_values['width']) || empty($form_values['height']))) {
       form_set_error('base][dimensions', t('Dimensions are required for custom packaging.'));
     }
