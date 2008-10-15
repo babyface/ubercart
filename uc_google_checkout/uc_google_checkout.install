@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.install,v 1.1.2.4 2008/09/22 21:07:48 islandusurper Exp $
+// $Id: uc_google_checkout.install,v 1.1.2.5 2008/10/15 14:42:07 islandusurper Exp $
 
 /**
  * @file
@@ -109,10 +109,10 @@ function uc_google_checkout_install() {
 }
 
 function uc_google_checkout_uninstall() {
-  db_query("DROP TABLE {uc_gc_products}");
-  variable_del('uc_google_merchant_id');
-  variable_del('uc_google_merchant_key');
+  drupal_uninstall_schema('uc_google_checkout');
+
   db_query("UPDATE {uc_order_statuses} SET locked = 0 WHERE order_status_id = 'in_google_checkout' OR order_status_id = 'chargeable'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_google_checkout_%%'");
 }
 
 function uc_google_checkout_update_1() {
@@ -170,4 +170,12 @@ function uc_google_checkout_update_6000() {
     ));
 
   return $ret;
+}
+
+function uc_google_checkout_update_6001() {
+  variable_set('uc_google_checkout_merchant_id' , variable_get('uc_google_merchant_id' , ''));
+  variable_del('uc_google_merchant_id');
+
+  variable_set('uc_google_checkout_merchant_key', variable_get('uc_google_merchant_key', ''));
+  variable_del('uc_google_merchant_key');
 }
