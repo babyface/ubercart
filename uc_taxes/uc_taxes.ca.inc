@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.ca.inc,v 1.1.2.3 2008/08/06 13:41:28 islandusurper Exp $
+// $Id: uc_taxes.ca.inc,v 1.1.2.4 2008/10/15 14:47:36 islandusurper Exp $
 
 /**
  * @file
@@ -34,7 +34,7 @@ function uc_taxes_ca_trigger() {
     '#title' => t('Calculate taxes'),
     '#category' => 'uc_taxes',
     '#arguments' => array(
-      'order' => array('#entity' => 'order', '#title' => t('Order')),
+      'order' => array('#entity' => 'uc_order', '#title' => t('Order')),
       'tax' => array('#entity' => 'tax', '#title' => t('Tax rule')),
       'user' => array('#entity' => 'user', '#title' => t('User account')),
     ),
@@ -54,8 +54,9 @@ function uc_taxes_ca_action() {
     $actions['uc_taxes_action_apply_tax_'. $tax->id] = array(
       '#title' => t('Charge a tax'),
       '#category' => t('Taxes'),
+      '#callback' => 'uc_taxes_action_apply_tax',
       '#arguments' => array(
-        'order' => array('#entity' => 'order', '#title' => t('Order')),
+        'order' => array('#entity' => 'uc_order', '#title' => t('Order')),
         'tax' => array('#entity' => 'tax', '#title' => t('Tax')),
       ),
     );
@@ -127,7 +128,7 @@ function uc_taxes_ca_predicate() {
           '#name' => 'uc_taxes_action_apply_tax_'. $tax->id,
           '#title' => t('Apply @tax', array('@tax' => $tax->name)),
           '#argument_map' => array(
-            'order' => 'order',
+            'order' => 'uc_order',
             'tax' => 'tax',
           ),
         ),

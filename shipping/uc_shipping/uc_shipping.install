@@ -1,5 +1,10 @@
 <?php
-// $Id: uc_shipping.install,v 1.4.2.1 2008/09/22 21:07:42 islandusurper Exp $
+// $Id: uc_shipping.install,v 1.4.2.2 2008/10/15 14:47:37 islandusurper Exp $
+
+/**
+ * @file
+ * Install hooks for uc_shipping.module.
+ */
 
 function uc_shipping_schema() {
   $schema = array();
@@ -294,7 +299,7 @@ function uc_shipping_update_1() {
       $ret[] = update_sql("ALTER TABLE {uc_packages} CHANGE units length_units varchar(255) NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_packages', 'units', 'length_units', 'varchar(255)', array('not null' => false));
+      db_change_column($ret, 'uc_packages', 'units', 'length_units', 'varchar(255)', array('not null' => FALSE));
     break;
   }
   return $ret;
@@ -315,13 +320,29 @@ function uc_shipping_update_6000() {
   db_drop_primary_key($ret, 'uc_packages');
   db_change_field($ret, 'uc_packages', 'package_id', 'package_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('package_id')));
   db_change_field($ret, 'uc_packages', 'order_id', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
-  db_change_field($ret, 'uc_packages', 'value', 'values', array('type' => 'numeric', 'unsigned' => TRUE, 'not null' => FALSE));
+  db_change_field($ret, 'uc_packages', 'value', 'value', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => FALSE));
   db_change_field($ret, 'uc_packages', 'sid', 'sid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE));
 
   db_drop_primary_key($ret, 'uc_packaged_products');
   db_change_field($ret, 'uc_packaged_products', 'package_id', 'package_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_packaged_products', 'order_product_id', 'order_product_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_add_primary_key($ret, 'uc_packaged_products', array('package_id', 'order_product_id'));
+
+  return $ret;
+}
+
+function uc_shipping_update_6001() {
+  $ret = array();
+
+  if (db_column_exists('uc_packages', 'values')) {
+    if ($GLOBALS['db_type'] == 'mysql' || $GLOBALS['db_type'] == 'mysqli') {
+      $field = '`values`';
+    }
+    else {
+      $field = '"values"';
+    }
+    db_change_field($ret, 'uc_packages', $field, 'value', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => FALSE));
+  }
 
   return $ret;
 }

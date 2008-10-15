@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_importer.module,v 1.7.2.1 2008/09/11 14:43:46 islandusurper Exp $
+// $Id: uc_importer.module,v 1.7.2.2 2008/10/15 14:47:58 islandusurper Exp $
 
 /**
  * @file
@@ -235,7 +235,7 @@ function uc_importer_export_form() {
     $products[$product->nid] = $product->model;
   }
   $form['nids'] = array('#type' => 'select',
-    '#multiple' => true,
+    '#multiple' => TRUE,
     '#title' => t('Products'),
     '#options' => $products,
     '#description' => t('Hold "Ctrl" to select multiple items.'),
@@ -252,7 +252,7 @@ function uc_importer_export_form_submit($form_id, $form_values) {
   if (count($form_values['nids'])) {
     $xml = uc_importer_export((array)$form_values['nids']);
     if ($file = file_save_data($xml, file_directory_temp() .'/uc_export.xml', FILE_EXISTS_REPLACE)) {
-      //drupal_set_message(print_r($file, true));
+      //drupal_set_message(print_r($file, TRUE));
       file_transfer($file, array(
         'Content-Type: application/xml; charset=utf-8',
         'Content-Length: '. filesize($file),
@@ -299,16 +299,16 @@ function uc_importer_export_buffer_form($nids) {
  */
 function uc_importer_export_buffer_form_submit($form_id, $form_values) {
   $item = menu_get_item(menu_get_active_item());
-  //drupal_set_message(print_r($form_values, true));
+  //drupal_set_message(print_r($form_values, TRUE));
   if ($form_values['op'] == t('Reset')) {
     return $item['path'];
   }
   else {
     $products = array_filter(explode('/', $form_values['products']));
-    //drupal_set_message('<pre>'. print_r($products, true) .'</pre>');
+    //drupal_set_message('<pre>'. print_r($products, TRUE) .'</pre>');
     $xml = uc_importer_export($products);
     if ($file = file_save_data($xml, file_directory_temp() .'/uc_export.xml', FILE_EXISTS_REPLACE)) {
-      //drupal_set_message(print_r($file, true));
+      //drupal_set_message(print_r($file, TRUE));
       file_transfer($file, array(
         'Content-Type: application/xml',
         'Content-Length: '. filesize($file),
@@ -349,7 +349,7 @@ function uc_importer_import_form_submit($form_id, $form_values) {
   if ($file) {
     $file = file_save_upload($file);
     drupal_set_message(t('File uploaded successfully.'));
-    //drupal_set_message('<pre>'. print_r($file, true) .'</pre>');
+    //drupal_set_message('<pre>'. print_r($file, TRUE) .'</pre>');
     if ($xml = file_get_contents($file->filepath)) {
       uc_importer_import($xml);
     }
@@ -403,7 +403,7 @@ function uc_importer_export($nids) {
   foreach ($data as $type => $ids) {
     $data[$type] = array_unique($ids);
   }
-  drupal_set_message('<pre>'. print_r($data, true) .'</pre>');
+  drupal_set_message('<pre>'. print_r($data, TRUE) .'</pre>');
   $xml = '<?xml version="1.0" encoding="utf-8" ?>'. "\n";
   $xml .= '<store xmlns="http://www.ubercart.org" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.ubercart.org http://www.ubercart.org/files/store.xsd">';
   if (is_array($data['vocabularies']) && !empty($data['categories'])) {
@@ -814,7 +814,7 @@ function uc_importer_import($xml) {
                 'weight' => (int)$vocabulary_data->weight[0]->data(),
               );
               foreach ($vocabulary_data->nodes as $node_type) {
-                $vocab['nodes'][(string)$node_type->data()] = true;
+                $vocab['nodes'][(string)$node_type->data()] = TRUE;
               }
               taxonomy_save_vocabulary($vocab);
               $id_map['vocabularies'][(int)$vocabulary_data->id[0]->data()] = db_result(db_query("SELECT id FROM {sequences} WHERE name = '{vocabulary}_vid'"));
@@ -980,7 +980,7 @@ function uc_importer_import($xml) {
       if (isset($store->document->products)) {
         foreach ($store->document->products[0]->product as $product_data) {
           $product = new stdClass();
-          //watchdog('importer', '<pre>'. print_r($product_data->unique_hash[0]->data(), true) .'</pre>');
+          //watchdog('importer', '<pre>'. print_r($product_data->unique_hash[0]->data(), TRUE) .'</pre>');
           if (!isset($product_data->unique_hash)) {
             $product_data->addChild('unique_hash', md5((string)$product_data->model[0]->data() . (string)$product_data->list_price[0]->data() . (string)$product_data->cost[0]->data() . (string)$product_data->sell_price[0]->data() . (string)$product_data->weight[0]->data() . (string)$product_data->weight_units[0]->data() . (string)$product_data->default_qty[0]->data() . time()), $product_data->level() + 1);
           }
@@ -994,7 +994,7 @@ function uc_importer_import($xml) {
             switch (variable_get('uc_importer_product_duplicates', UC_IMPORTER_DO_NOTHING)) {
               case UC_IMPORTER_REPLACE:
                 $product->nid = $nid;
-                $product->revision = true;
+                $product->revision = TRUE;
                 $product->unique_hash = db_result(db_query("SELECT unique_hash FROM {uc_products} WHERE nid = %d", $nid));
                 $id_map['products'][(string)$product_data->id[0]->data()] = $nid;
               break;
@@ -1105,8 +1105,8 @@ function uc_importer_import($xml) {
               }
             }
           }
-          //watchdog('importer', '<pre>'. print_r($product_data, true) .'</pre>');
-          //watchdog('importer', '<pre>'. print_r($product, true) .'</pre>');
+          //watchdog('importer', '<pre>'. print_r($product_data, TRUE) .'</pre>');
+          //watchdog('importer', '<pre>'. print_r($product, TRUE) .'</pre>');
           node_save($product);
           if (!isset($product->nid)) {
             $product->nid = db_result(db_query("SELECT id FROM {sequences} WHERE name = '{node}_nid'"));
@@ -1194,7 +1194,7 @@ function uc_importer_import($xml) {
         module_invoke_all('xml_importer', 'store', $store, $id_map);
       }
     //}
-    //drupal_set_message('<pre>'. print_r($id_map, true) .'</pre>');
+    //drupal_set_message('<pre>'. print_r($id_map, TRUE) .'</pre>');
     cache_clear_all();
   //}
 

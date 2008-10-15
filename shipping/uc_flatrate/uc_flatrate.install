@@ -1,5 +1,10 @@
 <?php
-// $Id: uc_flatrate.install,v 1.5.2.1 2008/09/22 21:07:42 islandusurper Exp $
+// $Id: uc_flatrate.install,v 1.5.2.2 2008/10/15 14:48:08 islandusurper Exp $
+
+/**
+ * @file
+ * Install hooks for uc_flatrate.module.
+ */
 
 function uc_flatrate_schema() {
   $schema = array();
@@ -28,8 +33,7 @@ function uc_flatrate_schema() {
         'type' => 'numeric',
         'precision' => 10,
         'scale' => 2,
-        'not null' => TRUE,
-        'default' => 0.0,
+        'not null' => FALSE,
       ),
     ),
     'primary key' => array('vid', 'mid'),
@@ -97,7 +101,7 @@ function uc_flatrate_update_1() {
       $ret[] = update_sql("ALTER TABLE {uc_flatrate_products} ADD PRIMARY KEY (vid)");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_flatrate_products', 'vid', 'integer unsigned', array('not null' => true, 'default' => 0));
+      db_add_column($ret, 'uc_flatrate_products', 'vid', 'integer unsigned', array('not null' => TRUE, 'default' => 0));
       $ret[] = update_sql("ALTER TABLE {uc_flatrate_products} DROP CONSTRAINT {uc_flatrate_products}_nid_key");
       $result = db_query("SELECT nid, vid FROM {node}");
       while ($product = db_fetch_object($result)) {
@@ -126,8 +130,8 @@ function uc_flatrate_update_2() {
       ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_flatrate_products', 'rate', 'rate', 'decimal(10,2)', array('not null' => true, 'default' => 0));
-      db_add_column($ret, 'uc_flatrate_products', 'mid', 'mediumint(9) unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_flatrate_products', 'rate', 'rate', 'decimal(10,2)', array('not null' => TRUE, 'default' => 0));
+      db_add_column($ret, 'uc_flatrate_products', 'mid', 'mediumint(9) unsigned', array('not null' => TRUE, 'default' => 0));
       $ret[] = update_sql("CREATE TABLE {uc_flatrate_methods} (
         mid mediumint(9) unsigned NOT NULL default 0,
         title varchar(255) NOT NULL default '',
@@ -140,7 +144,7 @@ function uc_flatrate_update_2() {
     break;
   }
 
-  $set_var = false;
+  $set_var = FALSE;
   $enabled = variable_get('uc_quote_enabled', array());
   $weight = variable_get('uc_quote_method_weight', array('flatrate' => 0, 'order_rate' => 1));
   $base_rate = variable_get('uc_flatrate_product_base_rate', 0);
@@ -213,9 +217,9 @@ function uc_flatrate_update_4() {
   $ret = array();
   switch ($GLOBALS['db_type']) {
     case 'pgsql':
-      db_change_column($ret, 'uc_flatrate_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => true, 'default' => 0));
-      db_change_column($ret, 'uc_flatrate_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));
-      db_change_column($ret, 'uc_flatrate_prodcts', 'mid', 'mid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_flatrate_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
+      db_change_column($ret, 'uc_flatrate_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
+      db_change_column($ret, 'uc_flatrate_prodcts', 'mid', 'mid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
     break;
   }
   return $ret;
@@ -232,6 +236,14 @@ function uc_flatrate_update_6000() {
 
   db_drop_primary_key($ret, 'uc_flatrate_methods');
   db_change_field($ret, 'uc_flatrate_methods', 'mid', 'mid', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('mid')));
+
+  return $ret;
+}
+
+function uc_flatrate_update_6001() {
+  $ret = array();
+
+  db_change_field($ret, 'uc_flatrate_products', 'rate', 'rate', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => FALSE));
 
   return $ret;
 }

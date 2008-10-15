@@ -1,11 +1,19 @@
 <?php
-// $Id: uc_payment_checkout_pane.inc,v 1.5.2.1 2008/09/11 14:43:45 islandusurper Exp $
+// $Id: uc_payment_checkout_pane.inc,v 1.5.2.2 2008/10/15 14:47:42 islandusurper Exp $
+
+/**
+ * @file
+ * Checkout pane functions for uc_payment.module.
+ *
+ * The checkout pane holds form to select the payment method. It also shows a
+ * preview of the line items and order total.
+ */
 
 function uc_checkout_pane_payment($op, &$arg1, $arg2) {
   switch ($op) {
     case 'view':
       // Add the default payment message as a JS variable.
-      uc_add_js("var def_payment_msg = '". addslashes(variable_get('uc_default_payment_msg', t('Continue with checkout to complete payment.'))) ."';", 'inline');
+      uc_add_js(array('defPaymentMsg' => addslashes(variable_get('uc_default_payment_msg', t('Continue with checkout to complete payment.')))), 'setting');
 
       if (variable_get('uc_payment_show_order_total_preview', TRUE)) {
         uc_add_js('misc/progress.js');
@@ -18,7 +26,9 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
           '#value' => '<div style="padding: .5em 1em; margin-bottom: 1em; border: dashed 1px #bbb;" id="line-items-div"><em>'. t('Javascript must be enabled to view the order total preview.') .'</em></div>',
           '#weight' => -20,
         );
-        uc_add_js("\$(document).ready(function() { show_progressBar('#line-items-div'); } );", 'inline');
+
+        // let the script know we need to show a progressbar
+        uc_add_js(array('ucShowProgressBar' => true), 'setting');
       }
 
       $methods = _payment_method_list();
@@ -130,7 +140,7 @@ function theme_uc_payment_method_select($form) {
 
   // Perhaps instead this should be a normal JS function and we just print the
   // default payment method to a JS variable or use a selector.  -RS
-  uc_add_js("\$(document).ready( function () { init_payment_details('". $form['#default_value'] ."'); } );", 'inline');
+  uc_add_js(array('ucDefaultPayment' => $form['#default_value']), 'setting');
 
   return drupal_render($form);
 }

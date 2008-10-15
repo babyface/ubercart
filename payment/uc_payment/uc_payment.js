@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.5 2008/07/10 12:40:57 islandusurper Exp $
+// $Id: uc_payment.js,v 1.5.2.1 2008/10/15 14:47:42 islandusurper Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
@@ -9,6 +9,37 @@ var li_summed = {};
 // Timestamps for last time line items or payment details were updated.
 var line_update = 0;
 var payment_update = 0;
+
+var do_payment_details = true;
+
+if (Drupal.jsEnabled) {
+  jQuery.extend(Drupal.settings, {
+    ucShowProgressBar: false,
+    ucDefaultPayment: '',
+    ucOrderInitiate: false,
+  });
+
+  $(document).ready(
+    function() {
+
+      // attach a progressbar if requested
+      if (Drupal.settings.ucShowProgressBar) {
+        show_progressBar('#line-items-div');
+      }
+
+      // initialize payment details
+      if (Drupal.settings.ucDefaultPayment != '') {
+        init_payment_details(Drupal.settings.ucDefaultPayment);
+      }
+
+      // disable the submission buttons and get payment details
+      if (Drupal.settings.ucOrderInitiate) {
+        add_order_save_hold();
+        get_payment_details('admin/store/orders/' + $('#edit-order-id').val() + '/payment_details/' + $('#edit-payment-method').val());
+      }
+    }
+  )
+}
 
 function show_progressBar(id) {
   var progress = new Drupal.progressBar('paymentProgress');
@@ -74,7 +105,7 @@ function render_line_items() {
   $('#order-total-throbber').attr('style', 'background-image: url(' + Drupal.settings.basePath + 'misc/throbber.gif); background-repeat: no-repeat; background-position: 100% -20px;').html('&nbsp;&nbsp;&nbsp;&nbsp;');
 
   // Post the line item data to a URL and get it back formatted for display.
-  $.post(Drupal.settings.basePath + 'cart/checkout/line_items', li_info,
+  $.post(Drupal.settings.basePath + '?q=cart/checkout/line_items', li_info,
     function(contents) {
       // Only display the changes if this was the last requested update.
       if (this_update.getTime() == line_update) {
@@ -122,12 +153,12 @@ function get_payment_details(path) {
     data = {};
   }
   // Make the post to get the details for the chosen payment method.
-  $.post(Drupal.settings.basePath + path, data,
+  $.post(Drupal.settings.basePath + '?q=' + path, data,
     function(details) {
       if (this_update.getTime() == payment_update) {
         // If the response was empty, throw up the default message.
         if (details == '') {
-          $('#payment_details').empty().html(def_payment_msg);
+          $('#payment_details').empty().html(Drupal.setting.defPaymentMsg);
         }
         // Otherwise display the returned details.
         else {
@@ -147,7 +178,7 @@ function get_payment_details(path) {
  * Pop-up an info box for the credit card CVV.
  */
 function cvv_info_popup() {
-  var popup = window.open(Drupal.settings.basePath + 'cart/checkout/credit/cvv_info', 'CVV_Info', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=480,height=460,left=282,top=122');
+  var popup = window.open(Drupal.settings.basePath + '?q=cart/checkout/credit/cvv_info', 'CVV_Info', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=480,height=460,left=282,top=122');
 }
 
 /**

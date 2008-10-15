@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.install,v 1.6.2.2 2008/09/22 21:07:42 islandusurper Exp $
+// $Id: uc_paypal.install,v 1.6.2.3 2008/10/15 14:48:03 islandusurper Exp $
 
 /**
  * @file
@@ -94,6 +94,7 @@ function uc_paypal_install() {
  */
 function uc_paypal_uninstall() {
   drupal_uninstall_schema('uc_paypal');
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_paypal_%%'");
 }
 
 function uc_paypal_update_1() {

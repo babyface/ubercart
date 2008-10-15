@@ -1,5 +1,10 @@
 <?php
-// $Id: uc_cart.install,v 1.7.2.1 2008/09/22 21:07:43 islandusurper Exp $
+// $Id: uc_cart.install,v 1.7.2.2 2008/10/15 14:47:53 islandusurper Exp $
+
+/**
+ * @file
+ * Install hooks for uc_cart.module.
+ */
 
 /**
  * Ubercart uc_cart.module schema
@@ -52,40 +57,23 @@ function uc_cart_install() {
 function uc_cart_uninstall() {
   drupal_uninstall_schema('uc_cart');
 
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_cart_%%'");
   db_query("DELETE FROM {variable} WHERE name LIKE 'uc_pane_%%'");
   db_query("DELETE FROM {variable} WHERE name LIKE 'uc_cap_%%'");
-  variable_del('uc_cart_empty_hide');
-  variable_del('uc_cart_expanded');
-  variable_del('uc_cart_show_help_text');
-  variable_del('uc_cart_help_text');
-  variable_del('uc_cart_anon_duration');
-  variable_del('uc_cart_anon_unit');
-  variable_del('uc_cart_auth_duration');
-  variable_del('uc_cart_auth_unit');
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_checkout_%%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_msg_%%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_new_customer_%%'");
+
   variable_del('uc_minimum_subtotal');
   variable_del('uc_add_item_redirect');
   variable_del('uc_continue_shopping_url');
   variable_del('uc_continue_shopping_text');
   variable_del('uc_continue_shopping_type');
-  variable_del('uc_cart_breadcrumb_url');
-  variable_del('uc_cart_breadcrumb_text');
-  variable_del('uc_checkout_enabled');
-  variable_del('uc_checkout_next_button');
-  variable_del('uc_checkout_review_button');
-  variable_del('uc_checkout_submit_button');
   variable_del('uc_use_next_buttons');
   variable_del('uc_collapse_current_pane');
-  variable_del('uc_cart_delivery_not_shippable');
-  variable_del('uc_new_customer_email');
-  variable_del('uc_checkout_anonymous');
-  variable_del('uc_cart_checkout_complete_page');
-  variable_del('uc_checkout_instructions');
-  variable_del('uc_checkout_review_instructions');
-  variable_del('uc_msg_order_submit');
-  variable_del('uc_msg_order_logged_in');
-  variable_del('uc_msg_order_existing_user');
-  variable_del('uc_msg_order_new_user');
-  variable_del('uc_msg_continue_shopping');
+
+  variable_del('uc_ce_no_cancel');
+  variable_del('uc_ce_submit_disable');
 }
 
 function uc_cart_update_6000() {

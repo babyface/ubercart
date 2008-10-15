@@ -1,5 +1,5 @@
 <?php
-// $Id: test_gateway.module,v 1.1.2.3 2008/08/06 13:41:21 islandusurper Exp $
+// $Id: test_gateway.module,v 1.1.2.4 2008/10/15 14:47:45 islandusurper Exp $
 
 /**
  * @file
@@ -42,7 +42,7 @@ function test_gateway_charge($order_id, $amount, $data) {
 
   // Uncomment this lines to see the order object.  The information for the
   // payment is in the $order->payment_details array.
-  // drupal_set_message('<pre>'. print_r($order->payment_details, true) .'</pre>');
+  // drupal_set_message('<pre>'. print_r($order->payment_details, TRUE) .'</pre>');
 
   if ($success) {
     $message = t('Credit card charged: !amount', array('!amount' => uc_currency_format($amount)));

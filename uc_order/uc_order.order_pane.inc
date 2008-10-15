@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_order_pane.inc,v 1.5.2.2 2008/09/11 14:43:46 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.1 2008/10/15 14:47:35 islandusurper Exp $
 
 /**
  * @file
@@ -194,7 +194,7 @@ function uc_order_pane_bill_to($op, $arg1) {
 function uc_order_pane_customer($op, $arg1) {
   switch ($op) {
     case 'view':
-      $output = t('Customer number: ') . l($arg1->uid, 'user/'. $arg1->uid)
+      $output = t('Customer number: !user_link', array('!user_link' => l($arg1->uid, 'user/'. $arg1->uid)))
                .'<br />'. t('Primary e-mail:') .'<br />'
               . check_plain($arg1->primary_email);
       return $output;
@@ -652,6 +652,12 @@ function uc_order_view_update_form_submit($form, &$form_state) {
     if (uc_order_update_status($form_state['values']['order_id'], $form_state['values']['status'])) {
       if (is_null($form_state['values']['order_comment']) || strlen($form_state['values']['order_comment']) == 0) {
         uc_order_comment_save($form_state['values']['order_id'], $user->uid, '-', 'order', $form_state['values']['status'], $form_state['values']['notify']);
+      }
+      $order = uc_order_load($form_state['values']['order_id']);
+
+      // Let conditional actions send email if requested.
+      if ($form_state['values']['notify']) {
+        ca_pull_trigger('uc_order_status_email_update', $order);
       }
     }
   }

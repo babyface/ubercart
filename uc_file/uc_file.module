@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.2.2.4 2008/08/06 13:41:25 islandusurper Exp $
+// $Id: uc_file.module,v 1.2.2.5 2008/10/15 14:47:57 islandusurper Exp $
 
 /**
  * @file
@@ -40,7 +40,7 @@ function uc_file_menu() {
 
   $items['_autocomplete_file'] = array(
     'page callback' => '_autocomplete_filename',
-    'access arguments' => array('administer products'),
+    'access arguments' => array('administer product features'),
     'type' => MENU_CALLBACK,
   );
   $items['admin/store/products/files'] = array(
@@ -49,6 +49,7 @@ function uc_file_menu() {
     'page callback' => 'uc_file_files_admin',
     'access arguments' => array('administer products'),
     'type' => MENU_NORMAL_ITEM,
+    'file' => 'uc_file.admin.inc',
   );
   if (module_exists('uc_notify')) {
     $items['admin/store/settings/notify/edit/file'] = array(
@@ -58,6 +59,7 @@ function uc_file_menu() {
       'page arguments' => array('uc_file_notify_settings'),
       'access arguments' => array('administer store'),
       'type' => MENU_LOCAL_TASK,
+    'file' => 'uc_file.admin.inc',
     );
   }
   $items['user/%user/files'] = array(
@@ -68,12 +70,14 @@ function uc_file_menu() {
     'access callback' => 'uc_file_user_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
+    'file' => 'uc_file.pages.inc',
   );
   $items['download/%/%'] = array(
     'page callback' => '_file_download',
     'page arguments' => array(1, 2),
     'access arguments' => array('download file'),
     'type' => MENU_CALLBACK,
+    'file' => 'uc_file.pages.inc',
   );
 
   return $items;
@@ -102,6 +106,7 @@ function uc_file_theme() {
     ),
     'uc_file_files_form' => array(
       'arguments' => array('form' => NULL),
+      'file' => 'uc_file.admin.inc',
     ),
   );
 }
@@ -379,6 +384,7 @@ function uc_file_feature_form($form_state, $node, $feature) {
     '#default_value' => $default_filename,
     '#autocomplete_path' => '_autocomplete_file',
     '#description' => t('The file that can be downloaded when product is purchased (enter a path relative to the %dir directory).', array('%dir' => variable_get('uc_file_base_dir', NULL))),
+    '#maxlength' => 255,
   );
   $form['uc_file_description'] = array(
     '#type' => 'textfield',
@@ -445,7 +451,7 @@ function uc_file_feature_form_submit($form, &$form_state) {
  * Form builder for file settings
  */
 function uc_file_feature_settings() {
-  uc_add_js('$(document).ready(function() { if ($("#edit-uc-file-download-limit-duration-granularity").val() == "never") {$("#edit-uc-file-download-limit-duration-qty").attr("disabled", "disabled").val("");} });', 'inline');
+  uc_add_js('if (Drupal.jsEnabled) { $(document).ready(function() { if ($("#edit-uc-file-download-limit-duration-granularity").val() == "never") {$("#edit-uc-file-download-limit-duration-qty").attr("disabled", "disabled").val("");} })};', 'inline');
   $statuses = array();
   foreach (uc_order_status_list('general') as $status) {
     $statuses[$status['id']] = $status['title'];
@@ -534,289 +540,6 @@ function uc_file_feature_settings_submit($form, &$form_state) {
 }
 
 /**
- * Page builder for file products admin
- */
-function uc_file_files_admin() {
-  _file_table_action('insert');
-  return drupal_get_form('uc_file_files_form');
-}
-
-/**
- * Implementation of theme_form($form)
- */
-function theme_uc_file_files_form($form) {
-  $output = '';
-
-  //Only display files on 1st form step
-  if ($form['step']['#value'] == 1) {
-    $files = array();
-    $args = array('form' => $form);
-    $header = tablesort_sql(tapir_get_header('uc_file_files_table', array()));
-    $order = (empty($header)) ? "ORDER BY f.filename ASC" : $header .", f.filename ASC";
-    $count_query = "SELECT COUNT(*) FROM {uc_files}";
-    $query = pager_query("SELECT n.nid, f.filename, n.title, fp.model, f.fid, pf.pfid FROM {uc_files} as f LEFT JOIN {uc_file_products} as fp ON (f.fid = fp.fid) LEFT JOIN {uc_product_features} as pf ON (fp.pfid = pf.pfid) LEFT JOIN {node} as n ON (pf.nid = n.nid) ". $order, UC_FILE_PAGER_SIZE, 0, $count_query);
-    while ($file = db_fetch_object($query)) {
-      $files[] = $file;
-    }
-    $args['files'] = $files;
-
-    $output .= '<p>'. t('File downloads can be attached to any Ubercart product as a product feature. For security reasons the <a href="!download_url">file downloads directory</a> is separated from the Drupal <a href="!file_url">file system</a>. Here are the list of files (and their associated Ubercart products) that can be used for file downloads.', array('!download_url' => url('admin/store/settings/products/edit/features'), '!file_url' => url('admin/settings/file-system'))) .'</p>';
-    $output .= drupal_render($form['uc_file_action']);
-    $output .= tapir_get_table('uc_file_files_table', $args);
-    $output .= theme('pager', NULL, UC_FILE_PAGER_SIZE, 0);
-  }
-
-  //Checkboxes already rendered in uc_file_files_table
-  foreach ($form as $form_element => $form_data) {
-    if (strpos($form_element, 'file_select_') !== FALSE) {
-      unset($form[$form_element]);
-    }
-  }
-  $output .= drupal_render($form);
-
-  return $output;
-}
-
-/**
- * Form builder for file products admin
- */
-function uc_file_files_form($form_state) {
-  if (!isset($form_state['step']) || $form_state['step'] < 2) {
-    //Display File Options and File checkboxes
-    $files = db_query("SELECT * FROM {uc_files}");
-    $file_actions = array(
-      'uc_file_delete' => t('Delete file(s)'),
-      'uc_file_upload' => t('Upload file')
-    );
-
-    //Check any if any hook_file_action('info', $args) are implemented
-    foreach (module_implements('file_action') as $module) {
-      $name = $module .'_file_action';
-      $result = $name('info', NULL);
-      if (is_array($result)) {
-        foreach ($result as $key => $action) {
-          if ($key != 'uc_file_delete' && $key != 'uc_file_upload') {
-            $file_actions[$key] = $action;
-          }
-        }
-      }
-    }
-
-    while ($file = db_fetch_object($files)) {
-      $form['file_select_'. $file->fid] = array('#type' => 'checkbox');
-    }
-    $form['uc_file_action'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('File options'),
-      '#collapsible' => FALSE,
-      '#collapsed' => FALSE,
-    );
-    $form['uc_file_action']['action'] = array(
-      '#type' => 'select',
-      '#title' => t('Action'),
-      '#options' => $file_actions,
-      '#prefix' => '<div class="duration">',
-      '#suffix' => '</div>',
-    );
-    $form['uc_file_action']['submit'] = array(
-      '#type' => 'submit',
-      '#value' => t('Perform action'),
-      '#prefix' => '<div class="duration">',
-      '#suffix' => '</div>',
-    );
-  }
-  else {
-    //Perform File Action (Upload, Delete, hooked in actions)
-    $file_ids = array();
-    foreach ($form_state['values'] as $name => $form_value) {
-      if (strpos($name, 'file_select_') !== FALSE) {
-        $file_ids[] = intval(str_replace('file_select_', '', $name));
-      }
-    }
-    $form['file_ids'] = array('#type' => 'value', '#value' => $file_ids);
-    $form['action'] = array('#type' => 'value', '#value' => $form_state['values']['action']);
-
-    //Switch to an action to perform
-    switch ($form_state['values']['action']) {
-      case 'uc_file_delete': //Delete selected files
-        foreach ($file_ids as $file_id) {
-          $filename = db_result(db_query("SELECT filename FROM {uc_files} WHERE fid = %d", $file_id));
-          $filename = (substr($filename, -1) == "/") ? $filename .' ('. t('directory') .')' : $filename;
-          $file_list[] = $filename;
-        }
-        $form['files'] = array(
-          '#type' => 'markup',
-          '#value' => theme_item_list($file_list, NULL, 'ul', array('class' => 'file-name')),
-        );
-        $form['recurse_directories'] = array(
-          '#type' => 'checkbox',
-          '#title' => t('Delete selected directories and their sub directories'),
-        );
-        $form = confirm_form($form, t('Delete the following file(s)?'), 'admin/store/products/files', t('Deleting a file will remove all its associated file downloads and product features. Removing a directory will remove any files it contains and their associated file downloads and product features.'), t('Yes'), t('No'));
-        break;
-      case 'uc_file_upload': //Upload file
-        drupal_set_title(t('Upload File'));
-        $max_bytes = trim(ini_get('post_max_size'));
-        $directories = array('' => '/');
-
-        switch (strtolower($max_bytes{strlen($max_bytes)-1})) {
-          case 'g':
-            $max_bytes *= 1024;
-          case 'm':
-            $max_bytes *= 1024;
-          case 'k':
-            $max_bytes *= 1024;
-        }
-
-        $files = db_query("SELECT * FROM {uc_files}");
-        while ($file = db_fetch_object($files)) {
-          if (is_dir(variable_get('uc_file_base_dir', NULL) ."/". $file->filename)) {
-            $directories[$file->filename] = $file->filename;
-          }
-        }
-
-        $form['#attributes']['enctype'] = 'multipart/form-data';
-        $form['upload_dir'] = array(
-          '#type' => 'select',
-          '#title' => t('Directory'),
-          '#description' => t('The directory to upload the file to. The default directory is the root of the file downloads directory.'),
-          '#options' => $directories,
-        );
-        $form['upload'] = array(
-          '#type' => 'file',
-          '#title' => t('File'),
-          '#description' => t('The maximum file size that can be uploaded is %size bytes. You will need to use a different method to upload the file to the directory (e.g. FTP, SSH) if your file exceeds this size.', array('%size' => number_format($max_bytes))),
-        );
-        $form['submit'] = array(
-          '#type' => 'submit',
-          '#value' => t('Upload'),
-        );
-        break;
-      default:
-        //Check any if any hook_file_action('form', $args) are implemented
-        foreach (module_implements('file_action') as $module) {
-          $name = $module .'_file_action';
-          $result = $name('form', array('action' => $form_state['values']['action'], 'file_ids' => $file_ids));
-          $form = (is_array($result)) ? array_merge($form, $result) : $form;
-        }
-        break;
-    }
-  }
-
-  return $form;
-}
-
-function uc_file_files_form_validate($form, &$form_state) {
-  switch ($form_state['step']) {
-    case 2:
-      switch ($form_state['values']['action']) {
-        case 'uc_file_delete': //Nothing to validate for file delete
-          break;
-        case 'uc_file_upload':
-          //Check any if any hook_file_action('validate', $args) are implemented
-          if ($temp_file = file_save_upload('upload', array())) {
-            foreach (module_implements('file_action') as $module) {
-              $name = $module .'_file_action';
-              $result = $name('upload_validate', array('file_object' => $temp_file, 'form_id' => $form_id, 'form_state' => $form_state));
-            }
-            $form_state['storage']['temp_file'] = $temp_file;
-          }
-          else {
-            form_set_error('', t('An error occurred while uploading the file'));
-          }
-          break;
-        default:
-          //Check any if any hook_file_action('validate', $args) are implemented
-          foreach (module_implements('file_action') as $module) {
-            $name = $module .'_file_action';
-            $result = $name('validate', array('form_id' => $form_id, 'form_state' => $form_state));
-          }
-          break;
-      }
-      break;
-    default:
-      break;
-  }
-}
-
-function uc_file_files_form_submit($form, &$form_state) {
-  switch ($form_state['step']) {
-    case 2:
-      switch ($form_state['values']['action']) {
-        case 'uc_file_delete':
-          foreach ($form_state['values']['file_ids'] as $file_id) {
-            _file_table_action('remove', $file_id, $form_state['values']['recurse_directories'], TRUE);
-          }
-          drupal_set_message(t('The select file(s) have been deleted.'));
-          break;
-        case 'uc_file_upload':
-          $dir = variable_get('uc_file_base_dir', NULL) .'/';
-          $dir = (is_null($form_state['values']['upload_dir'])) ? $dir : $dir . $form_state['values']['upload_dir'];
-          if (is_dir($dir)) {
-            $file_object = $form_state['storage']['temp_file'];
-            if (file_copy($file_object, $dir, FILE_EXISTS_REPLACE)) {
-              //Check any if any hook_file_action('upload', $args) are implemented
-              foreach (module_implements('file_action') as $module) {
-                $name = $module .'_file_action';
-                $result = $name('upload', array('file_object' => $file_object, 'form_id' => $form_id, 'form_state' => $form_state));
-              }
-
-              _file_table_action('insert');
-              drupal_set_message(t('The %file has been uploaded to %dir', array('%file' => basename($file_object->filepath), '%dir' => $dir)));
-            }
-            else {
-              drupal_set_message(t('An error occurred while copying the file to %dir', array('%dir' => $dir)));
-            }
-          }
-          else {
-            drupal_set_message(t('Can not move file to %dir', array('%dir' => $dir)));
-          }
-          break;
-        default:
-          //Check any if any hook_file_action('validate', $args) are implemented
-          foreach (module_implements('file_action') as $module) {
-            $name = $module .'_file_action';
-            $result = $name('submit', array('form_id' => $form_id, 'form_state' => $form_state));
-          }
-          break;
-      }
-      $form_state['rebuild'] = FALSE;
-      drupal_goto('admin/store/products/files');
-      break;
-    default:
-      $form_state['step'] = 2;
-      $form_state['rebuild'] = TRUE;
-    break;
-  }
-}
-
-/**
- * Form builder for file download notification settings.
- */
-function uc_file_notify_settings() {
-  $form['uc_file_download_notification'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Send email to customer with file download link(s).'),
-    '#default_value' => variable_get('uc_file_download_notification', FALSE),
-  );
-  $form['uc_file_download_notification_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Message subject'),
-    '#default_value' => variable_get('uc_file_download_notification_subject', uc_get_message('uc_file_download_subject')),
-  );
-  $form['uc_file_download_notification_message'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Message text'),
-    '#default_value' => variable_get('uc_file_download_notification_message', uc_get_message('uc_file_download_message')),
-    '#description' => t('The message the user receives after purchasing products with file downloads (<a href="!token_url">uses order, uc_file, and global tokens</a>)', array('!token_url' => url('admin/store/help/tokens'))),
-    '#rows' => 10,
-  );
-  $form['uc_file_download_notification_format'] = filter_form(variable_get('uc_file_download_notification_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_file_download_notification_format'));
-
-  return system_settings_form($form);
-}
-
-/**
  * Table builder for file products admin
  */
 function uc_file_files_table($form_state, $args = array()) {
@@ -869,59 +592,6 @@ function uc_file_files_table($form_state, $args = array()) {
       'class' => 'file-table',
     ),
   );
-}
-
-/**
- * Table builder for user downloads
- */
-function uc_file_user_downloads($account) {
-  drupal_set_title(t('File downloads'));
-  uc_add_js(drupal_get_path('module', 'uc_file') .'/uc_file.js');
-
-  $header = array(
-    array('data' => t('Purchased'), 'field' => 'u.granted', 'sort' => 'desc'),
-    array('data' => t('Filename'), 'field' => 'f.filename'),
-    array('data' => t('Description'), 'field' => 'p.description'),
-    array('data' => t('Downloads'), 'field' => 'u.accessed'),
-  );
-
-  $sql = "SELECT granted, filename, accessed, description, `key`, f.fid FROM {uc_file_users} as u LEFT JOIN {uc_files} as f ON u.fid = f.fid LEFT JOIN {uc_file_products} as p ON p.pfid = u.pfid WHERE uid = %d";
-  $count_query = "SELECT COUNT(*) FROM {uc_file_users} WHERE uid = %d";
-  $download_limit = variable_get('uc_file_download_limit_number', NULL);
-  $file_ids = array();
-  $rows = array();
-  $files = pager_query($sql . tablesort_sql($header), UC_FILE_PAGER_SIZE, 0, $count_query, $account->uid);
-
-  while ($file = db_fetch_object($files)) {
-    $row = count($rows);
-    $expiration = _file_expiration_date($file->granted);
-    $onclick = array('onclick' => 'uc_file_update_download('. $row .', '. $file->accessed .', '. ((empty($download_limit)) ? -1 : $download_limit) .');', 'id' => 'link-'. $row);
-
-    if (!$expiration) {
-      $file_link = l(basename($file->filename), 'download/'. $file->fid .'/'. $file->key, $onclick);
-    }
-    else {
-      if (time() > $expiration) {
-        $file_link = basename($file->filename);
-      }
-      else {
-        $file_link = l(basename($file->filename), 'download/'. $file->fid .'/'. $file->key, $onclick) .' ('. t('expires on @date', array('@date' => format_date($expiration, 'custom', variable_get('uc_date_format_default', 'm/d/Y')))) .')';
-      }
-    }
-
-    $rows[] = array(
-      array('data' => format_date($file->granted, 'custom', variable_get('uc_date_format_default', 'm/d/Y')), 'class' => 'date-row', 'id' => 'date-'. $row),
-      array('data' => $file_link, 'class' => 'filename-row', 'id' => 'filename-'. $row),
-      array('data' => $file->description, 'class' => 'description-row', 'id' => 'description-'. $row),
-      array('data' => $file->accessed, 'class' => 'download-row', 'id' => 'download-'. $row),
-    );
-  }
-  if (empty($rows)) {
-    $rows[] = array(array('data' => t('No downloads found'), 'colspan' => 4));
-  }
-
-  $output = theme('table', $header, $rows) . theme('pager', NULL, UC_FILE_PAGER_SIZE, 0);
-  return $output;
 }
 
 /* **************************************************************************** *
@@ -980,153 +650,6 @@ function uc_file_mail($key, &$message, $params) {
   $body = check_markup($body, variable_get('uc_file_download_notification_format', 3), FALSE);
   $message['body'][] = $body;
   $message['headers']['Content-Type'] = 'text/html; charset=UTF-8; format=flowed';
-}
-
-/**
- * Perform first-pass authorization. Call authorization hooks afterwards.
- *
- * Called when a user requests a file download, function checks download
- * limits then checks for any implementation of hook_download_authorize.
- * Passing that, the function _file_download_transfer is called.
- *
- * @param $fid
- *   The fid of the file specified to download.
- * @param $key
- *   The hash key of a user's download
- */
-function _file_download($fid, $key) {
-  global $user;
-  $ip = ip_address();
-  $message_admin = t('Please contact the site administrator if this message has been received in error.');
-
-  $message_user = ($user->uid) ? t('The user %username ', array('%username' => $user->name)) : t('The IP address %ip ', array('%ip' => $ip));
-  $file_download = db_fetch_object(db_query("SELECT * FROM {uc_file_users} WHERE fid = %d AND `key` = '%s'", $fid, $key));
-  $request_cache = cache_get('uc_file_'. $ip);
-  $requests = ($request_cache) ? $request_cache->data + 1 : 1;
-
-  if ($requests > UC_FILE_REQUEST_LIMIT) {
-    _file_download_deny($user->uid, t('You have attempted to download an incorrect file URL too many times. ') . $message_admin);
-  }
-
-  if (!$file_download) {
-    cache_set('uc_file_'. $ip, $requests, 'cache', time() + 86400);
-    if ($requests == UC_FILE_REQUEST_LIMIT) {
-      watchdog('uc_file', '%username has been temporarily banned from file downloads.', array('%username' => $message_user), WATCHDOG_WARNING);
-    }
-    _file_download_deny($user->uid, t("The following URL is not a valid download link. ") . $message_admin);
-  }
-  else {
-    $ip_limit = variable_get('uc_file_download_limit_addresses', NULL);
-    $addresses = unserialize($file_download->addresses);
-
-    if (!empty($ip_limit) && !in_array($ip, $addresses) && count($addresses) >= $ip_limit) {
-      watchdog('uc_file', '%username has been denied a file download by downloading it from too many IP addresses.', array('%username' => $message_user), WATCHDOG_WARNING);
-      _file_download_deny($user->uid, t('You have downloaded this file from too many different locations. ') . $message_admin);
-    }
-    else {
-      $download_limit = variable_get('uc_file_download_limit_number', NULL);
-
-      if (!empty($download_limit) && $file_download->accessed >= $download_limit) {
-        watchdog('uc_file', '%username has been denied a file download by downloading it too many times.', array('%username' => $message_user), WATCHDOG_WARNING);
-        _file_download_deny($user->uid, t('You have downloaded this file too many times. ') . $message_admin);
-      }
-      else {
-        $duration_limit = _file_expiration_date($file_download->granted);
-
-        if ($duration_limit !== FALSE && time() >= $duration_limit) {
-          watchdog('uc_file', '%username has been denied an expired file download.', array('%username' => $message_user), WATCHDOG_WARNING);
-          _file_download_deny($user->uid, t("This file download has expired. ") . $message_admin);
-        }
-        else {
-          //Check any if any hook_download_authorize calls deny the download
-          foreach (module_implements('download_authorize') as $module) {
-            $name = $module .'_download_authorize';
-            $result = $name($user, $file_download);
-            if (!$result) {
-              _file_download_deny($user->uid);
-            }
-          }
-
-          $filename = db_result(db_query("SELECT filename FROM {uc_files} WHERE fid = %d", $fid));
-          watchdog('uc_file', '%username has started download of the file %filename.', array('%username' => $message_user, '%filename' => basename($filename)), WATCHDOG_NOTICE);
-          _file_download_transfer($file_download, $ip, $file_download->fid);
-        }
-      }
-    }
-  }
-}
-
-/**
- * Deny a file download
- *
- * @param $uid
- *   The user id of the person attempting the download
- * @param $message
- *   The optional message to send to the user
- */
-function _file_download_deny($uid = NULL, $message = NULL) {
-  if (!is_null($message)) {
-    drupal_set_message($message, 'error');
-  }
-  if (is_null($uid) || $uid == 0) {
-    drupal_access_denied();
-    exit();
-  }
-  else {
-    drupal_goto('user/'. $uid .'/files');
-  }
-}
-
-/**
- * Send the file's binary data to a user via HTTP and update the uc_file_users table.
- *
- * @param $file_user
- *   The file_user object from the uc_file_users
- * @param $ip
- *   The string containing the ip address the download is going to
- * @param $fid
- *   The file id of the file to transfer
- */
-function _file_download_transfer($file_user, $ip, $fid) {
-  $file = db_result(db_query("SELECT filename FROM {uc_files} WHERE fid = %d", $fid));
-  $file_path = variable_get('uc_file_base_dir', NULL) .'/'. $file;
-
-  if (!is_file($file_path)) {
-    drupal_set_message(t('The file %filename could not be found. Please contact the site administrator.', array('%filename' => basename($file))), 'error');
-    drupal_not_found();
-    exit();
-  }
-  else {
-    //Check any if any hook_file_transfer_alter calls alter the download
-    foreach (module_implements('file_transfer_alter') as $module) {
-      $name = $module .'_file_transfer_alter';
-      $file_path = $name($file_user, $ip, $fid, $file_path);
-    }
-    $data = fopen($file_path, 'rb');
-
-    ob_end_clean();
-    $http_headers = array(
-      'Pragma: no-cache',
-      'Expires: 0',
-      'Cache-Control: no-cache, must-revalidate',
-      'Cache-Control: private',
-      'Content-Transfer-Encoding: binary',
-      'Content-Length:'. filesize($file_path),
-      'Content-Disposition: attachment; filename="'. basename($file) .'"',
-      'Content-Type: application/octet-stream'
-    );
-    foreach ($http_headers as $header) {
-      $header = preg_replace('/\r?\n(?!\t| )/', '', $header);
-      drupal_set_header($header);
-    }
-
-    while (!feof($data)) {
-      print fread($data, UC_FILE_BYTE_SIZE);
-    }
-    fclose($data);
-    _user_table_action('download', $file_user, $ip);
-    exit();
-  }
 }
 
 /**

@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.6 2008/09/22 21:07:41 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.7 2008/10/15 14:47:46 islandusurper Exp $
 
 /**
  * @file
@@ -87,6 +87,151 @@ function ca_admin() {
   $output .= l(t('Add a predicate'), 'admin/settings/ca/add');
 
   return $output;
+}
+
+/**
+ * Landing page for converting Workflow-ng configurations.
+ *
+ * From this page, the user can begin the batch processing of any Workflow-ng
+ * configurations in the site's database into Conditional Actions predicates.
+ */
+function ca_conversion_page() {
+  $output = t('TODO: Fill this page out. :)');
+
+  // TODO: Figure out if the conversion needs to be done
+  // Generally, it should only happen when someone upgrades from Drupal 5 to
+  // Drupal 6.
+
+  // TODO: Do batch processing because I can imagine some people having a lot
+  // of Ubercart-related Workflow-ng configurations.
+
+  return $output;
+}
+
+/**
+ * Batch API callback (that's the plan, anyway).
+ *
+ *
+ */
+function _ca_convert_configurations() {
+  global $user;
+
+  if (db_table_exists('workflow_ng_cfgs')) {
+    $result = db_query("SELECT name, data FROM {workflow_ng_cfgs} WHERE altered = 1");
+    $predicates = array();
+    while ($configuration_row = db_fetch_object($result)) {
+      $predicate = array('#pid' => $configuration_row->name);
+      $conditions = array();
+      $actions = array();
+      if ($configuration = unserialize($configuration_row->data)) {
+        $predicate['#class'] = $configuration['#module'];
+        $predicate['#title'] = $configuration['#label'];
+        switch ($configuration['#event']) {
+          case 'order_status_update':
+            $trigger = 'uc_order_status_update';
+          break;
+          case 'payment_entered':
+            $trigger = 'uc_payment_entered';
+          break;
+          case 'checkout_complete':
+            $trigger = 'uc_checkout_complete';
+          break;
+          default:
+            $trigger = $configuration['#event'];
+          break;
+        }
+        if (strpos($trigger, 'calculate_tax_') === 0) {
+          $tax_id = substr($trigger, 14);
+          $trigger = 'calculate_taxes';
+        }
+        $predicate['#trigger'] = $trigger;
+        $predicate['#weight'] = $configuration['#weight'];
+        $predicate['#status'] = $configuration['#active'];
+        for ($i = 0; isset($configuration[$i]); $i++) {
+          if ($configuration[$i]['#type'] == 'action') {
+            $action = _ca_convert_actions($configuration[$i], $tax_id);
+            if ($action) {
+              $actions[] = $action;
+            }
+          }
+          else {
+            $condition = _ca_convert_conditions($configuration[$i]);
+            if ($condition) {
+              $conditions[] = $condition;
+            }
+          }
+        }
+        if ($conditions) {
+          $predicate['#conditions'] = array(
+            '#operator' => 'AND',
+            '#conditions' => $conditions,
+          );
+        }
+        $predicate['#uid'] = $user->uid;
+        ca_save_predicate($predicate);
+      }
+    }
+  }
+}
+
+/**
+ * Helper function for converting Ubercart's Workflow-ng conditions.
+ */
+function _ca_convert_conditions($condition_tree) {
+  $ca_condition = array();
+
+  if ($condition_tree['#type'] == 'AND' || $condition_tree['#type'] == 'OR') {
+    $ca_condition['#operator'] = $condition_tree['#type'];
+    $ca_condition['#conditions'] = array();
+    for ($i = 0; isset($condition_tree[$i]); $i++) {
+      $condition = _ca_convert_conditions($condition_tree[$i]);
+      if ($condition) {
+        $ca_condition['#conditions'][] = $condition;
+      }
+    }
+  }
+  else if ($condition_tree['#type'] == 'condition') {
+    switch ($condition_tree['#name']) {
+      case 'uc_payment_condition_balance':
+        $ca_condition['#name'] = 'uc_payment_condition_order_balance';
+        break;
+      default:
+        $ca_condition['#name'] = $condition_tree['#name'];
+        break;
+    }
+    $ca_condition['#title'] = $condition_tree['#label'];
+    $ca_condition['#argument_map'] = $condition_tree['#argument map'];
+    $ca_condition['#settings'] = $condition_tree['#settings'];
+    if (isset($condition_tree['#negate'])) {
+      $ca_condition['#settings']['negate'] = $condition_tree['#negate'];
+    }
+  }
+
+  return $ca_condition;
+}
+
+/**
+ * Helper function for converting Ubercart's Workflow-ng actions.
+ */
+function _ca_convert_actions($wf_action, $tax_id = NULL) {
+  $action = $wf_action;
+
+  switch ($action['#name']) {
+    case 'uc_order_action_update_status':
+      $action['#name'] = 'uc_order_update_status';
+      break;
+    case 'uc_taxes_action_apply_tax':
+      $action['#name'] = 'uc_taxes_action_apply_tax_'. $tax_id;
+      break;
+  }
+
+  if (isset($action['#label'])) {
+    $action['#title'] = $action['#label'];
+    unset($action['#label']);
+  }
+  else {
+    $action['#title'] = $action['#name'];
+  }
 }
 
 // Form to allow the creation and editing of conditional action predicates.
@@ -434,17 +579,19 @@ function ca_actions_form_add_action_submit($form, &$form_state) {
   drupal_set_message(t('Action added.'));
 }
 
-// Save changes submit handler.
+// Save changes submit handler for the actions form.
 function ca_actions_form_save_changes_submit($form, &$form_state) {
   // Save the existing actions to preserve any changes.
   ca_actions_form_update_actions($form_state['values']['pid'], $form_state['values']['actions']);
+
+  drupal_set_message(t('Actions saved.'));
 }
 
 /**
  * Updates a predicate's actions based on the values from an actions form.
  *
  * @param $pid
- *   The ID of the predicates whose actions should be updated.
+ *   The ID of the predicate whose actions should be updated.
  * @param $data
  *   The actions values from the form state that should be used to update the
  *     predicate; normally $form_state['values']['actions'].
@@ -472,6 +619,450 @@ function ca_actions_form_update_actions($pid, $data) {
 
   // Update the actions and save the result.
   $predicate['#actions'] = $actions;
+  ca_save_predicate($predicate);
+
+  return $predicate;
+}
+
+// Builds a form for adding and editing conditions on a predicate.
+function ca_conditions_form($form_state, $pid, $title = TRUE) {
+  // Locate the specified predicate.
+  $predicate = ca_load_predicate($pid);
+
+  // Return an empty form if the predicate does not exist.
+  if (empty($predicate)) {
+    return array();
+  }
+
+  // Include the JS for conditional actions forms.
+  drupal_add_js(drupal_get_path('module', 'ca') .'/ca.js');
+
+  // Display the title if appropriate.
+  if ($title) {
+    drupal_set_title($predicate['#title']);
+  }
+
+  // Initialize the conditions available for this predicate.
+  ca_load_trigger_conditions($predicate['#trigger']);
+
+  // Add the predicate ID to the form array.
+  $form['pid'] = array(
+    '#type' => 'value',
+    '#value' => $pid,
+  );
+
+  // If the predicate conditions array isn't already a container of containers,
+  // make it so.  i.e. group => array('group' => array('cond', 'cond'))
+  if (empty($predicate['#conditions'])) {
+    $predicate['#conditions'] = ca_new_conditions();
+  }
+  else {
+    $key = array_shift(array_keys($predicate['#conditions']['#conditions']));
+
+    if (empty($predicate['#conditions']['#conditions'][$key]['#operator'])) {
+      $predicate['#conditions'] = array(
+        '#operator' => 'AND',
+        '#conditions' => array(
+          $predicate['#conditions'],
+        ),
+      );
+    }
+  }
+
+  // Recurse through the predicate's conditions to build the form.
+  $form['conditions'] = _ca_conditions_form_tree($predicate['#conditions'], $predicate['#trigger']);
+  $form['conditions'] = $form['conditions'][0];
+
+  // Always remove the top level condition group controls.
+  unset($form['conditions']['condition']);
+  unset($form['conditions']['add_condition']);
+  unset($form['conditions']['remove_condition_group']);
+
+  // If there are more than one top level condition groups...
+  if (count($form['conditions']['conditions']) > 1) {
+    // Update the top level fieldset.
+    $form['conditions']['#title'] = t('Condition groups');
+    $form['conditions']['#collapsible'] = FALSE;
+
+    // Adjust the titles of the operator options to be more explicit.
+    $form['conditions']['operator']['#options'] = array(
+      'AND' => t('AND. If all of these condition groups are TRUE.'),
+      'OR' => t('OR. If any of these condition groups are TRUE.'),
+    );
+  }
+  else {
+    // Otherwise remove the top level fieldset and operator.
+    unset($form['conditions']['#type']);
+    unset($form['conditions']['operator']);
+
+    // Adjust the second level conditions group to not collapse.
+    $form['conditions']['conditions'][0]['#collapsible'] = FALSE;
+  }
+
+  // Set the conditions array to a tree so the submitted form values mirror the
+  // structure of a predicate's #conditions array.
+  $form['conditions']['#tree'] = TRUE;
+
+  $form['add_condition_group'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add condition group'),
+    '#submit' => array('ca_conditions_form_add_condition_group_submit'),
+  );
+
+  $form['save'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save changes'),
+    '#submit' => array('ca_conditions_form_save_changes_submit'),
+  );
+
+  return $form;
+}
+
+// Recursively adds logical groups to the conditions form as fieldsets.
+function _ca_conditions_form_tree($condition, $trigger) {
+  // We need an index so condition group fieldsets have unique keys.
+  static $index = 0;
+  $form = array();
+
+  // If we're dealing with a conditions group and not a single condition.
+  if (isset($condition['#operator']) && is_array($condition['#conditions'])) {
+    $level = $index;
+
+    $form[$level] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Conditions group'),
+      '#collapsible' => TRUE,
+    );
+
+    // Add an operator radio select for the group.
+    $form[$level]['operator'] = array(
+      '#type' => 'radios',
+      '#title' => t('Operator'),
+      '#options' => array(
+        'AND' => t('AND. If all of these conditions are TRUE.'),
+        'OR' => t('OR. If any of these conditions are TRUE.'),
+      ),
+      '#default_value' => $condition['#operator'],
+    );
+
+    $form[$level]['conditions'] = array();
+
+    // For each condition in #conditions, add a condition fieldset to the form.
+    foreach ($condition['#conditions'] as $sub_condition) {
+      $result = _ca_conditions_form_tree($sub_condition, $trigger);
+
+      if (is_array($result)) {
+        $form[$level]['conditions'] = array_merge($form[$level]['conditions'], $result);
+      }
+    }
+
+    $form[$level]['condition'] = array(
+      '#type' => 'select',
+      '#title' => t('Available conditions'),
+      '#options' => ca_load_trigger_conditions(),
+    );
+    $form[$level]['add_condition'] = array(
+      '#type' => 'submit',
+      '#value' => t('Add condition'),
+      '#submit' => array('ca_conditions_form_add_condition_submit'),
+      '#name' => 'add_condition_'. $level,
+    );
+    $form[$level]['remove_condition_group'] = array(
+      '#type' => 'submit',
+      '#value' => t('Remove group'),
+      '#submit' => array('ca_conditions_form_remove_condition_group_submit'),
+      '#attributes' => array('class' => 'ca-remove-confirm'),
+      '#name' => 'remove_condition_group_'. $level,
+    );
+
+    $index++;
+
+    return $form;
+  }
+  elseif (!empty($condition)) {
+    // Load the data for the conditions as defined by modules.
+    $condition_data = ca_load_condition();
+
+    // Otherwise add a fieldset for the individual condition.
+    $form[0] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Condition: @title', array('@title' => $condition_data[$condition['#name']]['#title'])),
+      '#description' => t('@description', array('@description' => $condition_data[$condition['#name']]['#description'])),
+      '#collapsible' => TRUE,
+      '#collapsed' => isset($condition['#expanded']) ? FALSE : TRUE,
+    );
+
+    // Add form elements to the fieldset to adjust the condition's settings.
+    $form[0] += _ca_conditions_form_condition($condition, $trigger);
+
+    return $form;
+  }
+}
+
+// Adds a single condition's fieldset to the conditions form.
+function _ca_conditions_form_condition($condition, $trigger) {
+  static $identifier = 0;
+
+  // Load the data for the conditions as defined by modules.
+  $condition_data = ca_load_condition();
+
+  // Condition name is a hard reference to the condition and so not editable.
+  $form['name'] = array(
+    '#type' => 'value',
+    '#value' => $condition['#name'],
+  );
+
+  // The title for this particular instance of this condition.
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#default_value' => $condition['#title'],
+  );
+
+  $form['argument_map'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Arguments'),
+    '#description' => t('Some triggers pass in multiple options for arguments related to a particular condition, so you must specify which options to use in the fields below.'),
+    '#collapsible' => TRUE,
+  );
+
+  // Setup a variable to decide if we can collapse the arguments fieldset.
+  $collapsed = TRUE;
+
+  foreach ($condition_data[$condition['#name']]['#arguments'] as $key => $value) {
+    // Load the available arguments for each entity as received by the
+    // trigger when it was pulled.
+    $options = ca_load_trigger_arguments($trigger, $value['#entity']);
+
+    // If we have more than one option for any argument, do not collapse.
+    if (count($options) > 1) {
+      $collapsed = FALSE;
+    }
+
+    $form['argument_map'][$key] = array(
+      '#type' => 'select',
+      '#title' => check_plain($value['#title']),
+      '#options' => $options,
+      '#default_value' => $action['#argument_map'][$key],
+    );
+  }
+
+  $form['argument_map']['#collapsed'] = $collapsed;
+
+  // Whether or not to negate the result of this condition.
+  $form['settings']['negate'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Negate this condition.'),
+    '#description' => t('Return FALSE if the condition is TRUE and vice versa.'),
+    '#default_value' => $condition['#settings']['negate'],
+  );
+
+  // Get the callback for the condition we're displaying.
+  $callback = $condition_data[$condition['#name']]['#callback'] .'_form';
+
+  if (function_exists($callback)) {
+    // Add the condition's form elements to the fieldset.
+    $form['settings'] += $callback(array(), $condition['#settings']);
+  }
+
+  $form['remove'] = array(
+    '#type' => 'submit',
+    '#value' => t('Remove this condition'),
+    '#submit' => array('ca_conditions_form_remove_condition_submit'),
+    '#attributes' => array('class' => 'ca-remove-confirm'),
+    '#name' => 'remove_condition_group_'. $identifier++,
+  );
+
+  return $form;
+}
+
+// Submit handler for button to add a condition group.
+function ca_conditions_form_add_condition_group_submit($form, &$form_state) {
+  // Save the existing conditions to preserve any changes.
+  ca_conditions_form_update_conditions($form_state['values']['pid'], $form_state['values']['conditions']);
+
+  // Add the condition group to the predicate.
+  ca_add_condition_group($form_state['values']['pid']);
+
+  // Display a confirmation message.
+  drupal_set_message(t('Condition group added.'));
+}
+
+function ca_conditions_form_remove_condition_group_submit($form, &$form_state) {
+  $group_key = FALSE;
+
+  // Loop through the array keys of the conditions group.
+  foreach (array_keys($form['conditions']['conditions']) as $key => $value) {
+    // If we find the key we're looking for...
+    if (is_numeric($value) && $value == $form_state['clicked_button']['#array_parents'][2]) {
+      // Store its position as the new group key once the conditions are saved.
+      // This is necessary because the save function will truncate any holes so
+      // the keys are in numerical order starting with 0.
+      $group_key = $key;
+    }
+  }
+
+  // Save the existing conditions to preserve any changes.
+  ca_conditions_form_update_conditions($form_state['values']['pid'], $form_state['values']['conditions']);
+
+  // Fail if we didn't find a new group key for some reason.
+  if ($group_key === FALSE) {
+    drupal_set_message(t('An error occurred when trying to add the condition.  Please try again.'), 'error');
+  }
+  else {
+    // Remove the condition group from the predicate.
+    ca_remove_condition_group($form_state['values']['pid'], $group_key);
+
+    // Display a confirmation message.
+    drupal_set_message(t('Condition group removed.'));
+  }
+}
+
+// Submit handler for button to add a condition to a condition group.
+function ca_conditions_form_add_condition_submit($form, &$form_state) {
+  $group_key = FALSE;
+
+  // Loop through the array keys of the conditions group.
+  foreach (array_keys($form['conditions']['conditions']) as $key => $value) {
+    // If we find the key we're looking for...
+    if (is_numeric($value) && $value == $form_state['clicked_button']['#array_parents'][2]) {
+      // Store its position as the new group key once the conditions are saved.
+      // This is necessary because the save function will truncate any holes so
+      // the keys are in numerical order starting with 0.
+      $group_key = $key;
+    }
+  }
+
+  // Save the existing conditions to preserve any changes.
+  ca_conditions_form_update_conditions($form_state['values']['pid'], $form_state['values']['conditions']);
+
+  // Fail if we didn't find a new group key for some reason.
+  if ($group_key === FALSE) {
+    drupal_set_message(t('An error occurred when trying to add the condition.  Please try again.'), 'error');
+  }
+  else {
+    // Otherwise add the condition to the specified group.
+    $name = $form_state['values']['conditions']['conditions'][$group_key]['condition'];
+
+    ca_add_condition($form_state['values']['pid'], $name, $group_key);
+
+    $condition = ca_load_condition($name);
+
+    drupal_set_message(t('%title condition added.', array('%title' => $condition['#title'])));
+  }
+}
+
+// Submit handler for button to remove a condition from a condition group.
+function ca_conditions_form_remove_condition_submit($form, &$form_state) {
+  $group_key = FALSE;
+  $cond_key = FALSE;
+
+  // Loop through the array keys of the conditions group.
+  foreach (array_keys($form['conditions']['conditions']) as $key => $value) {
+    // If we find the key we're looking for...
+    if (is_numeric($value) && $value == $form_state['clicked_button']['#array_parents'][2]) {
+      // Store its position as the new group key once the conditions are saved.
+      // This is necessary because the save function will truncate any holes so
+      // the keys are in numerical order starting with 0.
+      $group_key = $key;
+    }
+  }
+
+  // Loop through the array keys of the conditions in the group.
+  foreach (array_keys($form['conditions']['conditions'][$form_state['clicked_button']['#array_parents'][2]]['conditions']) as $key => $value) {
+    // If we find the key we're looking for...
+    if (is_numeric($value) && $value == $form_state['clicked_button']['#array_parents'][4]) {
+      // Store its position as the new condition key once the conditions are
+      // saved. This is necessary because the save function will truncate any
+      // holes so the keys are in numerical order starting with 0.
+      $cond_key = $key;
+    }
+  }
+
+  // Save the existing conditions to preserve any changes.
+  ca_conditions_form_update_conditions($form_state['values']['pid'], $form_state['values']['conditions']);
+
+  // Fail if we didn't find a new group key for some reason.
+  if ($group_key === FALSE || $cond_key === FALSE) {
+    drupal_set_message(t('An error occurred when trying to remove the condition.  Please try again.'), 'error');
+  }
+  else {
+    // Otherwise remove the condition from the specified group.
+    ca_remove_condition($form_state['values']['pid'], $group_key, $cond_key);
+
+    drupal_set_message(t('Condition removed.'));
+  }
+/*
+  capm($form_state['clicked_button']['#array_parents']);
+  drupal_set_message('Group: '. $group_key);
+  drupal_set_message('Condition: '. $cond_key);
+*/
+}
+
+// Save changes submit handler for the conditions form.
+function ca_conditions_form_save_changes_submit($form, &$form_state) {
+  // Save the existing conditions to preserve any changes.
+  ca_conditions_form_update_conditions($form_state['values']['pid'], $form_state['values']['conditions']);
+
+  drupal_set_message(t('Conditions saved.'));
+}
+
+/**
+ * Updates a predicate's conditions based on the values from a conditions form.
+ *
+ * @param $pid
+ *   The ID of the predicate whose conditions should be updated.
+ * @param $data
+ *   The conditions values from the form state that should be used to update the
+ *     predicate; normally $form_state['values']['conditions'].
+ * @return
+ *   An array representing the full, updated predicate.
+ */
+function ca_conditions_form_update_conditions($pid, $data) {
+  // Build the new conditions array from scratch.
+  $conditions = ca_new_conditions();
+
+  // Override the top level operator if need be.
+  if (isset($data['operator'])) {
+    $condtions['#operator'] = $data['operator'];
+  }
+
+  // Use a variable to track the group array key so we can "reset" the keys.
+  $group = 0;
+
+  // Loop through each second level condition group.
+  foreach ($data['conditions'] as $key => $value) {
+    // Save the operator setting.
+    $conditions['#conditions'][$group]['#operator'] = $value['operator'];
+    $conditions['#conditions'][$group]['#conditions'] = array();
+
+    // If conditions exist...
+    if (is_array($value['conditions']) && count($value['conditions']) > 0) {
+      // Use a variable to track the condition array key as for groups.
+      $condition = 0;
+
+      // Loop through the conditions in this group.
+      foreach ($value['conditions'] as $cond_key => $cond_value) {
+        // Save the condition's settings.
+        $conditions['#conditions'][$group]['#conditions'][$condition] = array(
+          '#name' => $cond_value['name'],
+          '#title' => $cond_value['title'],
+          '#argument_map' => $cond_value['argument_map'],
+          '#settings' => $cond_value['settings'],
+        );
+
+        $condition++;
+      }
+    }
+
+    $group++;
+  }
+
+  // Load the predicate as it is now.
+  $predicate = ca_load_predicate($pid);
+
+  // Update the actions and save the result.
+  $predicate['#conditions'] = $conditions;
   ca_save_predicate($predicate);
 
   return $predicate;

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.install,v 1.6.2.4 2008/09/22 21:07:44 islandusurper Exp $
+// $Id: uc_stock.install,v 1.6.2.5 2008/10/15 14:47:56 islandusurper Exp $
 
 /**
  * @file
@@ -66,6 +66,7 @@ function uc_stock_install() {
 
 function uc_stock_uninstall() {
   drupal_uninstall_schema('uc_stock');
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_stock_%%'");
 }
 
 function uc_stock_update_6000() {

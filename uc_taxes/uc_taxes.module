@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.12.2.2 2008/09/11 14:43:47 islandusurper Exp $
+// $Id: uc_taxes.module,v 1.12.2.3 2008/10/15 14:47:36 islandusurper Exp $
 
 /**
  * @file
@@ -46,6 +46,7 @@ function uc_taxes_menu() {
     'page callback' => 'uc_taxes_admin_settings',
     'access arguments' => array('configure taxes'),
     'type' => MENU_NORMAL_ITEM,
+    'file' => 'uc_taxes.admin.inc',
   );
   $items['admin/store/settings/taxes/edit'] = array(
     'title' => 'Edit tax rule',
@@ -53,11 +54,13 @@ function uc_taxes_menu() {
     'page arguments' => array('uc_taxes_form'),
     'access arguments' => array('configure taxes'),
     'type' => MENU_CALLBACK,
+    'file' => 'uc_taxes.admin.inc',
   );
   $items['admin/store/settings/taxes/copy'] = array(
     'page callback' => 'uc_taxes_copy',
     'access arguments' => array('configure taxes'),
     'type' => MENU_CALLBACK,
+    'file' => 'uc_taxes.admin.inc',
   );
   $items['admin/store/settings/taxes/delete'] = array(
     'title' => 'Delete tax rule',
@@ -65,6 +68,7 @@ function uc_taxes_menu() {
     'page arguments' => array('uc_taxes_delete'),
     'access arguments' => array('configure taxes'),
     'type' => MENU_CALLBACK,
+    'file' => 'uc_taxes.admin.inc',
   );
   $items['taxes/calculate'] = array(
     'page callback' => 'uc_taxes_javascript',
@@ -82,7 +86,7 @@ function uc_taxes_init() {
 function uc_taxes_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'uc_cart_checkout_form') {
     if (isset($form['panes']['payment'])) {
-      uc_add_js('var tax_weight = '. variable_get('uc_li_tax_weight', 9), 'inline');
+      uc_add_js(array('ucTaxWeight' => variable_get('uc_li_tax_weight', 9)), 'setting');
       uc_add_js(drupal_get_path('module', 'uc_taxes') .'/uc_taxes.js');
     }
   }
@@ -106,7 +110,7 @@ function uc_taxes_line_item() {
     'title' => t('Tax'),
     'callback' => 'uc_line_item_tax',
     'weight' => 9,
-    'stored' => true,
+    'stored' => TRUE,
     'default' => FALSE,
     'calculated' => TRUE,
     'display_only' => FALSE,
@@ -116,8 +120,8 @@ function uc_taxes_line_item() {
     'title' => t('Subtotal excluding taxes'),
     'callback' => 'uc_line_item_tax_subtotal',
     'weight' => 7,
-    'stored' => false,
-    'calculated' => false,
+    'stored' => FALSE,
+    'calculated' => FALSE,
   );
 
   return $items;
@@ -131,12 +135,12 @@ function uc_taxes_order($op, $arg1, $arg2) {
     case 'save':
       $changes = array();
       $line_items = uc_line_item_tax('load', $arg1);
-      //$arg1->line_items = uc_order_load_line_items($arg1, true);
+      //$arg1->line_items = uc_order_load_line_items($arg1, TRUE);
       if (is_array($arg1->line_items)) {
-        //drupal_set_message('<pre>'. var_export($arg1->line_items, true) .'</pre>');
+        //drupal_set_message('<pre>'. var_export($arg1->line_items, TRUE) .'</pre>');
         foreach ($arg1->line_items as $line) {
           if ($line['type'] == 'tax') {
-            $delete = true;
+            $delete = TRUE;
             foreach ($line_items as $id => $new_line) {
               if ($new_line['title'] == $line['title']) {
                 if ($new_line['amount'] != $line['amount']) {
@@ -144,7 +148,7 @@ function uc_taxes_order($op, $arg1, $arg2) {
                   $changes[] = t('Changed %title to %amount.', array('%amount' => uc_currency_format($new_line['amount']), '%title' => $new_line['title']));
                 }
                 unset($line_items[$id]);
-                $delete = false;
+                $delete = FALSE;
                 break;
               }
             }
@@ -173,161 +177,6 @@ function uc_taxes_order($op, $arg1, $arg2) {
  ******************************************************************************/
 
 /**
- * Display a list of tax rates.
- */
-function uc_taxes_admin_settings() {
-  $header = array(t('Name'), t('Rate'), t('Taxed product types'), t('Taxed line items'), t('Weight'), array('data' => t('Actions'), 'colspan' => 3));
-  $rows = array();
-  $result = db_query("SELECT * FROM {uc_taxes} ORDER BY weight");
-  while ($rule = db_fetch_object($result)) {
-    $rule->taxed_product_types = (array)unserialize($rule->taxed_product_types);
-    $rule->taxed_line_items = (array)unserialize($rule->taxed_line_items);
-    $rows[] = array($rule->name, $rule->rate * 100 .'%', implode(', ', $rule->taxed_product_types), implode(', ', $rule->taxed_line_items), $rule->weight, l(t('edit'), 'admin/store/settings/taxes/edit/'. $rule->id), l(t('copy'), 'admin/store/settings/taxes/copy/'. $rule->id), l(t('delete'), 'admin/store/settings/taxes/delete/'. $rule->id));
-  }
-  $output = theme('table', $header, $rows);
-  $output .= l('Make a new tax rule.', 'admin/store/settings/taxes/edit');
-  return $output;
-}
-
-/**
- * Create or edit a tax rule.
- *
- * @ingroup forms
- * @see uc_taxes_form_submit
- */
-function uc_taxes_form($form_state, $tax_id = 0) {
-  $form = array();
-  if ($tax_id != 0) {
-    $form_state['values'] = db_fetch_array(db_query("SELECT * FROM {uc_taxes} WHERE id = %d", $tax_id));
-    $form_state['values']['taxed_product_types'] = array_values(unserialize($form_state['values']['taxed_product_types']));
-    $form_state['values']['taxed_line_items'] = array_values(unserialize($form_state['values']['taxed_line_items']));
-  }
-
-  $form['id'] = array('#type' => 'hidden', '#value' => $form_state['values']['id']);
-  $form['name'] = array('#type' => 'textfield',
-    '#title' => t('Name'),
-    '#default_value' => isset($form_state['values']['name']) ? $form_state['values']['name'] : '',
-    '#required' => true,
-  );
-  $form['rate'] = array('#type' => 'textfield',
-    '#title' => t('Rate'),
-    '#description' => t('The tax rate as a percent or decimal. Examples: 6%, .06'),
-    '#default_value' => isset($form_state['values']['rate']) ? $form_state['values']['rate'] : '',
-    '#size' => 15,
-    '#required' => true,
-  );
-  $types = array();
-  $node_types = module_invoke_all('node_info');
-  $product_types = module_invoke_all('product_types');
-  foreach ($product_types as $type) {
-    $types[$type] = $node_types[$type]['name'];
-  }
-  $form['taxed_product_types'] = array('#type' => 'checkboxes',
-    '#title' => t('Taxed product types'),
-    '#multiple' => true,
-    '#options' => $types,
-    '#default_value' => isset($form_state['values']['taxed_product_types']) ? $form_state['values']['taxed_product_types'] : array(),
-    '#description' => t('Apply taxes to specific product types.'),
-  );
-  $options = array();
-  foreach (_line_item_list() as $line_item) {
-    if (!in_array($line_item['id'], array('subtotal', 'tax_subtotal', 'total'))) {
-      $options[$line_item['id']] = $line_item['title'];
-    }
-  }
-  $form['taxed_line_items'] = array('#type' => 'checkboxes',
-    '#title' => t('Taxed line items'),
-    '#multiple' => true,
-    '#options' => $options,
-    '#default_value' => isset($form_state['values']['taxed_line_items']) ? $form_state['values']['taxed_line_items'] : array(),
-    '#description' => t('Adds the checked line item types to the total before applying this tax.'),
-  );
-  $form['weight'] = array('#type' => 'weight',
-    '#title' => t('Weight'),
-    '#default_value' => isset($form_state['values']['weight']) ? $form_state['values']['weight'] : 0,
-    '#description' => t('Lighter taxes are applied to an order first. This value is unimportant if there are no taxes on tax line items.'),
-  );
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
-
-  return $form;
-}
-
-/**
- * Submit handler for uc_taxes_form().
- */
-function uc_taxes_form_submit($form, &$form_state) {
-  if ($form_state['values']['op'] == t('Submit')) {
-    if (strpos($form_state['values']['rate'], '%')) {
-      $rate = floatval($form_state['values']['rate']) / 100;
-    }
-    else {
-      $rate = floatval($form_state['values']['rate']);
-    }
-    if (($form_state['values']['id']) != '') {
-      db_query("UPDATE {uc_taxes} SET name = '%s', rate = %f, taxed_product_types = '%s', taxed_line_items = '%s', weight = %d WHERE id = %d",
-        $form_state['values']['name'], $rate, serialize(array_filter($form_state['values']['taxed_product_types'])), serialize(array_filter($form_state['values']['taxed_line_items'])), $form_state['values']['weight'], $form_state['values']['id']
-      );
-    }
-    else {
-      db_query("INSERT INTO {uc_taxes} (name, rate, taxed_product_types, taxed_line_items, weight) VALUES ('%s', %f, '%s', '%s', %d)",
-        $form_state['values']['name'], $rate, serialize(array_filter($form_state['values']['taxed_product_types'])), serialize(array_filter($form_state['values']['taxed_line_items'])), $form_state['values']['weight']
-      );
-    }
-
-    drupal_set_message(t('%name settings have been saved.', array('%name' => $form_state['values']['name'])));
-  }
-  $form_state['redirect'] = 'admin/store/settings/taxes';
-}
-
-/**
- * Copy a tax rule.
- */
-function uc_taxes_copy($tax_id) {
-  $rule = db_fetch_array(db_query("SELECT * FROM {uc_taxes} WHERE id = %d", $tax_id));
-
-  db_query("INSERT INTO {uc_taxes} (name, rate, taxed_product_types, taxed_line_items, weight) VALUES ('%s', %f, '%s', '%s', %d)",
-    t('Copy of @rule', array('%rule' => $rule['name'])), $rule['rate'], $rule['taxed_product_types'], $rule['taxed_line_items'], $rule['weight']
-  );
-
-  drupal_goto('admin/store/settings/taxes');
-}
-
-/**
- * Delete a tax rule.
- *
- * @ingroup forms
- * @see uc_taxes_delete_submit
- */
-function uc_taxes_delete($form_state, $tax_id = 0) {
-  //drupal_set_message($tax_id);
-  if ($tax_id != 0) {
-    $rule = db_fetch_object(db_query("SELECT * FROM {uc_taxes} WHERE id = %d", $tax_id));
-    $form = array(
-      'tax_id' => array('#type' => 'value', '#value' => $tax_id),
-    );
-    $output = confirm_form($form, t('Delete @rule?', array('@rule' => $rule->name)), 'admin/store/settings/taxes', '', t('Continue'), t('Cancel'));
-    return $output;
-  }
-  else {
-    drupal_goto('admin/store/settings/taxes');
-  }
-}
-
-/**
- * Submit handler for uc_taxes_delete().
- */
-function uc_taxes_delete_submit($form, &$form_state) {
-  if ($form_state['values']['confirm']) {
-    db_query("DELETE FROM {uc_taxes} WHERE id = %d", $form_state['values']['tax_id']);
-    ca_delete_predicate('uc_taxes_'. $form_state['values']['tax_id']);
-  }
-
-  drupal_set_message(t('Tax rule deleted.'));
-
-  $form_state['redirect'] = 'admin/store/settings/taxes';
-}
-
-/**
  * Handle the tax line item.
  */
 function uc_line_item_tax($op, $order) {
@@ -339,12 +188,12 @@ function uc_line_item_tax($op, $order) {
         $script .= "set_line_item('tax_". $tax->id ."', '". $tax->name ."', ". $tax->amount .", + ". variable_get('uc_li_tax_weight', 9) + ($tax->weight / 10) .", 1, false);\n";
       }
       if ($script) {
-        uc_add_js("\$(document).ready(function() {
+        uc_add_js("if (Drupal.jsEnabled) { \$(document).ready(function() {
           if (window.set_line_item) {
             ". $script .";
             render_line_items();
           }
-        });", 'inline');
+        })};", 'inline');
       }
       break;
     case 'load':
@@ -373,24 +222,24 @@ function uc_line_item_tax_subtotal($op, $order) {
     foreach ($order->line_items as $key => $line_item) {
       if (substr($line_item['type'], 0, 3) != 'tax') {
         $amount += $line_item['amount'];
-        $different = true;
+        $different = TRUE;
       }
       else {
-        $has_taxes = true;
+        $has_taxes = TRUE;
       }
     }
   }
   if (is_array($order->taxes)) {
-    $has_taxes = true;
+    $has_taxes = TRUE;
   }
   if ($different && $has_taxes) {
     switch ($op) {
       case 'cart-preview':
-        uc_add_js("\$(document).ready(function() {
+        uc_add_js("if (Drupal.jsEnabled) { \$(document).ready(function() {
           if (window.set_line_item) {
             set_line_item('tax_subtotal', '". t('Subtotal excluding taxes') ."', ". $amount .", ". variable_get('uc_li_tax_subtotal_weight', 8) .");
           }
-        });", 'inline');
+        })};", 'inline');
       break;
       case 'load':
         return array(array(
@@ -421,6 +270,21 @@ function uc_taxes_get_rates() {
       $taxes[$rule->id] = $rule;
     }
   }
+
+  return $taxes;
+}
+
+/**
+ * Calculates the taxes for an order based on enabled tax modules.
+ *
+ * @param $order
+ *   The full order object for the order want to calculate taxes for.
+ * @return
+ *   An array of taxes for the order.
+ */
+function uc_taxes_calculate($order) {
+  // Find any taxes specified by enabled modules.
+  $taxes = module_invoke_all('calculate_tax', $order);
 
   return $taxes;
 }
@@ -505,7 +369,7 @@ function uc_taxes_javascript() {
     if (is_array($subtotal) && !empty($taxes)) {
       $taxes['subtotal'] = array('id' => 'subtotal', 'name' => $subtotal[0]['title'], 'amount' => $subtotal[0]['amount'], 'weight' => -10);
     }
-    //drupal_set_message('<pre>'. print_r($taxes, true) .'</pre>');
+    //drupal_set_message('<pre>'. print_r($taxes, TRUE) .'</pre>');
     if (count($taxes)) {
       print drupal_to_js((array)$taxes);
     }

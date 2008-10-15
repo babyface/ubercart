@@ -1,5 +1,10 @@
 <?php
-// $Id: uc_quote.install,v 1.5.2.1 2008/09/22 21:07:42 islandusurper Exp $
+// $Id: uc_quote.install,v 1.5.2.2 2008/10/15 14:47:48 islandusurper Exp $
+
+/**
+ * @file
+ * Install hooks for uc_quote.module.
+ */
 
 function uc_quote_schema() {
   $schema = array();
@@ -220,13 +225,7 @@ function uc_quote_install() {
 function uc_quote_uninstall() {
   drupal_uninstall_schema('uc_quote');
 
-  variable_del('uc_quote_store_default_address');
-  variable_del('uc_quote_log_errors');
-  variable_del('uc_quote_display_debug');
-  variable_del('uc_quote_require_quote');
-  variable_del('uc_quote_enabled');
-  variable_del('uc_quote_method_weight');
-  variable_del('uc_quote_type_weight');
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_quote_%%'");
   variable_del('uc_store_shipping_type');
 }
 
@@ -241,7 +240,7 @@ function uc_quote_update_1() {
       $ret[] = update_sql("ALTER TABLE {uc_order_quotes} CHANGE COLUMN accessorials accessorials varchar(255) NOT NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_order_quotes', 'accessorials', 'accessorials', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_order_quotes', 'accessorials', 'accessorials', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
     break;
   }
   return $ret;
@@ -322,10 +321,10 @@ function uc_quote_update_3() {
       $ret[] = update_sql("ALTER TABLE {uc_quote_product_locations} CHANGE COLUMN address2 street2 varchar(255) NOT NULL default ''");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_quote_manufacturer_locations', 'address1', 'street1', 'varchar(255)', array('not null' => true, 'default' => ''));
-      db_change_column($ret, 'uc_quote_manufacturer_locations', 'address2', 'street2', 'varchar(255)', array('not null' => true, 'default' => ''));
-      db_change_column($ret, 'uc_quote_product_locations', 'address1', 'street1', 'varchar(255)', array('not null' => true, 'default' => ''));
-      db_change_column($ret, 'uc_quote_product_locations', 'address2', 'street2', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_quote_manufacturer_locations', 'address1', 'street1', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_quote_manufacturer_locations', 'address2', 'street2', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_quote_product_locations', 'address1', 'street1', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_quote_product_locations', 'address2', 'street2', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
     break;
   }
   return $ret;
@@ -342,7 +341,7 @@ function uc_quote_update_5() {
   $ret = array();
   switch ($GLOBALS['db_type']) {
     case 'pgsql':
-      db_change_column($ret, 'uc_order_quotes', 'oid', 'oid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_order_quotes', 'oid', 'oid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
     break;
   }
   return $ret;
@@ -357,8 +356,8 @@ function uc_quote_update_6() {
       $ret[] = update_sql("ALTER TABLE {uc_quote_product_locations} ADD COLUMN phone varchar(255) NOT NULL");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_quote_manufacturer_locations', 'phone', 'varchar(255)', array('not null' => true, 'default' => ''));
-      db_add_column($ret, 'uc_quote_product_locations', 'phone', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_add_column($ret, 'uc_quote_manufacturer_locations', 'phone', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_add_column($ret, 'uc_quote_product_locations', 'phone', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
     break;
   }
   $address = variable_get('uc_quote_store_default_address', new stdClass());

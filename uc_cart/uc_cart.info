@@ -1,7 +1,8 @@
-; $Id: uc_cart.info,v 1.7 2008/07/10 12:41:00 islandusurper Exp $
+; $Id: uc_cart.info,v 1.7.2.1 2008/10/15 14:47:53 islandusurper Exp $
 name = Cart
 description = REQUIRED. Controls the shopping cart for an Ubercart e-commerce site.
 dependencies[] = uc_order
 dependencies[] = uc_product
 package = Ubercart - core
 core = 6.x
+php = 5.0

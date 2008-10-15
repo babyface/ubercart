@@ -1,5 +1,4 @@
-// -*- js-var: set_line_item, base_path, li_titles, li_values, tax_weight; -*-
-// $Id: uc_taxes.js,v 1.10.2.1 2008/09/11 14:43:47 islandusurper Exp $
+// $Id: uc_taxes.js,v 1.10.2.2 2008/10/15 14:47:36 islandusurper Exp $
 
 var pane = '';
 if ($("input[@name*=delivery_]").length) {
@@ -23,12 +22,30 @@ $(document).ready(function() {
 
 function getTax() {
   var products = $("[@name=cart_contents]").val();
-  var p_email = $("input[@name*=primary_email]").val()
+  var p_email = $("input[@name*=primary_email]").val();
+  if (!p_email) {
+    p_email = '';
+  }
   var s_f_name = $("input[@name*=delivery_first_name]").val();
+  if (!s_f_name) {
+    s_f_name = '';
+  }
   var s_l_name = $("input[@name*=delivery_last_name]").val();
+  if (!s_l_name) {
+    s_l_name = '';
+  }
   var s_street1 = $("input[@name*=delivery_street1]").val();
+  if (!s_street1) {
+    s_street1 = '';
+  }
   var s_street2 = $("input[@name*=delivery_street2]").val();
+  if (!s_street2) {
+    s_street2 = '';
+  }
   var s_city = $("input[@name*=delivery_city]").val();
+  if (!s_city) {
+    s_city = '';
+  }
   var s_zone = $("select[@name*=delivery_zone]").val();
   if (!s_zone) {
     s_zone = "0";
@@ -42,10 +59,25 @@ function getTax() {
     s_country = "0";
   }
   var b_f_name = $("input[@name*=billing_first_name]").val();
+  if (!b_f_name) {
+    b_f_name = '';
+  }
   var b_l_name = $("input[@name*=billing_last_name]").val();
+  if (!b_l_name) {
+    b_l_name = '';
+  }
   var b_street1 = $("input[@name*=billing_street1]").val();
+  if (!b_street1) {
+    b_street1 = '';
+  }
   var b_street2 = $("input[@name*=billing_street2]").val();
+  if (!b_street2) {
+    b_street2 = '';
+  }
   var b_city = $("input[@name*=billing_city]").val();
+  if (!b_city) {
+    b_city = '';
+  }
   var b_zone = $("select[@name*=billing_zone]").val();
   if (!b_zone) {
     b_zone = "0";
@@ -93,7 +125,7 @@ function getTax() {
   if (!!products) {
     $.ajax({
       type: "POST",
-      url: Drupal.settings.basePath + "taxes/calculate",
+      url: Drupal.settings.basePath + "?q=taxes/calculate",
       data: 'order=' + order,
       dataType: "json",
       success: function(taxes) {
@@ -113,7 +145,7 @@ function getTax() {
           else {
             summed = 1;
           }
-          set_line_item("tax_" + taxes[j].id, taxes[j].name, taxes[j].amount, tax_weight + taxes[j].weight / 10, summed, false);
+          set_line_item("tax_" + taxes[j].id, taxes[j].name, taxes[j].amount, Drupal.settings.ucTaxWeight + taxes[j].weight / 10, summed, false);
         }
         render_line_items();
       }

@@ -1,9 +1,11 @@
 <?php
-// $Id: uc_authorizenet.module,v 1.4.2.2 2008/09/11 14:43:45 islandusurper Exp $
+// $Id: uc_authorizenet.module,v 1.4.2.3 2008/10/15 14:48:09 islandusurper Exp $
 
 /**
  * @file
  * Process payments using Authorize.net. Supports AIM and ARB.
+ *
+ * Development sponsored by Digital Dollhouse - http://www.digitaldollhouse.com
  */
 
 
@@ -295,7 +297,7 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
   // Translate the data array into a string we can POST.
   $post_fields = array();
   foreach ($submit_data as $key => $value) {
-    $post_fields[] = $key .'='. drupal_urlencode($value);
+    $post_fields[] = $key .'='. urlencode($value);
   }
 
   // Setup the cURL request.
@@ -375,10 +377,12 @@ function uc_authorizenet_silent_post() {
   // Decrypt the Auth.Net API login data.
   $login_data = _uc_authorizenet_login_data();
 
+  // TODO: Modify the MD5 hash to accommodate differences from AIM ot ARB.
+
   // If we're receiving notification for an ARB payment...
   if (isset($_POST['x_subscription_id']) && isset($_POST['x_subscription_paynum'])) {
     if (variable_get('uc_authnet_report_arb_post', FALSE)) {
-      watchdog('uc_authorizenet', t('ARB payment reported: <pre>'. check_plain(print_r($_POST, TRUE)) .'</pre>'));
+      watchdog('uc_authorizenet', t('ARB payment reported: <pre>@post</pre>', array('@post' => print_r($_POST, TRUE))));
     }
 
     // Compare our expected MD5 Hash against what was received.

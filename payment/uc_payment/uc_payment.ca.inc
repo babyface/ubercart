@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.ca.inc,v 1.1.2.3 2008/08/06 13:41:21 islandusurper Exp $
+// $Id: uc_payment.ca.inc,v 1.1.2.4 2008/10/15 14:47:42 islandusurper Exp $
 
 /**
  * @file
@@ -67,9 +67,9 @@ function uc_payment_ca_predicate() {
 
   // Set the order status to "Completed" when checkout is complete, none
   // of the products are shippable, and the balance is less than or equal to 0.
-  $configurations['uc_checkout_complete'] = array(
-    '#title' => t('Update order status on completed checkout of non-shippable items'),
-    '#trigger' => 'uc_payment_entered',
+  $configurations['uc_checkout_complete_paid'] = array(
+    '#title' => t('Update order status upon checkout completion with full payment'),
+    '#trigger' => 'uc_checkout_complete',
     '#class' => 'payment',
     '#status' => 1,
     '#weight' => 1,

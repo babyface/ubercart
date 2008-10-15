@@ -1,5 +1,10 @@
 <?php
-// $Id: uc_weightquote.install,v 1.5.2.2 2008/09/22 21:07:43 islandusurper Exp $
+// $Id: uc_weightquote.install,v 1.5.2.3 2008/10/15 14:48:07 islandusurper Exp $
+
+/**
+ * @file
+ * Install modules for uc_weightquote.module.
+ */
 
 function uc_weightquote_schema() {
   $schema = array();
@@ -35,7 +40,7 @@ function uc_weightquote_install() {
 }
 
 function uc_weightquote_uninstall() {
-  drupal_uninstall_schema('uc_weight_quote');
+  drupal_uninstall_schema('uc_weightquote');
 
   variable_del('uc_weightquote_base_rate');
   variable_del('uc_weightquote_product_default');
@@ -55,7 +60,7 @@ function uc_weightquote_update_1() {
       $ret[] = update_sql("ALTER TABLE {uc_weightquote_products} ADD PRIMARY KEY (vid)");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_weightquote_products', 'vid', 'integer unsigned', array('not null' => true, 'default' => 0));
+      db_add_column($ret, 'uc_weightquote_products', 'vid', 'integer unsigned', array('not null' => TRUE, 'default' => 0));
       $ret[] = update_sql("ALTER TABLE {uc_weightquote_products} DROP CONSTRAINT {uc_weightquote_products}_nid_key");
       $result = db_query("SELECT nid, vid FROM {node}");
       while ($product = db_fetch_object($result)) {
@@ -71,8 +76,8 @@ function uc_weightquote_update_2() {
   $ret = array();
   switch ($GLOBALS['db_type']) {
     case 'pgsql':
-      db_change_column($ret, 'uc_weightquote_products', 'vid', 'vid', 'int_unsigned', array('not null' => true, 'default' => 0));
-      db_change_column($ret, 'uc_weightquote_products', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_weightquote_products', 'vid', 'vid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
+      db_change_column($ret, 'uc_weightquote_products', 'nid', 'nid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
     break;
   }
   return $ret;

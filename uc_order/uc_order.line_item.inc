@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_line_item.inc,v 1.4 2008/07/10 12:41:02 islandusurper Exp $
+// $Id: uc_order.line_item.inc,v 1.1.2.1 2008/10/15 14:47:35 islandusurper Exp $
 
 /**
  * @file
@@ -30,7 +30,7 @@ function uc_line_item_subtotal($op, $arg1) {
         $subtotal += $total;
       }
       if (module_exists('uc_payment') && variable_get('uc_pane_payment_enabled', TRUE)) {
-        uc_add_js("\$(document).ready( function() { set_line_item('subtotal', '". t('Subtotal') ."', ". $subtotal .", -10); } );", 'inline');
+        uc_add_js("if (Drupal.jsEnabled) { \$(document).ready( function() { set_line_item('subtotal', '". t('Subtotal') ."', ". $subtotal .", -10); } )};", 'inline');
       }
       break;
   }

@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, getTax; -*-
-// $Id: uc_quote.js,v 1.5.2.1 2008/09/11 14:43:45 islandusurper Exp $
+// $Id: uc_quote.js,v 1.5.2.2 2008/10/15 14:47:48 islandusurper Exp $
 
 var page;
 var details;
@@ -94,6 +94,7 @@ function quoteCallback(products) {
       products += "^" + $("input[@name^='products[" + i + "]']").filter("[@name$='[cost]']").val();
       products += "^" + $("input[@name^='products[" + i + "]']").filter("[@name$='[price]']").val();
       products += "^" + $("input[@name^='products[" + i + "]']").filter("[@name$='[weight]']").val();
+      products += "^" + $("input[@name^='products[" + i + "]']").filter("[@name$='[data]']").val();
       i++;
     }
     details["products"] = products.substr(1);
@@ -102,10 +103,10 @@ function quoteCallback(products) {
   progress.setProgress(-1, Drupal.settings.uc_quote.progress_msg);
   $("#quote").empty().append(progress.element);
   $("#quote").addClass("solid-border");
-  // progress.startMonitoring(Drupal.settings.basePath + "shipping/quote", 0);
+  // progress.startMonitoring(Drupal.settings.basePath + "?q=shipping/quote", 0);
   $.ajax({
     type: "POST",
-    url: Drupal.settings.basePath + "cart/checkout/shipping/quote",
+    url: Drupal.settings.basePath + "?q=cart/checkout/shipping/quote",
     data: details,
     dataType: "json",
     success: displayQuote

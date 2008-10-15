@@ -1,5 +1,10 @@
 <?php
-// $Id: uc_payment.install,v 1.5.2.1 2008/09/22 21:07:42 islandusurper Exp $
+// $Id: uc_payment.install,v 1.5.2.2 2008/10/15 14:47:42 islandusurper Exp $
+
+/**
+ * @file
+ * Install hooks for uc_payment.module.
+ */
 
 function uc_payment_schema() {
   $schema = array();
@@ -68,10 +73,7 @@ function uc_payment_uninstall() {
   drupal_uninstall_schema('uc_payment');
 
   db_query("DELETE FROM {variable} WHERE name LIKE 'uc_pg_%%'");
-  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_payment_method_%%'");
-  variable_del('uc_payment_tracking');
-  variable_del('uc_payment_deleting');
-  variable_del('uc_payment_logging');
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_payment_%%'");
   variable_del('uc_default_payment_msg');
 }
 

@@ -1,0 +1,12 @@
+<?php
+// $Id: uc_cybersource.install,v 1.1.2.1 2008/10/15 14:48:06 islandusurper Exp $
+
+/**
+ * @file
+ * Install hooks for uc_cybersource.module.
+ */
+
+function uc_cybersource_uninstall() {
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_cybersource_%%'");
+}
+

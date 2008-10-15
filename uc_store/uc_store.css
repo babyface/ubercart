@@ -1,4 +1,4 @@
-/* $Id: uc_store.css,v 1.8.2.1 2008/09/22 21:07:45 islandusurper Exp $ */
+/* $Id: uc_store.css,v 1.8.2.2 2008/10/15 14:47:39 islandusurper Exp $ */
 
 .uc-store-admin-table {
   margin: 1em auto;
@@ -52,22 +52,6 @@
   text-align: center;
   font-size: x-small;
   clear: both;
-}
-
-table.settings-overview {
-  width: auto;
-}
-
-table.settings-overview td {
-  padding: .5em;
-}
-
-table.settings-overview tbody {
-  border: 0px;
-}
-
-table.settings-overview tr.section {
-  border: 1px dashed #bbb;
 }
 
 .section-title {

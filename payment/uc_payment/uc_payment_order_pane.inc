@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_order_pane.inc,v 1.5.2.1 2008/07/11 21:41:21 islandusurper Exp $
+// $Id: uc_payment_order_pane.inc,v 1.5.2.2 2008/10/15 14:47:42 islandusurper Exp $
 
 /**
  * @file
@@ -52,7 +52,7 @@ function uc_order_pane_payment($op, $arg1) {
 
     case 'edit-form':
       uc_add_js('misc/progress.js');
-      uc_add_js("var def_payment_msg = '';", 'inline');
+      uc_add_js(array('defPaymentMsg' => ''), 'setting');
 
       $form['payment'] = array(
         '#type' => 'fieldset',
@@ -76,14 +76,18 @@ function uc_order_pane_payment($op, $arg1) {
 
     case 'edit-theme':
       uc_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
+
+      // build a JS array of our payment methods
       $methods = _payment_method_list();
-      $js = 'var methods = {';
+      $method_array_js = array();
       foreach ($methods as $method) {
-        $js .= '"'. $method['name'] .'": "'. $method['id'] .'", ';
+        $method_array_js[$method['name']] = $method['id'];
       }
-      $js = rtrim($js, ' ,') .'};';
-      uc_add_js($js, 'inline');
-      uc_add_js("\$(document).ready( function () { add_order_save_hold(); get_payment_details('admin/store/orders/' + \$('#edit-order-id').val() + '/payment_details/' + \$('#edit-payment-method').val()); } );", 'inline');
+      uc_add_js(array('methods' => $method_array_js), 'setting');
+
+      // begin the order lock, also get payment details
+      uc_add_js(array('ucOrderInitiate' => true), 'setting');
+
       $output = '<table class="order-edit-table">';
       foreach (element_children($arg1['payment']) as $field) {
         $title = $arg1['payment'][$field]['#title'];

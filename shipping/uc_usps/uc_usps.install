@@ -1,5 +1,10 @@
 <?php
-// $Id: uc_usps.install,v 1.5.2.1 2008/09/22 21:07:42 islandusurper Exp $
+// $Id: uc_usps.install,v 1.5.2.2 2008/10/15 14:47:41 islandusurper Exp $
+
+/**
+ * @file
+ * Install hooks for uc_usps.module.
+ */
 
 function uc_usps_schema() {
   $schema = array();
@@ -72,7 +77,7 @@ function uc_usps_update_2() {
       $ret[] = update_sql("ALTER TABLE {uc_usps_products} ADD PRIMARY KEY (vid)");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_usps_products', 'vid', 'integer unsigned', array('not null' => true, 'default' => 0));
+      db_add_column($ret, 'uc_usps_products', 'vid', 'integer unsigned', array('not null' => TRUE, 'default' => 0));
       $ret[] = update_sql("ALTER TABLE {uc_usps_products} DROP CONSTRAINT {uc_usps_products}_nid_key");
       $result = db_query("SELECT nid, vid FROM {node}");
       while ($product = db_fetch_object($result)) {
@@ -87,11 +92,11 @@ function uc_usps_update_2() {
 function uc_usps_update_3() {
   $ret = array();
   $markup = variable_get('uc_usps_markup', '0%');
-  if (strpos($markup, '%') !== false) {
+  if (strpos($markup, '%') !== FALSE) {
     variable_set('uc_usps_markup_type', 'percentage');
     variable_set('uc_usps_markup', floatval(rtrim($markup, '%')));
   }
-  else if (strpos($markup, '$') !== false) {
+  else if (strpos($markup, '$') !== FALSE) {
     variable_set('uc_usps_markup_type', 'currency');
     variable_set('uc_usps_markup', floatval(ltrim($markup, '$')));
   }
@@ -99,7 +104,7 @@ function uc_usps_update_3() {
     variable_set('uc_usps_markup_type', 'multiplier');
     variable_set('uc_usps_markup', floatval($markup));
   }
-  $ret[] = array('success' => true, 'query' => 'Added USPS markup type.');
+  $ret[] = array('success' => TRUE, 'query' => 'Added USPS markup type.');
   return $ret;
 }
 
@@ -111,7 +116,7 @@ function uc_usps_update_4() {
       $ret[] = update_sql("ALTER TABLE {uc_usps_products} CHANGE container container varchar(255) NOT NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_usps_products', 'container', 'container', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_usps_products', 'container', 'container', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
     break;
   }
   return $ret;
@@ -121,8 +126,8 @@ function uc_usps_update_5() {
   $ret = array();
   switch ($GLOBALS['db_type']) {
     case 'pgsql':
-      db_change_column($ret, 'uc_usps_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => true, 'default' => 0));
-      db_change_column($ret, 'uc_usps_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_usps_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
+      db_change_column($ret, 'uc_usps_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
     break;
   }
   return $ret;

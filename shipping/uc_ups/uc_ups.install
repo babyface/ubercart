@@ -1,5 +1,10 @@
 <?php
-// $Id: uc_ups.install,v 1.5.2.2 2008/09/22 21:07:42 islandusurper Exp $
+// $Id: uc_ups.install,v 1.5.2.3 2008/10/15 14:47:50 islandusurper Exp $
+
+/**
+ * @file
+ * Install hooks for uc_ups.module.
+ */
 
 function uc_ups_schema() {
   $schema = array();
@@ -60,7 +65,7 @@ function uc_ups_update_1() {
       $ret[] = update_sql("ALTER TABLE {uc_ups_products} ADD COLUMN units varchar(255) NOT NULL default 'in' AFTER height");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_ups_products', 'units', 'varchar(255)', array('not null' => true, 'default' => 'in'));
+      db_add_column($ret, 'uc_ups_products', 'units', 'varchar(255)', array('not null' => TRUE, 'default' => 'in'));
     break;
   }
   return $ret;
@@ -74,7 +79,7 @@ function uc_ups_update_2() {
       $ret[] = update_sql("ALTER TABLE {uc_ups_products} ADD COLUMN qty smallint unsigned NOT NULL default '1' AFTER pkg_type");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_ups_products', 'qty', 'smallint unsigned', array('not null' => true, 'default' => 1));
+      db_add_column($ret, 'uc_ups_products', 'qty', 'smallint unsigned', array('not null' => TRUE, 'default' => 1));
     break;
   }
   return $ret;
@@ -110,7 +115,7 @@ function uc_ups_update_4() {
       $ret[] = update_sql("ALTER TABLE {uc_ups_products} ADD PRIMARY KEY (vid)");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_ups_products', 'vid', 'integer unsigned', array('not null' => true, 'default' => 0));
+      db_add_column($ret, 'uc_ups_products', 'vid', 'integer unsigned', array('not null' => TRUE, 'default' => 0));
       $ret[] = update_sql("ALTER TABLE {uc_ups_products} DROP CONSTRAINT {uc_ups_products}_nid_key");
       $result = db_query("SELECT nid, vid FROM {node}");
       while ($product = db_fetch_object($result)) {
@@ -125,11 +130,11 @@ function uc_ups_update_4() {
 function uc_ups_update_5() {
   $ret = array();
   $markup = variable_get('uc_ups_markup', '0%');
-  if (strpos($markup, '%') !== false) {
+  if (strpos($markup, '%') !== FALSE) {
     variable_set('uc_ups_markup_type', 'percentage');
     variable_set('uc_ups_markup', floatval(rtrim($markup, '%')));
   }
-  else if (strpos($markup, '$') !== false) {
+  else if (strpos($markup, '$') !== FALSE) {
     variable_set('uc_ups_markup_type', 'currency');
     variable_set('uc_ups_markup', floatval(ltrim($markup, '$')));
   }
@@ -137,7 +142,7 @@ function uc_ups_update_5() {
     variable_set('uc_ups_markup_type', 'multiplier');
     variable_set('uc_ups_markup', floatval($markup));
   }
-  $ret[] = array('success' => true, 'query' => 'Added UPS markup type.');
+  $ret[] = array('success' => TRUE, 'query' => 'Added UPS markup type.');
   return $ret;
 }
 
@@ -145,8 +150,8 @@ function uc_ups_update_6() {
   $ret = array();
   switch ($GLOBALS['db_type']) {
     case 'pgsql':
-      db_change_column($ret, 'uc_ups_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => true, 'default' => 0));
-      db_change_column($ret, 'uc_ups_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_ups_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
+      db_change_column($ret, 'uc_ups_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
     break;
   }
   return $ret;

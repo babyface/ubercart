@@ -1,6 +1,7 @@
-; $Id: uc_file.info,v 1.2.2.3 2008/08/06 13:41:25 islandusurper Exp $
+; $Id: uc_file.info,v 1.2.2.4 2008/10/15 14:47:57 islandusurper Exp $
 name = File Downloads
 description = Allows products to be associated with downloadable files.
 dependencies[] = uc_product
 package = "Ubercart - core (optional)"
 core = 6.x
+php = 5.0

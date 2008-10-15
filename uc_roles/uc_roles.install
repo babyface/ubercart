@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.install,v 1.2.2.5 2008/09/22 21:07:44 islandusurper Exp $
+// $Id: uc_roles.install,v 1.2.2.6 2008/10/15 14:47:55 islandusurper Exp $
 
 /**
  * @file
@@ -171,6 +171,16 @@ function uc_roles_update_3() {
       $ret[] = update_sql("ALTER TABLE {uc_roles_products} ADD by_quantity boolean NOT NULL");
       break;
   }
+
+  return $ret;
+}
+
+function uc_roles_update_4() {
+  $ret = array();
+
+  // Fixes the db_next_id() + 1 error.
+  $pfid = db_result(db_query("SELECT MAX(pfid) FROM {uc_product_features}"));
+  $ret[] = update_sql("UPDATE {sequences} SET id = ". intval($pfid) ." WHERE name = '{uc_product_features}_pfid'");
 
   return $ret;
 }

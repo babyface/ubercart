@@ -1,11 +1,13 @@
-// $Id: uc_credit.js,v 1.3 2007/11/05 20:31:53 rszrama Exp $
+// $Id: uc_credit.js,v 1.3.4.1 2008/10/15 14:47:45 islandusurper Exp $
 
-$(document).ready(
-  function () {
-    $('#cc_details_title').show(0);
-    $('#cc_details').hide(0);
-  }
-);
+if (Drupal.jsEnabled) {
+  $(document).ready(
+    function () {
+      $('#cc_details_title').show(0);
+      $('#cc_details').hide(0);
+    }
+  );
+}
 
 /**
  * Toggle credit card details on the order view screen.

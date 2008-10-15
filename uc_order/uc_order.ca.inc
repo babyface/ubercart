@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.5 2008/09/22 21:07:44 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.6 2008/10/15 14:47:35 islandusurper Exp $
 
 /**
  * @file
@@ -45,6 +45,17 @@ function uc_order_ca_trigger() {
     ),
   );
 
+  $triggers['uc_order_status_email_update'] = array(
+    '#title' => t('Email requested for order status update'),
+    '#category' => t('Order'),
+    '#arguments' => array(
+      'order' => array(
+        '#entity' => 'uc_order',
+        '#title' => t('Order'),
+      ),
+    ),
+  );
+
   return $triggers;
 }
 
@@ -59,7 +70,7 @@ function uc_order_ca_predicate() {
     '#description' => t('Notify the customer when the order status is changed.'),
     '#class' => 'order',
     '#status' => 1,
-    '#trigger' => 'uc_order_status_update',
+    '#trigger' => 'uc_order_status_email_update',
     '#conditions' => array(
       '#operator' => 'AND',
       '#conditions' => array(
@@ -247,6 +258,14 @@ function uc_order_ca_action() {
     '#title' => t('Send an email to the customer'),
     '#category' => t('Order'),
     '#callback' => 'uc_order_action_send_customer_email',
+    '#arguments' => array(
+      'order' => $order_arg,
+    ),
+  );
+  $actions['uc_order_send_admin_email'] = array(
+    '#title' => t('Send an email to the administrator'),
+    '#category' => t('Order'),
+    '#callback' => 'uc_order_action_send_admin_email',
     '#arguments' => array(
       'order' => $order_arg,
     ),
@@ -499,7 +518,7 @@ function uc_order_condition_has_products($order, $settings) {
     $forbidden_check = (bool)count($forbidden);
   }
   else {
-    $forbidden_check = false;
+    $forbidden_check = FALSE;
   }
   return $required_check && !$forbidden_check;
 }
@@ -530,7 +549,7 @@ function uc_order_condition_has_products_form($form_state, $settings = array('re
     '#title' => t('Products'),
     '#options' => $options,
     '#default_value' => $settings['products'],
-    '#multiple' => true,
+    '#multiple' => TRUE,
   );
   return $form;
 }
@@ -583,7 +602,7 @@ function uc_order_condition_count_products_form($form_state, $settings = array()
     '#options' => $options,
     '#default_value' => $settings['products'],
     '#description' => check_plain(t('Selecting "<All products>" will override any other selections and returns the total number of products in the order.')),
-    '#multiple' => true,
+    '#multiple' => TRUE,
   );
   $form['product_count_value'] = array(
     '#type' => 'textfield',
@@ -659,7 +678,7 @@ function uc_order_condition_products_weight_form($form_state, $settings = array(
     '#options' => $options,
     '#default_value' => $settings['products'],
     '#description' => check_plain(t('Selecting "<All products>" will override any other selections and returns the total number of products in the order.')),
-    '#multiple' => true,
+    '#multiple' => TRUE,
   );
   $form['weight_units'] = array('#type' => 'select',
     '#title' => t('Unit of measurement'),
@@ -850,3 +869,82 @@ function uc_order_action_send_customer_email_submit($form, &$form_state) {
   );
 }
 
+/**
+ * Send an email to the administrator.
+ *
+ * The subject and message fields take order and user token replacements. The
+ * "To" field is populated by the store email.
+ */
+function uc_order_action_send_admin_email($order, $settings) {
+  $account = user_load(array('uid' => $order->uid));
+  $language = language_default();
+  $email = variable_get('uc_store_email', NULL);
+
+  // Token replacements for the subject and body
+  $settings['replacements'] = array(
+    'global' => NULL,
+    'order' => $order,
+    'user' => $account,
+  );
+
+  if ($email) {
+    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
+
+    if ($sent['result']) {
+      $changes[] = t('Customer notified of order update.');
+    }
+    else {
+      $changes[] = t('Email notification to @email failed.', array('@email' => $email));
+    }
+    uc_order_log_changes($order->order_id, $changes);
+  }
+}
+
+function uc_order_action_send_admin_email_form($form_state, $settings = array()) {
+  $form['from'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Sender'),
+    '#default_value' => isset($settings['from']) ? $settings['from'] : variable_get('site_mail', ini_get('sendmail_from')),
+    '#description' => t('The "From" address.'),
+    '#required' => TRUE,
+  );
+  $form['subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $settings['subject'],
+  );
+  $form['message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Message'),
+    '#default_value' => $settings['message'],
+  );
+  $form['format'] = filter_form($settings['format']);
+
+  $form['token_help'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Replacement patterns'),
+    '#description' => t('You can make use of the replacement patterns in the subject and message body.'),
+  );
+  foreach (array('global', 'order', 'user') as $name) {
+    $form['token_help'][$name] = array(
+      '#type' => 'fieldset',
+      '#title' => t('@name replacement patterns', array('@name' => drupal_ucfirst($name))),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['token_help'][$name]['content'] = array(
+      '#value' => theme('token_help', $name),
+    );
+  }
+
+  return $form;
+}
+
+function uc_order_action_send_admin_email_submit($form, &$form_state) {
+  return array(
+    'from' => $form_state['values']['from'],
+    'subject' => $form_state['values']['subject'],
+    'message' => $form_state['values']['message'],
+    'format' => $form_state['values']['format'],
+  );
+}

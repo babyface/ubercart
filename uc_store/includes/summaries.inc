@@ -1,5 +1,5 @@
 <?php
-// $Id: summaries.inc,v 1.1.2.4 2008/09/22 21:07:45 islandusurper Exp $
+// $Id: summaries.inc,v 1.1.2.5 2008/10/15 14:48:09 islandusurper Exp $
 
 /**
  * @file
@@ -30,7 +30,7 @@ function summarize_form($form) {
     if (!isset($form[$key]['#summary callback'])) {
 
       // watch out for those filter_form()s...
-      if(in_array('filter_form_validate', (array) $form[$key]['#element_validate'])) {
+      if (in_array('filter_form_validate', (array) $form[$key]['#element_validate'])) {
         $form[$key]['#summary callback'] = 'summarize_null';
       }
       else {

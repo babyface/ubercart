@@ -1,5 +1,10 @@
 <?php
-// $Id: uc_catalog.install,v 1.9.2.2 2008/08/14 21:08:47 islandusurper Exp $
+// $Id: uc_catalog.install,v 1.9.2.3 2008/10/15 14:47:47 islandusurper Exp $
+
+/**
+ * @file
+ * Install hooks for uc_catalog.module.
+ */
 
 function uc_catalog_schema() {
   $schema = array();
@@ -73,15 +78,7 @@ function uc_catalog_uninstall() {
   if ($vid = variable_get('uc_catalog_vid', 0)) {
     taxonomy_del_vocabulary($vid);
   }
-  variable_del('uc_catalog_vid');
-  variable_del('uc_catalog_name');
-  variable_del('uc_catalog_description');
-  variable_del('uc_catalog_breadcrumb');
-  variable_del('uc_catalog_block_nodecount');
-  variable_del('uc_catalog_breadcrumb_nodecount');
-  variable_del('uc_catalog_show_subcategories');
-  variable_del('uc_catalog_expand_categories');
-  variable_del('uc_catalog_category_columns');
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_catalog_%%'");
 }
 
 function uc_catalog_update_1() {
@@ -123,9 +120,9 @@ function uc_catalog_update_3() {
   $ret = array();
   switch ($GLOBALS['db_type']) {
     case 'pgsql':
-      db_change_column($ret, 'uc_catalog_images', 'fid', 'fid', 'int_unsigned', array('not null' => true, 'default' => 0));
-      db_change_column($ret, 'uc_catalog_images', 'tid', 'tid', 'int_unsigned', array('not null' => true, 'default' => 0));
-      db_change_column($ret, 'uc_catalog_images', 'filesize', 'filesize', 'int_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_catalog_images', 'fid', 'fid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
+      db_change_column($ret, 'uc_catalog_images', 'tid', 'tid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
+      db_change_column($ret, 'uc_catalog_images', 'filesize', 'filesize', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
     break;
   }
   return $ret;

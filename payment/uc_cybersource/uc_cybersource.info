@@ -1,8 +1,8 @@
-; $Id: uc_cybersource.info,v 1.4.2.1 2008/07/11 21:41:21 islandusurper Exp $
+; $Id: uc_cybersource.info,v 1.4.2.2 2008/10/15 14:48:06 islandusurper Exp $
 name = CyberSource
 description = Enable to process payments using CyberSource Silent Order POST.
 dependencies[] = uc_payment
 dependencies[] = uc_credit
 package = Ubercart - payment
 core = 6.x
-
+php = 5.0

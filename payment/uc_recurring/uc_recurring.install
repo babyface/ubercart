@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.install,v 1.4.2.5 2008/09/22 21:07:42 islandusurper Exp $
+// $Id: uc_recurring.install,v 1.4.2.6 2008/10/15 14:47:51 islandusurper Exp $
 
 /**
  * @file
@@ -181,18 +181,29 @@ function uc_recurring_update_6000() {
 
   db_drop_primary_key($ret, 'uc_recurring_products');
   db_change_field($ret, 'uc_recurring_products', 'pfid', 'pfid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('primary key' => array('pfid')));
-  db_change_field($ret, 'uc_recurring_products', 'fee_amount', 'fee_amount', array('type' => 'numeric', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_recurring_products', 'fee_amount', 'fee_amount', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_recurring_products', 'number_intervals', 'number_intervals', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'small', 'not null' => TRUE, 'default' => 1));
 
   db_drop_primary_key($ret, 'uc_recurring_users');
   db_change_field($ret, 'uc_recurring_users', 'rfid', 'rfid', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('rfid')));
   db_change_field($ret, 'uc_recurring_users', 'uid', 'uid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_recurring_users', 'next_charge', 'next_charge', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
-  db_change_field($ret, 'uc_recurring_users', 'fee_amount', 'fee_amount', array('type' => 'numeric', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_recurring_users', 'fee_amount', 'fee_amount', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_recurring_users', 'remaining_intervals', 'remaining_intervals', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'small', 'not null' => TRUE, 'default' => 1));
   db_change_field($ret, 'uc_recurring_users', 'charged_intervals', 'charged_intervals', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'small', 'not null' => TRUE, 'default' => 1));
   db_change_field($ret, 'uc_recurring_users', 'order_id', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_recurring_users', 'created', 'created', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
+}
+
+function uc_recurring_update_6001() {
+  $ret = array();
+
+  // Make sure that those who had the faulty 6000 update have the right
+  // precision and scale.
+  db_change_field($ret, 'uc_recurring_products', 'fee_amount', 'fee_amount', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_recurring_users', 'fee_amount', 'fee_amount', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }

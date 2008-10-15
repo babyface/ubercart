@@ -1,5 +1,10 @@
 <?php
-// $Id: uc_payment_pack.install,v 1.2.2.4 2008/09/22 21:07:42 islandusurper Exp $
+// $Id: uc_payment_pack.install,v 1.2.2.5 2008/10/15 14:47:44 islandusurper Exp $
+
+/**
+ * @file
+ * Install hooks for uc_payment_pack.module.
+ */
 
 function uc_payment_pack_schema() {
   $schema = array();
@@ -90,15 +95,8 @@ function uc_payment_pack_install() {
 function uc_payment_pack_uninstall() {
   drupal_uninstall_schema('uc_payment_pack');
 
-  variable_del('uc_check_mailing_company');
-  variable_del('uc_check_mailing_name');
-  variable_del('uc_check_mailing_street1');
-  variable_del('uc_check_mailing_street2');
-  variable_del('uc_check_mailing_city');
-  variable_del('uc_check_mailing_zone');
-  variable_del('uc_check_mailing_postal_code');
-  variable_del('uc_check_mailing_country');
-  variable_del('uc_check_policy');
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_check_%%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_cod_%%'");
 }
 
 function uc_payment_pack_update_6000() {

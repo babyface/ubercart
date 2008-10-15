@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.install,v 1.11.2.2 2008/09/22 21:07:44 islandusurper Exp $
+// $Id: uc_product_kit.install,v 1.11.2.3 2008/10/15 14:47:52 islandusurper Exp $
 
 /**
  * @file
@@ -78,8 +78,8 @@ function uc_product_kit_update_1() {
     break;
     case 'pgsql':
       $ret[] = update_sql("ALTER TABLE {uc_product_kits} ADD PRIMARY KEY (nid, product_id)");
-      db_add_column($ret, 'uc_product_kits', 'mutable', 'smallint', array('not null' => true, 'default' => 0));
-      db_add_column($ret, 'uc_product_kits', 'discount', 'float', array('not null' => true, 'default' => 0.0));
+      db_add_column($ret, 'uc_product_kits', 'mutable', 'smallint', array('not null' => TRUE, 'default' => 0));
+      db_add_column($ret, 'uc_product_kits', 'discount', 'float', array('not null' => TRUE, 'default' => 0.0));
     break;
   }
   return $ret;
@@ -93,7 +93,7 @@ function uc_product_kit_update_2() {
       $ret[] = update_sql("ALTER TABLE {uc_product_kits} ADD COLUMN ordering smallint NOT NULL default 0");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_product_kits', 'ordering', 'smallint', array('not null' => true, 'default' => 0));
+      db_add_column($ret, 'uc_product_kits', 'ordering', 'smallint', array('not null' => TRUE, 'default' => 0));
     break;
   }
   return $ret;
@@ -113,7 +113,7 @@ function uc_product_kit_update_3() {
       $ret[] = update_sql("ALTER TABLE {uc_product_kits} ADD PRIMARY KEY (vid, product_id)");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_product_kits', 'vid', 'mediumint', array('not null' => true, 'default' => 0));
+      db_add_column($ret, 'uc_product_kits', 'vid', 'mediumint', array('not null' => TRUE, 'default' => 0));
       $ret[] = update_sql("ALTER TABLE {uc_product_kits} DROP CONSTRAINT {uc_products}_pkey");
       $result = db_query("SELECT nid, vid FROM {node}");
       while ($product = db_fetch_object($result)) {

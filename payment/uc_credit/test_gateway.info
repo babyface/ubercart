@@ -1,8 +1,8 @@
-; $Id: test_gateway.info,v 1.1.2.3 2008/08/06 13:41:21 islandusurper Exp $
+; $Id: test_gateway.info,v 1.1.2.4 2008/10/15 14:47:45 islandusurper Exp $
 name = Test Gateway
 description = Adds a credit card gateway that simulates a successful payment for testing checkout.
 dependencies[] = uc_payment
 dependencies[] = uc_credit
 package = Ubercart - payment
 core = 6.x
-
+php = 5.0

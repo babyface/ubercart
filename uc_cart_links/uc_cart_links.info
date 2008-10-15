@@ -1,7 +1,7 @@
-; $Id: uc_cart_links.info,v 1.2.2.3 2008/08/06 13:41:24 islandusurper Exp $
+; $Id: uc_cart_links.info,v 1.2.2.4 2008/10/15 14:47:49 islandusurper Exp $
 name = Cart Links
 description = Create specialized links to purchase products from other nodes.
 dependencies[] = uc_cart
 package = Ubercart - extra
 core = 6.x
-
+php = 5.0

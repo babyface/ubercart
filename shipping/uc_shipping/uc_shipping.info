@@ -1,6 +1,7 @@
-; $Id: uc_shipping.info,v 1.4 2008/07/10 12:40:59 islandusurper Exp $
+; $Id: uc_shipping.info,v 1.4.2.1 2008/10/15 14:47:37 islandusurper Exp $
 name = Shipping
 description = Gets products ready for physical shipment.
 dependencies[] = uc_quote
 package = "Ubercart - core (optional)"
 core = 6.x
+php = 5.0

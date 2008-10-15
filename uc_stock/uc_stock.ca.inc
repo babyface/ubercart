@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.ca.inc,v 1.1.2.2 2008/08/06 13:41:27 islandusurper Exp $
+// $Id: uc_stock.ca.inc,v 1.1.2.3 2008/10/15 14:47:56 islandusurper Exp $
 
 /**
  * @file
@@ -18,7 +18,7 @@
 function uc_stock_ca_predicate() {
   $predicates['uc_stock_decrement_on_order'] = array(
     '#title' => t('Decrement stock upon order submission'),
-    '#trigger' => 'checkout_complete',
+    '#trigger' => 'uc_checkout_complete',
     '#class' => 'uc_stock',
     '#actions' => array(
       array(

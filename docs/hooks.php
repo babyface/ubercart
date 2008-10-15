@@ -1,5 +1,5 @@
 <?php
-// $Id: hooks.php,v 1.1.2.4 2008/09/11 14:43:44 islandusurper Exp $
+// $Id: hooks.php,v 1.1.2.5 2008/10/15 14:48:04 islandusurper Exp $
 
 /**
  * @file
@@ -951,7 +951,7 @@ function hook_shipment($op, &$shipment) {
 function hook_shipping_method() {
   $methods = array();
 
-  $enabled = variable_get('uc_quote_enabled', array('ups' => true));
+  $enabled = variable_get('uc_quote_enabled', array('ups' => TRUE));
   $weight = variable_get('uc_quote_method_weight', array('ups' => 0));
   $methods['ups'] = array(
     'id' => 'ups',

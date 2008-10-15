@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.install,v 1.12.2.1 2008/09/22 21:07:44 islandusurper Exp $
+// $Id: uc_product.install,v 1.12.2.2 2008/10/15 14:48:05 islandusurper Exp $
 
 /**
  * @file
@@ -236,13 +236,13 @@ function uc_product_update_1() {
       $ret[] = update_sql("ALTER TABLE {uc_products} CHANGE model model varchar(255) NOT NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_class_choices', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => ''));
-      db_change_column($ret, 'uc_class_fields', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_class_choices', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_class_fields', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
       $ret[] = update_sql("ALTER TABLE {uc_class_fields} DROP title");
-      db_change_column($ret, 'uc_product_classes', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => ''));
-      db_change_column($ret, 'uc_product_class_choices', 'value', 'value', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_product_classes', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_product_class_choices', 'value', 'value', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
       $ret[] = update_sql("ALTER TABLE {uc_product_class_choices} ADD PRIMARY KEY (nid, cfid, value)");
-      db_change_column($ret, 'uc_products', 'model', 'model', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_products', 'model', 'model', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
     break;
   }
 
@@ -264,7 +264,7 @@ function uc_product_update_2() {
     break;
     case 'pgsql':
       $ret[] = update_sql("ALTER TABLE {uc_product_class_choices} DROP CONSTRAINT {uc_product_class_choices}_pkey");
-      db_change_column($ret, 'uc_product_class_choices', 'value', 'value', 'text', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_product_class_choices', 'value', 'value', 'text', array('not null' => TRUE, 'default' => ''));
       $ret[] = update_sql("ALTER TABLE {uc_product_class_choices} ADD PRIMARY KEY (nid, cfid, value (3))");
     break;
   }
@@ -279,7 +279,7 @@ function uc_product_update_3() {
       $ret[] = update_sql("ALTER TABLE {uc_products} ADD COLUMN units varchar(255) NOT NULL default 'lbs' AFTER weight");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_products', 'units', 'varchar(255)', array('not null' => true, 'default' => 'lbs'));
+      db_add_column($ret, 'uc_products', 'units', 'varchar(255)', array('not null' => TRUE, 'default' => 'lbs'));
     break;
   }
   return $ret;
@@ -304,7 +304,7 @@ function uc_product_update_4() {
       $ret[] = update_sql("DROP TABLE {uc_class_fields}");
       $ret[] = update_sql("DROP TABLE {uc_product_class_choices}");
       $ret[] = update_sql("DROP INDEX {uc_product_classes}_pcid_idx");
-      db_change_column($ret, 'uc_product_classes', 'pcid', 'pcid', 'varchar(32)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_product_classes', 'pcid', 'pcid', 'varchar(32)', array('not null' => TRUE, 'default' => ''));
       db_add_column($ret, 'uc_product_classes', 'description', 'text');
       $ret[] = update_sql("ALTER TABLE {uc_products} DROP COLUMN pcid");
     break;
@@ -336,7 +336,7 @@ function uc_product_update_5() {
       $ret[] = update_sql("ALTER TABLE {uc_products} ADD COLUMN default_qty smallint(5) unsigned NOT NULL default '1' AFTER units");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_products', 'default_qty', 'smallint unsigned', array('not null' => true, 'default' => 1));
+      db_add_column($ret, 'uc_products', 'default_qty', 'smallint unsigned', array('not null' => TRUE, 'default' => 1));
     break;
   }
 
@@ -352,7 +352,7 @@ function uc_product_update_6() {
       $ret[] = update_sql("ALTER TABLE {uc_products} ADD COLUMN ordering smallint(2) NOT NULL default 0");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_products', 'default_qty', 'smallint(2)', array('not null' => true, 'default' => 0));
+      db_add_column($ret, 'uc_products', 'default_qty', 'smallint(2)', array('not null' => TRUE, 'default' => 0));
     break;
   }
 
@@ -372,12 +372,12 @@ function uc_product_update_7() {
       $ret[] = update_sql("ALTER TABLE {uc_products} ADD pkg_qty smallint unsigned NOT NULL default 1 AFTER length_units");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_products', 'units', 'weight_units', 'varchar(255)', array('not null' => true, 'default' => 'lb'));
-      db_add_column($ret, 'uc_products', 'pkg_qty', 'smallint unsigned', array('not null' => true, 'default' => 1));
-      db_add_column($ret, 'uc_products', 'length', 'float unsigned', array('not null' => true, 'default' => 0));
-      db_add_column($ret, 'uc_products', 'width', 'float unsigned', array('not null' => true, 'default' => 0));
-      db_add_column($ret, 'uc_products', 'height', 'float unsigned', array('not null' => true, 'default' => 0));
-      db_add_column($ret, 'uc_products', 'length_units', 'varchar(255)', array('not null' => true, 'default' => 'in'));
+      db_change_column($ret, 'uc_products', 'units', 'weight_units', 'varchar(255)', array('not null' => TRUE, 'default' => 'lb'));
+      db_add_column($ret, 'uc_products', 'pkg_qty', 'smallint unsigned', array('not null' => TRUE, 'default' => 1));
+      db_add_column($ret, 'uc_products', 'length', 'float unsigned', array('not null' => TRUE, 'default' => 0));
+      db_add_column($ret, 'uc_products', 'width', 'float unsigned', array('not null' => TRUE, 'default' => 0));
+      db_add_column($ret, 'uc_products', 'height', 'float unsigned', array('not null' => TRUE, 'default' => 0));
+      db_add_column($ret, 'uc_products', 'length_units', 'varchar(255)', array('not null' => TRUE, 'default' => 'in'));
     break;
   }
   return $ret;
@@ -397,7 +397,7 @@ function uc_product_update_8() {
       $ret[] = update_sql("ALTER TABLE {uc_products} ADD PRIMARY KEY (vid)");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_products', 'vid', 'integer', array('not null' => true, 'default' => 0));
+      db_add_column($ret, 'uc_products', 'vid', 'integer', array('not null' => TRUE, 'default' => 0));
       $ret[] = update_sql("ALTER TABLE {uc_products} DROP CONSTRAINT {uc_products}_pkey");
       $result = db_query("SELECT nid, vid FROM {node}");
       while ($product = db_fetch_object($result)) {
@@ -438,7 +438,7 @@ function uc_product_update_10() {
       $ret[] = update_sql("ALTER TABLE {uc_products} ADD shippable tinyint(2) NOT NULL default 1");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_products', 'shippable', 'tinyint', array('not null' => true, 'default' => 1));
+      db_add_column($ret, 'uc_products', 'shippable', 'tinyint', array('not null' => TRUE, 'default' => 1));
     break;
   }
   return $ret;
@@ -448,8 +448,8 @@ function uc_product_update_11() {
   $ret = array();
   switch ($GLOBALS['db_type']) {
     case 'pgsql':
-      db_change_column($ret, 'uc_products', 'pkg_qty', 'pkg_qty', 'smallint_unsigned', array('not null' => true, 'default' => 1));
-      db_change_column($ret, 'uc_products', 'default_qty', 'defautl_qty', 'smallint_unsigned', array('not null' => true, 'default' => 1));
+      db_change_column($ret, 'uc_products', 'pkg_qty', 'pkg_qty', 'smallint_unsigned', array('not null' => TRUE, 'default' => 1));
+      db_change_column($ret, 'uc_products', 'default_qty', 'defautl_qty', 'smallint_unsigned', array('not null' => TRUE, 'default' => 1));
     break;
   }
   return $ret;
@@ -482,12 +482,24 @@ function uc_product_update_6000() {
   db_drop_primary_key($ret, 'uc_products');
   db_change_field($ret, 'uc_products', 'vid', 'vid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('primary key' => array('vid')));
   db_change_field($ret, 'uc_products', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
-  db_change_field($ret, 'uc_products', 'list_price', 'list_price', array('type' => 'numeric', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
-  db_change_field($ret, 'uc_products', 'cost', 'cost', array('type' => 'numeric', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
-  db_change_field($ret, 'uc_products', 'sell_price', 'sell_price', array('type' => 'numeric', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_products', 'list_price', 'list_price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_products', 'sell_price', 'sell_price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_products', 'weight', 'weight', array('type' => 'float', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_products', 'unique_hash', 'unique_hash', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE, 'default' => 'd41d8cd98f00b204e9800998ecf8427e'));
   db_change_field($ret, 'uc_products', 'shippable', 'shippable', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'tiny', 'not null' => TRUE, 'default' => 1));
+
+  return $ret;
+}
+
+function uc_product_update_6001() {
+  $ret = array();
+
+  // Make sure that those who had the faulty 6000 update have the right
+  // precision and scale.
+  db_change_field($ret, 'uc_products', 'list_price', 'list_price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_products', 'sell_price', 'sell_price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }

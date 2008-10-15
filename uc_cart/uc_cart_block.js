@@ -1,14 +1,26 @@
-// $Id: uc_cart_block.js,v 1.8 2008/07/10 12:41:00 islandusurper Exp $
+// $Id: uc_cart_block.js,v 1.8.2.1 2008/10/15 14:47:53 islandusurper Exp $
+
+/**
+ * Set the behavior to (un)collapse the cart block on a click
+ */
+Drupal.behaviors.ucCollapseBlock = function(context) {
+  $('.cart-block-toggle:not(.ucCollapseBlock-processed)', context).addClass('ucCollapseBlock-processed').click(
+    function() {
+      cart_block_toggle();
+    }
+  );
+}
 
 /**
  * Collapse the shopping cart block at page load.
  */
-$(document).ready(function() {
-  if (collapsed_block == true) {
-    $('#block-cart-contents').hide(0);
+$(document).ready(
+  function() {
+    if (Drupal.settings.ucCollapsedBlock == true) {
+      $('#block-cart-contents').hide();
+    }
   }
-  $('.cart-block-toggle').click(function() { cart_block_toggle(); } );
-});
+);
 
 /**
  * Toggle the shopping cart block open and closed.
@@ -18,9 +30,9 @@ function cart_block_toggle() {
 
   isrc = $('#block-cart-title-arrow').attr('src');
   if (isrc.toLowerCase().match("up") != null) {
-    $('#block-cart-title-arrow').attr('src', uc_cart_path + '/images/bullet-arrow-down.gif');
+    $('#block-cart-title-arrow').attr('src', isrc.split('-up').join('-down'));
   }
   else {
-    $('#block-cart-title-arrow').attr('src', uc_cart_path + '/images/bullet-arrow-up.gif');
+    $('#block-cart-title-arrow').attr('src', isrc.split('-down').join('-up'));
   }
-}                                                                             
+}

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.install,v 1.2.2.5 2008/09/22 21:07:44 islandusurper Exp $
+// $Id: uc_file.install,v 1.2.2.6 2008/10/15 14:47:57 islandusurper Exp $
 
 function uc_file_schema() {
   $schema = array();
@@ -115,6 +115,7 @@ function uc_file_install() {
 function uc_file_uninstall() {
   drupal_uninstall_schema('uc_file');
   db_query("DELETE FROM {uc_product_features} WHERE fid = 'file'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_file_%%'");
 }
 
 function uc_file_update_1() {
@@ -137,9 +138,19 @@ function uc_file_update_2() {
   $ret = array();
   switch ($GLOBALS['db_type']) {
     case 'pgsql':
-      db_change_column($ret, 'uc_file_users', 'accessed', 'accessed', 'smallint_unsigned', array('not null' => true, 'default' => 0));
+      db_change_column($ret, 'uc_file_users', 'accessed', 'accessed', 'smallint_unsigned', array('not null' => TRUE, 'default' => 0));
     break;
   }
+  return $ret;
+}
+
+function uc_file_update_3() {
+  $ret = array();
+
+  // Fixes the db_next_id() + 1 error.
+  $pfid = db_result(db_query("SELECT MAX(pfid) FROM {uc_product_features}"));
+  $ret[] = update_sql("UPDATE {sequences} SET id = ". intval($pfid) ." WHERE name = '{uc_product_features}_pfid'");
+
   return $ret;
 }
 
