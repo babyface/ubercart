@@ -1,0 +1,7 @@
+; $Id: uc_google_checkout.info,v 1.1.2.7 2008/10/15 17:54:10 islandusurper Exp $
+name = Google Checkout
+description = Integrates Google's Checkout, Merchant Calculated Shipping, and Order Processing APIs.
+dependencies[] = uc_cart
+package = Ubercart - payment
+core = 6.x
+php = 5.0
