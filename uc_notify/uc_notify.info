@@ -1,6 +1,0 @@
-; $Id: uc_notify.info,v 1.6 2008/07/10 12:41:02 islandusurper Exp $
-name = Notify
-description = Send checkout and order email notifications to customers and administrators.
-dependencies = uc_store uc_order token
-package = "Ubercart - core (optional)"
-

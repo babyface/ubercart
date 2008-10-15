@@ -1,5 +1,0 @@
-; $Id: uc_importer.info,v 1.4 2007/11/05 20:31:58 rszrama Exp $
-name = Importer
-description = Provides an interface to import and export XML representations of the store's contents.
-package = Ubercart - extra
-dependencies = uc_product
