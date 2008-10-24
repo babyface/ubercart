@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.pages.inc,v 1.1.2.3 2008/10/15 17:54:10 islandusurper Exp $
+// $Id: uc_google_checkout.pages.inc,v 1.1.2.4 2008/10/24 21:06:44 islandusurper Exp $
 
 /**
  * @file

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.admin.inc,v 1.1.2.3 2008/10/15 17:54:10 islandusurper Exp $
+// $Id: uc_google_checkout.admin.inc,v 1.1.2.4 2008/10/24 21:06:44 islandusurper Exp $
 
 /**
  * @file
@@ -28,11 +28,37 @@ function uc_google_checkout_settings() {
     '#description' => t('Used to sign cart information. Keep it secret, keep it safe.'),
   );
 
+  $form['authentication']['sandbox'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Test Environment settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['authentication']['sandbox']['uc_google_checkout_mode'] = array(
+    '#type' => 'radios',
+    '#title' => t('Test Mode'),
+    '#default_value' => variable_get('uc_google_checkout_mode', 'checkout'),
+    '#options' => array('sandbox' => t('On'), 'checkout' => t('Off')),
+  );
+  $form['authentication']['sandbox']['uc_google_checkout_test_merchant_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Test Merchant ID'),
+    '#description' => t('Only needed for test mode. Click <a href="http://code.google.com/apis/checkout/developer/index.html#integration_overview" target="_blank">here</a> for more info.'),
+    '#default_value' => variable_get('uc_google_checkout_test_merchant_id', ''),
+    '#required' => FALSE,
+  );
+  $form['authentication']['sandbox']['uc_google_checkout_test_merchant_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Test Merchant Key'),
+    '#default_value' => variable_get('uc_google_checkout_test_merchant_key', ''),
+    '#required' => FALSE,
+  );
+
   $form['messages'] = array(
     '#type' => 'fieldset',
     '#title' => t('Customer messages'),
     '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
+    '#collapsed' => TRUE,
   );
   $form['messages']['uc_google_checkout_order_cancel_reason'] = array(
     '#type' => 'textarea',
@@ -66,31 +92,12 @@ function uc_google_checkout_settings() {
     '#options' => array('right' => t('Right'), 'left' => t('Left')),
   );
 
-  $form['sandbox'] = array(
+  /* $form['options'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Test Environment settings'),
+    '#title' => t('Merchant options'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
-  );
-  $form['sandbox']['uc_google_checkout_mode'] = array(
-    '#type' => 'radios',
-    '#title' => t('Test Mode'),
-    '#default_value' => variable_get('uc_google_checkout_mode', 'checkout'),
-    '#options' => array('sandbox' => t('On'), 'checkout' => t('Off')),
-  );
-  $form['sandbox']['uc_google_checkout_test_merchant_id'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Test Merchant ID'),
-    '#description' => t('Only needed for test mode. Click <a href="http://code.google.com/apis/checkout/developer/index.html#integration_overview" target="_blank">here</a> for more info.'),
-    '#default_value' => variable_get('uc_google_checkout_test_merchant_id', ''),
-    '#required' => FALSE,
-  );
-  $form['sandbox']['uc_google_checkout_test_merchant_key'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Test Merchant Key'),
-    '#default_value' => variable_get('uc_google_checkout_test_merchant_key', ''),
-    '#required' => FALSE,
-  );
+  ); */
 
   return system_settings_form($form);
 }

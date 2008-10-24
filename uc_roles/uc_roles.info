@@ -1,7 +1,8 @@
-; $Id: uc_roles.info,v 1.2.2.5 2008/10/15 14:47:55 islandusurper Exp $
+; $Id: uc_roles.info,v 1.2.2.6 2008/10/24 21:06:47 islandusurper Exp $
 name = Roles
 description = Assign permanent or expirable roles based on product purchases.
 dependencies[] = uc_product
+dependencies[] = uc_order
 package = "Ubercart - core (optional)"
 core = 6.x
 php = 5.0

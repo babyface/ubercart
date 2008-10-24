@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.install,v 1.2.2.6 2008/10/15 14:47:55 islandusurper Exp $
+// $Id: uc_roles.install,v 1.2.2.7 2008/10/24 21:06:47 islandusurper Exp $
 
 /**
  * @file
@@ -65,11 +65,11 @@ function uc_roles_schema() {
       ),
     ),
     'indexes' => array(
-      'pfid' => array('pfid'),
       'nid' => array('nid'),
       'model' => array('model'),
       'rid' => array('rid'),
     ),
+    'primary key' => array('pfid'),
   );
 
   $schema['uc_roles_expirations'] = array(
@@ -128,63 +128,6 @@ function uc_roles_uninstall() {
   db_query("DELETE FROM {variable} WHERE name LIKE 'uc_roles_%%'");
 }
 
-function uc_roles_update_1() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {uc_roles_products} CHANGE expiration duration SMALLINT( 4 ) NULL DEFAULT NULL");
-      $ret[] = update_sql("ALTER TABLE {uc_roles_products} CHANGE model model VARCHAR( 255 ) CHARACTER SET utf8 NULL");
-      break;
-    case 'pgsql':
-      break;
-  }
-
-  return $ret;
-}
-
-function uc_roles_update_2() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {uc_roles_products} ADD shippable BOOL NOT NULL");
-      break;
-    case 'pgsql':
-      break;
-  }
-
-  return $ret;
-}
-
-function uc_roles_update_3() {
-  $ret = array();
-
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      $ret[] = update_sql("ALTER TABLE {uc_roles_products} ADD by_quantity BOOL NOT NULL");
-      break;
-    case 'pgsql':
-      $ret[] = update_sql("ALTER TABLE {uc_roles_products} ADD by_quantity boolean NOT NULL");
-      break;
-  }
-
-  return $ret;
-}
-
-function uc_roles_update_4() {
-  $ret = array();
-
-  // Fixes the db_next_id() + 1 error.
-  $pfid = db_result(db_query("SELECT MAX(pfid) FROM {uc_product_features}"));
-  $ret[] = update_sql("UPDATE {sequences} SET id = ". intval($pfid) ." WHERE name = '{uc_product_features}_pfid'");
-
-  return $ret;
-}
-
 function uc_roles_update_6000() {
   $ret = array();
 
@@ -199,6 +142,18 @@ function uc_roles_update_6000() {
   db_drop_index($ret, 'uc_roles_expirations', 'rid');
   db_change_field($ret, 'uc_roles_expirations', 'uid', 'uid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('uid' => array('uid'))));
   db_change_field($ret, 'uc_roles_expirations', 'rid', 'rid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('rid' => array('rid'))));
+
+  return $ret;
+}
+
+function uc_roles_update_6001() {
+  $ret = array();
+
+  db_drop_index($ret, 'uc_roles_products', 'pfid');
+  db_add_primary_key($ret, 'uc_roles_products', array('pfid'));
+
+  db_drop_index($ret, 'uc_roles_products', 'uc_roles_products_model');
+  db_add_index($ret, 'uc_roles_products', 'model', array('model'));
 
   return $ret;
 }

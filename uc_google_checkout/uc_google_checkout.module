@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.7 2008/10/15 17:54:09 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.8 2008/10/24 21:06:44 islandusurper Exp $
 
 /**
  * @file
@@ -127,6 +127,9 @@ function uc_google_checkout_form_alter(&$form, &$form_state, $form_id) {
   }
   else if ($form_id == 'uc_order_view_update_form') {
     $form['#submit'][] = 'uc_google_checkout_notify_update';
+  }
+  else if ($form_id == 'uc_store_format_settings_form') {
+    $form['currency']['uc_currency_code']['#description'] .= ' '. t('Google Checkout only accepts the following currencies: @list', array('@list' => implode(', ', _uc_google_checkout_currency_codes())));
   }
 }
 
@@ -621,78 +624,13 @@ function uc_payment_method_google_checkout($op, &$arg1) {
     case 'order-view':
       $output = l(t('Google Checkout terminal'), 'admin/store/orders/'. $arg1->order_id .'/google_checkout');
       return $output;
-    case 'customer-view':
-      return;
-    case 'order-details':
-     return;
-    case 'edit-process':
-      return;
     case 'settings':
       $form = array();
 
-      $form['shipping'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Shipping settings'),
-        '#weight' => -4,
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
+      $form['link'] = array(
+        '#value' => l(t('Click here to go to Google Checkout settings.'), 'admin/store/settings/google_checkout'),
       );
-      $form['shipping']['uc_google_checkout_shipping_calculate'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Calculate shipping'),
-        '#default_value' => variable_get('uc_google_checkout_shipping_calculate', FALSE),
-      );
-/**
- * A possible example of how to add shipping modules
- * Needs a lot of work and this is all up in the error still. JS.
- *
-      $form['shipping']['uc_google_checkout_shipping_usps'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Calculate USPS shipping rates'),
-        '#default_value' => variable_get('uc_google_checkout_shipping_usps', FALSE),
-      );
-      $form['shipping']['fallback']['uc_google_checkout_shipping_usps_fallback'] = array(
-        '#type' => 'textfield',
-        '#title' => t('USPS Priority Mail'),
-        '#default_value' => variable_get('uc_google_checkout_shipping_usps_fallback', '10.00,3.00'),
-      );
-*/
 
-      $form['currency_tax'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Currency and Tax settings'),
-        '#description' => t('Currently only USD is supported'),
-        '#weight' => -6,
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-      );
-      $form['currency_tax']['uc_google_checkout_currency'] = array('#type' => 'select',
-        '#title' => t('Currency'),
-        '#options' => array('USD' => t('USD')),
-        '#default_value' => variable_get('uc_google_checkout_currency', 'USD'),
-      );
-      $form['currency_tax']['uc_google_checkout_tax_calculate'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Calculate tax'),
-        '#default_value' => variable_get('uc_google_checkout_tax_calculate', FALSE),
-      );
-      $form['options'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Merchant options'),
-        '#weight' => -5,
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-      );
-      $form['options']['uc_google_checkout_options_certificates'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Accept gift certificates'),
-        '#default_value' => variable_get('uc_google_checkout_options_certificates', TRUE),
-      );
-      $form['options']['uc_google_checkout_options_coupons'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Accept merchant coupons'),
-        '#default_value' => variable_get('uc_google_checkout_options_coupons', TRUE),
-      );
     return $form;
   }
 }
@@ -1064,4 +1002,11 @@ function uc_google_checkout_shipping_companies() {
     'ups' => 'UPS',
     'usps' => 'USPS',
   );
+}
+
+/**
+ * Returns an array of options for the currency selection widget.
+ */
+function _uc_google_checkout_currency_codes() {
+  return drupal_map_assoc(array('AUD', 'CAD', 'EUR', 'GBP', 'HKD', 'JPY', 'USD'));
 }
