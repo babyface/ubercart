@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_order_pane.inc,v 1.5.2.2 2008/10/15 14:47:42 islandusurper Exp $
+// $Id: uc_payment_order_pane.inc,v 1.5.2.3 2008/10/24 21:11:30 islandusurper Exp $
 
 /**
  * @file
@@ -51,8 +51,8 @@ function uc_order_pane_payment($op, $arg1) {
       return $output;
 
     case 'edit-form':
-      uc_add_js('misc/progress.js');
-      uc_add_js(array('defPaymentMsg' => ''), 'setting');
+      drupal_add_js('misc/progress.js');
+      drupal_add_js(array('defPaymentMsg' => ''), 'setting');
 
       $form['payment'] = array(
         '#type' => 'fieldset',
@@ -75,7 +75,7 @@ function uc_order_pane_payment($op, $arg1) {
       return $form;
 
     case 'edit-theme':
-      uc_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
+      drupal_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
 
       // build a JS array of our payment methods
       $methods = _payment_method_list();
@@ -83,10 +83,10 @@ function uc_order_pane_payment($op, $arg1) {
       foreach ($methods as $method) {
         $method_array_js[$method['name']] = $method['id'];
       }
-      uc_add_js(array('methods' => $method_array_js), 'setting');
+      drupal_add_js(array('methods' => $method_array_js), 'setting');
 
       // begin the order lock, also get payment details
-      uc_add_js(array('ucOrderInitiate' => true), 'setting');
+      drupal_add_js(array('ucOrderInitiate' => true), 'setting');
 
       $output = '<table class="order-edit-table">';
       foreach (element_children($arg1['payment']) as $field) {

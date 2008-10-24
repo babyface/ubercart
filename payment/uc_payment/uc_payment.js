@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.5.2.1 2008/10/15 14:47:42 islandusurper Exp $
+// $Id: uc_payment.js,v 1.5.2.2 2008/10/24 21:11:30 islandusurper Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
@@ -158,7 +158,7 @@ function get_payment_details(path) {
       if (this_update.getTime() == payment_update) {
         // If the response was empty, throw up the default message.
         if (details == '') {
-          $('#payment_details').empty().html(Drupal.setting.defPaymentMsg);
+          $('#payment_details').empty().html(Drupal.settings.defPaymentMsg);
         }
         // Otherwise display the returned details.
         else {

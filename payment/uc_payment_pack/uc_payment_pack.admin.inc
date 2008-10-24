@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_pack.admin.inc,v 1.1.2.1 2008/10/15 14:47:44 islandusurper Exp $
+// $Id: uc_payment_pack.admin.inc,v 1.1.2.2 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -58,7 +58,7 @@ function uc_payment_pack_receive_check_form($form_state, $order) {
 }
 
 function theme_uc_payment_pack_receive_check_form($form) {
-  uc_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
+  drupal_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
 
   $output = '<p>'. t('Use the form to enter the check into the payments system and set the expected clear date.') .'</p>';
   $output .= '<p><strong>'. t('Order balance:') .'</strong> '
@@ -87,17 +87,13 @@ function uc_payment_pack_receive_check_form_validate($form, &$form_state) {
 function uc_payment_pack_receive_check_form_submit($form, &$form_state) {
   global $user;
 
-  uc_payment_enter($form_state['values']['order_id'], _payment_method_data('check', 'name'),
-                   $form_state['values']['amount'], $user->uid, '', $form_state['values']['comment']);
+  uc_payment_enter($form_state['values']['order_id'], _payment_method_data('check', 'name'), $form_state['values']['amount'], $user->uid, '', $form_state['values']['comment']);
 
-  db_query("INSERT INTO {uc_payment_check} (order_id, clear_date) "
-          ."VALUES (%d, %d)", $form_state['values']['order_id'],
-           mktime(12, 0, 0, $form_state['values']['clear_month'], $form_state['values']['clear_day'], $form_state['values']['clear_year']));
+  db_query("INSERT INTO {uc_payment_check} (order_id, clear_date) VALUES (%d, %d)",
+    $form_state['values']['order_id'], mktime(12, 0, 0, $form_state['values']['clear_month'],
+    $form_state['values']['clear_day'], $form_state['values']['clear_year']));
 
-  drupal_set_message(t('Check received, expected clear date of !date.',
-                     array('!date' => $form_state['values']['clear_month'] .'/'
-                                    . $form_state['values']['clear_day'] .'/'
-                                    . $form_state['values']['clear_year'])));
+  drupal_set_message(t('Check received, expected clear date of @date.', array('@date' => $form_state['values']['clear_month'] .'/'. $form_state['values']['clear_day'] .'/'. $form_state['values']['clear_year'])));
 
   drupal_goto('admin/store/orders/'. $form_state['values']['order_id']);
 }

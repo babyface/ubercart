@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_googleanalytics.module,v 1.6.2.2 2008/10/15 14:48:01 islandusurper Exp $
+// $Id: uc_googleanalytics.module,v 1.6.2.3 2008/10/24 21:11:32 islandusurper Exp $
 
 /**
  * @file
@@ -26,7 +26,7 @@ function uc_googleanalytics_footer($main = 0) {
       if (variable_get('googleanalytics_legacy_version', TRUE)) {
         // Add the legacy script.
         $output = _uc_googleanalytics_ecommerce_legacy_script($order);
-        uc_add_js('if (Drupal.jsEnabled) { $(document).ready(function() { __utmSetTrans(); })};', 'inline', 'footer');
+        drupal_add_js('if (Drupal.jsEnabled) { $(document).ready(function() { __utmSetTrans(); })};', 'inline', 'footer');
       }
       else {
         // Add the updated script.
@@ -169,6 +169,6 @@ function _uc_googleanalytics_ecommerce_script($order) {
   $script .= $items;
   $script .= 'pageTracker._trackTrans();';
 
-  uc_add_js($script, 'inline', 'footer');
+  drupal_add_js($script, 'inline', 'footer');
 }
 

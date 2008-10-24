@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.1 2008/10/15 14:47:35 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.2 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -12,8 +12,8 @@
  */
 function uc_order_settings_overview() {
   // Add some Ubercart specific JS for modifying summaries.
-  uc_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
-  uc_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
+  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
+  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
 
   $summaries = array();
 
@@ -488,7 +488,7 @@ function uc_order_admin($sql = NULL, $args = NULL, $search = FALSE) {
     );
   }
 
-  uc_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
+  drupal_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
 
   if ($search === FALSE) {
     $output = '<div class="order-overview-form">'. drupal_get_form('uc_order_select_form') .'</div>'
@@ -585,7 +585,7 @@ function uc_order_create($customer = NULL) {
     drupal_goto('admin/store/orders/'. $order->order_id .'/edit');
   }
 
-  uc_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
+  drupal_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
 
   $output = '<div style="position: relative; top: 2px; cursor: pointer;" '
            .'onclick="load_customer_search();">'
@@ -997,7 +997,7 @@ function uc_order_view($order, $view = 'view') {
   }
 
   if ($view == 'customer' && variable_get('uc_cust_view_order_invoices', TRUE)) {
-    uc_add_js("function open_invoice() { window.open(Drupal.settings.basePath + 'user/". arg(1) ."/order/". arg(3) ."/invoice/print', '". t('Invoice') ."', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=600,height=480,left=50,top=50'); }", 'inline');
+    drupal_add_js("function open_invoice() { window.open(Drupal.settings.basePath + 'user/". arg(1) ."/order/". arg(3) ."/invoice/print', '". t('Invoice') ."', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=600,height=480,left=50,top=50'); }", 'inline');
     $contents = '<a href="#" onclick="open_invoice();">'
                . uc_store_get_icon('file:print') .' '
                . t('Click to open a window with a printable invoice.') .'</a>';

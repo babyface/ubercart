@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.4 2008/10/15 14:48:00 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.5 2008/10/24 21:11:32 islandusurper Exp $
 
 /**
  * @file
@@ -235,8 +235,8 @@ function uc_attribute_form_alter(&$form, &$form_state, $form_id) {
     // If the node has a product list, add attributes to them
     if (count(element_children($form['products']))) {
       foreach (element_children($form['products']) as $key) {
-        $form['products'][$key] = _uc_attribute_alter_form($form['products'][$key]);
-        if (isset($form['products'][$key]['attributes'])) {
+        $form['products'][$key]['attributes'] = _uc_attribute_alter_form(node_load($key));
+        if (is_array($form['products'][$key]['attributes'])) {
           $form['products'][$key]['attributes']['#tree'] = TRUE;
           $form['products'][$key]['#type'] = 'fieldset';
         }
@@ -244,8 +244,11 @@ function uc_attribute_form_alter(&$form, &$form_state, $form_id) {
     }
     // If not, add attributes to the node.
     else {
-      $form['attributes'] = array('#tree' => TRUE, '#weight' => -1);
-      $form = _uc_attribute_alter_form($form);
+      $form['attributes'] = _uc_attribute_alter_form($form['#parameters'][2]);
+      if (is_array($form['attributes'])) {
+        $form['attributes']['#tree'] = TRUE;
+        $form['attributes']['#weight'] = -1;
+      }
     }
   }
 }
@@ -256,6 +259,12 @@ function uc_attribute_form_alter(&$form, &$form_state, $form_id) {
 function uc_attribute_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
   if (in_array($node->type, module_invoke_all('product_types'))) {
     switch ($op) {
+      case 'load':
+        $attributes = uc_product_get_attributes($node->nid);
+        if(is_array($attributes) && !empty($attributes)) {
+          return array('attributes' => $attributes);
+        }
+        break;
       case 'insert':
         switch ($GLOBALS['db_type']) {
           case 'mysqli':
@@ -311,7 +320,7 @@ function uc_attribute_add_to_cart_data($form_values) {
       $combination[$aid] = $value;
     }
   }
-  $result = db_query("SELECT model FROM {uc_product_adjustments} WHERE nid = %d AND combination LIKE '%s'", $form_state['values']['nid'], serialize($combination));
+  $result = db_query("SELECT model FROM {uc_product_adjustments} WHERE nid = %d AND combination LIKE '%s'", $form_values['nid'], serialize($combination));
   $model = db_result($result);
   // drupal_set_message('Attributes to add to order Array(aid => oid):<pre>'. print_r($form_state['values']['attributes'], TRUE) . $model .'</pre>');
   // Preserve the 'attributes' key to allow other modules to add to the data field.
@@ -337,9 +346,11 @@ function uc_attribute_cart_item($op, &$item) {
   switch ($op) {
     case 'load':
       $item->options = _uc_cart_product_get_options($item);
+
       $op_costs = 0;
       $op_prices = 0;
       $op_weight = 0;
+
       foreach ($item->options as $option) {
         $op_costs += $option['cost'];
         $op_prices += $option['price'];
@@ -348,6 +359,7 @@ function uc_attribute_cart_item($op, &$item) {
       $item->cost += $op_costs;
       $item->price += $op_prices;
       $item->weight += $op_weight;
+
       if (!empty($item->data['model'])) {
         $item->model = $item->data['model'];
       }
@@ -490,9 +502,11 @@ function theme_uc_attribute($type, $data, $nid) {
 function _uc_cart_product_get_options($item) {
   $options = array();
   $data = $item->data;
+  $node = node_load($item->nid);
+
   if (!empty($data['attributes']) && is_array($data['attributes'])) {
     foreach ($data['attributes'] as $aid => $oid) {
-      $attribute = uc_attribute_load($aid, $item->nid, 'product');
+      $attribute = $node->attributes[$aid];
       // Only discrete options can affect the price of an item.
       if ($attribute->display && count($attribute->options)) {
         $options[$aid] = (array)$attribute->options[$oid];
@@ -519,71 +533,72 @@ function _uc_cart_product_get_options($item) {
  * Helper function for uc_attribute_form_alter()
  */
 function _uc_attribute_alter_form($product) {
-  $nid = intval($product['nid']['#value']);
-  $qty = intval($product['qty']['#value']);
+  $nid = $product->nid;
+  $qty = $product->default_qty;
   if (!$qty) {
     $qty = 1;
   }
+  // Load all product attributes for the given nid.
+  $priced_attributes = uc_attribute_priced_attributes($nid);
+  $attributes = $product->attributes;
 
-  // If we were passed an actual node object...
-  if ($node = node_load($nid)) {
-    // Load all product attributes for the given nid.
-    $result = db_query("SELECT * FROM {uc_product_attributes} WHERE nid = %d ORDER BY ordering", $nid);
-    $priced_attributes = uc_attribute_priced_attributes($nid);
-
-    // Loop through each product attribute and generate its form element.
-    while ($relation = db_fetch_object($result)) {
-      $attribute = uc_attribute_load($relation->aid, $nid, 'product');
-
-      // Build the attribute's options array.
-      $options = array();
-      foreach ($attribute->options as $option) {
-        switch (variable_get('uc_attribute_option_price_format', 'adjustment')) {
-          case 'total':
-            $display_price = in_array($relation->aid, $priced_attributes) ? ', '. uc_currency_format(($node->sell_price + $option->price) * $qty) : '';
-            if (count($priced_attributes) == 1) {
-              break;
-            }
-          case 'adjustment':
-            $display_price = ($option->price != 0 ? ', '. ($option->price > 0 ? '+' : '') . uc_currency_format($option->price * $qty) : '');
-            break;
-          case 'none':
-          default:
-            $display_price = '';
-            break;
-        }
-        $options[$option->oid] = $option->name . $display_price;
-      }
-
-      if (count($attribute->options) && $attribute->display > 0) {
-        if ($attribute->required) {
-          if ($attribute->display == 1) {
-            $options = array('' => t('Please select')) + $options;
-          }
-          unset($relation->default_option);
-        }
-        $product['attributes'][$attribute->aid] = array(
-          '#type' => $attribute->display == 1 ? 'select' : 'radios',
-          '#title' => $attribute->name,
-          '#description' => check_plain($attribute->description),
-          '#default_value' => $relation->default_option,
-          '#options' => $options,
-          '#required' => $attribute->required,
-        );
-      }
-      else {
-        $product['attributes'][$attribute->aid] = array(
-          '#type' => 'textfield',
-          '#title' => $attribute->name,
-          '#description' => check_plain($attribute->description),
-          '#default_value' => $attribute->required == FALSE ? $attribute->options[$relation->default_option]->name : '',
-          '#required' => $attribute->required,
-        );
-      }
-      $product['attributes']['#theme'] = 'uc_attribute_add_to_cart';
-    }
+  // If the product don't have attributes, return the form as it is.
+  if(!is_array($attributes)) {
+    return NULL;
   }
-  return $product;
+
+  $form_attributes = array();
+
+  // Loop through each product attribute and generate its form element.
+  foreach($attributes as $attribute) {
+    // Build the attribute's options array.
+    $options = array();
+    foreach ($attribute->options as $option) {
+      switch (variable_get('uc_attribute_option_price_format', 'adjustment')) {
+        case 'total':
+          $display_price = in_array($attribute->aid, $priced_attributes) ? ', '. uc_currency_format(($product->sell_price + $option->price) * $qty) : '';
+          if (count($priced_attributes) == 1) {
+            break;
+          }
+        case 'adjustment':
+          $display_price = ($option->price != 0 ? ', '. ($option->price > 0 ? '+' : '') . uc_currency_format($option->price * $qty) : '');
+          break;
+        case 'none':
+        default:
+          $display_price = '';
+          break;
+      }
+      $options[$option->oid] = $option->name . $display_price;
+    }
+
+    if (count($attribute->options) && $attribute->display > 0) {
+      if ($attribute->required) {
+        if ($attribute->display == 1) {
+          $options = array('' => t('Please select')) + $options;
+        }
+        unset($attribute->default_option);
+      }
+      $form_attributes[$attribute->aid] = array(
+        '#type' => $attribute->display == 1 ? 'select' : 'radios',
+        '#title' => $attribute->name,
+        '#description' => check_plain($attribute->description),
+        '#default_value' => $attribute->default_option,
+        '#options' => $options,
+        '#required' => $attribute->required,
+      );
+    }
+    else {
+      $form_attributes[$attribute->aid] = array(
+        '#type' => 'textfield',
+        '#title' => $attribute->name,
+        '#description' => check_plain($attribute->description),
+        '#default_value' => $attribute->required == FALSE ? $attribute->options[$attribute->default_option]->name : '',
+        '#required' => $attribute->required,
+      );
+    }
+    $form_attributes['#theme'] = 'uc_attribute_add_to_cart';
+  }
+  return $form_attributes;
 }
 
 // Returns an array of display types used as options when creating attributes.

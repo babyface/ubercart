@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.5.2.4 2008/10/15 14:47:45 islandusurper Exp $
+// $Id: uc_credit.module,v 1.5.2.5 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -469,7 +469,7 @@ function uc_payment_method_credit($op, &$arg1, $silent = FALSE) {
     case 'order-view':
       // Add the hidden span for the CC details if possible.
       if (user_access('view cc details')) {
-        uc_add_js(drupal_get_path('module', 'uc_credit') .'/uc_credit.js');
+        drupal_add_js(drupal_get_path('module', 'uc_credit') .'/uc_credit.js');
 
         $output .= '<span onclick="toggle_card_details();" style="cursor: pointer;">'
                   .'<a id="cc_details_title" href="" onclick="return false;" style="display: none;">'. t('View card details.') .'</a>';

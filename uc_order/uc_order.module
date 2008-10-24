@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.5 2008/10/15 14:47:35 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.6 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -307,7 +307,7 @@ function uc_order_init() {
   drupal_add_css(drupal_get_path('module', 'uc_order') .'/uc_order.css');
 
   if (arg(0) == 'admin' && arg(1) == 'store' && arg(2) == 'orders' && is_numeric(arg(3)) && arg(4) == 'edit') {
-    uc_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
+    drupal_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
   }
 }
 
@@ -432,13 +432,14 @@ function uc_order_token_list($type = 'all') {
  * Implementation of hook_perm().
  */
 function uc_order_perm() {
-  return array('view all orders', 'create orders', 'edit orders', 'delete orders', 'delete any order', 'administer order workflow');
+  return array('view own orders', 'view all orders', 'create orders', 'edit orders', 'delete orders', 'delete any order', 'administer order workflow');
 }
 
 function uc_order_can_view_order($order_user, $order = NULL) {
   global $user;
 
-  $access = user_access('view all orders') || ($user->uid && $user->uid == $order_user->uid);
+  $access = user_access('view all orders') || ($user->uid && user_access('view own orders') && $user->uid == $order_user->uid);
+
   if (!is_null($order)) {
     $access = $access && $order_user->uid == $order->uid;
   }
@@ -457,7 +458,7 @@ function uc_order_user($op, &$edit, &$account, $category = NULL) {
   global $user;
   switch ($op) {
     case 'view':
-      if ($user->uid && ($user->uid == $account->uid || user_access('view all orders'))) {
+      if ($user->uid && (($user->uid == $account->uid && user_access('view own orders')) || user_access('view all orders'))) {
         $items['orders'] = array(
           'value' => l(t('Click here to view your order history.'), 'user/'. $account->uid .'/orders'),
           'class' => 'member',
@@ -1543,7 +1544,6 @@ function uc_invoice_template_list() {
 
 // Returns a list of options for a template select box.
 function uc_order_template_options($custom = FALSE) {
-  $templates = uc_invoice_template_list();
   $templates = drupal_map_assoc(uc_invoice_template_list());
 
   if ($custom) {

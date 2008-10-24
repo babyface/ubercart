@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.pages.inc,v 1.1.2.1 2008/10/15 14:47:57 islandusurper Exp $
+// $Id: uc_file.pages.inc,v 1.1.2.2 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -12,7 +12,7 @@
  */
 function uc_file_user_downloads($account) {
   drupal_set_title(t('File downloads'));
-  uc_add_js(drupal_get_path('module', 'uc_file') .'/uc_file.js');
+  drupal_add_js(drupal_get_path('module', 'uc_file') .'/uc_file.js');
 
   $header = array(
     array('data' => t('Purchased'), 'field' => 'u.granted', 'sort' => 'desc'),

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.6.2.4 2008/10/15 14:47:37 islandusurper Exp $
+// $Id: uc_shipping.module,v 1.6.2.5 2008/10/24 21:11:30 islandusurper Exp $
 
 /**
  * @file
@@ -573,7 +573,7 @@ function uc_shipping_select_address($addresses, $onchange = '', $title = NULL, $
 }
 
 function uc_shipping_address_form($form_state, $addresses, $order) {
-  uc_add_js(drupal_get_path('module', 'uc_shipping') .'/uc_shipping.js');
+  drupal_add_js(drupal_get_path('module', 'uc_shipping') .'/uc_shipping.js');
   $form = array();
   $form['origin'] = array('#type' => 'fieldset',
     '#title' => t('Origin address'),

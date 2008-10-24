@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.pages.inc,v 1.1.2.1 2008/10/15 14:48:03 islandusurper Exp $
+// $Id: uc_paypal.pages.inc,v 1.1.2.2 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -258,7 +258,7 @@ function uc_paypal_ec_review_form($form_state, $order) {
     );
 
     // small hack; automatically looks for shipping quotes on page load
-    uc_add_js("\$(document).ready(function() { \$(' #edit-quote-button').click(); });", 'inline');
+    drupal_add_js("\$(document).ready(function() { \$(' #edit-quote-button').click(); });", 'inline');
 
     // Fake the checkout form delivery information.
     $form['delivery_first_name'] = array('#type' => 'hidden', '#value' => $order->delivery_first_name);

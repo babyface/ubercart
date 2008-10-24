@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.5.2.4 2008/10/15 14:47:42 islandusurper Exp $
+// $Id: uc_payment.module,v 1.5.2.5 2008/10/24 21:11:30 islandusurper Exp $
 
 /**
  * @file
@@ -205,8 +205,8 @@ function uc_payment_theme() {
  */
 function uc_payment_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'uc_cart_checkout_form') {
-    uc_add_js('misc/progress.js');
-    uc_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
+    drupal_add_js('misc/progress.js');
+    drupal_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
   }
 }
 

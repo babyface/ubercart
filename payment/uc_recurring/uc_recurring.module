@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.module,v 1.7.2.5 2008/10/15 14:47:51 islandusurper Exp $
+// $Id: uc_recurring.module,v 1.7.2.6 2008/10/24 21:11:32 islandusurper Exp $
 
 /**
  * @file
@@ -791,12 +791,16 @@ function uc_recurring_find_fees($order) {
     return array();
   }
 
-  foreach ($order->products as $product) {
+  $models = array();
+  $nids = array();
+
+  foreach ((array) $order->products as $product) {
+    $nids[] = $product->nid;
     $models[] = check_plain($product->model);
   }
 
   $fees = array();
-  $result = db_query("SELECT * FROM {uc_recurring_products} WHERE model IN ('". implode("', '", $models) ."')");
+  $result = db_query("SELECT rp.* FROM {uc_recurring_products} AS rp LEFT JOIN {uc_product_features} AS pf ON rp.pfid = pf.pfid WHERE rp.model IN ('". implode("', '", $models) ."') OR (rp.model = '' AND pf.nid IN ('". implode("', '", $nids) ."'))");
   while ($fee = db_fetch_object($result)) {
     $fees[] = $fee;
   }

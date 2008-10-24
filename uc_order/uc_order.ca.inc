@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.6 2008/10/15 14:47:35 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.7 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -46,7 +46,7 @@ function uc_order_ca_trigger() {
   );
 
   $triggers['uc_order_status_email_update'] = array(
-    '#title' => t('Email requested for order status update'),
+    '#title' => t('E-mail requested for order status update'),
     '#category' => t('Order'),
     '#arguments' => array(
       'order' => array(
@@ -66,7 +66,7 @@ function uc_order_ca_predicate() {
   $predicates = array();
 
   $predicates['uc_order_update_email_customer'] = array(
-    '#title' => t('Email order update'),
+    '#title' => t('E-mail an order update notification'),
     '#description' => t('Notify the customer when the order status is changed.'),
     '#class' => 'order',
     '#status' => 1,
@@ -89,13 +89,14 @@ function uc_order_ca_predicate() {
     ),
     '#actions' => array(
       array(
-        '#name' => 'uc_order_send_customer_email',
-        '#title' => t('Send an email to the customer'),
+        '#name' => 'uc_order_email',
+        '#title' => t('Send an e-mail to the customer'),
         '#argument_map' => array(
           'order' => 'order',
         ),
         '#settings' => array(
           'from' => uc_store_email_from(),
+          'addresses' => '[order-email]',
           'subject' => t('Order #[order-id] Update'),
           'message' => uc_get_message('order_update_email'),
           'format' => 1,
@@ -254,18 +255,18 @@ function uc_order_ca_action() {
       'order' => $order_arg,
     ),
   );
-  $actions['uc_order_send_customer_email'] = array(
-    '#title' => t('Send an email to the customer'),
+  $actions['uc_order_email'] = array(
+    '#title' => t('Send an order email'),
     '#category' => t('Order'),
-    '#callback' => 'uc_order_action_send_customer_email',
+    '#callback' => 'uc_order_action_email',
     '#arguments' => array(
       'order' => $order_arg,
     ),
   );
-  $actions['uc_order_send_admin_email'] = array(
-    '#title' => t('Send an email to the administrator'),
+  $actions['uc_order_email_invoice'] = array(
+    '#title' => t('Email an order invoice'),
     '#category' => t('Order'),
-    '#callback' => 'uc_order_action_send_admin_email',
+    '#callback' => 'uc_order_action_email_invoice',
     '#arguments' => array(
       'order' => $order_arg,
     ),
@@ -793,14 +794,13 @@ function uc_order_action_add_comment_submit($form, &$form_state) {
 }
 
 /**
- * Send an email to the customer.
+ * Send an email concerning an order.
  *
- * The subject and message fields take order and user token replacements. The
- * "To" field is populated by $order->primary_email.
+ * The recipients, subject, and message fields take order token replacements.
  */
-function uc_order_action_send_customer_email($order, $settings) {
+function uc_order_action_email($order, $settings) {
   $account = user_load(array('uid' => $order->uid));
-  $language = user_preferred_language($account);
+  $language = language_default();
 
   // Token replacements for the subject and body
   $settings['replacements'] = array(
@@ -809,18 +809,26 @@ function uc_order_action_send_customer_email($order, $settings) {
     'user' => $account,
   );
 
-  $sent = drupal_mail('uc_order', 'action-mail', $order->primary_email, $language, $settings, $settings['from']);
+  $recipients = array();
+  $addresses = token_replace_multiple($settings['addresses'], $settings['replacements']);
 
-  if ($sent['result']) {
-    $changes[] = t('Customer notified of order update.');
+  foreach (explode("\n", $addresses) as $address) {
+    $recipients[] = trim($address);
   }
-  else {
-    $changes[] = t('Email notification to @email failed.', array('@email' => $order->primary_email));
+
+  foreach ($recipients as $email) {
+    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
+
+    if ($sent['result']) {
+      watchdog('ca', 'Email sent to @email about order #!order_id.', array('@email' => $email, '!order_id' => $order->order_id));
+    }
+    else {
+      watchdog('ca', 'Email notification about order #!order_id to @email failed.', array('@email' => $email, '!order_id' => $order->order_id), WATCHDOG_ERROR);
+    }
   }
-  uc_order_log_changes($order->order_id, $changes);
 }
 
-function uc_order_action_send_customer_email_form($form_state, $settings = array()) {
+function uc_order_action_email_form($form_state, $settings = array()) {
   $form['from'] = array(
     '#type' => 'textfield',
     '#title' => t('Sender'),
@@ -828,10 +836,18 @@ function uc_order_action_send_customer_email_form($form_state, $settings = array
     '#description' => t('The "From" address.'),
     '#required' => TRUE,
   );
+  $form['addresses'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Recipients'),
+    '#default_value' => isset($settings['addresses']) ? $settings['addresses'] : '[order-email]',
+    '#description' => t('Enter the email addresses to receive the notifications, one on each line. You may use order tokens for dynamic email addresses.'),
+    '#required' => TRUE,
+  );
   $form['subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Subject'),
     '#default_value' => $settings['subject'],
+    '#required' => TRUE,
   );
   $form['message'] = array(
     '#type' => 'textarea',
@@ -843,9 +859,11 @@ function uc_order_action_send_customer_email_form($form_state, $settings = array
   $form['token_help'] = array(
     '#type' => 'fieldset',
     '#title' => t('Replacement patterns'),
-    '#description' => t('You can make use of the replacement patterns in the subject and message body.'),
+    '#description' => t('You can make use of the replacement patterns in the recipients field, the subject, and the message body.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
-  foreach (array('global', 'order', 'user') as $name) {
+  foreach (array('global', 'order') as $name) {
     $form['token_help'][$name] = array(
       '#type' => 'fieldset',
       '#title' => t('@name replacement patterns', array('@name' => drupal_ucfirst($name))),
@@ -860,9 +878,10 @@ function uc_order_action_send_customer_email_form($form_state, $settings = array
   return $form;
 }
 
-function uc_order_action_send_customer_email_submit($form, &$form_state) {
+function uc_order_action_email_submit($form, &$form_state) {
   return array(
     'from' => $form_state['values']['from'],
+    'addresses' => $form_state['values']['addresses'],
     'subject' => $form_state['values']['subject'],
     'message' => $form_state['values']['message'],
     'format' => $form_state['values']['format'],
@@ -870,37 +889,48 @@ function uc_order_action_send_customer_email_submit($form, &$form_state) {
 }
 
 /**
- * Send an email to the administrator.
+ * Email an invoice.
  *
- * The subject and message fields take order and user token replacements. The
- * "To" field is populated by the store email.
+ * The subject and addresses fields take order token replacements.
  */
-function uc_order_action_send_admin_email($order, $settings) {
-  $account = user_load(array('uid' => $order->uid));
-  $language = language_default();
-  $email = variable_get('uc_store_email', NULL);
+function uc_order_action_email_invoice($order, $settings) {
+  $language = user_preferred_language($account);
 
   // Token replacements for the subject and body
   $settings['replacements'] = array(
     'global' => NULL,
     'order' => $order,
-    'user' => $account,
   );
 
-  if ($email) {
+  $recipients = array();
+  $addresses = token_replace_multiple($settings['addresses'], $settings['replacements']);
+
+  foreach (explode("\n", $addresses) as $address) {
+    $recipients[] = trim($address);
+  }
+
+  $settings['message'] = uc_order_load_invoice($order, $settings['view'], $settings['template']);
+  $settings['format'] = 2; // Full HTML.
+
+  if (empty($recipients)) {
+    watchdog('ca', 'Can not send email without an email address.', array(), WATCHDOG_ERROR);
+    return;
+  }
+
+
+  foreach ($recipients as $email) {
     $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
 
     if ($sent['result']) {
-      $changes[] = t('Customer notified of order update.');
+      watchdog('ca', 'Email sent to @email about order #!order_id.', array('@email' => $email, '!order_id' => $order->order_id));
     }
     else {
-      $changes[] = t('Email notification to @email failed.', array('@email' => $email));
+      watchdog('ca', 'Email notification about order #!order_id to @email failed.', array('@email' => $email, '!order_id' => $order->order_id), WATCHDOG_ERROR);
     }
-    uc_order_log_changes($order->order_id, $changes);
   }
 }
 
-function uc_order_action_send_admin_email_form($form_state, $settings = array()) {
+function uc_order_action_email_invoice_form($form_state, $settings = array()) {
   $form['from'] = array(
     '#type' => 'textfield',
     '#title' => t('Sender'),
@@ -908,24 +938,28 @@ function uc_order_action_send_admin_email_form($form_state, $settings = array())
     '#description' => t('The "From" address.'),
     '#required' => TRUE,
   );
+  $form['addresses'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Recipients'),
+    '#default_value' => isset($settings['addresses']) ? $settings['addresses'] : '[order-email]',
+    '#description' => t('Enter the email addresses to receive the notifications, one on each line. You may use order tokens for dynamic email addresses.'),
+    '#required' => TRUE,
+  );
   $form['subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Subject'),
     '#default_value' => $settings['subject'],
+    '#required' => TRUE,
   );
-  $form['message'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Message'),
-    '#default_value' => $settings['message'],
-  );
-  $form['format'] = filter_form($settings['format']);
 
   $form['token_help'] = array(
     '#type' => 'fieldset',
     '#title' => t('Replacement patterns'),
-    '#description' => t('You can make use of the replacement patterns in the subject and message body.'),
+    '#description' => t('You can make use of the replacement patterns in the recipients, the subject, and the template file.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
-  foreach (array('global', 'order', 'user') as $name) {
+  foreach (array('global', 'order') as $name) {
     $form['token_help'][$name] = array(
       '#type' => 'fieldset',
       '#title' => t('@name replacement patterns', array('@name' => drupal_ucfirst($name))),
@@ -937,14 +971,33 @@ function uc_order_action_send_admin_email_form($form_state, $settings = array())
     );
   }
 
+  $form['template'] = array(
+    '#type' => 'select',
+    '#title' => t('Invoice template'),
+    '#description' => t('Select the invoice template to use for this email.'),
+    '#options' => uc_order_template_options(),
+    '#default_value' => $settings['template'],
+  );
+  $form['view'] = array(
+    '#type' => 'select',
+    '#title' => t('Included information'),
+    '#options' => array(
+      'print' => t('Show the business header and shipping method'),
+      'admin-mail' => t('...and the help text, email text, and store footer'),
+      'checkout-mail' => t('...and also the "thank you" message.'),
+    ),
+    '#default_value' => $settings['view'],
+  );
+
   return $form;
 }
 
-function uc_order_action_send_admin_email_submit($form, &$form_state) {
+function uc_order_action_email_invoice_submit($form, &$form_state) {
   return array(
     'from' => $form_state['values']['from'],
+    'addresses' => $form_state['values']['addresses'],
     'subject' => $form_state['values']['subject'],
-    'message' => $form_state['values']['message'],
-    'format' => $form_state['values']['format'],
+    'template' => $form_state['values']['template'],
+    'view' => $form_statep['values']['view'],
   );
 }

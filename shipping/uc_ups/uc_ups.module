@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.5.2.2 2008/10/15 14:47:50 islandusurper Exp $
+// $Id: uc_ups.module,v 1.5.2.3 2008/10/24 21:11:32 islandusurper Exp $
 
 /**
  * @file
@@ -361,7 +361,7 @@ function uc_ups_shipping_quote($packages, $origin, $destination, $ups_service) {
             $conversion = uc_weight_conversion($package->weight_units, 'kg');
           break;
         }
-        $weight = $package->weight * $conversion;
+        $weight = max(1, $package->weight * $conversion);
         $shipment_weight += $weight;
         $package_schema .= "<PackageWeight>";
           $package_schema .= "<UnitOfMeasurement>";

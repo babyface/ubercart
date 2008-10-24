@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.ca.inc,v 1.1.2.4 2008/09/11 14:43:46 islandusurper Exp $
+// $Id: uc_cart.ca.inc,v 1.1.2.5 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -57,24 +57,39 @@ function uc_cart_ca_trigger() {
  * Implementation of hook_ca_predicate().
  */
 function uc_cart_ca_predicate() {
-  $predicates['uc_checkout_email_customer'] = array(
-    '#title' => t('Email customer on checkout'),
-    '#description' => t('Send the customer an email about their new order.'),
+  $predicates['uc_checkout_email_notification'] = array(
+    '#title' => t('E-mail checkout notifications'),
+    '#description' => t('Send an e-mail about the new order.'),
     '#class' => 'order',
     '#status' => 1,
     '#trigger' => 'uc_checkout_complete',
     '#actions' => array(
       array(
-        '#name' => 'uc_order_send_customer_email',
-        '#title' => t('Send an email to the customer'),
+        '#name' => 'uc_order_email_invoice',
+        '#title' => t('Send an e-mail to the customer'),
         '#argument_map' => array(
           'order' => 'order',
         ),
         '#settings' => array(
           'from' => uc_store_email_from(),
+          'addresses' => '[order-email]',
           'subject' => t('Your Order at [store-name]'),
-          'message' => uc_order_load_invoice($order, 'checkout-mail', 'customer'),
-          'format' => 2,
+          'template' => 'customer',
+          'view' => 'checkout-mail',
+        ),
+      ),
+      array(
+        '#name' => 'uc_order_email_invoice',
+        '#title' => t('Send an e-mail to the administrator(s)'),
+        '#argument_map' => array(
+          'order' => 'order',
+        ),
+        '#settings' => array(
+          'from' => uc_store_email_from(),
+          'addresses' => variable_get('uc_store_email', ''),
+          'subject' => t('New Order at [store-name]'),
+          'template' => 'admin',
+          'view' => 'admin-mail',
         ),
       ),
     ),

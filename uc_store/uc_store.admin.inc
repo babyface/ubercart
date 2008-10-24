@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.1 2008/10/15 14:47:39 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.2 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -144,7 +144,7 @@ function uc_store_customers($message = NULL, $query = NULL, $count_query = NULL,
     );
   }
 
-  uc_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
+  drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
 
   $output = '<p>'. $message .'</p>'
           . theme('table', $header, $rows, array('width' => '100%', 'class' => 'uc-customer-table'))
@@ -350,8 +350,8 @@ function uc_store_ubercart_help_tokens() {
 function uc_country_settings_overview() {
 
   // Add some Ubercart specific JS for modifying summaries.
-  uc_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
-  uc_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
+  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
+  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
 
   // Load the form summaries for pages beneath this path.
   $summaries = summarize_child_form_pages('admin/store/settings/countries/edit');
@@ -548,8 +548,8 @@ function uc_country_formats_form_submit($form, &$form_state) {
 function uc_store_store_settings_overview() {
 
   // Add some Ubercart specific JS for modifying summaries.
-  uc_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
-  uc_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
+  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
+  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
 
   // Load the form summaries for pages beneath this path.
   $summaries = summarize_child_form_pages('admin/store/settings/store/edit');
@@ -961,7 +961,7 @@ function uc_store_customer_orders($uid) {
     );
   }
 
-  uc_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
+  drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
 
   $output = '<p>'. l(t('Create an order for this customer.'),
                      'admin/store/orders/create/'. $uid) .'</p>';

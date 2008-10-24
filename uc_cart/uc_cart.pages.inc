@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.1 2008/10/15 14:47:53 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.2 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -92,7 +92,7 @@ function uc_cart_checkout() {
     }
   }
 
-  uc_add_js(drupal_get_path('module', 'uc_cart') .'/uc_cart.js');
+  drupal_add_js(drupal_get_path('module', 'uc_cart') .'/uc_cart.js');
   $output = drupal_get_form('uc_cart_checkout_form');
 
   return $output;
@@ -283,7 +283,7 @@ function uc_cart_checkout_form_submit($form, &$form_state) {
  * Allow a customer to review their order before finally submitting it.
  */
 function uc_cart_checkout_review() {
-  uc_add_js(drupal_get_path('module', 'uc_cart') .'/uc_cart.js');
+  drupal_add_js(drupal_get_path('module', 'uc_cart') .'/uc_cart.js');
   $form = drupal_get_form('uc_cart_checkout_review_form');
 
   if ($_SESSION['do_review'] !== TRUE && !uc_referer_check('cart/checkout')) {
@@ -317,7 +317,7 @@ function uc_cart_checkout_review() {
     }
   }
 
-  $output = theme('uc_cart_checkout_review', $help, $data, $form);
+  $output = theme('uc_cart_checkout_review', $data, $form);
 
   return $output;
 }
@@ -325,8 +325,6 @@ function uc_cart_checkout_review() {
 /**
  * Theme the checkout review order page.
  *
- * @param $help
- *   A string containing the review order page help message.
  * @param $panes
  *   An associative array for each checkout pane that has information to add to
  *   the review page.  The key is the pane's title and the value is either the
@@ -338,11 +336,11 @@ function uc_cart_checkout_review() {
  *   A string of HTML for the page contents.
  * @ingroup themeable
  */
-function theme_uc_cart_checkout_review($help, $panes, $form) {
+function theme_uc_cart_checkout_review($panes, $form) {
   drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart.css');
 
-  $output = '<div>'. check_markup(variable_get('uc_checkout_review_instructions',  uc_get_message('review_instructions')), variable_get('uc_checkout_review_instructions_format', 3), FALSE)
-           .'</div><table class="order-review-table">';
+  $output = '<p>' . check_markup(variable_get('uc_checkout_review_instructions', uc_get_message('review_instructions')), variable_get('uc_checkout_review_instructions_format', 3), FALSE)
+           . '</p><table class="order-review-table">';
 
   foreach ($panes as $title => $data) {
     $output .= '<tr class="pane-title-row"><td colspan="2">'. $title

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.1 2008/10/15 14:47:35 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.2 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -274,7 +274,7 @@ function uc_order_pane_products($op, $arg1) {
       return tapir_get_table('op_products_customer_table', $arg1->products);
 
     case 'edit-theme':
-      uc_add_js('uc_order_load_product_edit_div('. $arg1['order_id']['#value'] .');', 'inline');
+      drupal_add_js('uc_order_load_product_edit_div('. $arg1['order_id']['#value'] .');', 'inline');
 
       $output = '<div id="products-selector"></div>'
                .'<div id="products-container">'. t('Loading product information... (<em>If nothing happens, make sure you have Javascript enabled.</em>)') .'</div>';

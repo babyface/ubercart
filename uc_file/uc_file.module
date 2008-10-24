@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.2.2.5 2008/10/15 14:47:57 islandusurper Exp $
+// $Id: uc_file.module,v 1.2.2.6 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -451,7 +451,7 @@ function uc_file_feature_form_submit($form, &$form_state) {
  * Form builder for file settings
  */
 function uc_file_feature_settings() {
-  uc_add_js('if (Drupal.jsEnabled) { $(document).ready(function() { if ($("#edit-uc-file-download-limit-duration-granularity").val() == "never") {$("#edit-uc-file-download-limit-duration-qty").attr("disabled", "disabled").val("");} })};', 'inline');
+  drupal_add_js('if (Drupal.jsEnabled) { $(document).ready(function() { if ($("#edit-uc-file-download-limit-duration-granularity").val() == "never") {$("#edit-uc-file-download-limit-duration-qty").attr("disabled", "disabled").val("");} })};', 'inline');
   $statuses = array();
   foreach (uc_order_status_list('general') as $status) {
     $statuses[$status['id']] = $status['title'];

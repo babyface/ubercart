@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.6 2008/10/15 14:47:53 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.7 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -262,8 +262,8 @@ function uc_cart_block($op = 'list', $delta = 0, $edit = array()) {
 
     if (variable_get('uc_cart_block_collapsible', TRUE)) {
       $val = variable_get('uc_cart_block_collapsed', TRUE) ? 'true' : 'false';
-      uc_add_js(array('ucCollapsedBlock' => $val), 'inline');
-      uc_add_js(drupal_get_path('module', 'uc_cart') .'/uc_cart_block.js');
+      drupal_add_js(array('ucCollapsedBlock' => $val), 'inline');
+      drupal_add_js(drupal_get_path('module', 'uc_cart') .'/uc_cart_block.js');
     }
 
     drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart_block.css');
@@ -481,15 +481,15 @@ function uc_cart_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'user_login' || $form_id == 'user_edit' || $form_id == 'user_register') {
     if ($_SESSION['checkout-redirect'] == TRUE) {
       $form['#action'] = url($_GET['q'], array('query' => 'destination=cart/checkout'));
-      return;
     }
-
-    // Compare the referer to checkout page URLs.
-    if (uc_referer_check('cart/checkout') && uc_referer_uri() != '') {
-      $form['#action'] = url($_GET['q'], array('query' => 'destination=cart/checkout'));
-    }
-    elseif (uc_referer_check(array('cart/checkout/review', 'cart/checkout/complete')) && uc_referer_uri() != '') {
-      $form['#action'] = url($_GET['q'], array('query' => 'destination=user'));
+    else {
+      // Compare the referer to checkout page URLs.
+      if (uc_referer_check('cart/checkout') && uc_referer_uri() != '') {
+        $form['#action'] = url($_GET['q'], array('query' => 'destination=cart/checkout'));
+      }
+      elseif (uc_referer_check(array('cart/checkout/review', 'cart/checkout/complete')) && uc_referer_uri() != '') {
+        $form['#action'] = url($_GET['q'], array('query' => 'destination=user'));
+      }
     }
   }
 
@@ -530,7 +530,7 @@ function uc_cart_uc_message() {
   global $user;
 
   $messages['checkout_instructions'] = '';
-  $messages['review_instructions'] = t('Your order is not complete. Please review the details of your order and click !submit if all the information is correct.  You may use the Back button to make changes to your order if necessary.', array('!submit' => variable_get('uc_checkout_submit_button', t('Submit order'))));
+  $messages['review_instructions'] = t("Your order is almost complete. Please review the details below and click '!submit' if all the information is correct.  You may use the 'Back' button to make changes to your order if necessary.", array('!submit' => variable_get('uc_checkout_submit_button', t('Submit order'))));
   $messages['completion_message'] = t('Your order is complete! Your order number is [order-id].');
   $messages['completion_logged_in'] = t('Thank you for shopping at [store-name]. While logged in, you may continue shopping or <a href="[order-url]">click here</a> to view your current order status and order history.');
   $messages['completion_existing_user'] = t('Thank you for shopping at [store-name]. Your current order has been attached to the account we found matching your e-mail address.') .'<p>'. t('<a href="!url">Click here</a> to login and view your current order status and order history. Remember to login when you make your next purchase for a faster checkout experience!', array('!url' => url('user', array('absolute' => TRUE))));
@@ -911,8 +911,8 @@ function uc_cart_complete_sale($order, $login = FALSE) {
     }
   }
 
-  $output = check_markup(variable_get('uc_msg_order_submit', uc_get_message('completion_message')),
-                         variable_get('uc_msg_order_submit_format', 3), FALSE);
+  $output = '<p>' . check_markup(variable_get('uc_msg_order_submit', uc_get_message('completion_message')),
+                         variable_get('uc_msg_order_submit_format', 3), FALSE) . '</p>';
   $show_message = check_markup(variable_get('uc_msg_order_'. $message_type, uc_get_message('completion_'. $message_type)), variable_get('uc_msg_order_'. $message_type .'_format', 3), FALSE);
 
   if ($show_message != '') {

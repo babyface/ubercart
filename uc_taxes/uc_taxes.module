@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.12.2.3 2008/10/15 14:47:36 islandusurper Exp $
+// $Id: uc_taxes.module,v 1.12.2.4 2008/10/24 21:12:33 islandusurper Exp $
 
 /**
  * @file
@@ -86,13 +86,13 @@ function uc_taxes_init() {
 function uc_taxes_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'uc_cart_checkout_form') {
     if (isset($form['panes']['payment'])) {
-      uc_add_js(array('ucTaxWeight' => variable_get('uc_li_tax_weight', 9)), 'setting');
-      uc_add_js(drupal_get_path('module', 'uc_taxes') .'/uc_taxes.js');
+      drupal_add_js(array('ucTaxWeight' => variable_get('uc_li_tax_weight', 9)), 'setting');
+      drupal_add_js(drupal_get_path('module', 'uc_taxes') .'/uc_taxes.js');
     }
   }
   else if ($form_id == 'uc_order_edit_form') {
     if (isset($form['quotes'])) {
-      uc_add_js(drupal_get_path('module', 'uc_taxes') .'/uc_taxes.js');
+      drupal_add_js(drupal_get_path('module', 'uc_taxes') .'/uc_taxes.js');
     }
   }
 }
@@ -188,7 +188,7 @@ function uc_line_item_tax($op, $order) {
         $script .= "set_line_item('tax_". $tax->id ."', '". $tax->name ."', ". $tax->amount .", + ". variable_get('uc_li_tax_weight', 9) + ($tax->weight / 10) .", 1, false);\n";
       }
       if ($script) {
-        uc_add_js("if (Drupal.jsEnabled) { \$(document).ready(function() {
+        drupal_add_js("if (Drupal.jsEnabled) { \$(document).ready(function() {
           if (window.set_line_item) {
             ". $script .";
             render_line_items();
@@ -235,7 +235,7 @@ function uc_line_item_tax_subtotal($op, $order) {
   if ($different && $has_taxes) {
     switch ($op) {
       case 'cart-preview':
-        uc_add_js("if (Drupal.jsEnabled) { \$(document).ready(function() {
+        drupal_add_js("if (Drupal.jsEnabled) { \$(document).ready(function() {
           if (window.set_line_item) {
             set_line_item('tax_subtotal', '". t('Subtotal excluding taxes') ."', ". $amount .", ". variable_get('uc_li_tax_subtotal_weight', 8) .");
           }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.6 2008/10/15 14:47:39 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.7 2008/10/24 21:11:31 islandusurper Exp $
 
 /**
  * @file
@@ -508,8 +508,8 @@ function uc_store_exit() {
 // Themes the dashboard on the admin/store page.
 function theme_uc_admin_dashboard($type, $menus) {
   if ($type == 1) {
-    uc_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js', 'module');
-    uc_add_js(array('ucTextShow' => t('- Show links -'), 'ucTextHide' => t('- Hide links -')), 'setting');
+    drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js', 'module');
+    drupal_add_js(array('ucTextShow' => t('- Show links -'), 'ucTextHide' => t('- Hide links -')), 'setting');
   }
 
   $output = '<table class="uc-store-admin-table" align="center"><tr valign="top">';
@@ -1191,7 +1191,7 @@ function uc_country_select($title, $default = NULL, $description = NULL, $displa
     '#required' => $required,
   );
 
-  uc_add_js(drupal_get_path('module', 'uc_store') .'/uc_country_select.js');
+  drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_country_select.js');
 
   return $select;
 }
@@ -1732,7 +1732,7 @@ function uc_store_default_country() {
   return $default;
 }
 
-// Wrapper for uc_add_js() to cache .js files based on their timestamp.
+// Wrapper for drupal_add_js() to cache .js files based on their timestamp.
 function uc_add_js($data = NULL, $type = 'module', $scope = 'header', $defer = FALSE, $cache = TRUE) {
   // If we're adding a module or theme .js file...
   if (($type == 'module' || $type == 'theme') && $cache) {

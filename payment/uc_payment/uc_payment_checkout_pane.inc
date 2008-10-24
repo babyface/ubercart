@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_checkout_pane.inc,v 1.5.2.2 2008/10/15 14:47:42 islandusurper Exp $
+// $Id: uc_payment_checkout_pane.inc,v 1.5.2.3 2008/10/24 21:11:30 islandusurper Exp $
 
 /**
  * @file
@@ -13,10 +13,10 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
   switch ($op) {
     case 'view':
       // Add the default payment message as a JS variable.
-      uc_add_js(array('defPaymentMsg' => addslashes(variable_get('uc_default_payment_msg', t('Continue with checkout to complete payment.')))), 'setting');
+      drupal_add_js(array('defPaymentMsg' => addslashes(variable_get('uc_default_payment_msg', t('Continue with checkout to complete payment.')))), 'setting');
 
       if (variable_get('uc_payment_show_order_total_preview', TRUE)) {
-        uc_add_js('misc/progress.js');
+        drupal_add_js('misc/progress.js');
 
         $contents['current_total'] = array(
           '#type' => 'hidden',
@@ -28,7 +28,7 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
         );
 
         // let the script know we need to show a progressbar
-        uc_add_js(array('ucShowProgressBar' => true), 'setting');
+        drupal_add_js(array('ucShowProgressBar' => true), 'setting');
       }
 
       $methods = _payment_method_list();
@@ -140,7 +140,7 @@ function theme_uc_payment_method_select($form) {
 
   // Perhaps instead this should be a normal JS function and we just print the
   // default payment method to a JS variable or use a selector.  -RS
-  uc_add_js(array('ucDefaultPayment' => $form['#default_value']), 'setting');
+  drupal_add_js(array('ucDefaultPayment' => $form['#default_value']), 'setting');
 
   return drupal_render($form);
 }

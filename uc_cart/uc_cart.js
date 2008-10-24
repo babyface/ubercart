@@ -1,16 +1,17 @@
-// $Id: uc_cart.js,v 1.8.2.1 2008/10/15 14:47:53 islandusurper Exp $
+// $Id: uc_cart.js,v 1.8.2.2 2008/10/24 21:11:31 islandusurper Exp $
 
 var copy_box_checked = false;
 var uc_ce_submit_disable = false;
 
-/**
- * Scan the DOM and display the cancel and continue buttons.
- */
+// Scans the DOM and displays the cancel and continue buttons.
 Drupal.behaviors.ucShowOnLoad = function(context) {
   $('.show-onload:not(.ucShowOnLoad-processed)', context).addClass('ucShowOnLoad-processed').show();
+}
 
-  $('form#uc-cart-checkout-review-form input#edit-submit').click(function() {
-    $(this).clone().insertAfter(this).attr('disabled', true).after('<span id=\"submit-throbber\" style=\"background: url(' + Drupal.settings['base_path'] + 'misc/throbber.gif) no-repeat 100% -20px;\">&nbsp;&nbsp;&nbsp;&nbsp;</span>').end().hide();
+// Adds a throbber to the submit order button on the review order form.
+Drupal.behaviors.ucSubmitOrderThrobber = function(context) {
+  $('form#uc-cart-checkout-review-form input#edit-submit:not(.ucSubmitOrderThrobber-processed)', context).addClass('ucSubmitOrderThrobber-processed').click(function() {
+    $(this).clone().insertAfter(this).attr('disabled', true).after('<span id="submit-throbber" style="background: url(' + Drupal.settings.basePath + 'misc/throbber.gif) no-repeat 100% -20px;">&nbsp;&nbsp;&nbsp;&nbsp;</span>').end().hide();
     $('#uc-cart-checkout-review-form #edit-back').attr('disabled', true);
   });
 }
@@ -82,12 +83,22 @@ function uc_cart_copy_address(checked, source, target) {
 
 function update_billing_field(field) {
   if (copy_box_checked) {
+    if (field.id.substring(29) == 'zone') {
+      $('#edit-panes-billing-billing-zone').empty().append($('#edit-panes-delivery-delivery-zone').children().clone());
+      $('#edit-panes-billing-billing-zone').attr('disabled', $('#edit-panes-delivery-delivery-zone').attr('disabled'));
+    }
+
     $('#edit-panes-billing-billing' + field.id.substring(28)).val($(field).val());
   }
 }
 
 function update_delivery_field(field) {
   if (copy_box_checked) {
+    if (field.id.substring(27) == 'zone') {
+      $('#edit-panes-delivery-delivery-zone').empty().append($('#edit-panes-billing-billing-zone').children().clone());
+      $('#edit-panes-delivery-delivery-zone').attr('disabled', $('#edit-panes-billing-billing-zone').attr('disabled'));
+    }
+
     $('#edit-panes-delivery-delivery' + field.id.substring(26)).val($(field).val());
   }
 }
@@ -113,7 +124,7 @@ function apply_address(type, address_str) {
   $('#edit-panes-' + temp + '-postal-code').val(address.postal_code).trigger('change');
 
   if ($('#edit-panes-' + temp + '-country').val() != address.country) {
-    $('#edit-panes-' + temp + '-country').val(address.country);
+    $('#edit-panes-' + temp + '-country').val(address.country).trigger('change');
     try {
       uc_update_zone_select('edit-panes-' + temp + '-country', address.zone);
     }

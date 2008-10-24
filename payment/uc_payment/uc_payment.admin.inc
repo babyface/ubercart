@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.admin.inc,v 1.1.2.1 2008/10/15 14:47:42 islandusurper Exp $
+// $Id: uc_payment.admin.inc,v 1.1.2.2 2008/10/24 21:11:30 islandusurper Exp $
 
 /**
  * @file
@@ -12,8 +12,8 @@
  */
 function uc_payment_settings_overview() {
   // Add some Ubercart specific JS for modifying summaries.
-  uc_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
-  uc_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
+  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
+  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
 
   // Load the form summaries for pages beneath this path.
   $summaries = summarize_child_form_pages('admin/store/settings/payment/edit');
