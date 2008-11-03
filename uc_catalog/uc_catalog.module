@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.14.2.14 2008/09/17 21:38:40 rszrama Exp $
+// $Id: uc_catalog.module,v 1.14.2.15 2008/11/03 21:26:35 rszrama Exp $
 
 /**
  * @file
@@ -497,10 +497,19 @@ function uc_catalog_store_status() {
     $result = db_query("SELECT DISTINCT * FROM {node} AS n LEFT JOIN {term_node} AS tn ON n.nid = tn.nid LEFT JOIN {vocabulary_node_types} AS vnt ON n.type = vnt.type WHERE n.type != 'image' AND tn.tid IS NULL AND vnt.vid = %d", $cat_id);
     $excluded = db_num_rows($result);
     if ($excluded) {
-      $statuses[] = array('status' => 'warning', 'title' => t('Unlisted products'),
-        'desc' => format_plural($excluded, 'There is @count product not listed in the catalog.', 'There are @count products not listed in the catalog.')
-          . t(' Products are listed by assigning a category from the Product Catalog vocabulary to them. ')
-          . l(t('Find orphaned products here.'), 'admin/store/products/orphans'),
+      $description = format_plural($excluded, 'There is @count product not listed in the catalog.', 'There are @count products not listed in the catalog.')
+        . t(' Products are listed by assigning a category from the <a href="!cat_url">Product Catalog</a> vocabulary to them.', array('!cat_url' => url('admin/content/taxonomy/'. $catalog->vid)));
+      $terms = db_result(db_query("SELECT COUNT(*) FROM {term_data} WHERE vid = %d", $catalog->vid));
+      if ($terms) {
+        $description .= ' '. l(t('Find orphaned products here.'), 'admin/store/products/orphans');
+      }
+      else {
+        $description .= ' '. l(t('Add terms for the products to inhabit.'), 'admin/content/taxonomy/'. $catalog->vid .'/add/term');
+      }
+      $statuses[] = array(
+        'status' => 'warning',
+        'title' => t('Unlisted products'),
+        'desc' => $description,
       );
     }
   }
@@ -1219,7 +1228,7 @@ function uc_catalog_orphaned_products() {
 
   $rows = array();
   while ($node = db_fetch_object($result)) {
-    $rows[] = l($node->title, 'node/'. $node->nid .'/edit');
+    $rows[] = l($node->title, 'node/'. $node->nid .'/edit', array(), 'destination=admin/store/products/orphans');
   }
 
   if (count($rows) > 0) {

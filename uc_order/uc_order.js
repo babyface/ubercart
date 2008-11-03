@@ -1,4 +1,4 @@
-// $Id: uc_order.js,v 1.8.2.7 2008/09/17 21:38:41 rszrama Exp $
+// $Id: uc_order.js,v 1.8.2.8 2008/11/03 21:26:35 rszrama Exp $
 
 var customer_select = '';
 var add_product_browser = '';
@@ -151,7 +151,11 @@ function select_customer_search() {
   $('#edit-uid-text').val(data.substr(0, data.indexOf(':')));
   $('#edit-primary-email').val(data.substr(data.indexOf(':') + 1));
   $('#edit-primary-email-text').val(data.substr(data.indexOf(':') + 1));
-  $('#edit-submit-changes').click();
+  try {
+    $('#edit-submit-changes').get(0).click();
+  }
+  catch (err) {
+  }
   return close_customer_select();
 }
 
@@ -187,7 +191,11 @@ function select_existing_customer(uid, email) {
   $('#edit-uid-text').val(uid);
   $('#edit-primary-email').val(email);
   $('#edit-primary-email-text').val(email);
-  $('#edit-submit-changes').click();
+  try {
+    $('#edit-submit-changes').click();
+  }
+  catch (err) {
+  }
   return close_customer_select();
 }
 
@@ -348,7 +356,7 @@ function confirm_line_item_delete(message, img_id) {
   if (confirm(message)) {
     var li_id = img_id.substring(3);
     $('#edit-li-delete-id').val(li_id);
-    $('#uc-order-edit-form #edit-submit-changes').click();
+    $('#uc-order-edit-form #edit-submit-changes').get(0).click();
   }
 }
 

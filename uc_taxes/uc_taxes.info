@@ -1,6 +1,6 @@
-; $Id: uc_taxes.info,v 1.5.2.3 2008/07/29 22:22:47 rszrama Exp $
+; $Id: uc_taxes.info,v 1.5.2.4 2008/11/03 21:26:37 rszrama Exp $
 name = Taxes
 description = Define tax rates for customers' geographic locations and products sold.
-dependencies = uc_store uc_product workflow_ng
+dependencies = uc_store uc_product workflow_ng workflow_ng_ui
 package = "Ubercart - core (optional)"
 

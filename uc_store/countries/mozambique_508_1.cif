@@ -1,0 +1,35 @@
+<?php
+// $Id: mozambique_508_1.cif,v 1.1.2.1 2008/11/03 21:26:37 rszrama Exp $
+
+/*
+ * Brought to you by teh doomed :)
+ */
+
+function mozambique_install() {
+
+  // VALUES = Country ID, Country Name, 2-digit Code, 3-digit Code, File Version
+  db_query("INSERT INTO {uc_countries} VALUES (508, 'Mozambique', 'MZ', 'MOZ', 1)");
+
+  db_query("INSERT INTO {uc_zones} VALUES "
+          ."(%d, 508, 'POL', 'Cabo Delgado'),"
+          ."(%d, 508, 'VJB', 'Gaza'),"
+          ."(%d, 508, 'INH', 'Inhambane'),"
+          ."(%d, 508, 'CHI', 'Manica'),"
+          ."(%d, 508, 'MPM', 'Maputo'),"
+          ."(%d, 508, 'APL', 'Nampula'),"
+          ."(%d, 508, 'VXC', 'Niassa'),"
+          ."(%d, 508, 'BEW', 'Sofala'),"
+          ."(%d, 508, 'TCV', 'Tete'),"
+          ."(%d, 508, 'UEL', 'Zambezia')",
+           uc_get_zone_ids(10));
+
+  variable_set('uc_address_format_508',
+               "!company\r\n!first_name !last_name\r\n!street1\r\n!street2"
+              ."\r\n!city, !zone_name\r\n!country_name");
+}
+
+function mozambique_update($version) {
+}
+
+function mozambique_uninstall() {
+}

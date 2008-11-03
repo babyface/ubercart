@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.4.2.13 2008/09/17 21:38:38 rszrama Exp $
+// $Id: uc_payment.module,v 1.4.2.14 2008/11/03 21:26:34 rszrama Exp $
 
 /**
  * @file
@@ -122,8 +122,8 @@ function uc_payment_menu($may_cache) {
         $items[] = array(
           'path' => 'admin/store/orders/'. arg(3) .'/payments',
           'title' => t('Payments'),
-          'callback' => 'uc_payment_by_order',
-          'callback arguments' => array(arg(3)),
+          'callback' => 'drupal_get_form',
+          'callback arguments' => array('uc_payment_by_order_form', arg(3)),
           'access' => user_access('view payments'),
           'weight' => 5,
           'type' => MENU_LOCAL_TASK
@@ -134,8 +134,8 @@ function uc_payment_menu($may_cache) {
           'path' => 'admin/store/orders/'. arg(3) .'/payments/'. arg(5) .'/delete',
           'title' => t('Delete payment?'),
           'description' => t('Delete payment?'),
-          'callback' => 'uc_payment_delete_confirm',
-          'callback arguments' => array(arg(3), arg(5)),
+          'callback' => 'drupal_get_form',
+          'callback arguments' => array('uc_payment_delete_confirm_form', arg(3), arg(5)),
           'access' => user_access('delete payments'),
           'type' => MENU_CALLBACK,
         );
@@ -248,6 +248,7 @@ function uc_payment_order($op, &$arg1) {
       if (uc_payment_load_payments($arg1->order_id) !== FALSE) {
         return FALSE;
       }
+      break;
 
     case 'delete':
       db_query("DELETE FROM {uc_payment_receipts} WHERE order_id = %d", $arg1->order_id);
@@ -481,10 +482,9 @@ function uc_payment_gateways_form() {
                 . t('Payment gateways are web services that allow you to process various types of payments remotely.  The settings forms below are for the payment gateways you have installed.  Click a name to expand its options and adjust the settings accordingly.') .'</div>',
     );
     foreach ($gateways as $gateway) {
-      $prefix = 'uc_pg_'. $gateway['id'];
-      $form[$prefix] = array(
+      $form['gateways'][$gateway['id']] = array(
         '#type' => 'fieldset',
-        '#title' => t('!gateway_name settings', array('!gateway_name' => $gateway['title'])),
+        '#title' => t('@gateway_name settings', array('@gateway_name' => $gateway['title'])),
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       );
@@ -494,19 +494,21 @@ function uc_payment_gateways_form() {
           $supported_methods[] = $method['name'];
         }
       }
-      $form[$prefix]['supported_methods'] = array(
+      $form['gateways'][$gateway['id']]['supported_methods'] = array(
         '#value' => '<div>'. t('This gateway supports the following payment methods:')
                    .'<br />'. implode(',', $supported_methods) .'</div>',
+        '#weight' => -10,
       );
-      $form[$prefix][$prefix .'_enabled'] = array(
+      $form['gateways'][$gateway['id']]['uc_pg_'. $gateway['id'] .'_enabled'] = array(
         '#type' => 'checkbox',
         '#title' => t('Enable this payment gateway for use.'),
-        '#default_value' => variable_get($prefix .'_enabled', TRUE),
+        '#default_value' => variable_get('uc_pg_'. $gateway['id'] .'_enabled', TRUE),
+        '#weight' => -7,
       );
       if (function_exists($gateway['settings'])) {
         $gateway_settings = $gateway['settings']();
         if (is_array($gateway_settings)) {
-          $form[$prefix] = array_merge($form[$prefix], $gateway_settings);
+          $form['gateways'][$gateway['id']] = array_merge($form['gateways'][$gateway['id']], $gateway_settings);
         }
       }
     }
@@ -580,14 +582,7 @@ function _total_sort($a, $b) {
   return ($a[0] < $b[0]) ? -1 : 1;
 }
 
-/**
- * View a list of payments attached to an order.
- */
-function uc_payment_by_order($order_id) {
-  $output = '<p>'. drupal_get_form('uc_payment_by_order_form', $order_id) .'</p>';
-  return $output;
-}
-
+// Displays a list of payments attached to an order.
 function uc_payment_by_order_form($order_id) {
   $order = uc_order_load($order_id);
 
@@ -717,6 +712,7 @@ function uc_payments_table($op, $form) {
 
     case 'data':
       foreach (element_children($form['payments']) as $i) {
+        $data['#attributes'][] = array('valign' => 'top');
         $data['received'][] = drupal_render($form['payments'][$i]['received']);
         $data['user'][] = drupal_render($form['payments'][$i]['user']);
         $data['method'][] = drupal_render($form['payments'][$i]['method']);
@@ -729,48 +725,35 @@ function uc_payments_table($op, $form) {
   }
 }
 
-/**
- * Delete a payment from an order.
- */
-function uc_payment_delete_confirm($order_id, $receipt_id) {
+// Confirmation form to delete a payment from an order.
+function uc_payment_delete_confirm_form($order_id, $receipt_id) {
+  // Attempt to load the payment.
   $payment = uc_payment_load($receipt_id);
+
+  // Get outta here if the payment doesn't exist.
   if ($payment->order_id != $order_id) {
     drupal_set_message(t('An error loading the payment information occurred.'));
     drupal_goto('admin/store/orders/'. $order_id .'/payments');
   }
 
-  $output = '<p><strong>'. t('Payment information:') .'</strong><br />'
-          . t('!method payment of !amount received on !date.',
-              array('!method' => $payment->method,
-                    '!amount' => uc_currency_format($payment->amount),
-                    '!date' => format_date($payment->received, 'custom', variable_get('uc_date_format_default', 'm/d/Y')))) .'</p>';
-  $output .= t('Are you sure you want to delete this payment?') .'<p>'
-           . drupal_get_form('uc_payment_delete_confirm_form', $order_id, $receipt_id);
+  $desc = '<strong>'. t('Payment information:') .'</strong> '
+        . t('@method payment of @amount received on @date.', array('@method' => $payment->method, '@amount' => uc_currency_format($payment->amount), '@date' => format_date($payment->received, 'short')));
 
-  return $output;
-}
-
-function uc_payment_delete_confirm_form($order_id, $receipt_id) {
   $form['order_id'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => $order_id
   );
   $form['receipt_id'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => $receipt_id,
   );
-  $form['delete'] = array(
-    '#type' => 'submit',
-    '#value' => t('Delete'),
-    '#suffix' => l(t('Cancel'), 'admin/store/orders/'. $order_id .'/payments'),
-  );
 
-  return $form;
+  return confirm_form($form, t('Are you sure you want to delete this payment?'), 'admin/store/orders/'. $order_id .'/payments', $desc, t('Delete'));
 }
 
 function uc_payment_delete_confirm_form_submit($form_id, $form_values) {
-  // Delete the payment.
   uc_payment_delete($form_values['receipt_id']);
+
   drupal_set_message(t('Payment deleted.'));
 
   return 'admin/store/orders/'. $form_values['order_id'] .'/payments';
@@ -845,47 +828,100 @@ function uc_payment_gateway_select_form_submit($form_id, $form_values) {
 
 /**
  * Process a payment through an enabled payment gateway.
+ *
+ * @param $method
+ *   The ID of the payment method to use to process the payment.
+ * @param $order_id
+ *   The ID of the order associated with this payment.
+ * @param $amount
+ *   The amount of the payment we're attempting to collect.
+ * @param $data
+ *   An array of data passed on to the payment gateway module used to process
+ *     the payment for the specified payment method.
+ * @param $default
+ *   TRUE or FALSE to indicate we're forcing the use of the default gateway for
+ *     the specified payment method. When TRUE, admin messages related to the
+ *     payment will be hidden from display so customers don't see them.
+ * @param $selected
+ *    The ID of a payment gateway to use to process the payment; normally comes
+ *      from the payment gateway select form.
+ * @param $redirect
+ *    TRUE or FALSE to indicate whether or not to redirect back to the admin
+ *      order view page for the order referenced in $order_id.
+ * @return
+ *   TRUE or FALSE indicating whether or not the payment was processed.
  */
 function uc_payment_process($method, $order_id, $amount, $data = NULL, $default = FALSE, $selected = NULL, $redirect = TRUE) {
+  $result = array();
+
+  // Get an array of enabled payment gateways available for the payment method.
   $gateways = _payment_gateway_list($method, TRUE);
-  if (!is_array($gateways) || count($gateways) == 0) {
+
+  // Fail if no gateways were found for the specified method.
+  if (empty($gateways)) {
+    // Display an error message if messages weren't silenced.
     if (!$default) {
-      drupal_set_message(t('You are not able to process payments of type !type. ',
-                           array('!type' => '<em>'. _payment_method_data($method, 'name') .'</em>')));
+      drupal_set_message(t('You are not able to process %type payments.', array('%type' => _payment_method_data($method, 'name'))));
     }
+
     return FALSE;
   }
+
+  // If we only found one gateway for this payment method...
   if (count($gateways) == 1) {
-    $keys = array_keys($gateways);
-    if (function_exists($gateways[$keys[0]][$method])) {
-      $result = $gateways[$keys[0]][$method]($order_id, $amount, $data);
+    // Get the right key for the payment gateway in the array.
+    $key = array_shift(array_keys($gateways));
+
+    // If we can find a callback in the gateway for the payment method...
+    if (function_exists($gateways[$key][$method])) {
+      // Pass the payment data onto the callback and store the result.
+      $result = $gateways[$key][$method]($order_id, $amount, $data);
     }
     else {
+      // Otherwise display a failure message to administrators.
       if (user_access('administer store')) {
-        drupal_set_message(t("Attempted to process payment but the gateway's function was not found."));
+        drupal_set_message(t("Attempted to process a %type payment but the gateway's function was not found."));
       }
+
+      $result['success'] = FALSE;
     }
   }
   else {
-    $func = FALSE;
+    // Otherwise attempt to find the appropriate gateway function in the array.
+    $callback = FALSE;
+
     foreach ($gateways as $gateway) {
+      // If we want the default gateway and this is it, store the callback
+      // and continue.
       if ($default && $gateway['id'] == variable_get('uc_payment_'. $method .'_gateway', '')) {
-        $func = $gateway[$method];
+        $callback = $gateway[$method];
+        continue;
       }
-      if (!is_null($selected) && $gateway['id'] == $selected) {
-        $func = $gateway[$method];
+
+      // If we want to use a specific gateway and this is it, store the callback.
+      if (!empty($selected) && $gateway['id'] == $selected) {
+        $callback = $gateway[$method];
       }
     }
-    if ($func !== FALSE) {
-      if (function_exists($func)) {
-        $result = $func($order_id, $amount, $data);
+
+    // If we found a callback...
+    if ($callback !== FALSE) {
+      // Check to see if the function exists and process the payment.
+      if (function_exists($callback)) {
+        $result = $callback($order_id, $amount, $data);
       }
       else {
-        drupal_set_message(t('An error has occurred with your payment gateway.  The charge function could not be found.'));
+        // Otherwise display an error message to administrators.
+        if (user_access('administer store')) {
+          drupal_set_message(t('An error has occurred with your payment gateway.  The charge function could not be found.'));
+        }
+
         $result['success'] = FALSE;
       }
     }
     else {
+      // Otherwise store the info that was passed to us in the session and
+      // redirect to a form where we can choose a payment gateway.
       $_SESSION['uc_payment_method'] = $method;
       $_SESSION['uc_payment_order_id'] = $order_id;
       $_SESSION['uc_payment_amount'] = $amount;
@@ -895,20 +931,25 @@ function uc_payment_process($method, $order_id, $amount, $data = NULL, $default 
     }
   }
 
+  // If the payment processed successfully...
   if ($result['success'] === TRUE) {
-    if (empty($result['uid'])) {
-      $result['uid'] = 0;
+    // Log the payment to the order if not disabled.
+    if ($result['log_payment'] !== FALSE) {
+      uc_payment_enter($order_id, $method, $amount, empty($result['uid']) ? 0 : $result['uid'], $result['data'], $result['comment']);
     }
-    uc_payment_enter($order_id, $method, $amount, $result['uid'], $result['data'], $result['comment']);
   }
   else {
+    // Otherwise display the failue message in the logs.
     watchdog('uc_payment', t('Payment failed: !message', array('!message' => $result['message'])), WATCHDOG_WARNING);
   }
 
+  // If we have a message for display and aren't simply charging with the
+  // default gateway for a customer...
   if (!empty($result['message']) && !$default) {
     drupal_set_message($result['message']);
   }
 
+  // Head back to the order if a redirect was specified.
   if ($redirect) {
     drupal_goto('admin/store/orders/'. $order_id);
   }
@@ -1078,10 +1119,21 @@ function _payment_gateway_list($filter = NULL, $enabled_only = FALSE) {
 
 /**
  * Return data from a payment gateway by gateway ID and the array key.
+ *
+ * @param $gateway_id
+ *   The ID of the payment gateway to query.
+ * @param $key
+ *   The key of the data being requested.
+ * @return
+ *   The requested data.
  */
-function _payment_gateway_data($method_id, $key) {
+function _payment_gateway_data($gateway_id, $key) {
+  // Load all the payment gateways.
   $gateways = _payment_gateway_list();
+
+  // Loop through the array to find the matching gateway.
   foreach ($gateways as $gateway) {
+    // If this is it, return the requested data.
     if ($gateway['id'] == $gateway_id) {
       return $gateway[$key];
     }

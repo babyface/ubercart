@@ -1,4 +1,4 @@
-// $Id: uc_cart.js,v 1.7.2.5 2008/10/07 15:47:57 rszrama Exp $
+// $Id: uc_cart.js,v 1.7.2.6 2008/11/03 21:26:35 rszrama Exp $
 
 var copy_box_checked = false;
 
@@ -83,12 +83,22 @@ function uc_cart_copy_address(checked, source, target) {
 
 function update_billing_field(field) {
   if (copy_box_checked) {
+    if (field.id.substring(29) == 'zone') {
+      $('#edit-panes-billing-billing-zone').empty().append($('#edit-panes-delivery-delivery-zone').children().clone());
+      $('#edit-panes-billing-billing-zone').attr('disabled', $('#edit-panes-delivery-delivery-zone').attr('disabled'));
+    }
+
     $('#edit-panes-billing-billing' + field.id.substring(28)).val($(field).val());
   }
 }
 
 function update_delivery_field(field) {
   if (copy_box_checked) {
+    if (field.id.substring(27) == 'zone') {
+      $('#edit-panes-delivery-delivery-zone').empty().append($('#edit-panes-billing-billing-zone').children().clone());
+      $('#edit-panes-delivery-delivery-zone').attr('disabled', $('#edit-panes-billing-billing-zone').attr('disabled'));
+    }
+
     $('#edit-panes-delivery-delivery' + field.id.substring(26)).val($(field).val());
   }
 }
@@ -114,7 +124,7 @@ function apply_address(type, address_str) {
   $('#edit-panes-' + temp + '-postal-code').val(address.postal_code).trigger('change');
 
   if ($('#edit-panes-' + temp + '-country').val() != address.country) {
-    $('#edit-panes-' + temp + '-country').val(address.country);
+    $('#edit-panes-' + temp + '-country').val(address.country).trigger('change');
     try {
       uc_update_zone_select('edit-panes-' + temp + '-country', address.zone);
     }

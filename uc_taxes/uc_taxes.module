@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.11.2.13 2008/09/17 21:38:43 rszrama Exp $
+// $Id: uc_taxes.module,v 1.11.2.14 2008/11/03 21:26:37 rszrama Exp $
 
 /**
  * @file
@@ -17,23 +17,10 @@ require_once('uc_taxes_workflow.inc');
  ******************************************************************************/
 
 function uc_taxes_help($section) {
-  $output = '';
   switch ($section) {
     case 'admin/store/settings/taxes':
-      $menu_item = menu_get_item(NULL, 'admin/build/workflow-ng');
-      if (!empty($menu_item)) {
-        $workflow_ng_ui = url('admin/build/workflow-ng');
-      }
-      else {
-        $workflow_ng_ui = url('admin/workflow-ng/configurations');
-      }
-      $output .= t('After setting up tax rates and rules on this page, go to the
-  <a href="!link">Workflow-ng configurations</a> to add
-  conditions to the taxes. Especially important are the geographic area
-  conditions for the delivery address.', array('!link' => $workflow_ng_ui));
-    break;
+      return t('Add tax rates through this page and then use <a href="!url">Workflow-ng</a> to add conditions to the taxes that limit which orders they are applied to. Especially important are the geographic area conditions for the delivery address.  Use the conditions link to jump to a particular tax rate Workflow-ng configuration page.', array('!url' => _workflow_ng_ui_path(TRUE)));
   }
-  return $output;
 }
 
 /**
@@ -187,13 +174,13 @@ function uc_taxes_order($op, $arg1, $arg2) {
  * Display a list of tax rates.
  */
 function uc_taxes_admin_settings() {
-  $header = array(t('Name'), t('Rate'), t('Taxed product types'), t('Taxed line items'), t('Weight'), array('data' => t('Actions'), 'colspan' => 3));
+  $header = array(t('Name'), t('Rate'), t('Taxed product types'), t('Taxed line items'), t('Weight'), array('data' => t('Actions'), 'colspan' => 4));
   $rows = array();
   $result = db_query("SELECT * FROM {uc_taxes} ORDER BY weight");
   while ($rule = db_fetch_object($result)) {
     $rule->taxed_product_types = (array)unserialize($rule->taxed_product_types);
     $rule->taxed_line_items = (array)unserialize($rule->taxed_line_items);
-    $rows[] = array($rule->name, $rule->rate * 100 .'%', implode(', ', $rule->taxed_product_types), implode(', ', $rule->taxed_line_items), $rule->weight, l(t('edit'), 'admin/store/settings/taxes/edit/'. $rule->id), l(t('copy'), 'admin/store/settings/taxes/copy/'. $rule->id), l(t('delete'), 'admin/store/settings/taxes/delete/'. $rule->id));
+    $rows[] = array($rule->name, $rule->rate * 100 .'%', implode(', ', $rule->taxed_product_types), implode(', ', $rule->taxed_line_items), $rule->weight, l(t('edit'), 'admin/store/settings/taxes/edit/'. $rule->id), l(t('conditions'), _workflow_ng_ui_path() . '/uc_taxes_'. $rule->id), l(t('copy'), 'admin/store/settings/taxes/copy/'. $rule->id), l(t('delete'), 'admin/store/settings/taxes/delete/'. $rule->id));
   }
   $output = theme('table', $header, $rows);
   $output .= l('Make a new tax rule.', 'admin/store/settings/taxes/edit');
@@ -441,6 +428,21 @@ function uc_taxes_get_rates() {
 }
 
 /**
+ * Calculates the taxes for an order based on enabled tax modules.
+ *
+ * @param $order
+ *   The full order object for the order want to calculate taxes for.
+ * @return
+ *   An array of taxes for the order.
+ */
+function uc_taxes_calculate($order) {
+  // Find any taxes specified by enabled modules.
+  $taxes = module_invoke_all('calculate_tax', $order);
+
+  return $taxes;
+}
+
+/**
  * Calculate the amount and types of taxes that apply to an order.
  */
 function uc_taxes_calculate_tax($order) {
@@ -514,3 +516,9 @@ function uc_taxes_javascript() {
   }
   exit();
 }
+
+// Returns the path to the UI for Workflow-ng based on the installed version.
+function _workflow_ng_ui_path($url = FALSE) {
+   return $url ? url(WORKFLOW_NG_UI_PATH) : WORKFLOW_NG_UI_PATH;
+}
+

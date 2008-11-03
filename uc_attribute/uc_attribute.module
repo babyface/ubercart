@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.11.2.12 2008/09/17 21:38:39 rszrama Exp $
+// $Id: uc_attribute.module,v 1.11.2.13 2008/11/03 21:26:35 rszrama Exp $
 
 /**
  * @file
@@ -868,7 +868,20 @@ function uc_object_attributes_form_submit($form_id, $form_values) {
   }
   else if ($form_values['view'] == 'add') {
     foreach ($form_values['add_attributes'] as $aid) {
-      db_query("INSERT INTO $attr_table ($id, aid, ordering, default_option, required, display) SELECT $sql_type, aid, ordering, 0, required, display FROM {uc_attributes} WHERE aid = %d", $form_values['id'], $aid);
+      // Enable all options for added attributes.
+      $attribute = uc_attribute_load($aid);
+      foreach ($attribute->options as $option) {
+        db_query("INSERT INTO $opt_table ($id, oid, cost, price, weight, ordering) VALUES ($sql_type, %d, %f, %f, %f, %d)", $form_values['id'], $option->oid, $option->cost, $option->price, $option->weight, $option->ordering);
+      }
+      // Make the first option (if any) the default.
+      $option = reset($attribute->options);
+      if ($option) {
+        $oid = $option->oid;
+      }
+      else {
+        $oid = 0;
+      }
+      db_query("INSERT INTO $attr_table ($id, aid, ordering, default_option, required, display) SELECT $sql_type, aid, ordering, %d, required, display FROM {uc_attributes} WHERE aid = %d", $form_values['id'], $oid, $aid);
     }
     if (count($form_values['add_attributes']) > 0) {
       if ($form_values['type'] == 'product') {
@@ -1435,7 +1448,7 @@ function _uc_cart_product_get_options($item) {
       else {
         $options[$aid] = array('attribute' => $attribute->name,
           'oid' => 0,
-          'name' => check_plain($oid),
+          'name' => $oid,
           'cost' => 0,
           'price' => 0,
           'weight' => 0,

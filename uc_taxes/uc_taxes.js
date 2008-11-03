@@ -1,5 +1,14 @@
 // -*- js-var: set_line_item, base_path, li_titles, li_values, tax_weight; -*-
-// $Id: uc_taxes.js,v 1.9.2.8 2008/10/07 15:47:57 rszrama Exp $
+// $Id: uc_taxes.js,v 1.9.2.9 2008/11/03 21:26:37 rszrama Exp $
+
+/**
+ * Calculate the number of bytes of a Unicode string.
+ *
+ * Gratefully stolen from http://dt.in.th/2008-09-16.string-length-in-bytes.html
+ */
+String.prototype.bytes = function() {
+    return Drupal.encodeURIComponent(this).replace(/%../g, 'x').length;
+};
 
 var pane = '';
 if ($("input[@name*=delivery_]").length) {
@@ -97,30 +106,30 @@ function getTax() {
   var i = 0;
   for (key in li_titles) {
     if (key != 'subtotal') {
-      line_item = line_item + 'i:' + i + ';a:3:{s:5:"title";s:' + li_titles[key].length + ':"' + li_titles[key] + '";s:4:"type";s:'+ key.length + ':"'+ key + '";s:6:"amount";d:' + li_values[key] + ';}';
+      line_item = line_item + 'i:' + i + ';a:3:{s:5:"title";s:' + li_titles[key].bytes() + ':"' + li_titles[key] + '";s:4:"type";s:'+ key.bytes() + ':"'+ key + '";s:6:"amount";d:' + li_values[key] + ';}';
       i++;
     }
   }
   line_item = 's:10:"line_items";a:' + i + ':{' + line_item + '}';
-  var order = 'O:8:"stdClass":' + order_size + ':{s:8:"products";' + encodeURIComponent(products)
+  var order = 'O:8:"stdClass":' + order_size + ':{s:8:"products";' + Drupal.encodeURIComponent(products)
     + 's:8:"order_id";i:0;'
     + 's:3:"uid";i:0;'
-    + 's:13:"primary_email";s:' + p_email.length + ':"' + encodeURIComponent(p_email)
-    + '";s:19:"delivery_first_name";s:' + s_f_name.length + ':"' + encodeURIComponent(s_f_name)
-    + '";s:18:"delivery_last_name";s:' + s_l_name.length + ':"' + encodeURIComponent(s_l_name)
-    + '";s:16:"delivery_street1";s:' + s_street1.length + ':"' + encodeURIComponent(s_street1)
-    + '";s:16:"delivery_street2";s:' + s_street2.length + ':"' + encodeURIComponent(s_street2)
-    + '";s:13:"delivery_city";s:' + s_city.length + ':"' + encodeURIComponent(s_city)
+    + 's:13:"primary_email";s:' + p_email.bytes() + ':"' + Drupal.encodeURIComponent(p_email)
+    + '";s:19:"delivery_first_name";s:' + s_f_name.bytes() + ':"' + Drupal.encodeURIComponent(s_f_name)
+    + '";s:18:"delivery_last_name";s:' + s_l_name.bytes() + ':"' + Drupal.encodeURIComponent(s_l_name)
+    + '";s:16:"delivery_street1";s:' + s_street1.bytes() + ':"' + Drupal.encodeURIComponent(s_street1)
+    + '";s:16:"delivery_street2";s:' + s_street2.bytes() + ':"' + Drupal.encodeURIComponent(s_street2)
+    + '";s:13:"delivery_city";s:' + s_city.bytes() + ':"' + Drupal.encodeURIComponent(s_city)
     + '";s:13:"delivery_zone";i:' + s_zone
-    + ';s:20:"delivery_postal_code";s:' + s_code.length +':"' + encodeURIComponent(s_code)
+    + ';s:20:"delivery_postal_code";s:' + s_code.bytes() +':"' + Drupal.encodeURIComponent(s_code)
     + '";s:16:"delivery_country";i:' + s_country + ';'
-    + 's:18:"billing_first_name";s:' + b_f_name.length + ':"' + encodeURIComponent(b_f_name)
-    + '";s:17:"billing_last_name";s:' + b_l_name.length + ':"' + encodeURIComponent(b_l_name)
-    + '";s:15:"billing_street1";s:' + b_street1.length + ':"' + encodeURIComponent(b_street1)
-    + '";s:15:"billing_street2";s:' + b_street2.length + ':"' + encodeURIComponent(b_street2)
-    + '";s:12:"billing_city";s:' + b_city.length + ':"' + encodeURIComponent(b_city)
+    + 's:18:"billing_first_name";s:' + b_f_name.bytes() + ':"' + Drupal.encodeURIComponent(b_f_name)
+    + '";s:17:"billing_last_name";s:' + b_l_name.bytes() + ':"' + Drupal.encodeURIComponent(b_l_name)
+    + '";s:15:"billing_street1";s:' + b_street1.bytes() + ':"' + Drupal.encodeURIComponent(b_street1)
+    + '";s:15:"billing_street2";s:' + b_street2.bytes() + ':"' + Drupal.encodeURIComponent(b_street2)
+    + '";s:12:"billing_city";s:' + b_city.bytes() + ':"' + Drupal.encodeURIComponent(b_city)
     + '";s:12:"billing_zone";i:' + b_zone
-    + ';s:19:"billing_postal_code";s:' + b_code.length +':"' + encodeURIComponent(b_code)
+    + ';s:19:"billing_postal_code";s:' + b_code.bytes() +':"' + Drupal.encodeURIComponent(b_code)
     + '";s:15:"billing_country";i:' + b_country + ';'
     + line_item + '}';
   if (!!products) {

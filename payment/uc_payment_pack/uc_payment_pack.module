@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_pack.module,v 1.6.4.2 2008/07/29 22:22:40 rszrama Exp $
+// $Id: uc_payment_pack.module,v 1.6.4.3 2008/11/03 21:26:34 rszrama Exp $
 
 /**
  * @file Provides the check/money order, COD, and "other" payment methods.
@@ -221,7 +221,7 @@ function uc_payment_method_cod($op, &$arg1) {
 }
 
 function uc_payment_method_cod_form($order) {
-  $form['table1'] = array('#value' => '<style>.cod-table div, .cod-table { display: inline; }</style><table class="cod-table"><tr><td class="form-item" colspan="3"><label>'. t('Enter a desired delivery date:') .'</label></td></tr><tr><td>');
+  $form['table1'] = array('#value' => '<style>.cod-table div, .cod-table { display: inline; }.cod-table tbody { border-top: 0px; }</style><table class="cod-table"><tr><td class="form-item" colspan="3"><label>'. t('Enter a desired delivery date:') .'</label></td></tr><tr><td>');
   $month = (!empty($order->payment_details['delivery_month'])) ? $order->payment_details['delivery_month'] : format_date(time(), 'custom', 'n');
   $form['cod_delivery_month'] = uc_select_month(NULL, $month);
   $form['table2'] = array('#value' => '</td><td>');
@@ -412,17 +412,7 @@ function theme_uc_payment_pack_receive_check_form($form) {
   uc_add_js(drupal_get_path('module', 'uc_payment') .'/uc_payment.js');
 
   $output = '<p>'. t('Use the form to enter the check into the payments system and set the expected clear date.') .'</p>';
-  $output .= '<p><strong>'. t('Order balance:') .'</strong> '
-           . drupal_render($form['balance']) .'</p>';
-
-/*  $output .= drupal_render($form['check_exists'])
-           . drupal_render($form['amount'])
-           . drupal_render($form['comment']);
-
-  $output .= '<table><tr><td colspan="3"><strong>'. t('Expected clear date:')
-            .'</strong></td></tr><tr><td>'. drupal_render($form['clear_month'])
-            .'</td><td>'. drupal_render($form['clear_day']) . '</td><td>'
-           . drupal_render($form['clear_year']) .'</td></tr></table>';*/
+  $output .= '<p><strong>'. t('Order balance:') .'</strong> '. drupal_render($form['balance']) .'</p>';
 
   $output .= drupal_render($form);
 
@@ -438,17 +428,12 @@ function uc_payment_pack_receive_check_form_validate($form_id, $form_values) {
 function uc_payment_pack_receive_check_form_submit($form_id, $form_values) {
   global $user;
 
-  uc_payment_enter($form_values['order_id'], _payment_method_data('check', 'name'),
-                   $form_values['amount'], $user->uid, '', $form_values['comment']);
+  uc_payment_enter($form_values['order_id'], _payment_method_data('check', 'id'), $form_values['amount'], $user->uid, '', $form_values['comment']);
 
-  db_query("INSERT INTO {uc_payment_check} (check_id, order_id, clear_date) "
-          ."VALUES (%d, %d, %d)", db_next_id('{uc_payment_check}_check_id'),
-           $form_values['order_id'], mktime(12, 0, 0, $form_values['clear_month'], $form_values['clear_day'], $form_values['clear_year']));
+  db_query("INSERT INTO {uc_payment_check} (check_id, order_id, clear_date) VALUES (%d, %d, %d)",
+    db_next_id('{uc_payment_check}_check_id'), $form_values['order_id'], mktime(12, 0, 0, $form_values['clear_month'], $form_values['clear_day'], $form_values['clear_year']));
 
-  drupal_set_message(t('Check received, expected clear date of !date.',
-                     array('!date' => $form_values['clear_month'] .'/'
-                                    . $form_values['clear_day'] .'/'
-                                    . $form_values['clear_year'])));
+  drupal_set_message(t('Check received, expected clear date of @date.', array('@date' => $form_values['clear_month'] .'/'. $form_values['clear_day'] .'/'. $form_values['clear_year'])));
 
   drupal_goto('admin/store/orders/'. $form_values['order_id']);
 }

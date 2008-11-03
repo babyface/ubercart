@@ -1,5 +1,5 @@
 <?php
-// $Id: united_kingdom_826_1.cif,v 1.4.2.1 2008/01/07 20:56:46 rszrama Exp $
+// $Id: united_kingdom_826_1.cif,v 1.4.2.2 2008/11/03 21:26:37 rszrama Exp $
 
 /**
  * First implement hook_install() using the name of the country as the base of
@@ -35,6 +35,7 @@ function united_kingdom_install() {
           ."(%d, 826, 'CLACK', 'Clackmannanshire'),"
           ."(%d, 826, 'CON', 'Conwy'),"
           ."(%d, 826, 'CORN', 'Cornwall'),"
+          ."(%d, 826, 'CMA', 'Cumbria'),"
           ."(%d, 826, 'DNBG', 'Denbighshire'),"
           ."(%d, 826, 'DERBY', 'Derbyshire'),"
           ."(%d, 826, 'DVN', 'Devon'),"
@@ -55,8 +56,6 @@ function united_kingdom_install() {
           ."(%d, 826, 'FLINT', 'Flintshire'),"
           ."(%d, 826, 'GLAS', 'Glasgow'),"
           ."(%d, 826, 'GLOS', 'Gloucestershire'),"
-          ."(%d, 826, 'LDN', 'Greater London'),"
-          ."(%d, 826, 'MCH', 'Greater Manchester'),"
           ."(%d, 826, 'GDD', 'Gwynedd'),"
           ."(%d, 826, 'HANTS', 'Hampshire'),"
           ."(%d, 826, 'HWR', 'Herefordshire'),"
@@ -68,6 +67,8 @@ function united_kingdom_install() {
           ."(%d, 826, 'LANCS', 'Lancashire'),"
           ."(%d, 826, 'LEICS', 'Leicestershire'),"
           ."(%d, 826, 'LINCS', 'Lincolnshire'),"
+          ."(%d, 826, 'LDN', 'London'),"
+          ."(%d, 826, 'MAN', 'Manchester'),"
           ."(%d, 826, 'MSY', 'Merseyside'),"
           ."(%d, 826, 'MERT', 'Merthyr Tydfil'),"
           ."(%d, 826, 'MLOT', 'Midlothian'),"

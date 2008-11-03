@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.11.2.15 2008/10/07 15:47:57 rszrama Exp $
+// $Id: uc_order.module,v 1.11.2.16 2008/11/03 21:26:35 rszrama Exp $
 
 /**
  * @file
@@ -301,8 +301,8 @@ function uc_order_menu($may_cache) {
         'path' => 'admin/store/orders/'. arg(3) .'/delete',
         'title' => t('Delete order @order_id?', array('@order_id' => arg(3))),
         'description' => t('Delete order @order_id.', array('@order_id' => arg(3))),
-        'callback' => 'uc_order_delete_confirm',
-        'callback arguments' => array(arg(3)),
+        'callback' => 'drupal_get_form',
+        'callback arguments' => array('uc_order_delete_confirm_form', arg(3)),
         'access' => user_access('delete orders') || user_access('delete any order'),
         'type' => MENU_CALLBACK,
       );
@@ -2130,7 +2130,8 @@ function uc_order_log($order_id) {
   else {
     $header = array(t('Time'), t('User'), t('Changes'));
     while ($change = db_fetch_object($result)) {
-      $rows[] = array('data' => array(format_date($change->created, 'custom', 'm/d/Y'), uc_get_initials($change->uid), $change->changes), 'valign' => 'top');
+      $user = uc_get_initials($change->uid);
+      $rows[] = array('data' => array(format_date($change->created, 'short'), $user == '-' ? $user : l($user, 'user/'. $change->uid), $change->changes), 'valign' => 'top');
     }
     $output = theme('table', $header, $rows);
   }
@@ -2138,10 +2139,8 @@ function uc_order_log($order_id) {
   return $output;
 }
 
-/**
- * Totally delete an order from the system... use with caution!
- */
-function uc_order_delete_confirm($order_id) {
+// Confirmation form to delete an order.
+function uc_order_delete_confirm_form($order_id) {
   $order = uc_order_load($order_id);
 
   if ($order === FALSE) {
@@ -2154,29 +2153,19 @@ function uc_order_delete_confirm($order_id) {
     drupal_goto('admin/store/orders');
   }
 
-  $output = t('Are you sure you want to delete order @order_id?', array('@order_id' => $order_id))
-          . drupal_get_form('uc_order_delete_confirm_form', $order_id);
-
-  return $output;
-}
-
-function uc_order_delete_confirm_form($order_id) {
   $form['order_id'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => $order_id
   );
 
-  $form['delete'] = array(
-    '#type' => 'submit',
-    '#value' => t('Delete'),
-    '#suffix' => l(t('Cancel'), 'admin/store/orders'),
-  );
-
-  return $form;
+  return confirm_form($form, t('Are you sure you want to delete order @order_id?', array('@order_id' => $order_id)), 'admin/store/orders', NULL, t('Delete'));
 }
 
 function uc_order_delete_confirm_form_submit($form_id, $form_values) {
+  // Delete the specified order.
   uc_order_delete($form_values['order_id']);
+
+  // Display a message to the user and return to the order admin page.
   drupal_set_message(t('Order @order_id completely removed from the database.', array('@order_id' => $form_values['order_id'])));
 
   return 'admin/store/orders';
@@ -2623,6 +2612,8 @@ function uc_order_load($order_id) {
  *   The ID of the order you wish to delete.
  */
 function uc_order_delete($order_id) {
+  global $user;
+
   $order = uc_order_load($order_id);
 
   // Perform the operations if we're deleting a valid order.
@@ -2643,6 +2634,9 @@ function uc_order_delete($order_id) {
 
     // Delete line items for the order.
     uc_order_delete_line_item($order_id, TRUE);
+
+    // Log the action in the database.
+    watchdog('uc_order', t('Order @order_id deleted by user @uid.', array('@order_id' => $order_id, '@uid' => $user->uid)));
   }
 }
 
@@ -2753,7 +2747,7 @@ function uc_order_update_status($order_id, $status) {
     db_query("UPDATE {uc_orders} SET order_status = '%s', modified = %d WHERE order_id = %d", $status, time(), $order_id);
     module_invoke_all('order', 'update', $order, $status);
 
-    $change = array(t('Order status') => array('old' => $order->order_status, 'new' => $status));
+    $change = array(t('Order status') => array('old' => uc_order_status_data($order->order_status, 'title'), 'new' => uc_order_status_data($status, 'title')));
     uc_order_log_changes($order->order_id, $change);
 
     $updated = uc_order_load($order_id);

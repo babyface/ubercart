@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order_workflow.inc,v 1.1.2.7 2008/07/29 22:22:44 rszrama Exp $
+// $Id: uc_order_workflow.inc,v 1.1.2.8 2008/11/03 21:26:36 rszrama Exp $
 
 /**
  * @file
@@ -56,9 +56,9 @@ function uc_order_condition_info() {
     '#module' => t('Order: Shipping address'),
   );
   $conditions['uc_order_condition_delivery_zone'] = array(
-    '#label' => t("Check an order's shipping zone"),
+    '#label' => t("Check an order's shipping @zone", array('@zone' => uc_get_field_name('zone'))),
     '#arguments' => array('order' => $order_arg),
-    '#description' => t('Returns TRUE if the shipping zone is in the specified list.'),
+    '#description' => t('Returns TRUE if the shipping @zone is in the specified list.', array('@zone' => uc_get_field_name('zone'))),
     '#module' => t('Order: Shipping address'),
   );
   $conditions['uc_order_condition_delivery_country'] = array(
@@ -74,9 +74,9 @@ function uc_order_condition_info() {
     '#module' => t('Order: Billing address'),
   );
   $conditions['uc_order_condition_billing_zone'] = array(
-    '#label' => t("Check an order's billing zone"),
+    '#label' => t("Check an order's billing @zone", array('@zone' => uc_get_field_name('zone'))),
     '#arguments' => array('order' => $order_arg),
-    '#description' => t('Returns TRUE if the billing zone is in the specified list.'),
+    '#description' => t('Returns TRUE if the billing @zone is in the specified list.', array('@zone' => uc_get_field_name('zone'))),
     '#module' => t('Order: Billing address'),
   );
   $conditions['uc_order_condition_billing_country'] = array(

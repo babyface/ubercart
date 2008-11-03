@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.13.2.14 2008/09/17 21:38:41 rszrama Exp $
+// $Id: uc_product.module,v 1.13.2.15 2008/11/03 21:26:36 rszrama Exp $
 
 /**
  * @file
@@ -1472,7 +1472,7 @@ function uc_product_cart_display($item) {
   $element['options'] = '';
   if (module_exists('uc_attribute') && is_array($item->options)) {
     foreach ($item->options as $option) {
-      $op_names[] = $option['attribute'] .': '. $option['name'];
+      $op_names[] = t('@attribute: @option', array('@attribute' => $option['attribute'], '@option' => $option['name']));
     }
     $element['options'] = array('#value' => theme('item_list', $op_names, NULL, 'ul', array('class' => 'cart-options')));
   }
@@ -2303,7 +2303,7 @@ function uc_product_is_product($node) {
  */
 function theme_uc_product_model($model) {
   $output = '<div class="model">';
-  $output .= t('!m', array('!m' => $model));
+  $output .= t('SKU: @sku', array('@sku' => $model));
   $output .= '</div>';
   return $output;
 }
@@ -2414,15 +2414,16 @@ function theme_uc_product_price($price, $class) {
  */
 function theme_uc_product_sell_price($price, $teaser) {
   if ($teaser) {
-    $output = '<span class="sell_price">';
+    $output = '<div class="sell_price">';
     $output .= uc_currency_format($price);
-    $output .= '</span>';
+    $output .= '</div>';
   }
   else {
     $output = '<div class="sell_price">';
     $output .= t('Price: !price', array('!price' => uc_currency_format($price)));
     $output .= '</div>';
   }
+
   return $output;
 }
 

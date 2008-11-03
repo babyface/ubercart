@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_authorizenet.module,v 1.3.2.8 2008/10/07 15:47:56 rszrama Exp $
+// $Id: uc_authorizenet.module,v 1.3.2.9 2008/11/03 21:26:33 rszrama Exp $
 
 /**
  * @file
@@ -85,6 +85,7 @@ function uc_authorizenet_payment_gateway() {
     'description' => t('Process credit card payments using the AIM service of Authorize.net.'),
     'settings' => 'uc_authorizenet_settings_form',
     'credit' => 'uc_authorizenet_charge',
+    'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE),
   );
 
   return $gateways;
@@ -134,16 +135,6 @@ function uc_authorizenet_settings_form() {
     ),
     '#default_value' => variable_get('uc_authnet_aim_txn_mode', 'live_test'),
   );
-  $form['aim_settings']['uc_authnet_aim_txn_type'] = array(
-    '#type' => 'radios',
-    '#title' => t('Transaction type'),
-    '#description' => t('If you choose <em>Authorization only</em> you must complete the transaction manually after checkout.'),
-    '#options' => array(
-      'AUTH_CAPTURE' => _uc_authorizenet_txn_type('AUTH_CAPTURE') .' '. t('(recommended)'),
-      'AUTH_ONLY' => _uc_authorizenet_txn_type('AUTH_ONLY'),
-    ),
-    '#default_value' => variable_get('uc_authnet_aim_txn_type', 'AUTH_CAPTURE'),
-  );
 
   $form['aim_settings']['uc_authnet_aim_email_customer'] = array(
     '#type' => 'checkbox',
@@ -177,6 +168,7 @@ function uc_authorizenet_settings_form() {
   $form['arb_settings']['uc_authnet_report_arb_post'] = array(
     '#type' => 'checkbox',
     '#title' => t('Log reported ARB payments in watchdog.'),
+    '#description' => t('Make sure you have set your Silent POST URL in Authorize.Net to @url.', array('@url' => url('authnet/silent-post', NULL, NULL, TRUE))),
     '#default_value' => variable_get('uc_authnet_report_arb_post', FALSE),
   );
 
@@ -237,7 +229,7 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
 
     // Transaction Information
     'x_version' => '3.1',
-    'x_type' => variable_get('uc_authnet_aim_txn_type', 'AUTH_CAPTURE'),
+    'x_type' => _uc_authorizenet_txn_map($data['txn_type']),
     // 'x_method' => $order->payment_method == 'credit' ? 'CC' : 'ECHECK',
     'x_method' => 'CC',
     // 'x_recurring_billing' => 'FALSE',
@@ -282,9 +274,14 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
     // Extra Information
     'x_delim_data' => 'TRUE',
     'x_delim_char' => '|',
+    'x_encap_char' => '"',
     'x_relay_response' => 'FALSE',
     'x_email_customer' => variable_get('uc_authnet_aim_email_customer', FALSE) ? 'TRUE' : 'FALSE',
   );
+
+  if ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE) {
+    $submit_data['x_trans_id'] = $data['auth_id'];
+  }
 
   // Determine the correct URL based on the transaction mode.
   if (variable_get('uc_authnet_aim_txn_mode', 'live_test') == 'developer_test') {
@@ -321,6 +318,11 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
 
   $response = explode('|', $result);
 
+  // Trim off the encapsulating character from the results.
+  for ($i = 0; $i < count($response); $i++) {
+    $response[$i] = substr($response[$i], 1, strlen($response[$i]) - 2);
+  }
+
   /**
    * Response key index:
    * 0 = Response Code
@@ -355,11 +357,25 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
       'data' => array('module' => 'uc_authorizenet', 'txn_type' => $response[11], 'txn_id' => $response[6]),
       'uid' => $user->uid,
     );
+
+    // If this was an authorization only transaction...
+    if ($data['txn_type'] == UC_CREDIT_AUTH_ONLY) {
+      // Log the authorization to the order.
+      uc_credit_log_authorization($order_id, $response[6], $amount);
+    }
+    elseif ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE) {
+      uc_credit_log_prior_auth_capture($order_id, $data['auth_id']);
+    }
+  }
+
+  // Don't log this as a payment money wasn't actually captured.
+  if (in_array($data['txn_type'], array(UC_CREDIT_AUTH_ONLY))) {
+    $result['log_payment'] = FALSE;
   }
 
   // Build an admin order comment.
-  $comment = t('@message<br />Amount: @amount<br />AVS response: @avs',
-    array('@message' => $response[3], '@amount' => uc_currency_format($response[9]), '@avs' => _uc_authorizenet_avs($response[5])));
+  $comment = t('<b>@type</b><br /><b>@status:</b> @message<br />Amount: @amount<br />AVS response: @avs',
+    array('@type'=> _uc_authorizenet_txn_type($response[11]), '@status' => $result['success'] ? t('ACCEPTED') : t('REJECTED'), '@message' => $response[3], '@amount' => uc_currency_format($response[9]), '@avs' => _uc_authorizenet_avs($response[5])));
 
   // Add the CVV response if enabled.
   if (variable_get('uc_credit_cvv_enabled', TRUE)) {
@@ -374,26 +390,52 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
 
 // Receives a payment notification and handles it appropriately.
 function uc_authorizenet_silent_post() {
+  if (variable_get('uc_authnet_report_arb_post', FALSE)) {
+    watchdog('uc_authorizenet', t('!arbSilent POST received: <pre>@post</pre>', array('!arb' => (isset($_POST['x_subscription_id']) && isset($_POST['x_subscription_paynum'])) ? 'ARB ' : '', '@post' => print_r($_POST, TRUE))));
+  }
+
   // Decrypt the Auth.Net API login data.
   $login_data = _uc_authorizenet_login_data();
 
-  // TODO: Modify the MD5 hash to accommodate differences from AIM ot ARB.
+  // TODO: Modify the MD5 hash to accommodate differences from AIM to ARB.
 
   // If we're receiving notification for an ARB payment...
   if (isset($_POST['x_subscription_id']) && isset($_POST['x_subscription_paynum'])) {
-    if (variable_get('uc_authnet_report_arb_post', FALSE)) {
-      watchdog('uc_authorizenet', t('ARB payment reported: <pre>@post</pre>', array('@post' => print_r($_POST, TRUE))));
-    }
-
     // Compare our expected MD5 Hash against what was received.
     $md5 = strtoupper(md5($login_data['md5_hash'] . $_POST['x_trans_id'] . $_POST['x_amount']));
 
+    // Post an error message if the MD5 hash does not validate.
     if ($_POST['x_MD5_Hash'] != $md5) {
       watchdog('uc_authorizenet', t('Invalid ARB payment notification received.'), WATCHDOG_ERROR);
     }
+    else {
+      // Otherwise, update the recurring fee information in our database.
+      $fee = db_fetch_array(db_query("SELECT * FROM {uc_recurring_users} WHERE fee_handler = 'uc_authorizenet' AND data = '%s'", $_POST['x_subscription_id']));
+
+      // Only process if the fee actually exists!
+      if (!empty($fee)) {
+        // Update the interval counters.
+        $fee['remaining_intervals'] -= 1;
+        $fee['charged_intervals'] += 1;
+
+        // Set the next expected charge time.
+        $fee['next_charge'] = strtotime('+'. $fee['regular_interval'], $fee['next_charge']);
+
+        // Save the new values.
+        uc_recurring_fee_save('user', $fee);
+
+        // Log the ARB payment if enabled.
+        if (variable_get('uc_authnet_report_arb_post', FALSE)) {
+          watchdog('uc_authorizenet', t('ARB payment reported for order @order_id: <pre>@post</pre>', array('@order_id' => $fee['order_id'], '@post' => print_r($_POST, TRUE))));
+        }
+
+        // Let other modules act on the data.
+        module_invoke_all('uc_arb_payment', $fee);
+      }
+    }
   }
 
-  drupal_goto('<front>');
+  exit();
 }
 
 /**
@@ -510,6 +552,11 @@ function uc_authorizenet_arb_create($order, $fee) {
     $unit = 'days';
   }
 
+  // Get a default SKU if none was supplied.
+  if (empty($fee->model)) {
+    $fee->model = db_result(db_query("SELECT model FROM {uc_products} WHERE nid = %d", $fee->nid));
+  }
+
   // Make sure we have valid values for Authorize.Net.
   if ($length <= 0 || $unit == 'days' && $length > 365 || $unit == 'months' && $length > 12) {
     watchdog('uc_authorizenet', t('Product @sku has invalid interval settings for Authorize.Net - @length @unit', array('@sku' => $fee->model, '@length' => $length, '@unit' => $unit)), WATCHDOG_ERROR);
@@ -618,7 +665,7 @@ function uc_authorizenet_arb_create($order, $fee) {
     'remaining_intervals' => $fee->number_intervals,
     'charged_intervals' => 0,
     'order_id' => $order->order_id,
-    'data' => serialize($data['subscriptionId']),
+    'data' => $data['subscriptionId'],
   );
 
   uc_recurring_fee_save('user', $user_fee);
@@ -802,10 +849,14 @@ function uc_authorizenet_arb_user_update_form_submit($form_id, $form_values) {
  *
  * @param $subscription
  *   The ID of the subscription at Authorize.Net.
+ * @param $order_id
+ *   Optional. The ID of the order the recurring fee was attached to.
+ * @param $fee
+ *   Optional. The data array for the recurring fee being canceled.
  * @return
  *   TRUE or FALSE indicating the success of the cancellation.
  */
-function uc_authorizenet_arb_cancel($subscription_id, $order_id = NULL) {
+function uc_authorizenet_arb_cancel($subscription_id, $order_id = NULL, $fee = array()) {
   $server = variable_get('uc_authnet_arb_mode', 'disabled');
 
   // Build the data array for the request.
@@ -837,6 +888,11 @@ function uc_authorizenet_arb_cancel($subscription_id, $order_id = NULL) {
 
   uc_order_comment_save($order_id, 0, t('Authorize.Net: Subscription @subscription_id cancelled.', array('@subscription_id' => $subscription_id)), 'admin');
 
+  // Let other modules act on the canceled fee.
+  if (!empty($fee)) {
+    module_invoke_all('uc_arb_cancel', $fee);
+  }
+
   return TRUE;
 }
 
@@ -854,7 +910,7 @@ function uc_authorizenet_arb_admin_cancel_form($rfid) {
 function uc_authorizenet_arb_admin_cancel_form_submit($form_id, $form_values) {
   $fee = uc_recurring_fee_load('user', $form_values['rfid']);
 
-  $result = uc_authorizenet_arb_cancel($fee['data'], $fee['order_id']);
+  $result = uc_authorizenet_arb_cancel($fee['data'], $fee['order_id'], $fee);
 
   // If the cancellation was successful...
   if ($result) {
@@ -888,7 +944,7 @@ function uc_authorizenet_arb_user_cancel_form($uid, $rfid) {
 function uc_authorizenet_arb_user_cancel_form_submit($form_id, $form_values) {
   $fee = uc_recurring_fee_load('user', $form_values['rfid']);
 
-  $result = uc_authorizenet_arb_cancel($fee['data'], $fee['order_id']);
+  $result = uc_authorizenet_arb_cancel($fee['data'], $fee['order_id'], $fee);
 
   // If the cancellation was successful...
   if ($result) {
@@ -1024,6 +1080,22 @@ function _uc_authorizenet_txn_type($type) {
       return t('Credit');
     case 'VOID':
       return t('Void');
+  }
+}
+
+// Returns the Auth.Net transaction type corresponding to a UC type.
+function _uc_authorizenet_txn_map($type) {
+  switch ($type) {
+    case UC_CREDIT_AUTH_ONLY:
+      return 'AUTH_ONLY';
+    case UC_CREDIT_PRIOR_AUTH_CAPTURE:
+      return 'PRIOR_AUTH_CAPTURE';
+    case UC_CREDIT_AUTH_CAPTURE:
+      return 'AUTH_CAPTURE';
+    case UC_CREDIT_CREDIT:
+      return 'CREDIT';
+    case UC_CREDIT_VOID:
+      return 'VOID';
   }
 }
 

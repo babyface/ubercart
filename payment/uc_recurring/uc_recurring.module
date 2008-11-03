@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.module,v 1.8.2.3 2008/09/17 21:38:39 rszrama Exp $
+// $Id: uc_recurring.module,v 1.8.2.4 2008/11/03 21:26:34 rszrama Exp $
 
 /**
  * @file
@@ -383,7 +383,7 @@ function uc_recurring_recurring_fee_ops($context, $fee) {
       break;
 
     case 'user':
-      $ops[] = l(t('cancel'), 'users/'. $fee['uid'] .'/recurring/'. $fee['rfid'] .'/cancel');
+      $ops[] = l(t('cancel'), 'user/'. $fee['uid'] .'/recurring/'. $fee['rfid'] .'/cancel');
   }
 
   return $ops;
@@ -890,32 +890,24 @@ function uc_recurring_fee_save($type, $data) {
     case 'product':
       // First attempt to update an existing row.
       db_query("UPDATE {uc_recurring_products} SET model = '%s', fee_amount = %f, initial_charge = '%s', regular_interval = '%s', number_intervals = %d WHERE pfid = %d",
-        $data['model'], $data['fee_amount'], $data['initial_charge'],
-        $data['regular_interval'], $data['number_intervals'], $data['pfid']);
+        $data['model'], $data['fee_amount'], $data['initial_charge'], $data['regular_interval'], $data['number_intervals'], $data['pfid']);
 
       // Otherwise insert this feature as a new row.
       if (db_affected_rows() == 0) {
         db_query("INSERT INTO {uc_recurring_products} (pfid, model, fee_amount, initial_charge, regular_interval, number_intervals) VALUES (%d, '%s', %f, '%s', '%s', %d)",
-          $data['pfid'], $data['model'], $data['fee_amount'], $data['initial_charge'],
-          $data['regular_interval'], $data['number_intervals']);
+          $data['pfid'], $data['model'], $data['fee_amount'], $data['initial_charge'], $data['regular_interval'], $data['number_intervals']);
       }
       break;
 
     case 'user':
       // First attempt to update an existing row.
       db_query("UPDATE {uc_recurring_users} SET uid = %d, fee_handler = '%s', next_charge = %d, fee_amount = %f, regular_interval = '%s', remaining_intervals = %d, charged_intervals = %d, data = '%s' WHERE rfid = %d",
-        $data['uid'], $data['fee_handler'], $data['next_charge'], $data['fee_amount'],
-        $data['regular_interval'], $data['remaining_intervals'],
-        $data['charged_intervals'], $data['order_id'], $data['data'],
-        $data['rfid']);
+        $data['uid'], $data['fee_handler'], $data['next_charge'], $data['fee_amount'], $data['regular_interval'], $data['remaining_intervals'], $data['charged_intervals'], $data['order_id'], $data['data'], $data['rfid']);
 
       // Otherwise insert this feature as a new row.
       if (db_affected_rows() == 0) {
         db_query("INSERT INTO {uc_recurring_users} (rfid, uid, fee_handler, next_charge, fee_amount, regular_interval, remaining_intervals, charged_intervals, order_id, data, created) VALUES (%d, %d, '%s', %d, %f, '%s', %d, %d, %d, '%s', %d)",
-          $data['rfid'], $data['uid'], $data['fee_handler'], $data['next_charge'],
-          $data['fee_amount'], $data['regular_interval'],
-          $data['remaining_intervals'], $data['charged_intervals'],
-          $data['order_id'], $data['data'], time());
+          $data['rfid'], $data['uid'], $data['fee_handler'], $data['next_charge'], $data['fee_amount'], $data['regular_interval'], $data['remaining_intervals'], $data['charged_intervals'], $data['order_id'], $data['data'], time());
       }
       break;
   }
@@ -945,17 +937,19 @@ function uc_recurring_fee_load($type, $id) {
     case 'user':
       $fee = db_fetch_array(db_query("SELECT * FROM {uc_recurring_users} WHERE rfid = %d", $id));
 
-      $fee['data'] = unserialize($fee['data']);
+      if ($fee['fee_handler'] == 'uc_recurring') {
+        $fee['data'] = unserialize($fee['data']);
 
-      if ($fee['fee_handler'] == 'uc_recurring' && $key = uc_credit_encryption_key()) {
-        $crypt = new uc_encryption_class;
-        $fee['data']['payment_details']['cc_number'] = $crypt->decrypt($key, $fee['data']['payment_details']['cc_number']);
-        if (variable_get('uc_credit_debug', FALSE)) {
-          $fee['data']['payment_details']['cc_cvv'] = $crypt->decrypt($key, $fee['data']['payment_details']['cc_cvv']);
+        if ($key = uc_credit_encryption_key()) {
+          $crypt = new uc_encryption_class;
+          $fee['data']['payment_details']['cc_number'] = $crypt->decrypt($key, $fee['data']['payment_details']['cc_number']);
+          if (variable_get('uc_credit_debug', FALSE)) {
+            $fee['data']['payment_details']['cc_cvv'] = $crypt->decrypt($key, $fee['data']['payment_details']['cc_cvv']);
+          }
+          $fee['data']['payment_details']['cc_exp_month'] = $crypt->decrypt($key, $fee['data']['payment_details']['cc_exp_month']);
+          $fee['data']['payment_details']['cc_exp_year'] = $crypt->decrypt($key, $fee['data']['payment_details']['cc_exp_year']);
+          uc_store_encryption_errors($crypt, 'uc_recurring');
         }
-        $fee['data']['payment_details']['cc_exp_month'] = $crypt->decrypt($key, $fee['data']['payment_details']['cc_exp_month']);
-        $fee['data']['payment_details']['cc_exp_year'] = $crypt->decrypt($key, $fee['data']['payment_details']['cc_exp_year']);
-        uc_store_encryption_errors($crypt, 'uc_recurring');
       }
       break;
   }
@@ -1006,12 +1000,16 @@ function uc_recurring_find_fees($order) {
     return array();
   }
 
-  foreach ($order->products as $product) {
+  $models = array();
+  $nids = array();
+
+  foreach ((array) $order->products as $product) {
+    $nids[] = $product->nid;
     $models[] = check_plain($product->model);
   }
 
   $fees = array();
-  $result = db_query("SELECT * FROM {uc_recurring_products} WHERE model IN ('". implode("', '", $models) ."')");
+  $result = db_query("SELECT rp.*, nid FROM {uc_recurring_products} AS rp LEFT JOIN {uc_product_features} AS pf ON rp.pfid = pf.pfid WHERE rp.model IN ('". implode("', '", $models) ."') OR (rp.model = '' AND pf.nid IN ('". implode("', '", $nids) ."'))");
   while ($fee = db_fetch_object($result)) {
     $fees[] = $fee;
   }

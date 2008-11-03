@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.14.2.16 2008/10/07 15:47:57 rszrama Exp $
+// $Id: uc_cart.module,v 1.14.2.17 2008/11/03 21:26:35 rszrama Exp $
 
 /**
  * @file
@@ -1686,16 +1686,23 @@ function uc_cart_checkout_review_form_submit($form_id, $form_values) {
       // Invoke hook_order($op = 'submit') to test to make sure the order can
       // be completed... used for auto payment in uc_credit.module.
       $order = uc_order_load($_SESSION['cart_order']);
-      $pass = module_invoke_all('order', 'submit', $order, NULL);
 
-      foreach ($pass as $result) {
+      // Invoke it on a per-module basis instead of all at once.
+      foreach (module_implements('order') as $module) {
+        $result = module_invoke($module, 'order', 'submit', $order, NULL);
+
         $msg_type = 'status';
-        if ($result['pass'] === FALSE) {
+        if ($result[0]['pass'] === FALSE) {
           $error = TRUE;
           $msg_type = 'error';
         }
-        if (!empty($result['message'])) {
-          drupal_set_message($result['message'], $msg_type);
+        if (!empty($result[0]['message'])) {
+          drupal_set_message($result[0]['message'], $msg_type);
+        }
+
+        // Stop invoking the hooks if there was an error.
+        if ($error) {
+          break;
         }
       }
 
