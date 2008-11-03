@@ -1,5 +1,5 @@
 <?php
-// $Id: portugal_620_1.cif,v 1.2.2.3 2008/08/06 13:41:27 islandusurper Exp $
+// $Id: portugal_620_1.cif,v 1.2.2.4 2008/11/03 21:33:50 islandusurper Exp $
 
 /**
  * Brought to you by teh doomed :>
@@ -14,28 +14,27 @@ function portugal_install() {
   // function uc_get_zone_ids($num) as the second argument for db_query() where
   // $num is the number of zones in the INSERT query.
   // VALUES = %d for ID, Parent Country ID, Zone Abbreviation, Zone Name
-  db_query("INSERT INTO {uc_zones} VALUES "
-          ."(%d, 620, 'AVE', 'Aveiro'),"
-          ."(%d, 620, 'BEJ', 'Beja'),"
-          ."(%d, 620, 'BRA', 'Braga'),"
-          ."(%d, 620, 'BGA', 'Bragança'),"
-          ."(%d, 620, 'CAB', 'Castelo Branco'),"
-          ."(%d, 620, 'COI', 'Coimbra'),"
-          ."(%d, 620, 'EVO', 'Évora'),"
-          ."(%d, 620, 'FAR', 'Faro'),"
-          ."(%d, 620, 'GUA', 'Guarda'),"
-          ."(%d, 620, 'LEI', 'Leiria'),"
-          ."(%d, 620, 'LIS', 'Lisboa'),"
-          ."(%d, 620, 'PTL', 'Portalegre'),"
-          ."(%d, 620, 'POR', 'Porto'),"
-          ."(%d, 620, 'STR', 'Santarém'),"
-          ."(%d, 620, 'SET', 'Setúbal'),"
-          ."(%d, 620, 'VIC', 'Viana do Castelo'),"
-          ."(%d, 620, 'VIR', 'Vila Real'),"
-          ."(%d, 620, 'VIS', 'Viseu'),"
-          ."(%d, 620, 'ACO', 'Reg. Autónoma Açores'),"
-      ."(%d, 620, 'MAD', 'Reg. Autónoma Madeira')",
-           uc_get_zone_ids(20));
+  db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
+          ."(620, 'AVE', 'Aveiro'),"
+          ."(620, 'BEJ', 'Beja'),"
+          ."(620, 'BRA', 'Braga'),"
+          ."(620, 'BGA', 'Bragança'),"
+          ."(620, 'CAB', 'Castelo Branco'),"
+          ."(620, 'COI', 'Coimbra'),"
+          ."(620, 'EVO', 'Évora'),"
+          ."(620, 'FAR', 'Faro'),"
+          ."(620, 'GUA', 'Guarda'),"
+          ."(620, 'LEI', 'Leiria'),"
+          ."(620, 'LIS', 'Lisboa'),"
+          ."(620, 'PTL', 'Portalegre'),"
+          ."(620, 'POR', 'Porto'),"
+          ."(620, 'STR', 'Santarém'),"
+          ."(620, 'SET', 'Setúbal'),"
+          ."(620, 'VIC', 'Viana do Castelo'),"
+          ."(620, 'VIR', 'Vila Real'),"
+          ."(620, 'VIS', 'Viseu'),"
+          ."(620, 'ACO', 'Reg. Autónoma Açores'),"
+          ."(620, 'MAD', 'Reg. Autónoma Madeira')");
 
   // Use uc_set_address_format() with the country ID as the first argument and
   // an address format string as the second.

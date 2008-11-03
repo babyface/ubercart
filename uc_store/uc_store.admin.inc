@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.2 2008/10/24 21:11:31 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.3 2008/11/03 21:33:54 islandusurper Exp $
 
 /**
  * @file
@@ -584,7 +584,7 @@ function uc_store_store_settings_form() {
     '#title' => t('E-mail address'),
     '#description' => NULL,
     '#size' => 32,
-    '#maxlength' => 32,
+    '#maxlength' => 128,
     '#required' => FALSE,
     '#default_value' => variable_get('uc_store_email', NULL),
     '#summary' => variable_get('uc_store_email', NULL) ? t('Store e-mail address is %email.', array('%email' => variable_get('uc_store_email', ''))) : t('Store e-mail address is not set.'),

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.ca.inc,v 1.1.2.4 2008/10/15 14:47:36 islandusurper Exp $
+// $Id: uc_taxes.ca.inc,v 1.1.2.5 2008/11/03 21:33:53 islandusurper Exp $
 
 /**
  * @file
@@ -32,7 +32,7 @@ function uc_taxes_ca_trigger() {
 
   $triggers['calculate_taxes'] = array(
     '#title' => t('Calculate taxes'),
-    '#category' => 'uc_taxes',
+    '#category' => t('Taxes'),
     '#arguments' => array(
       'order' => array('#entity' => 'uc_order', '#title' => t('Order')),
       'tax' => array('#entity' => 'tax', '#title' => t('Tax rule')),

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.6 2008/10/24 21:11:31 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.7 2008/11/03 21:33:53 islandusurper Exp $
 
 /**
  * @file
@@ -495,7 +495,7 @@ function uc_order_mail($key, &$message, $params) {
       );
 
       $body = token_replace_multiple($params['message'], $params['replacements']);
-      $message['body'] = check_markup($body, $params['format']);
+      $message['body'] = check_markup($body, $params['format'], FALSE);
     break;
   }
 }

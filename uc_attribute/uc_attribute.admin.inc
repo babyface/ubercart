@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.1 2008/10/15 14:48:00 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.2 2008/11/03 21:33:51 islandusurper Exp $
 
 /**
  * @file
@@ -561,7 +561,20 @@ function uc_object_attributes_form_submit($form, &$form_state) {
   }
   else if ($form_state['values']['view'] == 'add') {
     foreach ($form_state['values']['add_attributes'] as $aid) {
-      db_query("INSERT INTO $attr_table ($id, aid, ordering, default_option, required, display) SELECT $sql_type, aid, ordering, 0, required, display FROM {uc_attributes} WHERE aid = %d", $form_state['values']['id'], $aid);
+      // Enable all options for added attributes.
+      $attribute = uc_attribute_load($aid);
+      foreach ($attribute->options as $option) {
+        db_query("INSERT INTO $opt_table ($id, oid, cost, price, weight, ordering) VALUES ($sql_type, %d, %f, %f, %f, %d)", $form_state['values']['id'], $option->oid, $option->cost, $option->price, $option->weight, $option->ordering);
+      }
+      // Make the first option (if any) the default.
+      $option = reset($attribute->options);
+      if ($option) {
+        $oid = $option->oid;
+      }
+      else {
+        $oid = 0;
+      }
+      db_query("INSERT INTO $attr_table ($id, aid, ordering, default_option, required, display) SELECT $sql_type, aid, ordering, %d, required, display FROM {uc_attributes} WHERE aid = %d", $form_state['values']['id'], $oid, $aid);
     }
     if (count($form_state['values']['add_attributes']) > 0) {
       if ($form_state['values']['type'] == 'product') {

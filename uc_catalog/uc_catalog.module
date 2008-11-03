@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.6 2008/10/15 14:47:47 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.7 2008/11/03 21:33:51 islandusurper Exp $
 
 /**
  * @file
@@ -528,21 +528,31 @@ function uc_catalog_store_status() {
   $catalog = taxonomy_vocabulary_load($cat_id);
   if ($catalog) {
     $statuses[] = array('status' => 'ok', 'title' => t('Catalog vocabulary'),
-      'desc' => t('Vocabulary !name has been identified as the !uber catalog.', array('!name' => l($catalog->name, 'admin/content/taxonomy/'. $catalog->vid), '!uber' => '&Uuml;bercart'))
+      'desc' => t('Vocabulary !name has been identified as the Ubercart catalog.', array('!name' => l($catalog->name, 'admin/content/taxonomy/'. $catalog->vid)))
     );
 
     $excluded = 0;
     $result = db_query("SELECT COUNT(DISTINCT n.nid) FROM {node} AS n LEFT JOIN {term_node} AS tn ON n.nid = tn.nid LEFT JOIN {vocabulary_node_types} AS vnt ON n.type = vnt.type WHERE n.type <> 'image' AND tn.tid IS NULL AND vnt.vid = %d", $cat_id);
     if ($excluded = db_result($result)) {
-      $statuses[] = array('status' => 'warning', 'title' => t('Unlisted products'),
-        'desc' => format_plural($excluded, 'There is @count product not listed in the catalog.', 'There are @count products not listed in the catalog.')
-          . t(' Products are listed by assigning a category from the Product Catalog vocabulary to them.') .' '
-          . l(t('Find orphaned products here.'), 'admin/store/products/orphans'),
+      $description = format_plural($excluded, 'There is @count product not listed in the catalog.', 'There are @count products not listed in the catalog.')
+        . t(' Products are listed by assigning a category from the <a href="!cat_url">Product Catalog</a> vocabulary to them.', array('!cat_url' => url('admin/content/taxonomy/'. $catalog->vid)));
+      $terms = db_result(db_query("SELECT COUNT(*) FROM {term_data} WHERE vid = %d", $catalog->vid));
+      if ($terms) {
+        $description .= ' '. l(t('Find orphaned products here.'), 'admin/store/products/orphans');
+      }
+      else {
+        $description .= ' '. l(t('Add terms for the products to inhabit.'), 'admin/content/taxonomy/'. $catalog->vid .'/add/term');
+      }
+      $statuses[] = array(
+        'status' => 'warning',
+        'title' => t('Unlisted products'),
+        'desc' => $description,
       );
     }
   }
   else {
-    $statuses[] = array('status' => 'error',
+    $statuses[] = array(
+      'status' => 'error',
       'title' => t('Catalog vocabulary'),
       'desc' => t('No vocabulary has been recognized as the Ubercart catalog. Choose one on <a href="!admin_catalog">this page</a> or click <a href="!admin_vocab">here</a> to create one first.', array('!admin_catalog' => url('admin/store/settings/catalog'), '!admin_vocab' => url('admin/content/taxonomy'))),
     );

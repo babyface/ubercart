@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.module,v 1.12.2.6 2008/10/15 14:47:56 islandusurper Exp $
+// $Id: uc_stock.module,v 1.12.2.7 2008/11/03 21:33:52 islandusurper Exp $
 
 /**
  * @file
@@ -25,7 +25,7 @@ require_once('uc_stock.ca.inc');
  */
 function uc_stock_help($path, $arg) {
   switch ($path) {
-    case 'node/'. $arg[1] .'/edit/stock':
+    case 'node/%/edit/stock':
       return t('To keep track of stock for a particular product SKU, make sure it is marked as active and enter a stock value. When the stock level drops below the threshold value, you can be notified based on your stock settings.');
     case 'admin/store/reports/stock':
     case 'admin/store/reports/stock/threshold':

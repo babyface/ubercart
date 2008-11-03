@@ -1,9 +1,9 @@
 <?php
-// $Id: uc_flatrate.admin.inc,v 1.1.2.1 2008/10/15 14:48:08 islandusurper Exp $
+// $Id: uc_flatrate.admin.inc,v 1.1.2.2 2008/11/03 21:33:51 islandusurper Exp $
 
 /**
  * @file
- * Google Checkout administration menu items.
+ * Flat rate shipping method administration menu items.
  *
  */
 
@@ -118,38 +118,6 @@ function uc_flatrate_admin_method_edit_form_submit($form, &$form_state) {
     drupal_set_message(t("Created and enabled new flat rate shipping method."));
   }
   $form_state['redirect'] = 'admin/store/settings/quotes/methods/flatrate';
-}
-
-/**
- * Implementation of hook_ca_predicate().
- *
- * Connect the quote action with the quote event.
- */
-function uc_flatrate_ca_predicate() {
-  $enabled = variable_get('uc_quote_enabled', array());
-  $predicates = array();
-
-  $result = db_query("SELECT mid, title FROM {uc_flatrate_methods}");
-  while ($method = db_fetch_object($result)) {
-    $predicates['uc_flatrate_get_quote_'. $method->mid] = array(
-      '#title' => t('Shipping quote via @method', array('@method' => $method->title)),
-      '#trigger' => 'get_quote_from_flatrate_'. $method->mid,
-      '#class' => 'uc_flatrate',
-      '#status' => $enabled['flatrate_'. $method->mid],
-      '#actions' => array(
-        array(
-          '#name' => 'uc_quote_action_get_quote',
-          '#title' => t('Fetch a flatrate shipping quote.'),
-          '#argument_map' => array(
-            'order' => 'order',
-            'method' => 'method',
-          ),
-        ),
-      ),
-    );
-  }
-
-  return $predicates;
 }
 
 /******************************************************************************

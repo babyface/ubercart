@@ -1,20 +1,21 @@
 <?php
-// $Id: belgium_56_1.cif,v 1.2.2.3 2008/08/06 13:41:27 islandusurper Exp $
+// $Id: belgium_56_1.cif,v 1.2.2.4 2008/11/03 21:33:50 islandusurper Exp $
 
 function belgium_install() {
   db_query("INSERT INTO {uc_countries} VALUES ('056', 'Belgium', 'BE', 'BEL', 1)");
 
-  db_query("INSERT INTO {uc_zones} VALUES "
-          ."(%d, 056, 'AN', 'Antwerpen'),"
-          ."(%d, 056, 'LG', 'Limburg'),"
-          ."(%d, 056, 'OV', 'Oost-Vlaanderen'),"
-          ."(%d, 056, 'VB', 'Vlaams-Brabant'),"
-          ."(%d, 056, 'WV', 'West-Vlaanderen'),"
-          ."(%d, 056, 'BW', 'Waals-Brabant'),"
-          ."(%d, 056, 'HT', 'Henegouwen'),"
-          ."(%d, 056, 'LB', 'Luik'),"
-          ."(%d, 056, 'LU', 'Luxemburg'),"
-          ."(%d, 056, 'NM', 'Namen')" , uc_get_zone_ids(10));
+  // Make the entries in the zones table.
+  db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
+          ."(056, 'AN', 'Antwerpen'),"
+          ."(056, 'LG', 'Limburg'),"
+          ."(056, 'OV', 'Oost-Vlaanderen'),"
+          ."(056, 'VB', 'Vlaams-Brabant'),"
+          ."(056, 'WV', 'West-Vlaanderen'),"
+          ."(056, 'BW', 'Waals-Brabant'),"
+          ."(056, 'HT', 'Henegouwen'),"
+          ."(056, 'LB', 'Luik'),"
+          ."(056, 'LU', 'Luxemburg'),"
+          ."(056, 'NM', 'Namen')" );
 
   uc_set_address_format(56, "!company\n!first_name !last_name\n!street\n!postal_code !city\n!country_name_if");
 }

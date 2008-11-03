@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_2checkout.module,v 1.6.2.2 2008/10/15 14:47:38 islandusurper Exp $
+// $Id: uc_2checkout.module,v 1.6.2.3 2008/11/03 21:33:52 islandusurper Exp $
 
 /**
  * @file
@@ -175,7 +175,7 @@ function uc_2checkout_form($form_state, $order) {
     'demo' => variable_get('uc_2checkout_demo', TRUE) ? 'Y' : 'N',
     'fixed' => 'Y',
     'lang' => variable_get('uc_2checkout_language', 'en'),
-    'x_receipt_link_url' => url('cart/2checkout/complete/'. uc_cart_get_id(), NULL, NULL, TRUE),
+    'x_receipt_link_url' => url('cart/2checkout/complete/'. uc_cart_get_id(), array('absolute' => TRUE)),
     'merchant_order_id' => $order->order_id,
     'pay_method' => isset($_SESSION['pay_method']) ? $_SESSION['pay_method'] : 'CC',
     'card_holder_name' => substr($order->billing_first_name .' '. $order->billing_last_name, 0, 128),

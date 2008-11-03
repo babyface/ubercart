@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.5.2.2 2008/10/24 21:11:30 islandusurper Exp $
+// $Id: uc_payment.js,v 1.5.2.3 2008/11/03 21:33:52 islandusurper Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
@@ -16,7 +16,7 @@ if (Drupal.jsEnabled) {
   jQuery.extend(Drupal.settings, {
     ucShowProgressBar: false,
     ucDefaultPayment: '',
-    ucOrderInitiate: false,
+    ucOrderInitiate: false
   });
 
   $(document).ready(

@@ -1,10 +1,11 @@
 <?php
-// $Id: united_states_840_1.cif,v 1.5 2008/07/10 12:41:06 islandusurper Exp $
+// $Id: united_states_840_1.cif,v 1.5.2.1 2008/11/03 21:33:50 islandusurper Exp $
 
 function united_states_install() {
   // VALUES = Country ID, Country Name, 2-digit Code, 3-digit Code, File Version
   db_query("INSERT INTO {uc_countries} VALUES (840, 'United States', 'US', 'USA', 1)");
 
+  // Make the entries in the zones table.
   db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
           ."(840, 'AL', 'Alabama'),"
           ."(840, 'AK', 'Alaska'),"

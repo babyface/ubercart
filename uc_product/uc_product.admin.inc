@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.admin.inc,v 1.1.2.2 2008/10/24 21:11:30 islandusurper Exp $
+// $Id: uc_product.admin.inc,v 1.1.2.3 2008/11/03 21:33:53 islandusurper Exp $
 
 /**
  * @file
@@ -210,7 +210,11 @@ function uc_product_field_settings_form() {
   ));
   $fields = array();
   foreach ($options as $field => $value) {
-    $fields[$field] = array('enabled' => $enabled[$field], 'weight' => $weight[$field]);
+    $fields[$field] = array(
+      'title' => $value,
+      'enabled' => $enabled[$field],
+      'weight' => $weight[$field],
+    );
   }
   uasort($fields, 'uc_weight_sort');
   $form['fields'] = array('#tree' => TRUE);
@@ -220,6 +224,9 @@ function uc_product_field_settings_form() {
   foreach ($fields as $label => $field) {
     $form['fields'][$label]['enabled'] = array('#type' => 'checkbox',
       '#default_value' => $field['enabled'],
+    );
+    $form['fields'][$label]['title'] = array('#type' => 'markup',
+      '#value' => $field['title'],
     );
     $form['fields'][$label]['weight'] = array('#type' => 'weight',
       '#delta' => 10,
@@ -271,24 +278,12 @@ function _uc_product_fields_summarize($form, $options, $enabled, $weight) {
  * @see uc_product_field_settings_form
  */
 function theme_uc_product_field_settings_form($form) {
-  $options = array(
-    'model' => t('Model'),
-    'image' => t('Image'),
-    'display_price' => t('Display price'),
-    'list_price' => t('List price'),
-    'cost' => t("Cost (seen only by 'administer products' permission)"),
-    'sell_price' => t('Sell price'),
-    'weight' => t('Weight'),
-    'dimensions' => t('Dimensions'),
-    'add_to_cart' => variable_get('uc_product_add_to_cart_text', t('Add to cart')),
-  );
-
   $header = array(t('Enable'), t('Product field'), t('Weight'));
   $rows = array();
   foreach (element_children($form['fields']) as $field) {
     $row = array();
     $row[] = drupal_render($form['fields'][$field]['enabled']);
-    $row[] = $options[$field];
+    $row[] = drupal_render($form['fields'][$field]['title']);
     $row[] = drupal_render($form['fields'][$field]['weight']);
     $rows[] = $row;
   }

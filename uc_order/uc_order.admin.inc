@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.2 2008/10/24 21:11:31 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.3 2008/11/03 21:33:53 islandusurper Exp $
 
 /**
  * @file
@@ -1335,7 +1335,7 @@ function uc_order_add_line_item_form_submit($form, &$form_state) {
   else {
     uc_order_line_item_add($form_state['values']['order_id'], $form_state['values']['line_item_id'],
              $form_state['values']['title'], $form_state['values']['amount']);
-    d-rupal_set_message(t('Line item added to order.'));
+    drupal_set_message(t('Line item added to order.'));
   }
 
   return 'admin/store/orders/'. $form_state['values']['order_id'] .'/edit';

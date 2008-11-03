@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.5 2008/10/24 21:11:32 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.6 2008/11/03 21:33:53 islandusurper Exp $
 
 /**
  * @file
@@ -181,9 +181,24 @@ function uc_quote_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
  * blank, products default to their manufacturers', which default to the store's.
  */
 function uc_quote_form_alter(&$form, &$form_state, $form_id) {
-  $node = $form['#node'];
-  $product_types = uc_product_node_info();
-  if (($form_id == 'taxonomy_form_term' && $form['vid']['#value'] == variable_get('uc_manufacturer_vid', 0)) || $form_id == 'uc_manufacturer_form' || ($form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && in_array($node->type, module_invoke_all('product_types')))) {
+  if (isset($form['#node'])) {
+    $node = $form['#node'];
+  }
+
+  $is_term_form = (
+    $form_id == 'taxonomy_form_term'
+    && $form['vid']['#value'] == variable_get('uc_manufacturer_vid', 0)
+    && $form_state['confirm_delete'] == FALSE
+    && $form_state['confirm_parents'] == FALSE
+  ) || $form_id == 'uc_manufacturer_form';
+
+  $is_product_form = (
+    $form_id == $node->type .'_node_form'
+    && isset($form['base']['dimensions'])
+    && in_array($node->type, module_invoke_all('product_types'))
+  );
+
+  if ($is_term_form || $is_product_form) {
     if (strpos($form_id, 'node_form')) {
       $type = 'product';
       $id = $form['nid']['#value'];
@@ -698,6 +713,9 @@ function uc_cart_pane_quotes($items) {
       $method_choices[$method['id']] = $method['title'];
     }
   }
+  $form['delivery_country'] = uc_country_select(uc_get_field_name('country'), uc_store_default_country(), NULL, 'name', TRUE);
+  $country_id = isset($_POST['delivery_country']) ? intval($_POST['delivery_country']) : uc_store_default_country();
+  $form['delivery_zone'] = uc_zone_select(uc_get_field_name('zone'), null, null, $country_id, 'name', true);
   $form['delivery_postal_code'] = uc_textfield(uc_get_field_name('postal_code'), '', TRUE, NULL, 10, 10);
   $form['quote_method'] = array('#type' => 'hidden',
     '#value' => key($method_choices),
@@ -755,7 +773,10 @@ function uc_cart_pane_quotes($items) {
 function theme_uc_cart_pane_quotes($form) {
   $output = '<div class="solid-border">';
   $output .= '<strong>'. t('Estimated shipping cost:') .'</strong>';
-  $output .= drupal_render($form['delivery_postal_code']) . drupal_render($form['get_quote']);
+  $output .= drupal_render($form['delivery_country']);
+  $output .= drupal_render($form['delivery_zone']);
+  $output .= drupal_render($form['delivery_postal_code']);
+  $output .= drupal_render($form['get_quote']);
   $output .= drupal_render($form);
   $output .= '</div>';
 

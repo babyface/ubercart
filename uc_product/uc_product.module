@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.7 2008/10/15 14:48:05 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.8 2008/11/03 21:33:53 islandusurper Exp $
 
 /**
  * @file
@@ -237,18 +237,29 @@ function uc_product_init() {
  * Set up default imagefield and imagecache settings.
  */
 function uc_product_enable() {
-  $node_types = node_get_types('types');
-  $product_classes = array('product');
-  $result = db_query("SELECT pcid, name, description FROM {uc_product_classes}");
-  while ($product_class = db_fetch_object($result)) {
-    $product_classes[] = $product_class->pcid;
-  }
-  foreach ($node_types as $type => $info) {
-    if ($info->module == 'node' && in_array($type, $product_classes)) {
-      $info->module = 'uc_product';
-      $info->custom = 0;
-      node_type_save($info);
+  // For some time in Drupal 5, CCK would delete its field data if a node
+  // type was unavailable because its module was disabled. This function
+  // worked around that by giving the product classes to node.module when
+  // uc_product was disabled. This is no longer necessary as of CCK 5.x-1.9,
+  // but the workaround was left in to prevent accidents. This block of
+  // code is here to reclaim the product nodes after an upgrade to Drupal
+  // 6, and then should not be used again as the corresponding code in
+  // uc_product_disable() was removed.
+  if (variable_get('uc_product_enable_nodes', TRUE)) {
+    $node_types = node_get_types('types');
+    $product_classes = array('product');
+    $result = db_query("SELECT pcid, name, description FROM {uc_product_classes}");
+    while ($product_class = db_fetch_object($result)) {
+      $product_classes[] = $product_class->pcid;
     }
+    foreach ($node_types as $type => $info) {
+      if ($info->module == 'node' && in_array($type, $product_classes)) {
+        $info->module = 'uc_product';
+        $info->custom = 0;
+        node_type_save($info);
+      }
+    }
+    variable_set('uc_product_enable_nodes', FALSE);
   }
 
   if (module_exists('filefield')) {
@@ -293,20 +304,6 @@ function uc_product_enable() {
         }
         imagecache_action_save($action);
       }
-    }
-  }
-}
-
-function uc_product_disable() {
-  $product_types = node_get_types('types');
-  // node_type_rebuild() deletes disabled modules' node types. Give these
-  // node types to node.module to prevent this. Get them back during
-  // hook_enable().
-  foreach ($product_types as $type) {
-    if ($type->module == 'uc_product') {
-      $type->module = 'node';
-      $type->custom = 1;
-      node_type_save($type);
     }
   }
 }
@@ -1160,7 +1157,7 @@ function uc_product_cart_display($item) {
   $element['options'] = '';
   if (module_exists('uc_attribute') && is_array($item->options)) {
     foreach ($item->options as $option) {
-      $op_names[] = $option['attribute'] .': '. $option['name'];
+      $op_names[] = t('@attribute: @option', array('@attribute' => $option['attribute'], '@option' => $option['name']));
     }
     $element['options'] = array('#value' => theme('item_list', $op_names, NULL, 'ul', array('class' => 'cart-options')));
   }
@@ -1264,7 +1261,7 @@ function uc_product_is_product($node) {
  */
 function theme_uc_product_model($model) {
   $output = '<div class="model">';
-  $output .= t('!m', array('!m' => $model));
+  $output .= t('SKU: @m', array('@m' => $model));
   $output .= '</div>';
   return $output;
 }
@@ -1376,15 +1373,16 @@ function theme_uc_product_price($price, $class) {
  */
 function theme_uc_product_sell_price($price, $teaser) {
   if ($teaser) {
-    $output = '<span class="sell_price">';
+    $output = '<div class="sell_price">';
     $output .= uc_currency_format($price);
-    $output .= '</span>';
+    $output .= '</div>';
   }
   else {
     $output = '<div class="sell_price">';
     $output .= t('Price: !price', array('!price' => uc_currency_format($price)));
     $output .= '</div>';
   }
+
   return $output;
 }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.4 2008/10/15 14:47:52 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.5 2008/11/03 21:33:52 islandusurper Exp $
 
 /**
  * @file
@@ -37,19 +37,23 @@ function uc_product_kit_access($op, $node, $account) {
 }
 
 function uc_product_kit_enable() {
-  $node_type = node_get_types('type', 'product_kit');
-  if ($node_type->module == 'node') {
-    $node_type->module = 'uc_product_kit';
-    $node_type->custom = 0;
-    node_type_save($node_type);
+  // For some time in Drupal 5, CCK would delete its field data if a node
+  // type was unavailable because its module was disabled. This function
+  // worked around that by giving the product classes to node.module when
+  // uc_product_kit was disabled. This is no longer necessary as of CCK
+  // 5.x-1.9, but the workaround was left in to prevent accidents. This block
+  // of code is here to reclaim the product kit nodes after an upgrade to
+  // Drupal 6, and then should not be used again as the corresponding code in
+  // uc_product_kit_disable() was removed.
+  if (variable_get('uc_product_kit_enable_nodes', TRUE)) {
+    $node_type = node_get_types('type', 'product_kit');
+    if ($node_type->module == 'node') {
+      $node_type->module = 'uc_product_kit';
+      $node_type->custom = 0;
+      node_type_save($node_type);
+    }
+    variable_set('uc_product_kit_enable_nodes', FALSE);
   }
-}
-
-function uc_product_kit_disable() {
-  $node_type = node_get_types('type', 'product_kit');
-  $node_type->module = 'node';
-  $node_type->custom = 1;
-  node_type_save($node_type);
 }
 
 /**

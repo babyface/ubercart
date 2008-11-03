@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.admin.inc,v 1.1.2.2 2008/10/24 21:11:32 islandusurper Exp $
+// $Id: uc_catalog.admin.inc,v 1.1.2.3 2008/11/03 21:33:51 islandusurper Exp $
 
 /**
  * @file
@@ -263,7 +263,7 @@ function uc_catalog_orphaned_products() {
 
   $rows = array();
   while ($node = db_fetch_object($result)) {
-    $rows[] = l($node->title, 'node/'. $node->nid .'/edit');
+    $rows[] = l($node->title, 'node/'. $node->nid .'/edit', array('query' => array('destination' => 'admin/store/products/orphans')));
   }
 
   if (count($rows) > 0) {

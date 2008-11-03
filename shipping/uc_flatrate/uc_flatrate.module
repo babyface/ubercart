@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.module,v 1.5.2.1 2008/10/15 14:48:08 islandusurper Exp $
+// $Id: uc_flatrate.module,v 1.5.2.2 2008/11/03 21:33:51 islandusurper Exp $
 
 /**
  * @file
@@ -127,7 +127,39 @@ function uc_flatrate_nodeapi(&$node, $op) {
  ******************************************************************************/
 
 /**
- * Implementation of Übercart's hook_shipping_method().
+ * Implementation of hook_ca_predicate().
+ *
+ * Connect the quote action with the quote event.
+ */
+function uc_flatrate_ca_predicate() {
+  $enabled = variable_get('uc_quote_enabled', array());
+  $predicates = array();
+
+  $result = db_query("SELECT mid, title FROM {uc_flatrate_methods}");
+  while ($method = db_fetch_object($result)) {
+    $predicates['uc_flatrate_get_quote_'. $method->mid] = array(
+      '#title' => t('Shipping quote via @method', array('@method' => $method->title)),
+      '#trigger' => 'get_quote_from_flatrate_'. $method->mid,
+      '#class' => 'uc_flatrate',
+      '#status' => $enabled['flatrate_'. $method->mid],
+      '#actions' => array(
+        array(
+          '#name' => 'uc_quote_action_get_quote',
+          '#title' => t('Fetch a flatrate shipping quote.'),
+          '#argument_map' => array(
+            'order' => 'order',
+            'method' => 'method',
+          ),
+        ),
+      ),
+    );
+  }
+
+  return $predicates;
+}
+
+/**
+ * Implementation of Ubercart's hook_shipping_method().
  */
 function uc_flatrate_shipping_method() {
   $methods = array();

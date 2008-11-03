@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.pages.inc,v 1.1.2.1 2008/10/15 14:47:47 islandusurper Exp $
+// $Id: uc_catalog.pages.inc,v 1.1.2.2 2008/11/03 21:33:51 islandusurper Exp $
 
 /**
  * @file
@@ -92,7 +92,7 @@ function theme_uc_catalog_browse($tid = 0) {
 
   $sql = "SELECT DISTINCT(n.nid), n.sticky, n.title, n.created, p.model, p.sell_price, p.ordering
     FROM {node} n
-      INNER JOIN {term_node} tn ON n.nid = tn.nid
+      INNER JOIN {term_node} tn ON n.vid = tn.vid
       INNER JOIN {uc_products} AS p ON n.vid = p.vid
     WHERE tn.tid = %d AND n.status = 1
       AND n.type IN (". db_placeholders($product_types, 'varchar') .")
@@ -103,8 +103,8 @@ function theme_uc_catalog_browse($tid = 0) {
     case 'mysqli':
       $sql_count = "SELECT COUNT(DISTINCT(n.nid))
         FROM {node} n
-          INNER JOIN {term_node} tn ON n.nid = tn.nid
-          INNER JOIN {uc_products} AS p ON n.nid = p.nid
+          INNER JOIN {term_node} tn ON n.vid = tn.vid
+          INNER JOIN {uc_products} AS p ON n.vid = p.vid
         WHERE tn.tid = %d
           AND n.status = 1
           AND n.type IN (". db_placeholders($product_types, 'varchar') .")";
@@ -112,8 +112,8 @@ function theme_uc_catalog_browse($tid = 0) {
     case 'pgsql':
       $sql_count = "SELECT DISTINCT n.nid, COUNT(*)
         FROM {node} n
-          INNER JOIN {term_node} tn ON n.nid = tn.nid
-          INNER JOIN {uc_products} AS p ON n.nid = p.nid
+          INNER JOIN {term_node} tn ON n.vid = tn.vid
+          INNER JOIN {uc_products} AS p ON n.vid = p.vid
         WHERE tn.tid = %d
           AND n.status = 1
           AND n.type IN (". db_placeholders($product_types) .")
