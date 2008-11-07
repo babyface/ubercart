@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.module,v 1.5.2.2 2008/10/15 14:48:07 islandusurper Exp $
+// $Id: uc_weightquote.module,v 1.5.2.3 2008/11/07 21:13:28 islandusurper Exp $
 
 /**
  * @file
@@ -35,7 +35,7 @@ function uc_weightquote_menu() {
  *
  * Add a form element for the shipping rate of a product.
  *
- * @see uc_product_form
+ * @see uc_product_form()
  */
 function uc_weightquote_form_alter(&$form, &$form_state, $form_id) {
   $node = $form['#node'];

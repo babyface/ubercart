@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.5.2.1 2008/10/15 14:47:54 islandusurper Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.5.2.2 2008/11/07 21:13:21 islandusurper Exp $
 
 /**
  * @file
@@ -184,7 +184,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
     case 'settings':
       $form['uc_cart_email_validation'] = array(
         '#type' => 'checkbox',
-        '#title' => t('Require e-mail validation for anonymous customers.'),
+        '#title' => t('Require e-mail confirmation in checkout for anonymous customers.'),
         '#default_value' => variable_get('uc_cart_email_validation', FALSE),
       );
       $form['uc_cart_new_account_name'] = array(

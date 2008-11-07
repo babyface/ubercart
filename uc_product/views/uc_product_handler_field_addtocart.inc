@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_handler_field_addtocart.inc,v 1.1.2.1 2008/10/15 14:47:43 islandusurper Exp $
+// $Id: uc_product_handler_field_addtocart.inc,v 1.1.2.2 2008/11/07 21:13:28 islandusurper Exp $
 
 /**
  * @file
@@ -22,7 +22,7 @@ class uc_product_handler_field_addtocart extends views_handler_field {
     if (function_exists('theme_'. $module .'_add_to_cart')) {
       return theme($module .'_add_to_cart', $product);
     }
-    else if (function_exists('theme_uc_product_add_to_cart')) {
+    elseif (function_exists('theme_uc_product_add_to_cart')) {
       return theme('uc_product_add_to_cart', $product);
     }
   }

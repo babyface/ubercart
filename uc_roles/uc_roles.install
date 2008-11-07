@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.install,v 1.2.2.7 2008/10/24 21:06:47 islandusurper Exp $
+// $Id: uc_roles.install,v 1.2.2.8 2008/11/07 21:13:26 islandusurper Exp $
 
 /**
  * @file

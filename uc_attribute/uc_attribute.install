@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.install,v 1.10.2.2 2008/10/15 14:47:59 islandusurper Exp $
+// $Id: uc_attribute.install,v 1.10.2.3 2008/11/07 21:13:22 islandusurper Exp $
 
 /**
  * @file

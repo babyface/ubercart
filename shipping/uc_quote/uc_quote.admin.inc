@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.admin.inc,v 1.1.2.2 2008/10/24 21:11:32 islandusurper Exp $
+// $Id: uc_quote.admin.inc,v 1.1.2.3 2008/11/07 21:13:24 islandusurper Exp $
 
 /**
  * @file
@@ -35,7 +35,7 @@ function uc_quote_overview() {
  * in the store. Individual products may be configured differently.
  *
  * @ingroup forms
- * @see uc_quote_admin_settings_submit
+ * @see uc_quote_admin_settings_submit()
  */
 function uc_quote_admin_settings() {
   $address = variable_get('uc_quote_store_default_address', new stdClass());
@@ -157,9 +157,9 @@ function uc_quote_admin_settings_submit($form, &$form_state) {
  * Enable and reorder shipping quote methods. Set the default shipping type.
  *
  * @ingroup forms
- * @see theme_uc_quote_method_settings
- * @see uc_quote_method_settings_validate
- * @see uc_quote_method_settings_submit
+ * @see theme_uc_quote_method_settings()
+ * @see uc_quote_method_settings_validate()
+ * @see uc_quote_method_settings_submit()
  */
 function uc_quote_method_settings() {
   $form = array();
@@ -232,7 +232,7 @@ function uc_quote_method_settings() {
  * Display a formatted list of shipping quote methods and form elements.
  *
  * @ingroup themeable
- * @see uc_quote_method_settings
+ * @see uc_quote_method_settings()
  */
 function theme_uc_quote_method_settings($form) {
   $methods = uc_quote_shipping_method_options();

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.admin.inc,v 1.1.2.2 2008/10/24 21:11:30 islandusurper Exp $
+// $Id: uc_payment.admin.inc,v 1.1.2.3 2008/11/07 21:13:25 islandusurper Exp $
 
 /**
  * @file
@@ -178,10 +178,9 @@ function uc_payment_gateways_form() {
     );
 
     foreach ($gateways as $gateway) {
-      $prefix = 'uc_pg_'. $gateway['id'];
-      $form[$prefix] = array(
+      $form['gateways'][$gateway['id']] = array(
         '#type' => 'fieldset',
-        '#title' => t('!gateway_name settings', array('!gateway_name' => $gateway['title'])),
+        '#title' => t('@gateway_name settings', array('@gateway_name' => $gateway['title'])),
         '#summary callback' => 'summarize_form',
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
@@ -193,13 +192,14 @@ function uc_payment_gateways_form() {
         }
       }
 
-      $form[$prefix]['#summary callback'] = 'summarize_form';
+      $form['gateways'][$gateway['id']]['#summary callback'] = 'summarize_form';
 
-      $form[$prefix]['supported_methods'] = array(
+      $form['gateways'][$gateway['id']]['supported_methods'] = array(
         '#value' => '<div>'. t('This gateway supports the following payment methods:')
                    .'<br />'. implode(',', $supported_methods) .'</div>',
+        '#weight' => -10,
       );
-      $form[$prefix][$prefix .'_enabled'] = array(
+      $form['gateways'][$gateway['id']]['uc_pg_'. $gateway['id'] .'_enabled'] = array(
         '#type' => 'checkbox',
         '#title' => t('Enable this payment gateway for use.'),
         '#summary callback' => 'summarize_checkbox',
@@ -207,24 +207,14 @@ function uc_payment_gateways_form() {
           t('@payment is enabled.', array('@payment' => $gateway['title'])),
           t('@payment is disabled.', array('@payment' => $gateway['title'])),
         ),
-        '#default_value' => variable_get($prefix .'_enabled', TRUE),
+        '#default_value' => variable_get('uc_pg_'. $gateway['id'] .'_enabled', TRUE),
       );
 
+      // Find any additional settings defined in the payment gateway callback.
       if (function_exists($gateway['settings'])) {
-
-        $all_gateway_settings = $gateway['settings']();
-        if (is_array($all_gateway_settings)) {
-
-          // none of these should show a summary (?)
-          // But it doesn't seem to do much? -JLM
-          /* foreach (element_children($all_gateway_settings) as $i => $gateway_settings) {
-            $all_gateway_settings[$i]['#summary callback'] = 'summarize_null';
-            foreach (element_children($gateway_settings) as $j => $gateway_setting) {
-              $all_gateway_settings[$i][$j]['#summary callback'] = 'summarize_null';
-            }
-          } */
-
-          $form[$prefix] = array_merge($form[$prefix], $all_gateway_settings);
+        $gateway_settings = $gateway['settings']();
+        if (is_array($gateway_settings)) {
+          $form['gateways'][$gateway['id']] = array_merge($form['gateways'][$gateway['id']], $gateway_settings);
         }
       }
     }
@@ -296,14 +286,7 @@ function uc_payment_gateway_select_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/store/orders/'. $form_state['values']['order_id'];
 }
 
-/**
- * View a list of payments attached to an order.
- */
-function uc_payment_by_order($order) {
-  $output = '<p>'. drupal_get_form('uc_payment_by_order_form', $order) .'</p>';
-  return $output;
-}
-
+// Displays a list of payments attached to an order.
 function uc_payment_by_order_form($form_state, $order) {
   $total = $order->order_total;
   $payments = uc_payment_load_payments($order->order_id);
@@ -412,46 +395,32 @@ function uc_payment_by_order_form_submit($form, &$form_state) {
   drupal_set_message(t('Payment entered.'));
 }
 
-/**
- * Delete a payment from an order.
- */
-function uc_payment_delete_confirm($order, $payment) {
+// Confirmation form to delete a payment from an order.
+function uc_payment_delete_confirm_form($form_state, $order, $payment) {
+  // Make sure the payment is for the specified order.
   if ($payment->order_id != $order->order_id) {
     drupal_set_message(t('An error loading the payment information occurred.'));
     drupal_goto('admin/store/orders/'. $order->order_id .'/payments');
   }
 
-  $output = '<p><strong>'. t('Payment information:') .'</strong><br />'
-          . t('!method payment of !amount received on !date.',
-              array('!method' => $payment->method,
-                    '!amount' => uc_currency_format($payment->amount),
-                    '!date' => format_date($payment->received, 'custom', variable_get('uc_date_format_default', 'm/d/Y')))) .'</p>';
-  $output .= t('Are you sure you want to delete this payment?') .'<p>'
-           . drupal_get_form('uc_payment_delete_confirm_form', $order->order_id, $payment->receipt_id);
+  $desc = '<strong>'. t('Payment information:') .'</strong> '
+        . t('@method payment of @amount received on @date.', array('@method' => $payment->method, '@amount' => uc_currency_format($payment->amount), '@date' => format_date($payment->received, 'short')));
 
-  return $output;
-}
-
-function uc_payment_delete_confirm_form($form_state, $order_id, $receipt_id) {
   $form['order_id'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => $order_id
   );
   $form['receipt_id'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => $receipt_id,
   );
-  $form['delete'] = array(
-    '#type' => 'submit',
-    '#value' => t('Delete'),
-    '#suffix' => l(t('Cancel'), 'admin/store/orders/'. $order_id .'/payments'),
-  );
 
-  return $form;
+  return confirm_form($form, t('Are you sure you want to delete this payment?'), 'admin/store/orders/'. $order_id .'/payments', $desc, t('Delete'));
 }
 
 function uc_payment_delete_confirm_form_submit($form, &$form_state) {
   uc_payment_delete($form_state['values']['receipt_id']);
+
   drupal_set_message(t('Payment deleted.'));
 
   $form_state['redirect'] = 'admin/store/orders/'. $form_state['values']['order_id'] .'/payments';

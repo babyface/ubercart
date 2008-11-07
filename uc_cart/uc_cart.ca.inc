@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.ca.inc,v 1.1.2.5 2008/10/24 21:11:31 islandusurper Exp $
+// $Id: uc_cart.ca.inc,v 1.1.2.6 2008/11/07 21:13:20 islandusurper Exp $
 
 /**
  * @file
@@ -13,7 +13,7 @@
  ******************************************************************************/
 
 /**
- * Implmentation of hook_ca_condition().
+ * Implementation of hook_ca_condition().
  */
 function uc_cart_ca_condition() {
   $conditions['uc_cart_condition_product_class'] = array(
@@ -143,7 +143,7 @@ function uc_cart_condition_product_class_form($settings = array()) {
   return $form;
 }
 
-function uc_cart_condition_product_class_submit($form_id, $form_values) {
-  return array('class' => $form_values['class']);
+function uc_cart_condition_product_class_submit($form, &$form_state) {
+  return array('class' => $form_state['values']['class']);
 }
 

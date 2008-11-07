@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, getTax; -*-
-// $Id: uc_quote.js,v 1.5.2.2 2008/10/15 14:47:48 islandusurper Exp $
+// $Id: uc_quote.js,v 1.5.2.3 2008/11/07 21:13:24 islandusurper Exp $
 
 var page;
 var details;

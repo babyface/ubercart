@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.admin.inc,v 1.1.2.1 2008/10/15 14:47:37 islandusurper Exp $
+// $Id: uc_shipping.admin.inc,v 1.1.2.2 2008/11/07 21:13:26 islandusurper Exp $
 
 /**
  * @file
@@ -58,9 +58,9 @@ function uc_shipping_order_packages($order) {
  * Put ordered products into a package.
  *
  * @ingroup forms
- * @see theme_uc_shipping_new_package_fieldset
- * @see uc_shipping_new_package_validate
- * @see uc_shipping_new_package_submit
+ * @see theme_uc_shipping_new_package_fieldset()
+ * @see uc_shipping_new_package_validate()
+ * @see uc_shipping_new_package_submit()
  */
 function uc_shipping_new_package($form_state, $order) {
   $breadcrumb = drupal_get_breadcrumb();
@@ -223,8 +223,8 @@ function uc_shipping_new_package_submit($form, &$form_state) {
  * Rearrange the products in or out of a package.
  *
  * @ingroup forms
- * @see theme_uc_shipping_edit_package_fieldset
- * @see uc_shipping_package_edit_submit
+ * @see theme_uc_shipping_edit_package_fieldset()
+ * @see uc_shipping_package_edit_submit()
  */
 function uc_shipping_package_edit($form_state, $order, $package) {
   $breadcrumb = drupal_get_breadcrumb();
@@ -358,7 +358,7 @@ function uc_shipping_package_cancel_confirm_submit($form, &$form_state) {
  * Decide to unpackage products.
  *
  * @ingroup forms
- * @see uc_shipping_package_delete_confirm_submit
+ * @see uc_shipping_package_delete_confirm_submit()
  */
 function uc_shipping_package_delete_confirm($form_state, $order, $package) {
   $form = array();
@@ -422,8 +422,8 @@ function uc_shipping_order_shipments($order) {
  * Set up a new shipment with the chosen packages.
  *
  * @ingroup forms
- * @see theme_uc_shipping_new_shipment
- * @see uc_shipping_new_shipment_submit
+ * @see theme_uc_shipping_new_shipment()
+ * @see uc_shipping_new_shipment_submit()
  */
 function uc_shipping_new_shipment($form_state, $order) {
   $breadcrumb = drupal_get_breadcrumb();
@@ -532,7 +532,7 @@ function theme_uc_shipping_new_shipment($form) {
  *
  * Send package information to the chosen method.
  *
- * @see uc_shipping_make_shipment
+ * @see uc_shipping_make_shipment()
  */
 function uc_shipping_new_shipment_submit($form, &$form_state) {
   $packages = array();
@@ -602,9 +602,9 @@ function uc_shipping_shipment_view($order, $shipment) {
  * Create or edit a shipment.
  *
  * @ingroup forms
- * @see theme_uc_shipping_package_dimensions
- * @see theme_uc_shipping_address
- * @see uc_shipping_shipment_edit_submit
+ * @see theme_uc_shipping_package_dimensions()
+ * @see theme_uc_shipping_address()
+ * @see uc_shipping_shipment_edit_submit()
  */
 function uc_shipping_shipment_edit($form_state, $order, $shipment) {
   drupal_add_css(drupal_get_path('module', 'uc_shipping') .'/uc_shipping.css');
@@ -779,7 +779,7 @@ function uc_shipping_shipment_edit_submit($form, &$form_state) {
       $field = substr($key, 7);
       $shipment->origin->$field = $value;
     }
-    else if (substr($key, 0, 9) == 'delivery_') {
+    elseif (substr($key, 0, 9) == 'delivery_') {
       $field = substr($key, 9);
       $shipment->destination->$field = $value;
     }
@@ -816,7 +816,7 @@ function uc_shipping_shipment_edit_submit($form, &$form_state) {
  * Decide to release packages to be put on another shipment.
  *
  * @ingroup forms
- * @see uc_shipping_shipment_delete_confirm_submit
+ * @see uc_shipping_shipment_delete_confirm_submit()
  */
 function uc_shipping_shipment_delete_confirm($form_state, $order, $shipment) {
   $form = array();

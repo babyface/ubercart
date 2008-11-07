@@ -1,4 +1,4 @@
-; $Id: uc_payment_pack.info,v 1.2.2.4 2008/10/15 14:47:44 islandusurper Exp $
+; $Id: uc_payment_pack.info,v 1.2.2.5 2008/11/07 21:13:27 islandusurper Exp $
 name = Payment Method Pack
 description = Provides the check/money order, COD, and 'other' payment methods.
 dependencies[] = uc_cart

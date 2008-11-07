@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.pages.inc,v 1.1.2.1 2008/10/15 14:47:51 islandusurper Exp $
+// $Id: uc_recurring.pages.inc,v 1.1.2.2 2008/11/07 21:13:25 islandusurper Exp $
 
 /**
  * @file
@@ -8,10 +8,10 @@
  */
 
 // Displays the confirm form for cancelling a recurring fee.
-function uc_recurring_user_cancel_form($form_state, $uid, $rfid) {
+function uc_recurring_user_cancel_form($form_state, $user, $rfid) {
   $form['uid'] = array(
     '#type' => 'value',
-    '#value' => $uid,
+    '#value' => $user->uid,
   );
 
   $form['rfid'] = array(
@@ -19,7 +19,7 @@ function uc_recurring_user_cancel_form($form_state, $uid, $rfid) {
     '#value' => $rfid,
   );
 
-  return confirm_form($form, t('Are you sure you want to cancel your recurring fee?'), 'user/'. $uid, t('This action cannot be undone and may result in the termination of subscription services.'), t('Confirm'), t('Cancel'));
+  return confirm_form($form, t('Are you sure you want to cancel your recurring fee?'), 'user/'. $user->uid, t('This action cannot be undone and may result in the termination of subscription services.'), t('Confirm'), t('Cancel'));
 }
 
 function uc_recurring_user_cancel_form_submit($form, &$form_state) {

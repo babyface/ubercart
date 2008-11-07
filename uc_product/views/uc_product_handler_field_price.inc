@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_handler_field_price.inc,v 1.1.2.1 2008/10/15 14:47:43 islandusurper Exp $
+// $Id: uc_product_handler_field_price.inc,v 1.1.2.2 2008/11/07 21:13:28 islandusurper Exp $
 
 /**
  * @file

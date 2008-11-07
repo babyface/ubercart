@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.admin.inc,v 1.1.2.1 2008/10/15 14:47:50 islandusurper Exp $
+// $Id: uc_ups.admin.inc,v 1.1.2.2 2008/11/07 21:13:25 islandusurper Exp $
 
 /**
  * @file
@@ -15,7 +15,7 @@
  * or production mode. Configure which UPS services are quoted to customers.
  *
  * @ingroup forms
- * @see uc_admin_settings_validate
+ * @see uc_admin_settings_validate()
  */
 function uc_ups_admin_settings() {
   $form = array();
@@ -150,8 +150,8 @@ function uc_ups_admin_settings_validate($form, &$form_state) {
  * Last chance for user to review shipment.
  *
  * @ingroup forms
- * @see theme_uc_ups_confirm_shipment
- * @see uc_ups_confirm_shipment_submit
+ * @see theme_uc_ups_confirm_shipment()
+ * @see uc_ups_confirm_shipment_submit()
  */
 function uc_ups_confirm_shipment($order) {
   $form = array();
@@ -304,13 +304,13 @@ View/Print Label</title></head><style>
 <table border="0" cellpadding="0" cellspacing="0" width="600"><tr>
 <td height="410" align="left" valign="top">
 <b class="large_text">View/Print Label</b>
-&nbsp;<br>
+&nbsp;<br />
 <ol class="small_text"> <li><b>Print the label:</b> &nbsp;
-Select Print from the File menu in this browser window to print the label below.<br><br><li><b>
+Select Print from the File menu in this browser window to print the label below.<br /><br /><li><b>
 Fold the printed label at the dotted line.</b> &nbsp;
-Place the label in a UPS Shipping Pouch. If you do not have a pouch, affix the folded label using clear plastic shipping tape over the entire label.<br><br><li><b>GETTING YOUR SHIPMENT TO UPS<br>
+Place the label in a UPS Shipping Pouch. If you do not have a pouch, affix the folded label using clear plastic shipping tape over the entire label.<br /><br /><li><b>GETTING YOUR SHIPMENT TO UPS<br />
 Customers without a Daily Pickup</b><ul><li>Ground, 3 Day Select, and Standard to Canada shipments must be dropped off at an authorized UPS location, or handed to a UPS driver. Pickup service is not available for these services. To find the nearest drop-off location, select the Drop-off icon from the UPS tool bar.<li>
-Air shipments (including Worldwide Express and Expedited) can be picked up or dropped off. To schedule a pickup, or to find a drop-off location, select the Pickup or Drop-off icon from the UPS tool bar.  </ul> <br>
+Air shipments (including Worldwide Express and Expedited) can be picked up or dropped off. To schedule a pickup, or to find a drop-off location, select the Pickup or Drop-off icon from the UPS tool bar.  </ul> <br />
 <b>Customers with a Daily Pickup</b><ul><li>
 Your driver will pickup your shipment(s) as usual. </ul>
 </ol></td></tr></table><table border="0" cellpadding="0" cellspacing="0" width="600">

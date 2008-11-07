@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.admin.inc,v 1.1.2.1 2008/10/15 14:48:07 islandusurper Exp $
+// $Id: uc_weightquote.admin.inc,v 1.1.2.2 2008/11/07 21:13:28 islandusurper Exp $
 
 /**
  * @file

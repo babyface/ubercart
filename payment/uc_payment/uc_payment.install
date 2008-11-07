@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.install,v 1.5.2.2 2008/10/15 14:47:42 islandusurper Exp $
+// $Id: uc_payment.install,v 1.5.2.3 2008/11/07 21:13:25 islandusurper Exp $
 
 /**
  * @file

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.5.2.3 2008/10/24 21:11:32 islandusurper Exp $
+// $Id: uc_ups.module,v 1.5.2.4 2008/11/07 21:13:25 islandusurper Exp $
 
 /**
  * @file
@@ -68,8 +68,8 @@ function uc_ups_theme() {
  *
  * Add package type to products.
  *
- * @see uc_product_form
- * @see uc_ups_product_alte_validate
+ * @see uc_product_form()
+ * @see uc_ups_product_alte_validate()
  */
 function uc_ups_form_alter(&$form, &$form_state, $form_id) {
   $node = $form['#node'];
@@ -842,7 +842,7 @@ function uc_ups_quote($products, $details) {
  * @param $package_ids
  *   Array of package ids to shipped.
  * @ingroup forms
- * @see uc_ups_fulfill_order_submit
+ * @see uc_ups_fulfill_order_submit()
  */
 function uc_ups_fulfill_order($form_state, $order, $package_ids) {
   $form = array();
@@ -951,7 +951,7 @@ function uc_ups_fulfill_order($form_state, $order, $package_ids) {
  *
  * Pass final information into shipment object.
  *
- * @see uc_ups_confirm_shipment
+ * @see uc_ups_confirm_shipment()
  */
 function uc_ups_fulfill_order_validate($form, &$form_state) {
   $origin = new stdClass();
@@ -962,7 +962,7 @@ function uc_ups_fulfill_order_validate($form, &$form_state) {
       $field = substr($key, 7);
       $origin->$field = $value;
     }
-    else if (substr($key, 0, 9) == 'delivery_') {
+    elseif (substr($key, 0, 9) == 'delivery_') {
       $field = substr($key, 9);
       $destination->$field = $value;
     }
@@ -1020,7 +1020,7 @@ function uc_ups_fulfill_order_validate($form, &$form_state) {
  *
  * Pass final information into shipment object.
  *
- * @see uc_ups_confirm_shipment
+ * @see uc_ups_confirm_shipment()
  */
 function uc_ups_fulfill_order_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/store/orders/'. $form_state['values']['order_id'] .'/shipments/ups';

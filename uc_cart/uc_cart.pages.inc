@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.3 2008/11/03 21:33:52 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.4 2008/11/07 21:13:22 islandusurper Exp $
 
 /**
  * @file
@@ -191,7 +191,7 @@ function uc_cart_checkout_form() {
   }
   unset($_SESSION['expanded_panes']);
 
-  $form['cart_contents'] = array('#type' => 'value', '#value' => uc_cart_get_contents());
+  $form['cart_contents'] = array('#type' => 'hidden', '#value' => serialize(uc_cart_get_contents()));
   $form['cancel'] = array('#type' => 'submit', '#submit' => FALSE, '#value' => t('Cancel'));
   $form['continue'] = array('#type' => 'submit', '#value' => variable_get('uc_checkout_review_button', t('Review order')));
 
@@ -245,7 +245,7 @@ function uc_cart_checkout_form_validate($form, &$form_state) {
     $order->order_status = uc_order_state_default('in_checkout');
   }
 
-  $order->products = $form_state['values']['cart_contents'];
+  $order->products = unserialize($form_state['values']['cart_contents']);
 
   $order->order_total = uc_order_get_total($order, TRUE);
 
@@ -339,8 +339,8 @@ function uc_cart_checkout_review() {
 function theme_uc_cart_checkout_review($panes, $form) {
   drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart.css');
 
-  $output = '<p>' . check_markup(variable_get('uc_checkout_review_instructions', uc_get_message('review_instructions')), variable_get('uc_checkout_review_instructions_format', 3), FALSE)
-           . '</p><table class="order-review-table">';
+  $output = '<p>'. check_markup(variable_get('uc_checkout_review_instructions', uc_get_message('review_instructions')), variable_get('uc_checkout_review_instructions_format', 3), FALSE)
+           .'</p><table class="order-review-table">';
 
   foreach ($panes as $title => $data) {
     $output .= '<tr class="pane-title-row"><td colspan="2">'. $title
@@ -403,20 +403,28 @@ function uc_cart_checkout_review_form_submit($form, &$form_state) {
   // Invoke hook_order($op = 'submit') to test to make sure the order can
   // be completed... used for auto payment in uc_credit.module.
   $order = uc_order_load($_SESSION['cart_order']);
-  $pass = module_invoke_all('order', 'submit', $order, NULL);
+  $error = FALSE;
 
-  foreach ($pass as $result) {
+  // Invoke it on a per-module basis instead of all at once.
+  foreach (module_implements('order') as $module) {
+    $result = module_invoke($module, 'order', 'submit', $order, NULL);
+
     $msg_type = 'status';
-    if ($result['pass'] === FALSE) {
+    if ($result[0]['pass'] === FALSE) {
       $error = TRUE;
       $msg_type = 'error';
     }
-    if (!empty($result['message'])) {
-      drupal_set_message($result['message'], $msg_type);
+    if (!empty($result[0]['message'])) {
+      drupal_set_message($result[0]['message'], $msg_type);
+    }
+
+    // Stop invoking the hooks if there was an error.
+    if ($error) {
+      break;
     }
   }
 
-  if ($error === TRUE) {
+  if ($error) {
     $_SESSION['do_review'] = TRUE;
     $form_state['redirect'] = 'cart/checkout/review';
   }

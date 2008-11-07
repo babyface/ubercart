@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.admin.inc,v 1.1.2.1 2008/10/15 14:47:36 islandusurper Exp $
+// $Id: uc_taxes.admin.inc,v 1.1.2.2 2008/11/07 21:13:26 islandusurper Exp $
 
 /**
  * @file
@@ -29,7 +29,7 @@ function uc_taxes_admin_settings() {
  * Create or edit a tax rule.
  *
  * @ingroup forms
- * @see uc_taxes_form_submit
+ * @see uc_taxes_form_submit()
  */
 function uc_taxes_form($form_state, $tax_id = 0) {
   $form = array();
@@ -132,7 +132,7 @@ function uc_taxes_copy($tax_id) {
  * Delete a tax rule.
  *
  * @ingroup forms
- * @see uc_taxes_delete_submit
+ * @see uc_taxes_delete_submit()
  */
 function uc_taxes_delete($form_state, $tax_id = 0) {
   //drupal_set_message($tax_id);

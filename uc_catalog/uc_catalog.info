@@ -1,4 +1,4 @@
-; $Id: uc_catalog.info,v 1.6.2.1 2008/10/15 14:47:47 islandusurper Exp $
+; $Id: uc_catalog.info,v 1.6.2.2 2008/11/07 21:13:24 islandusurper Exp $
 name = Catalog
 description = Display a hierarchical product catalog page and block.
 dependencies[] = path

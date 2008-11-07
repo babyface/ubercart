@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.7 2008/10/24 21:11:31 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.8 2008/11/07 21:13:23 islandusurper Exp $
 
 /**
  * @file
@@ -146,9 +146,9 @@ function uc_order_ca_condition() {
     ),
   );
   $conditions['uc_order_condition_delivery_zone'] = array(
-    '#title' => t("Check an order's shipping zone"),
+    '#title' => t("Check an order's shipping @zone", array('@zone' => uc_get_field_name('zone'))),
     '#category' => t('Order: Shipping address'),
-    '#description' => t('Returns TRUE if the shipping zone is in the specified list.'),
+    '#description' => t('Returns TRUE if the shipping @zone is in the specified list.', array('@zone' => uc_get_field_name('zone'))),
     '#callback' => 'uc_order_condition_delivery_zone',
     '#arguments' => array(
       'order' => $order_arg,
@@ -173,9 +173,9 @@ function uc_order_ca_condition() {
     ),
   );
   $conditions['uc_order_condition_billing_zone'] = array(
-    '#title' => t("Check an order's billing zone"),
+    '#title' => t("Check an order's billing @zone", array('@zone' => uc_get_field_name('zone'))),
     '#category' => t('Order: Billing address'),
-    '#description' => t('Returns TRUE if the billing zone is in the specified list.'),
+    '#description' => t('Returns TRUE if the billing @zone is in the specified list.', array('@zone' => uc_get_field_name('zone'))),
     '#callback' => 'uc_order_condition_billing_zone',
     '#arguments' => array(
       'order' => $order_arg,
@@ -683,7 +683,7 @@ function uc_order_condition_products_weight_form($form_state, $settings = array(
   );
   $form['weight_units'] = array('#type' => 'select',
     '#title' => t('Unit of measurement'),
-    '#default_value' => variable_get('uc_weight_unit', 'lb'),
+    '#default_value' => $settings['weight_units'] ? $settings['weight_units'] : variable_get('uc_weight_unit', 'lb'),
     '#options' => array(
       'lb' => t('Pounds'),
       'kg' => t('Kilograms'),
@@ -719,6 +719,7 @@ function uc_order_condition_products_weight_form($form_state, $settings = array(
 function uc_order_condition_products_weight_submit($form, &$form_state) {
   return array(
     'products' => $form_state['values']['products'],
+    'weight_units' => $form_state['values']['weight_units'],
     'product_weight_value' => $form_state['values']['product_weight_value'],
     'product_weight_comparison' => $form_state['values']['product_weight_comparison'],
   );
@@ -819,11 +820,8 @@ function uc_order_action_email($order, $settings) {
   foreach ($recipients as $email) {
     $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
 
-    if ($sent['result']) {
-      watchdog('ca', 'Email sent to @email about order #!order_id.', array('@email' => $email, '!order_id' => $order->order_id));
-    }
-    else {
-      watchdog('ca', 'Email notification about order #!order_id to @email failed.', array('@email' => $email, '!order_id' => $order->order_id), WATCHDOG_ERROR);
+    if (!$sent['result']) {
+      watchdog('ca', 'Attempt to e-mail @email concerning order @order_id failed.', array('@email' => $email, '@order_id' => $order->order_id), WATCHDOG_ERROR);
     }
   }
 }
@@ -913,7 +911,7 @@ function uc_order_action_email_invoice($order, $settings) {
   $settings['format'] = 2; // Full HTML.
 
   if (empty($recipients)) {
-    watchdog('ca', 'Can not send email without an email address.', array(), WATCHDOG_ERROR);
+    watchdog('ca', 'Attempted to e-mail an invoice with no recipient.', array(), WATCHDOG_ERROR);
     return;
   }
 
@@ -921,11 +919,8 @@ function uc_order_action_email_invoice($order, $settings) {
   foreach ($recipients as $email) {
     $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
 
-    if ($sent['result']) {
-      watchdog('ca', 'Email sent to @email about order #!order_id.', array('@email' => $email, '!order_id' => $order->order_id));
-    }
-    else {
-      watchdog('ca', 'Email notification about order #!order_id to @email failed.', array('@email' => $email, '!order_id' => $order->order_id), WATCHDOG_ERROR);
+    if (!$sent['result']) {
+      watchdog('ca', 'Attempt to e-mail invoice for order @order_id to @email failed.', array('@email' => $email, '@order_id' => $order->order_id), WATCHDOG_ERROR);
     }
   }
 }

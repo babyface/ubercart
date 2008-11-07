@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_pack.module,v 1.6.2.4 2008/10/15 14:47:44 islandusurper Exp $
+// $Id: uc_payment_pack.module,v 1.6.2.5 2008/11/07 21:13:27 islandusurper Exp $
 
 /**
  * @file Provides the check/money order, COD, and "other" payment methods.
@@ -168,6 +168,7 @@ function uc_payment_method_cod($op, &$arg1) {
       return $review;
 
     case 'order-view':
+    case 'customer-view':
       if (variable_get('uc_cod_delivery_date', FALSE)) {
         $output = t('Desired delivery date:') .'<br />'
                 . uc_date_format($arg1->payment_details['delivery_month'],
@@ -181,6 +182,18 @@ function uc_payment_method_cod($op, &$arg1) {
         $details .= uc_strip_form(drupal_get_form('uc_payment_method_cod_form', $arg1));
       }
       return $details;
+
+    case 'edit-process':
+      if (variable_get('uc_cod_delivery_date', FALSE)) {
+        return array(
+          'payment_details' => array(
+            'delivery_month' => intval($_POST['cod_delivery_month']),
+            'delivery_day' => intval($_POST['cod_delivery_day']),
+            'delivery_year' => intval($_POST['cod_delivery_year']),
+          ),
+        );
+      }
+      return;
 
     case 'order-load':
       $result = db_query("SELECT * FROM {uc_payment_cod} WHERE order_id = %d", $arg1->order_id);
@@ -231,7 +244,7 @@ function uc_payment_method_cod($op, &$arg1) {
 }
 
 function uc_payment_method_cod_form($form_state, $order) {
-  $form['table1'] = array('#value' => '<style>.cod-table div, .cod-table { display: inline; }</style><table class="cod-table"><tr><td class="form-item" colspan="3"><label>'. t('Enter a desired delivery date:') .'</label></td></tr><tr><td>');
+  $form['table1'] = array('#value' => '<style>.cod-table div, .cod-table { display: inline; }.cod-table tbody { border-top: 0px; }</style><table class="cod-table"><tr><td class="form-item" colspan="3"><label>'. t('Enter a desired delivery date:') .'</label></td></tr><tr><td>');
   $month = (!empty($order->payment_details['delivery_month'])) ? $order->payment_details['delivery_month'] : format_date(time(), 'custom', 'n');
   $form['cod_delivery_month'] = uc_select_month(NULL, $month);
   $form['table2'] = array('#value' => '</td><td>');

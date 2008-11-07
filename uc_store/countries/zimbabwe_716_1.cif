@@ -1,5 +1,5 @@
 <?php
-// $Id: zimbabwe_716_1.cif,v 1.1.4.2 2008/11/03 21:33:50 islandusurper Exp $
+// $Id: zimbabwe_716_1.cif,v 1.1.4.3 2008/11/07 21:13:24 islandusurper Exp $
 
 /**
  * First implement hook_install() using the name of the country as the base of
@@ -14,7 +14,7 @@ function zimbabwe_install() {
   // function uc_get_zone_ids($num) as the second argument for db_query() where
   // $num is the number of zones in the INSERT query.
   // VALUES = %d for ID, Parent Country ID, Zone Abbreviation, Zone Name
-  db_query("INSERT INTO {uc_zones} VALUES "
+  db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
           ."(716, 'BW', 'Bulawayo'),"
           ."(716, 'HR', 'Harare'),"
           ."(716, 'MC', 'Manicaland'),"

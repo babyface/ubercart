@@ -1,4 +1,4 @@
-; $Id: uc_usps.info,v 1.4.2.2 2008/10/15 14:47:41 islandusurper Exp $
+; $Id: uc_usps.info,v 1.4.2.3 2008/11/07 21:13:23 islandusurper Exp $
 name = U.S. Postal Service
 description = Integration of USPS Rate Calculator and Mail Service Standards Web Tools with Ubercart.
 dependencies[] = uc_quote

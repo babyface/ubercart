@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.install,v 1.6.2.3 2008/10/15 14:48:03 islandusurper Exp $
+// $Id: uc_paypal.install,v 1.6.2.4 2008/11/07 21:13:25 islandusurper Exp $
 
 /**
  * @file
@@ -113,6 +113,23 @@ function uc_paypal_update_1() {
   $ret[] = update_sql("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('paypal_pending', '". $t('PayPal pending') ."', 'payment_received', 7, 1);");
 
   return $ret;
+}
+
+function uc_paypal_update_2() {
+  // Change the variable used to define the default transaction type.
+  if (variable_get('uc_paypal_wpp_payment_action', 'Sale') == 'Sale') {
+    variable_set('uc_pg_paypal_wpp_cc_txn_type', UC_CREDIT_AUTH_CAPTURE);
+  }
+  else {
+    variable_set('uc_pg_paypal_wpp_cc_txn_type', UC_CREDIT_AUTH_ONLY);
+  }
+  variable_del('uc_paypal_wpp_payment_action');
+
+  // Fix a bug in a variable name.
+  variable_set('uc_paypal_wps_submit_method', variable_get('uc_paypal_wbs_submit_method', 'single'));
+  variable_del('uc_paypal_wbs_submit_method');
+
+  return array();
 }
 
 function uc_paypal_update_6000() {

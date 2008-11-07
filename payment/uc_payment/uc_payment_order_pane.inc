@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_order_pane.inc,v 1.5.2.3 2008/10/24 21:11:30 islandusurper Exp $
+// $Id: uc_payment_order_pane.inc,v 1.5.2.4 2008/11/07 21:13:25 islandusurper Exp $
 
 /**
  * @file
@@ -86,7 +86,7 @@ function uc_order_pane_payment($op, $arg1) {
       drupal_add_js(array('methods' => $method_array_js), 'setting');
 
       // begin the order lock, also get payment details
-      drupal_add_js(array('ucOrderInitiate' => true), 'setting');
+      drupal_add_js(array('ucOrderInitiate' => TRUE), 'setting');
 
       $output = '<table class="order-edit-table">';
       foreach (element_children($arg1['payment']) as $field) {
@@ -102,7 +102,7 @@ function uc_order_pane_payment($op, $arg1) {
       $changes['payment_method'] = $arg1['payment_method'];
       $func = _payment_method_data($arg1['payment_method'], 'callback');
       if (function_exists($func) && ($return = $func('edit-process', $arg1)) != NULL && is_array($return)) {
-         $changes = array_merge($changes, $return);
+        $changes = array_merge($changes, $return);
       }
       return $changes;
   }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.12.2.4 2008/10/24 21:12:33 islandusurper Exp $
+// $Id: uc_taxes.module,v 1.12.2.5 2008/11/07 21:13:26 islandusurper Exp $
 
 /**
  * @file
@@ -90,7 +90,7 @@ function uc_taxes_form_alter(&$form, &$form_state, $form_id) {
       drupal_add_js(drupal_get_path('module', 'uc_taxes') .'/uc_taxes.js');
     }
   }
-  else if ($form_id == 'uc_order_edit_form') {
+  elseif ($form_id == 'uc_order_edit_form') {
     if (isset($form['quotes'])) {
       drupal_add_js(drupal_get_path('module', 'uc_taxes') .'/uc_taxes.js');
     }
@@ -298,7 +298,7 @@ function uc_taxes_calculate_tax($order) {
     $order = uc_order_load($order);
     $account = user_load(array('uid' => $order->uid));
   }
-  else if ((int)$order->uid) {
+  elseif ((int)$order->uid) {
     $account = user_load(array('uid' => intval($order->uid)));
   }
   else {

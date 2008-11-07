@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.2.2.6 2008/10/24 21:11:31 islandusurper Exp $
+// $Id: uc_file.module,v 1.2.2.7 2008/11/07 21:13:23 islandusurper Exp $
 
 /**
  * @file
@@ -18,9 +18,9 @@ define('UC_FILE_PAGER_SIZE', 50);
 define('UC_FILE_REQUEST_LIMIT', 50);
 define('UC_FILE_BYTE_SIZE', 1024);
 
-/* **************************************************************************** *
- *  Hook Functions (Drupal)                                                     *
- * **************************************************************************** */
+/*******************************************************************************
+ * Hook Functions (Drupal)                                                     *
+ ******************************************************************************/
 
 /**
  * Implementation of hook_form_alter().
@@ -217,11 +217,17 @@ function uc_file_order($op, $order, $status) {
 
   switch ($op) {
     case 'update':
-      if (($order->uid > 0) && ($order_user = user_load(array('uid' => $order->uid))) !== FALSE) {
+      // Only process file downloads when the order is being updated to the
+      // correct status, the status is actually being changed, and a valid user
+      // has been assigned to the order.
+      if ($status == variable_get('uc_file_default_order_status', 'completed') &&
+          $order->status != $status &&
+          $order->uid > 0 &&
+          ($order_user = user_load(array('uid' => $order->uid))) !== FALSE) {
         foreach ($order->products as $product) {
           $files = db_query("SELECT fp.fid, fp.pfid, model, f.filename FROM {uc_file_products} AS fp INNER JOIN {uc_product_features} AS pf ON pf.pfid = fp.pfid INNER JOIN {uc_files} as f ON f.fid = fp.fid WHERE nid = %d", $product->nid);
           while ($file = db_fetch_object($files)) {
-            if (($file->model == $product->model || empty($file->model)) && $status == variable_get('uc_file_default_order_status', 'completed')) {
+            if (($file->model == $product->model || empty($file->model))) {
               $downloads = _user_table_action('allow', $file->fid, $order_user->uid, $file->pfid);
               $user_downloads = (!empty($user_downloads)) ? array_merge($user_downloads, $downloads) : $downloads ;
               if (_get_dir_file_ids($file->fid)) {
@@ -311,8 +317,8 @@ function uc_file_token_values($type, $object = NULL) {
  * Implementation of hook_uc_message().
  */
 function uc_file_uc_message() {
-  $messages['uc_file_download_subject'] = t("File Downloads for Order# [order-id]");
-  $messages['uc_file_download_message'] = t("Your order (order# [order-link]) at [store-name] included file download(s). You may access them with the following link(s):\n\n[file-downloads]\n\nAfter downloading these files these links will have expired. If you need to download the files again, you can login at [site-login] and visit the \"My Account\" section of the site.\n\nThanks again, \n\n[store-name]\n[site-slogan]");
+  $messages['uc_file_download_subject'] = t("File Downloads for Order [order-id]");
+  $messages['uc_file_download_message'] = t("Your order (order [order-link]) at [store-name] included file download(s). You may access them with the following link(s):\n\n[file-downloads]\n\nAfter downloading these files these links will have expired. If you need to download the files again, you can login at [site-login] and visit the \"My Account\" section of the site.\n\nThanks again, \n\n[store-name]\n[site-slogan]");
 
   return $messages;
 }
@@ -470,22 +476,15 @@ function uc_file_feature_settings() {
     '#description' => t('The absolute path (or relative to Drupal root) where files used for file downloads are located. For security reasons, it is reccommended to choose a path outside the web root.'),
     '#default_value' => variable_get('uc_file_base_dir', NULL),
   );
-  $form['uc_file_file_mask'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Files mask'),
-    '#description' => t("The regular expression used for masking files in files directory. Don't change unless you know what you're doing."),
-    '#default_value' => variable_get('uc_file_file_mask', ".*"),
-  );
   $form['uc_file_download_limit'] = array(
     '#type' => 'fieldset',
     '#title' => t('Download limits'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
+    '#description' => t('Leave any of these fields empty or unchanged to not enforce a limit with them.'),
   );
   $form['uc_file_download_limit']['uc_file_download_limit_number'] = array(
     '#type' => 'textfield',
     '#title' => t('Downloads'),
-    '#description' => t("The number of times a file can be downloaded. Leave empty to set no limit."),
+    '#description' => t('The number of times a file can be downloaded.'),
     '#default_value' => variable_get('uc_file_download_limit_number', NULL),
     '#maxlength' => 4,
     '#size' => 4,
@@ -493,7 +492,7 @@ function uc_file_feature_settings() {
   $form['uc_file_download_limit']['uc_file_download_limit_addresses'] = array(
     '#type' => 'textfield',
     '#title' => t('IP addresses'),
-    '#description' => t("The number of unique IPs that a file can be downloaded from. Leave empty to set no limit."),
+    '#description' => t('The number of unique IP addresses from which a user can download a file.'),
     '#default_value' => variable_get('uc_file_download_limit_addresses', NULL),
     '#maxlength' => 4,
     '#size' => 4,
@@ -524,6 +523,21 @@ function uc_file_feature_settings() {
     '#prefix' => '<div class="duration">',
     '#suffix' => '</div>',
   );
+
+  $form['uc_file_advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Advanced server settings'),
+    '#description' => t('The defaults should cover most use cases.  Do not change these unless you know what you are doing.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['uc_file_advanced']['uc_file_file_mask'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Files mask'),
+    '#description' => t("The regular expression used for masking files in files directory. Don't change unless you know what you're doing."),
+    '#default_value' => variable_get('uc_file_file_mask', ".*"),
+  );
+
   return $form;
 }
 

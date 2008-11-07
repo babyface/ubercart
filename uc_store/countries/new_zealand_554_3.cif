@@ -1,5 +1,5 @@
 <?php
-// $Id: new_zealand_554_3.cif,v 1.1.2.4 2008/11/03 21:33:50 islandusurper Exp $
+// $Id: new_zealand_554_3.cif,v 1.1.2.5 2008/11/07 21:13:24 islandusurper Exp $
 
 function new_zealand_install() {
   db_query("INSERT INTO {uc_countries} VALUES (554, 'New Zealand', 'NZ', 'NZL', 3)");
@@ -33,7 +33,7 @@ function new_zealand_install() {
 function new_zealand_update($version) {
   switch ($version) {
     case 2:
-      db_query("INSERT INTO {uc_zones} VALUES "
+      db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
               ."(554, 'AUK', 'Auckland'),"
               ."(554, 'BOP', 'Bay of Plenty'),"
               ."(554, 'CAN', 'Canterbury'),"

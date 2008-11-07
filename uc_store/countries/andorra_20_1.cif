@@ -1,5 +1,5 @@
 <?php
-// $Id: andorra_20_1.cif,v 1.2.2.4 2008/11/03 21:33:50 islandusurper Exp $
+// $Id: andorra_20_1.cif,v 1.2.2.5 2008/11/07 21:13:24 islandusurper Exp $
 
 /**
  * Brought to you by teh doomed :)
@@ -18,7 +18,7 @@ function andorra_install() {
           ."(20, 'EN', 'Encamp'),"
           ."(20, 'MA', 'La Massana'),"
           ."(20, 'OR', 'Ordino'),"
-          ."(20, 'JL', 'Sant Juli� de L�ria'),"
+          ."(20, 'JL', 'Sant Julià de Lòria'),"
           ."(20, 'AN', 'Andorra La Vella'),"
           ."(20, 'EE', 'Escaldes Engordany')");
 

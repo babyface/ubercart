@@ -1,4 +1,4 @@
-; $Id: uc_credit.info,v 1.4 2008/07/10 12:40:56 islandusurper Exp $
+; $Id: uc_credit.info,v 1.4.2.1 2008/11/07 21:13:23 islandusurper Exp $
 name = Credit Card
 description = Receive credit card payments through checkout.
 dependencies[] = uc_store

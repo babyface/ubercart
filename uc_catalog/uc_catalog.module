@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.7 2008/11/03 21:33:51 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.8 2008/11/07 21:13:24 islandusurper Exp $
 
 /**
  * @file
@@ -287,7 +287,7 @@ function uc_catalog_taxonomy($op, $type, $object = NULL) {
           if ($object['remove']) {
             db_query("DELETE FROM {uc_catalog_images} WHERE tid = %d", $object['tid']);
           }
-          else if ($file = file_save_upload($field_name)) {
+          elseif ($file = file_save_upload($field_name)) {
             $file->filepath = str_replace('\\', '/', $file->filepath);
             //dpm($file);
             if (file_copy($file, file_create_path() .'/'. $file->filename)) {
@@ -422,8 +422,8 @@ function uc_catalog_block($op = 'list', $delta = 0, $edit = array()) {
  * Theme the beginning of the catalog block.
  *
  * @ingroup themeable
- * @see theme_uc_catalog_item
- * @see theme_uc_catalog_block_end
+ * @see theme_uc_catalog_item()
+ * @see theme_uc_catalog_block_end()
  */
 function theme_uc_catalog_block_start() {
   return '<ul class="menu">';
@@ -433,8 +433,8 @@ function theme_uc_catalog_block_start() {
  * Theme the end of the catalog block.
  *
  * @ingroup themeable
- * @see theme_uc_catalog_block_start
- * @see theme_uc_catalog_item
+ * @see theme_uc_catalog_block_start()
+ * @see theme_uc_catalog_item()
  */
 function theme_uc_catalog_block_end() {
   return '</ul>';
@@ -687,7 +687,7 @@ function theme_uc_catalog_product_grid($products) {
     if ($count == 0) {
       $product_table .= "<tr>";
     }
-    else if ($count % variable_get('uc_catalog_grid_display_width', 3) == 0) {
+    elseif ($count % variable_get('uc_catalog_grid_display_width', 3) == 0) {
       $product_table .= "</tr><tr>";
     }
 
@@ -890,8 +890,8 @@ function _uc_catalog_navigation($branch) {
  * Display a formatted link in the catalog block.
  *
  * @ingroup themeable
- * @see theme_uc_catalog_block_start
- * @see theme_uc_catalog_block_end
+ * @see theme_uc_catalog_block_start()
+ * @see theme_uc_catalog_block_end()
  */
 function theme_uc_catalog_item($here, $active_link = '', $lis, $expand, $inpath, $link, $count_children ) {
   $output='';
@@ -949,7 +949,7 @@ function uc_catalog_image_load($term) {
   if (is_object($term)) {
     $tid = $term->tid;
   }
-  else if (is_array($term)) {
+  elseif (is_array($term)) {
     $tid = $term['tid'];
   }
   else {

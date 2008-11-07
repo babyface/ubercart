@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.6 2008/11/03 21:33:53 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.7 2008/11/07 21:13:24 islandusurper Exp $
 
 /**
  * @file
@@ -264,7 +264,7 @@ function uc_quote_form_alter(&$form, &$form_state, $form_id) {
       '#weight' => -7,
     );
   }
-  else if ($form_id == 'uc_cart_checkout_form' && isset($form['panes']['quotes'])) {
+  elseif ($form_id == 'uc_cart_checkout_form' && isset($form['panes']['quotes'])) {
     $form['#validate'][] = 'uc_quote_save_choice';
     $form['#pre_render'][] = 'uc_quote_cache_quotes';
   }
@@ -325,7 +325,7 @@ function uc_quote_ca_condition() {
 /**
  * Returns true if the order has a product of the chosen shipping type.
  *
- * @see uc_quote_condition_product_shipping_type_form
+ * @see uc_quote_condition_product_shipping_type_form()
  */
 function uc_quote_condition_product_shipping_type($order, $settings) {
   $result = FALSE;
@@ -342,8 +342,8 @@ function uc_quote_condition_product_shipping_type($order, $settings) {
  * Settings form for uc_quote_condition_product_shipping_type().
  *
  * @ingroup forms
- * @see uc_quote_condition_product_shipping_type
- * @see uc_quooe_condition_product_shipping_type_submit
+ * @see uc_quote_condition_product_shipping_type()
+ * @see uc_quooe_condition_product_shipping_type_submit()
  */
 function uc_quote_condition_product_shipping_type_form($form_state, $settings = array()) {
   $form = array();
@@ -683,7 +683,7 @@ function uc_quote_get_default_shipping_address($nid) {
  * Cart pane callback.
  *
  * @ingroup forms
- * @see theme_uc_cart_pane_quotes
+ * @see theme_uc_cart_pane_quotes()
  */
 function uc_cart_pane_quotes($items) {
   if (!variable_get('uc_cap_quotes_enabled', FALSE)) {
@@ -715,7 +715,7 @@ function uc_cart_pane_quotes($items) {
   }
   $form['delivery_country'] = uc_country_select(uc_get_field_name('country'), uc_store_default_country(), NULL, 'name', TRUE);
   $country_id = isset($_POST['delivery_country']) ? intval($_POST['delivery_country']) : uc_store_default_country();
-  $form['delivery_zone'] = uc_zone_select(uc_get_field_name('zone'), null, null, $country_id, 'name', true);
+  $form['delivery_zone'] = uc_zone_select(uc_get_field_name('zone'), NULL, NULL, $country_id, 'name', TRUE);
   $form['delivery_postal_code'] = uc_textfield(uc_get_field_name('postal_code'), '', TRUE, NULL, 10, 10);
   $form['quote_method'] = array('#type' => 'hidden',
     '#value' => key($method_choices),
@@ -1206,7 +1206,7 @@ function uc_quote_get_shipping_types() {
     if (isset($result) && is_array($result)) {
       $return = array_merge($return, $result);
     }
-    else if (isset($result)) {
+    elseif (isset($result)) {
       $return[] = $result;
     }
   }

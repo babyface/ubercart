@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.7 2008/11/03 21:33:53 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.8 2008/11/07 21:13:23 islandusurper Exp $
 
 /**
  * @file
@@ -286,10 +286,9 @@ function uc_order_menu() {
     'file' => 'uc_order.admin.inc',
   );
   $items['admin/store/orders/%uc_order/delete'] = array(
-    'title' => 'Delete order?',
-    'description' => 'Delete order?',
-    'page callback' => 'uc_order_delete_confirm',
-    'page arguments' => array(3),
+    'title' => 'Delete an order',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_order_delete_confirm_form', 3),
     'access callback' => 'uc_order_can_delete',
     'access arguments' => array(3),
     'type' => MENU_CALLBACK,
@@ -459,44 +458,59 @@ function uc_order_user($op, &$edit, &$account, $category = NULL) {
   switch ($op) {
     case 'view':
       if ($user->uid && (($user->uid == $account->uid && user_access('view own orders')) || user_access('view all orders'))) {
-        $items['orders'] = array(
-          'value' => l(t('Click here to view your order history.'), 'user/'. $account->uid .'/orders'),
-          'class' => 'member',
+        $account->content['orders'] = array(
+          '#type' => 'user_profile_category',
+          '#weight' => -5,
+          '#title' => t('Orders'),
+          'link' => array(
+            '#type' => 'user_profile_item',
+            '#value' => l(t('Click here to view your order history.'), 'user/'. $account->uid .'/orders'),
+          ),
         );
-        return array(t('Orders') => $items);
       }
+
+      break;
   }
 }
 
+/**
+ * Implementation of hook_mail().
+ */
 function uc_order_mail($key, &$message, $params) {
+  // Build the appropriate message paramaters based on the e-mail key.
   switch ($key) {
+    // Setup an e-mailed invoice.
     case 'invoice':
       $message['headers']['Content-Type'] = 'text/html; charset=UTF-8; format=flowed';
       $message['subject'] = t('Your Order Invoice');
       $message['from'] = uc_store_email_from();
       $message['body'][] = uc_order_load_invoice($params['order'], 'admin-mail', variable_get('uc_cust_order_invoice_template', 'customer'));
-    break;
+      break;
+
+    // Setup a registration e-mail for a new user created during checkout.
     case 'user-register-welcome':
       $variables = array('!username' => $params['account']->name, '!site' => variable_get('site_name', 'Drupal'), '!password' => $params['account']->pass, '!uri' => $base_url, '!uri_brief' => substr($base_url, strlen('http://')), '!mailto' => $params['account']->mail, '!date' => format_date(time()), '!login_uri' => url('user', array('absolute' => TRUE)), '!edit_uri' => url('user/'. $params['account']->uid .'/edit', array('absolute' => TRUE)), '!login_url' => user_pass_reset_url($params['account']));
       $message['from'] = uc_store_email_from();
       $message['subject'] = _user_mail_text('welcome_subject', $variables);
       $message['body'][] = _user_mail_text('welcome_body', $variables);
-    break;
+      break;
+
+    // Setup a custom e-mail defined by an action on a predicate.
     case 'action-mail':
       // Assemble an email message from the conditional actions settings.
       $message['headers']['Content-Type'] = 'text/html; charset=UTF-8; format=flowed';
       $message['from'] = $params['from'];
 
-      // Newlines are not allowed in subjects. Maybe drupal_mail_send() should do this?
-      $message['subject'] = str_replace(
-        array("\r\n", "\r", "\n"),
-        ' ',
-        check_plain(token_replace_multiple($params['subject'], $params['replacements']))
-      );
-
+      // Perform token replacement on the subject and body.
+      $subject = token_replace_multiple($params['subject'], $params['replacements']);
       $body = token_replace_multiple($params['message'], $params['replacements']);
+
+      // Strip newline characters from e-mail subjects.
+      // TODO: Maybe drupal_mail_send() should do this? -LM
+      $message['subject'] = str_replace(array("\r\n", "\r", "\n"), ' ', check_plain($subject));
       $message['body'] = check_markup($body, $params['format'], FALSE);
-    break;
+
+      break;
   }
 }
 
@@ -1168,6 +1182,8 @@ function uc_order_load($order_id) {
  *   The ID of the order you wish to delete.
  */
 function uc_order_delete($order_id) {
+  global $user;
+
   $order = uc_order_load($order_id);
 
   // Perform the operations if we're deleting a valid order.
@@ -1188,6 +1204,9 @@ function uc_order_delete($order_id) {
 
     // Delete line items for the order.
     uc_order_delete_line_item($order_id, TRUE);
+
+    // Log the action in the database.
+    watchdog('uc_order', 'Order @order_id deleted by user @uid.', array('@order_id' => $order_id, '@uid' => $user->uid));
   }
 }
 
@@ -1298,7 +1317,7 @@ function uc_order_update_status($order_id, $status) {
     db_query("UPDATE {uc_orders} SET order_status = '%s', modified = %d WHERE order_id = %d", $status, time(), $order_id);
     module_invoke_all('order', 'update', $order, $status);
 
-    $change = array(t('Order status') => array('old' => $order->order_status, 'new' => $status));
+    $change = array(t('Order status') => array('old' => uc_order_status_data($order->order_status, 'title'), 'new' => uc_order_status_data($status, 'title')));
     uc_order_log_changes($order->order_id, $change);
 
     $updated = uc_order_load($order_id);
@@ -1339,8 +1358,8 @@ function uc_order_log_changes($order_id, $changes) {
     }
   }
 
-  db_query("INSERT INTO {uc_order_log} (order_id, uid, changes, created) VALUES "
-          ."(%d, %d, '%s', %d)", $order_id, $user->uid, theme('item_list', $items), time());
+  db_query("INSERT INTO {uc_order_log} (order_id, uid, changes, created) VALUES (%d, %d, '%s', %d)",
+    $order_id, $user->uid, theme('item_list', $items), time());
 
   return TRUE;
 }

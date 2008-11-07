@@ -1,4 +1,4 @@
-// $Id: uc_cart_block.js,v 1.8.2.1 2008/10/15 14:47:53 islandusurper Exp $
+// $Id: uc_cart_block.js,v 1.8.2.2 2008/11/07 21:13:22 islandusurper Exp $
 
 /**
  * Set the behavior to (un)collapse the cart block on a click

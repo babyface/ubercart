@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cybersource.soap.inc,v 1.1.4.2 2008/10/15 14:48:06 islandusurper Exp $
+// $Id: uc_cybersource.soap.inc,v 1.1.4.3 2008/11/07 21:13:27 islandusurper Exp $
 
 /**
  * @file

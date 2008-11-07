@@ -1,4 +1,4 @@
-; $Id: uc_flatrate.info,v 1.4.2.1 2008/10/15 14:48:08 islandusurper Exp $
+; $Id: uc_flatrate.info,v 1.4.2.2 2008/11/07 21:13:27 islandusurper Exp $
 name = Flatrate
 description = Assigns a flat shipping rate to products.
 dependencies[] = uc_quote

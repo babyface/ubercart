@@ -1,10 +1,10 @@
 <?php
-// $Id: kazakhstan_398_1.cif,v 1.1.4.2 2008/11/03 21:33:50 islandusurper Exp $
+// $Id: kazakhstan_398_1.cif,v 1.1.4.3 2008/11/07 21:13:24 islandusurper Exp $
 
 function kazakhstan_install() {
-  db_query("INSERT INTO {uc_countries} VALUES ('398', 'Kazakhstan', 'KZ', 'KAZ', 1)");
+  db_query("INSERT INTO {uc_countries} VALUES (398, 'Kazakhstan', 'KZ', 'KAZ', 1)");
 
-  db_query("INSERT INTO {uc_zones} VALUES "
+  db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
           ."(398, 'ALA', 'Алматы'),"
           ."(398, 'TSE', 'Астана'),"
           ."(398, 'AKM', 'Акмолинская область'),"

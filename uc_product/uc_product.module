@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.8 2008/11/03 21:33:53 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.9 2008/11/07 21:13:24 islandusurper Exp $
 
 /**
  * @file
@@ -421,10 +421,10 @@ function uc_product_edit_access($node) {
  * Implementation of hook_form().
  *
  * @ingroup forms
- * @see theme_uc_product_form_prices
- * @see theme_uc_product_form_weight
- * @see theme_uc_product_dimensions
- * @see uc_product_form_validate
+ * @see theme_uc_product_form_prices()
+ * @see theme_uc_product_form_weight()
+ * @see theme_uc_product_dimensions()
+ * @see uc_product_form_validate()
  */
 function uc_product_form(&$node) {
   $type = node_get_types('type', $node);
@@ -653,7 +653,7 @@ function uc_product_validate($node) {
     if (!is_numeric($node->default_qty)) {
       form_set_error('default_qty', t('Quantities should be numeric.'));
     }
-    else if ($node->default_qty < 0) {
+    elseif ($node->default_qty < 0) {
       form_set_error('default_qty', t("Adding negative items to the cart doesn't make sense, so don't make it easy."));
     }
   }
@@ -781,7 +781,7 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
       );
     }
   }
-  else if (module_exists('uc_cart') && variable_get('uc_product_add_to_cart_teaser', TRUE)) {
+  elseif (module_exists('uc_cart') && variable_get('uc_product_add_to_cart_teaser', TRUE)) {
     $node->content['add_to_cart'] = array('#value' => theme('uc_product_add_to_cart', $node),
       '#access' => $enabled['add_to_cart'],
       '#weight' => $weight['add_to_cart'],
@@ -869,7 +869,7 @@ function uc_product_form_alter(&$form, &$form_state, $form_id) {
 /**
  * Define up the product list table.
  *
- * @see uc_product_table
+ * @see uc_product_table()
  */
 function uc_product_table_settings() {
   $tables = array();
@@ -976,8 +976,8 @@ function uc_product_table($form_state, $args = array()) {
 
 /**
  * @ingroup forms
- * @see uc_product_forms
- * @see uc_catalog_buy_it_now_form_submit
+ * @see uc_product_forms()
+ * @see uc_catalog_buy_it_now_form_submit()
  */
 function uc_catalog_buy_it_now_form($form_state, $node) {
   $form = array();
@@ -1079,7 +1079,7 @@ function uc_product_product_types() {
 /**
  * Display the status of the product image handlers.
  *
- * @see uc_product_image_defaults
+ * @see uc_product_image_defaults()
  */
 function uc_product_store_status() {
   if (!module_exists('filefield') || !module_exists('imagecache')) {
@@ -1261,7 +1261,7 @@ function uc_product_is_product($node) {
  */
 function theme_uc_product_model($model) {
   $output = '<div class="model">';
-  $output .= t('SKU: @m', array('@m' => $model));
+  $output .= t('SKU: @sku', array('@sku' => $model));
   $output .= '</div>';
   return $output;
 }
@@ -1288,9 +1288,9 @@ function theme_uc_product_add_to_cart($node) {
  *
  * @ingroup forms
  * @param $node A product node.
- * @see uc_product_forms
- * @see uc_product_add_to_cart_form_validate
- * @see uc_product_add_to_cart_form_submit
+ * @see uc_product_forms()
+ * @see uc_product_add_to_cart_form_validate()
+ * @see uc_product_add_to_cart_form_submit()
  */
 function uc_product_add_to_cart_form($form_state, $node) {
   $form = array();
@@ -1624,7 +1624,7 @@ function uc_product_feature_save($data) {
 function uc_product_add_default_image_field($type = NULL) {
   module_load_include('inc', 'content', 'includes/content.crud');
   $label = t('Image');
-  $field = array (
+  $field = array(
     'label' => $label,
     'field_name' => 'field_image_cache',
     'type' => 'filefield',
@@ -1690,7 +1690,7 @@ function uc_product_add_default_image_field($type = NULL) {
 }
 
 /**
- * Implementation of hook_views_api
+ * Implementation of hook_views_api().
  */
 function uc_product_views_api() {
   return array(

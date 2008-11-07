@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.3 2008/11/03 21:33:54 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.4 2008/11/07 21:13:27 islandusurper Exp $
 
 /**
  * @file
@@ -402,8 +402,15 @@ function uc_country_import_form() {
     ksort($import_list);
   }
 
+  if (is_array($import_list)) {
+    $options = $import_list;
+  }
+  else {
+    $options = array(t('-None available-'));
+  }
+
   $form['country_import'] = array(
-    '#title' => 'Country import settings',
+    '#title' => 'Country importer',
     '#type' => 'fieldset',
     '#collapsed' => FALSE,
     '#collapsible' => FALSE,
@@ -416,13 +423,15 @@ function uc_country_import_form() {
   $form['country_import']['import_file'] = array(
     '#type' => 'select',
     '#title' => t('Country'),
-    '#options' => is_array($import_list) ? $import_list : array(t('-None available-')),
-    '#disabled' => is_array($import_list) ? FALSE : TRUE,
+    '#options' => $options,
+    '#disabled' => !is_array($import_list),
+    '#multiple' => is_array($import_list),
+    '#size' => min(10, count($options)),
   );
   $form['country_import']['import_button'] = array(
     '#type' => 'submit',
     '#value' => t('Import'),
-    '#disabled' => is_array($import_list) ? FALSE : TRUE,
+    '#disabled' => !is_array($import_list),
   );
   $form['country_table'] = array(
     '#value' => theme('table', $header, $rows),
@@ -453,21 +462,23 @@ function _uc_country_summarize() {
 }
 
 function uc_country_import_form_submit($form, &$form_state) {
-  $file = $form_state['values']['import_file'];
+  $files = $form_state['values']['import_file'];
 
-  $pieces = explode('_', substr($file, 0, strlen($file) - 4));
-  $country_id = $pieces[count($pieces) - 2];
-  $version = $pieces[count($pieces) - 1];
-  $country = substr($file, 0, strlen($file) - strlen($country_id) - strlen($version) - 6);
+  foreach ($files as $file) {
+    $pieces = explode('_', substr($file, 0, strlen($file) - 4));
+    $country_id = $pieces[count($pieces) - 2];
+    $version = $pieces[count($pieces) - 1];
+    $country = substr($file, 0, strlen($file) - strlen($country_id) - strlen($version) - 6);
 
-  require_once(drupal_get_path('module', 'uc_store') .'/countries/'. $file);
-  $func = $country .'_install';
-  if (function_exists($func)) {
-    $func();
-    drupal_set_message(t('Country file !file imported.', array('!file' => $file)));
-  }
-  else {
-    drupal_set_message(t('Country file had no install function.'));
+    require_once(drupal_get_path('module', 'uc_store') .'/countries/'. $file);
+    $func = $country .'_install';
+    if (function_exists($func)) {
+      $func();
+      drupal_set_message(t('Country file @file imported.', array('@file' => $file)));
+    }
+    else {
+      drupal_set_message(t('Country file @file had no install function.', array('@file' => $file)), 'error');
+    }
   }
 }
 
@@ -497,7 +508,7 @@ function uc_country_formats_form() {
   );
   $form['instructions']['text'] = array(
     '#value' => '<div>'. t('The following variables should be used in configuring addresses for the countries you ship to:') .'<p>'
-              . theme('table', $header, $rows) .'</p><p>'. t('*Adding _if to any country variable will make it only display for addresses<br>whose country is different than the default store country.') .'</div>',
+              . theme('table', $header, $rows) .'</p><p>'. t('*Adding _if to any country variable will make it only display for addresses<br />whose country is different than the default store country.') .'</div>',
   );
 
   $result = db_query("SELECT * FROM {uc_countries} ORDER BY country_name ASC");
@@ -1003,12 +1014,11 @@ function uc_country_enable($country_id) {
   $result = db_query("SELECT * FROM {uc_countries} WHERE country_id = %d", $country_id);
   if (($country = db_fetch_object($result))) {
     if ($country->version < 0) {
-      db_query("UPDATE {uc_countries} SET version = %d WHERE country_id = %d",
-               abs($country->version), $country_id);
-      drupal_set_message(t('!country enabled.', array('!country' => $country->country_name)));
+      db_query("UPDATE {uc_countries} SET version = %d WHERE country_id = %d", abs($country->version), $country_id);
+      drupal_set_message(t('@country enabled.', array('@country' => $country->country_name)));
     }
     else {
-      drupal_set_message(t('!country is already enabled.', array('!country' => $country->country_name)), 'error');
+      drupal_set_message(t('@country is already enabled.', array('@country' => $country->country_name)), 'error');
     }
   }
   else {
@@ -1019,28 +1029,24 @@ function uc_country_enable($country_id) {
 
 // Form to completely remove a country.
 function uc_country_remove_form($form_state, $country_id) {
+  // Fetch the country name from the database.
+  $country = db_result(db_query("SELECT country_name FROM {uc_countries} WHERE country_id = %d", $country_id));
+
+  // If orders exist for this country, show a warning message prior to removal.
   if ($_POST['op'] != t('Remove') && module_exists('uc_order')) {
     $count = db_result(db_query("SELECT COUNT(order_id) FROM {uc_orders} WHERE delivery_country = %d OR billing_country = %d", $country_id, $country_id));
     if ($count > 0) {
-      drupal_set_message(t('Warning: !count orders were found with addresses in this country. Removing this country now will cause errors to show on those order pages. You might consider simply disabling this country instead.', array('!count' => $count)), 'error');
+      drupal_set_message(t('Warning: @count orders were found with addresses in this country. Removing this country now will cause errors to show on those order pages. You might consider simply disabling this country instead.', array('@count' => $count)), 'error');
     }
   }
 
-  $form['text'] = array(
-    '#value' => '<p>'. t('Are you sure you wish to completely remove this country?') .'</p>',
-  );
+  // Store the country ID in the form array for processing.
   $form['country_id'] = array(
-    '#type' => 'hidden',
+    '#type' => 'value',
     '#value' => $country_id,
   );
 
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Remove'),
-    '#suffix' => l(t('Cancel'), 'admin/store/settings/countries/edit'),
-  );
-
-  return $form;
+  return confirm_form($form, t('Are you sure you want to remove @country from the system?', array('@country' => $country)), 'admin/store/settings/countries/edit', NULL, t('Remove'));
 }
 
 function uc_country_remove_form_submit($form, &$form_state) {

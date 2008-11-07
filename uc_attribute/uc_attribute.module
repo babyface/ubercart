@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.6 2008/11/03 21:33:51 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.7 2008/11/07 21:13:22 islandusurper Exp $
 
 /**
  * @file
@@ -52,7 +52,8 @@ function uc_attribute_menu() {
   $items['admin/store/attributes'] = array(
     'title' => 'Attributes',
     'description' => 'Create and edit attributes and options.',
-    'page callback' => 'uc_attribute_admin',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_attribute_admin'),
     'access arguments' => array('administer products'),
     'type' => MENU_NORMAL_ITEM,
     'weight' => -1,
@@ -98,8 +99,8 @@ function uc_attribute_menu() {
   );
   $items['admin/store/attributes/%uc_attribute/options'] = array(
     'title' => 'Options',
-    'page callback' => 'uc_attribute_options',
-    'page arguments' => array(3),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_attribute_options', 3),
     'access arguments' => array('administer products'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_attribute.admin.inc',
@@ -209,8 +210,15 @@ function uc_attribute_init() {
   drupal_add_css(drupal_get_path('module', 'uc_attribute') .'/uc_attribute.css');
 }
 
+/*
+ * Implementation of hook_theme().
+ */
 function uc_attribute_theme() {
   return array(
+    'uc_attribute_admin' => array(
+      'arguments' => array('form' => NULL),
+      'file' => 'uc_attribute.admin.inc',
+    ),
     'uc_object_attributes_form' => array(
       'arguments' => array('form' => NULL),
       'file' => 'uc_attribute.admin.inc',
@@ -223,7 +231,7 @@ function uc_attribute_theme() {
       'arguments' => array('type' => NULL, 'data' => NULL, 'nid' => NULL),
     ),
     'uc_attribute_options' => array(
-      'arguments' => array('aid' => NULL, 'oid' => NULL),
+      'arguments' => array('form' => NULL),
       'file' => 'uc_attribute.admin.inc',
     ),
   );
@@ -265,7 +273,7 @@ function uc_attribute_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
     switch ($op) {
       case 'load':
         $attributes = uc_product_get_attributes($node->nid);
-        if(is_array($attributes) && !empty($attributes)) {
+        if (is_array($attributes) && !empty($attributes)) {
           return array('attributes' => $attributes);
         }
         break;
@@ -546,15 +554,15 @@ function _uc_attribute_alter_form($product) {
   $priced_attributes = uc_attribute_priced_attributes($nid);
   $attributes = $product->attributes;
 
-  // If the product don't have attributes, return the form as it is.
-  if(!is_array($attributes)) {
+  // If the product doesn't have attributes, return the form as it is.
+  if (!is_array($attributes)) {
     return NULL;
   }
 
   $form_attributes = array();
 
   // Loop through each product attribute and generate its form element.
-  foreach($attributes as $attribute) {
+  foreach ($attributes as $attribute) {
     // Build the attribute's options array.
     $options = array();
     foreach ($attribute->options as $option) {

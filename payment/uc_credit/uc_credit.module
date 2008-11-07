@@ -1,10 +1,37 @@
 <?php
-// $Id: uc_credit.module,v 1.5.2.5 2008/10/24 21:11:31 islandusurper Exp $
+// $Id: uc_credit.module,v 1.5.2.6 2008/11/07 21:13:23 islandusurper Exp $
 
 /**
  * @file
  * Defines the credit card payment method and hooks in payment gateways.
  */
+
+// Used to just authorize an amount on a credit card account.
+define('UC_CREDIT_AUTH_ONLY', 'authorize');
+
+// Used to capture funds from a prior authorization.
+define('UC_CREDIT_PRIOR_AUTH_CAPTURE', 'prior_auth_capture');
+
+// Used to authorize and capture money all at once.
+define('UC_CREDIT_AUTH_CAPTURE', 'auth_capture');
+
+// Used to setup a credit card reference through the payment gateway.
+define('UC_CREDIT_REFERENCE_SET', 'reference_set');
+
+// Used to capture funds using a credit card reference.
+define('UC_CREDIT_REFERENCE_TXN', 'reference_txn');
+
+// Used to remove a reference from the payment gateway.
+define('UC_CREDIT_REFERENCE_REMOVE', 'reference_remove');
+
+// Used to credit funds to a reference at the payment gateway.
+define('UC_CREDIT_REFERENCE_CREDIT', 'reference_credit');
+
+// Used to credit funds to a credit card account.
+define('UC_CREDIT_CREDIT', 'credit');
+
+// Used to void a transaction before the transaction clears.
+define('UC_CREDIT_VOID', 'void');
 
 /*******************************************************************************
  * Hook Functions (Drupal)
@@ -121,6 +148,42 @@ function uc_credit_form_alter(&$form, &$form_state, $form_id) {
       // Clear the session of the details.
       unset($_SESSION['sescrd']);
       break;
+
+    case 'uc_payment_gateways_form':
+      // Loop through each of the gateways on the form.
+      foreach ((array) $form['gateways'] as $key => $value) {
+        // Get the transaction types associated with this gateway.
+        $gateway_types = uc_credit_gateway_txn_types($key);
+
+        // Default to authorization plus capture if none are specified.
+        if (empty($types) && !is_null(_payment_gateway_data($key, 'credit'))) {
+          $types = array(UC_CREDIT_AUTH_CAPTURE);
+        }
+
+        // Loop through all the available transaction types.
+        $options = array();
+
+        $txn_types = array(
+          UC_CREDIT_AUTH_ONLY => t('Authorization only'),
+          UC_CREDIT_AUTH_CAPTURE => t('Authorize and capture immediately'),
+        );
+
+        foreach ($txn_types as $type => $title) {
+          // Add the current one to the options if the gateway supports it.
+          if (in_array($type, $gateway_types)) {
+            $options[$type] = $title;
+          }
+        }
+
+        $form['gateways'][$key]['uc_pg_'. $key .'_cc_txn_type'] = array(
+          '#type' => 'radios',
+          '#title' => t('Default credit transaction type'),
+          '#description' => t('Only available transaction types are listed. The default will be used unless an administrator chooses otherwise through the terminal.'),
+          '#options' => $options,
+          '#default_value' => variable_get('uc_pg_'. $key .'_cc_txn_type', UC_CREDIT_AUTH_CAPTURE),
+          '#weight' => -5,
+        );
+      }
   }
 }
 
@@ -160,8 +223,11 @@ function uc_credit_cron() {
  * Implementation of hook_exit().
  */
 function uc_credit_exit() {
+  // Separate the args ourself since the arg() function may not be loaded.
+  $args = explode('/', $_GET['q']);
+
   // Make sure sensitive checkout session data doesn't persist on other pages.
-  if (arg(1) != 'checkout' && isset($_SESSION['sescrd'])) {
+  if ($args[1] != 'checkout' && isset($_SESSION['sescrd'])) {
     unset($_SESSION['sescrd']);
   }
 }
@@ -222,8 +288,14 @@ function uc_credit_order($op, &$arg1, $arg2) {
 
         // Process CC transactions when an order is submitted after review.
         if (variable_get('uc_credit_checkout_process', TRUE)) {
+          // Stuff the transaction type into the data array.
+          $gateway_id = uc_credit_default_gateway();
+          $data = array(
+            'txn_type' => variable_get('uc_pg_'. $gateway_id .'_cc_txn_type', UC_CREDIT_AUTH_CAPTURE),
+          );
+
           // Attempt to process the CC payment.
-          $pass = uc_payment_process('credit', $arg1->order_id, $arg1->order_total, NULL, TRUE, NULL, FALSE);
+          $pass = uc_payment_process('credit', $arg1->order_id, $arg1->order_total, $data, TRUE, NULL, FALSE);
 
           // If the payment failed, store the data back in the session and
           // halt the checkout process.
@@ -1217,7 +1289,7 @@ function _valid_card_start($month, $year) {
   if ($year > date('Y')) {
     return FALSE;
   }
-  else if ($year == date('Y')) {
+  elseif ($year == date('Y')) {
     if ($month > date('n')) {
       return FALSE;
     }
@@ -1240,7 +1312,7 @@ function _valid_card_expiration($month, $year) {
   if ($year < date('Y')) {
     return FALSE;
   }
-  else if ($year == date('Y')) {
+  elseif ($year == date('Y')) {
     if ($month < date('n')) {
       return FALSE;
     }
@@ -1256,22 +1328,6 @@ function _valid_card_issue($issue) {
   }
 
   return FALSE;
-}
-
-/**
- * Returns either an array of options from a multi-line textarea or an array
- * condensed into a multi-line string depending on the type of $data.
- */
-function _array_convert($data) {
-  if (is_array($data)) {
-    return implode("\n", $data);
-  }
-  elseif (is_string($data)) {
-    return explode("\n", $data);
-  }
-  else {
-    return NULL;
-  }
 }
 
 /**
@@ -1321,5 +1377,187 @@ function _save_cc_data_to_order($cc_data, $order_id) {
 
   // Save it again.
   db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($data), $order_id);
+}
+
+/**
+ * Returns an array of credit card transaction types available to payment
+ *   gateway modules that make sense for default usage.
+ */
+function uc_credit_transaction_types() {
+  $types = array(
+    UC_CREDIT_AUTH_ONLY => t('Authorization only'),
+    UC_CREDIT_PRIOR_AUTH_CAPTURE => t('Prior authorization capture'),
+    UC_CREDIT_AUTH_CAPTURE => t('Authorize and capture immediately'),
+    UC_CREDIT_REFERENCE_TXN => t('Reference transaction'),
+  );
+
+  return $types;
+}
+
+/**
+ * Retrieves the ID of the default credit card gateway.
+ *
+ * @return
+ *   A string containing the ID of the default gateway or FALSE if none exists
+ *     or none have valid credit callbacks.
+ */
+function uc_credit_default_gateway() {
+  // Get an array of enabled payment gateways available for the payment method.
+  $gateways = _payment_gateway_list('credit', TRUE);
+
+  // Return FALSE if we found no gateways.
+  if (empty($gateways)) {
+    return FALSE;
+  }
+
+  // If we only found one gateway for this payment method...
+  if (count($gateways) == 1) {
+    // Get the right key for the payment gateway in the array.
+    $gateway_id = array_shift(array_keys($gateways));
+
+    // Store the callback for this gateway.
+    $callback = $gateways[$gateway_id]['credit'];
+  }
+  else {
+    // Otherwise attempt to find the appropriate gateway function in the array.
+    $callback = FALSE;
+
+    // Loop through each gateway.
+    foreach ($gateways as $gateway) {
+      // Store the callback if this is the specified default.
+      if ($gateway['id'] == variable_get('uc_payment_credit_gateway', '')) {
+        $callback = $gateway['credit'];
+        $gateway_id = $gateway['id'];
+      }
+    }
+
+    // If we didn't find a default callback...
+    if ($callback === FALSE) {
+      // Get the key for the first payment gateway in the array.
+      $gateway_id = array_shift(array_keys($gateways));
+
+      // Store the callback for this gateway.
+      $callback = $gateways[$gateway_id]['credit'];
+    }
+  }
+
+  // Return FALSE if the specified callback does not exist.
+  if (!function_exists($callback)) {
+    return FALSE;
+  }
+
+  return $gateway_id;
+}
+
+/**
+ * Stores a credit card authorization to an order's data array.
+ *
+ * @param $order_id
+ *   The order associated with the credit card authorization.
+ * @param $auth_id
+ *   The payment service's ID for the authorization.
+ * @param $amount
+ *   The amount that was authorized on the card.
+ * @return
+ *   The entire updated data array for the order.
+ */
+function uc_credit_log_authorization($order_id, $auth_id, $amount) {
+  // Load the existing order data array.
+  $data = db_result(db_query("SELECT data FROM {uc_orders} WHERE order_id = %d", $order_id));
+  $data = unserialize($data);
+
+  // Add the authorization to the cc_txns.
+  $data['cc_txns']['authorizations'][$auth_id] = array(
+    'amount' => $amount,
+    'authorized' => time(),
+  );
+
+  // Save the updated data array to the database.
+  db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($data), $order_id);
+
+  return $data;
+}
+
+/**
+ * Logs the capture of a prior authorization to an order's data array.
+ *
+ * @param $order_id
+ *   The order associated with the credit card capture.
+ * @param $auth_id
+ *   The payment service's ID for the authorization that was captured.
+ * @return
+ *   The entire updated data array for the order or FALSE to indicate the
+ *     specified authorization was not found.
+ */
+function uc_credit_log_prior_auth_capture($order_id, $auth_id) {
+  // Load the existing order data array.
+  $data = db_result(db_query("SELECT data FROM {uc_orders} WHERE order_id = %d", $order_id));
+  $data = unserialize($data);
+
+  // Return FALSE if we can't find the authorization.
+  if (empty($data['cc_txns']['authorizations'][$auth_id])) {
+    return FALSE;
+  }
+
+  // Otherwise log the capture timestamp to the authorization.
+  $data['cc_txns']['authorizations'][$auth_id]['captured'] = time();
+
+  // Save the updated data array to the database.
+  db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($data), $order_id);
+
+  return $data;
+}
+
+/**
+ * Logs a credit card reference to an order's data array.
+ *
+ * @param $order_id
+ *   The order associated with the credit card details.
+ * @param $ref_id
+ *   The payment service's ID for the reference that may be used to charge the
+ *     same credit card at a later date.
+ * @param $cc_number
+ *   The credit card number associated with this reference.  Only the last 4
+ *     digits will be stored.
+ * @return
+ *   The entire updated data array for the order.
+ */
+function uc_credit_log_reference($order_id, $ref_id, $cc_number) {
+  // Load the existing order data array.
+  $data = db_result(db_query("SELECT data FROM {uc_orders} WHERE order_id = %d", $order_id));
+  $data = unserialize($data);
+
+  $data['cc_txns']['references'][$ref_id] = array(
+    'card' => substr($cc_number, -4),
+    'created' => time(),
+  );
+
+  // Save the updated data array to the database.
+  db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($data), $order_id);
+
+  return $data;
+}
+
+/**
+ * Returns the credit transaction types available for a payment gateway.
+ */
+function uc_credit_gateway_txn_types($gateway) {
+  $types = array();
+
+  // Get the transaction types associated with this gateway.
+  $types = _payment_gateway_data($gateway, 'credit_txn_types');
+
+  // Default to authorization plus capture if none are specified.
+  if (empty($types)) {
+    if (!is_null(_payment_gateway_data($gateway, 'credit'))) {
+      $types = array(UC_CREDIT_AUTH_CAPTURE);
+    }
+    else {
+      // Or an empty array if the gateway doesn't even handle credit payments.
+      $types = array();
+    }
+  }
+
+  return $types;
 }
 

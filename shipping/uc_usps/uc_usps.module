@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.6.2.5 2008/10/15 14:47:41 islandusurper Exp $
+// $Id: uc_usps.module,v 1.6.2.6 2008/11/07 21:13:23 islandusurper Exp $
 
 /**
  * @file
@@ -36,7 +36,7 @@ function uc_usps_menu() {
  *
  * Add package type to products.
  *
- * @see uc_product_form
+ * @see uc_product_form()
  */
 function uc_usps_form_alter(&$form, &$form_state, $form_id) {
   $node = $form['#node'];
@@ -273,7 +273,7 @@ function uc_usps_quote($products, $details) {
               if ((string)$postage->MailService == "First-Class Mail Parcel") {
                 $classid = 'zeroParcel';
               }
-              else if ((string)$postage->MailService == "First-Class Mail Flat") {
+              elseif ((string)$postage->MailService == "First-Class Mail Flat") {
                 $classid = 'zeroFlat';
               }
               else {
@@ -433,9 +433,9 @@ function uc_usps_intl_rate_request($packages, $origin, $destination) {
   foreach ($packages as $package) {
     $qty = $package->qty;
     for ($i = 0; $i < $qty; $i++) {
-      $request .= '<Package ID="' . $services_count . '">' .
-        '<Pounds>'. intval($package->pounds) .'</Pounds>' .
-        '<Ounces>'. ceil($package->ounces) .'</Ounces>' .
+      $request .= '<Package ID="'. $services_count .'">'.
+        '<Pounds>'. intval($package->pounds) .'</Pounds>'.
+        '<Ounces>'. ceil($package->ounces) .'</Ounces>'.
         '<MailType>Package</MailType>'.
         '<Country>'. $shipto_country[0]['country_name'] .'</Country>'.
         '</Package>';
@@ -546,10 +546,10 @@ function _uc_usps_package_products($products, &$addresses) {
         if ($package->size <= 84) {
           $package->size = 'REGULAR';
         }
-        else if ($package->size <= 108) {
+        elseif ($package->size <= 108) {
           $package->size = 'LARGE';
         }
-        else if ($package->size <= 130) {
+        elseif ($package->size <= 130) {
           $package->size = 'OVERSIZE';
         }
         else {
@@ -595,10 +595,10 @@ function _uc_usps_package_products($products, &$addresses) {
         if ($package->size <= 84) {
           $package->size = 'REGULAR';
         }
-        else if ($package->size <= 108) {
+        elseif ($package->size <= 108) {
           $package->size = 'LARGE';
         }
-        else if ($package->size <= 130) {
+        elseif ($package->size <= 130) {
           $package->size = 'OVERSIZE';
         }
         else {

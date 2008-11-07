@@ -1,4 +1,4 @@
-/* $Id: uc_cart.css,v 1.5 2008/07/10 12:41:00 islandusurper Exp $ */
+/* $Id: uc_cart.css,v 1.5.2.1 2008/11/07 21:13:21 islandusurper Exp $ */
 
 /* These classes should really be universal... pretty standard stuff. */
 
@@ -149,7 +149,7 @@
 }
 
 #continue-shopping-button {
-  margin-right: 100%; 
+  margin-right: 100%;
   margin-left: .5em;
   white-space: nowrap;
 }

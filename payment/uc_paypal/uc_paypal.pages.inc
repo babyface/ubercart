@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.pages.inc,v 1.1.2.2 2008/10/24 21:11:31 islandusurper Exp $
+// $Id: uc_paypal.pages.inc,v 1.1.2.3 2008/11/07 21:13:25 islandusurper Exp $
 
 /**
  * @file
@@ -11,10 +11,8 @@
 
 // Process Instant Payment Notifiations from PayPal.
 function uc_paypal_ipn($order_id = 0) {
-  if (variable_get('uc_paypal_wps_debug_ipn', FALSE)) {
-    $debug = '<pre>'. print_r($_POST, TRUE) .'</pre>';
-  }
-  watchdog('uc_paypal', 'Receiving IPN at URL for order !order_id.'. $debug, array('!order_id' => check_plain($order_id)));
+  watchdog('uc_paypal', 'Receiving IPN at URL for order @order_id. <pre>@debug</pre>',
+    array('@order_id' => $order_id, '@debug' => variable_get('uc_paypal_wps_debug_ipn', FALSE) ? print_r($_POST, TRUE) : ''));
 
   if (!isset($_POST['invoice'])) {
     watchdog('uc_paypal', 'IPN attempted with invalid order ID.', array(), WATCHDOG_ERROR);
@@ -48,7 +46,7 @@ function uc_paypal_ipn($order_id = 0) {
   $req = 'cmd=_notify-validate';
 
   foreach ($_POST as $key => $value) {
-    $value = drupal_urlencode(stripslashes($value));
+    $value = urlencode(stripslashes($value));
     $req .= '&'. $key .'='. $value;
   }
 

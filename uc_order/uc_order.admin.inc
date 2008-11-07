@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.3 2008/11/03 21:33:53 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.4 2008/11/07 21:13:23 islandusurper Exp $
 
 /**
  * @file
@@ -722,10 +722,10 @@ function uc_order_address_book_form($form_state, $uid = 0, $type = 'billing', $f
   $select = uc_select_address($uid, $type, $func);
 
   if ($uid == 0) {
-    $form['desc'] = array('#value' => '<br>'. t('You must select a customer before address<br>information is available.<br>') .'<br>');
+    $form['desc'] = array('#value' => '<br />'. t('You must select a customer before address<br>information is available.<br>') .'<br/>');
   }
   elseif (is_null($select)) {
-    $form['desc'] = array('#value' => '<br>'. t('No addresses found for customer.') .'<br>');
+    $form['desc'] = array('#value' => '<br />'. t('No addresses found for customer.') .'<br />');
   }
   else {
     $form['addresses'] = uc_select_address($uid, $type, $func, t('Select an address'));
@@ -814,7 +814,7 @@ function uc_order_select_customer($email = NULL) {
       if ($_POST['sendmail'] == 'true') {
         $params = array('account' => $user);
         drupal_mail('uc_order', 'user-register-welcome', $user->mail, user_preferred_language($user), $params);
-        $output .= t('Account details sent to e-mail provided.<br><br><strong>Username:</strong> !username<br><strong>Password:</strong> !password', array('!username' => $user->name, '!password' => $data['pass'])) .'<br/><br/>';
+        $output .= t('Account details sent to e-mail provided.<br /><br /><strong>Username:</strong> !username<br /><strong>Password:</strong> !password', array('!username' => $user->name, '!password' => $data['pass'])) .'<br /><br />';
       }
       $output .= '<strong>'. t('Use this account now?') .'</strong><br />'
                . t('User !uid - !mail', array('!uid' => $user->uid, '!mail' => $user->mail)) .' <input type="button" '
@@ -1511,8 +1511,10 @@ function uc_order_log($order) {
   $result = db_query("SELECT * FROM {uc_order_log} WHERE order_id = %d", $order->order_id);
 
   while ($change = db_fetch_object($result)) {
-    $rows[] = array('data' => array(format_date($change->created, 'custom', 'm/d/Y'), uc_get_initials($change->uid), $change->changes), 'valign' => 'top');
+    $user = uc_get_initials($change->uid);
+    $rows[] = array('data' => array(format_date($change->created, 'short'), $user == '-' ? $user : l($user, 'user/'. $change->uid), $change->changes), 'valign' => 'top');
   }
+
   if (count($rows)) {
     $header = array(t('Time'), t('User'), t('Changes'));
     $output = theme('table', $header, $rows);
@@ -1524,38 +1526,26 @@ function uc_order_log($order) {
   return $output;
 }
 
-/**
- * Totally delete an order from the system... use with caution!
- */
-function uc_order_delete_confirm($order) {
+// Confirmation form to delete an order.
+function uc_order_delete_confirm_form($form_state, $order_id) {
   if (!uc_order_can_delete($order)) {
     drupal_set_message(t('It is not possible to delete order @id.', array('@id' => $order->order_id)));
     drupal_goto('admin/store/orders');
   }
 
-  $output = t('Are you sure you want to delete order @order_id?', array('@order_id' => $order->order_id))
-          . drupal_get_form('uc_order_delete_confirm_form', $order->order_id);
-
-  return $output;
-}
-
-function uc_order_delete_confirm_form($form_state, $order_id) {
   $form['order_id'] = array(
     '#type' => 'value',
     '#value' => $order_id
   );
 
-  $form['delete'] = array(
-    '#type' => 'submit',
-    '#value' => t('Delete'),
-    '#suffix' => l(t('Cancel'), 'admin/store/orders'),
-  );
-
-  return $form;
+  return confirm_form($form, t('Are you sure you want to delete order @order_id?', array('@order_id' => $order_id)), 'admin/store/orders', NULL, t('Delete'));
 }
 
 function uc_order_delete_confirm_form_submit($form, &$form_state) {
+  // Delete the specified order.
   uc_order_delete($form_state['values']['order_id']);
+
+  // Display a message to the user and return to the order admin page.
   drupal_set_message(t('Order @order_id completely removed from the database.', array('@order_id' => $form_state['values']['order_id'])));
 
   $form_state['redirect'] = 'admin/store/orders';

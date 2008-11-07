@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_authorizenet.install,v 1.1.2.1 2008/09/11 14:43:45 islandusurper Exp $
+// $Id: uc_authorizenet.install,v 1.1.2.2 2008/11/07 21:13:22 islandusurper Exp $
 
 /**
  * @file
@@ -49,3 +49,16 @@ function uc_authorizenet_update_1() {
   return array();
 }
 
+function uc_authorizenet_update_2() {
+  // Change the variable used to define the default transaction type.
+  if (variable_get('uc_authnet_aim_txn_type', 'AUTH_CAPTURE') == 'AUTH_CAPTURE') {
+    variable_set('uc_pg_authorizenet_cc_txn_type', UC_CREDIT_AUTH_CAPTURE);
+  }
+  else {
+    variable_set('uc_pg_authorizenet_cc_txn_type', UC_CREDIT_AUTH_ONLY);
+  }
+
+  variable_del('uc_authnet_aim_txn_type');
+
+  return array();
+}

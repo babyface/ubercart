@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.module,v 1.1.2.7 2008/10/15 14:47:46 islandusurper Exp $
+// $Id: ca.module,v 1.1.2.8 2008/11/07 21:13:20 islandusurper Exp $
 
 /**
  * @file
@@ -352,7 +352,7 @@ function _ca_evaluate_conditions_tree($condition, $arguments, $condition_data) {
       if ($condition['#operator'] == 'OR' && $result) {
         return TRUE;
       }
-      else if ($condition['#operator'] == 'AND' && !$result) {
+      elseif ($condition['#operator'] == 'AND' && !$result) {
         return FALSE;
       }
     }

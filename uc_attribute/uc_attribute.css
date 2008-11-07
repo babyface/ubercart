@@ -1,6 +1,10 @@
-/* $Id: uc_attribute.css,v 1.4 2007/11/05 20:31:56 rszrama Exp $ */
+/* $Id: uc_attribute.css,v 1.4.4.1 2008/11/07 21:13:22 islandusurper Exp $ */
 
 .options {
+  display: inline;
+}
+
+tr.draggable div.form-item {
   display: inline;
 }
 

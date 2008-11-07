@@ -1,12 +1,11 @@
 <?php
-// $Id: bulgaria_100_1.cif,v 1.1.2.4 2008/11/03 21:33:50 islandusurper Exp $
+// $Id: bulgaria_100_1.cif,v 1.1.2.5 2008/11/07 21:13:24 islandusurper Exp $
 
 function bulgaria_install() {
   // VALUES = Country ID, Country Name, 2-digit Code, 3-digit Code, File Version
   db_query("INSERT INTO {uc_countries} VALUES (100, 'Bulgaria', 'BG', 'BGR', 1)");
 
   // BG has no postal zones in the Ubercart sense
-  //db_query("INSERT INTO {uc_zones} VALUES (100, 'BG', 'България')");
 
   uc_set_address_format(100, "!first_name !last_name\r\n!company\r\n!street1\r\n!street2"
                             ."\r\n!zone_name\r\n!postal_code !city !country_name_if");

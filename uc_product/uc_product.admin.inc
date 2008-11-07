@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.admin.inc,v 1.1.2.3 2008/11/03 21:33:53 islandusurper Exp $
+// $Id: uc_product.admin.inc,v 1.1.2.4 2008/11/07 21:13:24 islandusurper Exp $
 
 /**
  * @file
@@ -74,8 +74,8 @@ function uc_product_class_default() {
 /**
  * Display overview of product settings.
  *
- * @see uc_product_settings_form
- * @see uc_product_field_settings_form
+ * @see uc_product_settings_form()
+ * @see uc_product_field_settings_form()
  */
 function uc_product_settings_overview() {
 
@@ -95,7 +95,7 @@ function uc_product_settings_overview() {
  * Form to change product settings.
  *
  * @ingroup forms
- * @see uc_product_settings_overview
+ * @see uc_product_settings_overview()
  */
 function uc_product_settings_form() {
   $form['uc_product_nodes_per_page'] = array(
@@ -172,9 +172,9 @@ function _uc_submit_text_summarize($form) {
  * Allows store administrators to control what product information is relavent to their store.
  *
  * @ingroup forms
- * @see uc_product_settings_overview
- * @see theme_uc_product_field_settings_form
- * @see uc_product_field_settings_form_submit
+ * @see uc_product_settings_overview()
+ * @see theme_uc_product_field_settings_form()
+ * @see uc_product_field_settings_form_submit()
  */
 function uc_product_field_settings_form() {
   $form = array();
@@ -275,7 +275,7 @@ function _uc_product_fields_summarize($form, $options, $enabled, $weight) {
  * Display the product field settings form.
  *
  * @ingroup themeable
- * @see uc_product_field_settings_form
+ * @see uc_product_field_settings_form()
  */
 function theme_uc_product_field_settings_form($form) {
   $header = array(t('Enable'), t('Product field'), t('Weight'));
@@ -466,7 +466,7 @@ function uc_product_features($node) {
  * Add the form for adding a product feature to the features tab.
  *
  * @ingroup forms
- * @see theme_uc_product_feature_add_form
+ * @see theme_uc_product_feature_add_form()
  */
 function uc_product_feature_add_form() {
   foreach (module_invoke_all('product_feature') as $feature) {
@@ -510,7 +510,7 @@ function uc_product_feature_add_form_submit($form, &$form_state) {
  *   checks are made to fill this bitmap: an imagefield exists, an imagefield
  *   is attached to product, the imagecache presets exist, and each preset has
  *   at least one action.
- * @see uc_product_store_status
+ * @see uc_product_store_status()
  */
 function uc_product_image_defaults() {
   uc_product_add_default_image_field();
@@ -575,7 +575,7 @@ function uc_product_image_defaults() {
  *  Form builder for product classes.
  *
  * @ingroup forms
- * @see uc_product_class_form_submit
+ * @see uc_product_class_form_submit()
  */
 function uc_product_class_form($form_state, $class = NULL) {
   if ($class) {
@@ -613,7 +613,7 @@ function uc_product_class_form($form_state, $class = NULL) {
 /**
  * Submit handler for uc_product_class_form.
  */
-function uc_product_class_form_submit($form_id, &$form_state) {
+function uc_product_class_form_submit($form, &$form_state) {
   if (uc_product_class_load($form_state['values']['pcid'])) {
     $is_new = FALSE;
     $pcid = $form_state['values']['pcid'];
@@ -651,7 +651,7 @@ function uc_product_class_form_submit($form_id, &$form_state) {
 /**
  * Confirm the deletion of a product class.
  *
- * @see uc_product_class_delete_confirm_submit
+ * @see uc_product_class_delete_confirm_submit()
  */
 function uc_product_class_delete_confirm($form_state, $class) {
   $result = db_query("SELECT COUNT(*) AS number FROM {node} WHERE type = '%s'", $class->pcid);

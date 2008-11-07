@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_checkout_pane.inc,v 1.5.2.3 2008/10/24 21:11:30 islandusurper Exp $
+// $Id: uc_payment_checkout_pane.inc,v 1.5.2.4 2008/11/07 21:13:25 islandusurper Exp $
 
 /**
  * @file
@@ -28,7 +28,7 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
         );
 
         // let the script know we need to show a progressbar
-        drupal_add_js(array('ucShowProgressBar' => true), 'setting');
+        drupal_add_js(array('ucShowProgressBar' => TRUE), 'setting');
       }
 
       $methods = _payment_method_list();

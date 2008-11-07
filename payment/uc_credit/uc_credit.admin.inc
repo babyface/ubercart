@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.admin.inc,v 1.1.2.1 2008/10/15 14:47:45 islandusurper Exp $
+// $Id: uc_credit.admin.inc,v 1.1.2.2 2008/11/07 21:13:23 islandusurper Exp $
 
 /**
  * @file
@@ -17,6 +17,9 @@ function uc_credit_terminal($order) {
     $output .= '<p>'. t('Be warned that credit card data will automatically be converted to the last 4 digits of the card once a transaction has occurred.  As such, subsequent charges after a partial payment will not have any stored credit card information to use.') .'</p>';
   }
 
+  $output .= '<div><strong>'. t('Order total: @total', array('@total' => uc_currency_format($order->order_total))) .'</strong></div>'
+            .'<div><strong>'. t('Balance: @balance', array('@balance' => uc_currency_format(uc_payment_balance($order)))) .'</strong></div>';
+
   $output .= drupal_get_form('uc_credit_terminal_form', $order, $balance);
 
   return $output;
@@ -24,52 +27,191 @@ function uc_credit_terminal($order) {
 
 // Displays the credit card terminal form for administrators.
 function uc_credit_terminal_form($form_state, $order, $lock_amount = FALSE) {
-  $form['cc_data'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Credit card details'),
-    '#theme' => 'uc_payment_method_credit_form',
-    '#tree' => TRUE,
+  // Get the transaction types available to our default gateway.
+  $types = uc_credit_gateway_txn_types(uc_credit_default_gateway());
+
+  // Put the order ID in the form.
+  $form['order_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $order->order_id,
   );
-  $form['cc_data'] += uc_payment_method_credit_form(array(), $order);
-  unset($form['cc_data']['cc_policy']);
 
   $balance = uc_payment_balance($order);
-  $form['review'] = array(
-    '#value' => '<div><strong>'. t('Order total:') .' </strong>'
-              . uc_currency_format($order->order_total) .'</div>'
-              .'<div><strong>'. t('Balance:') .' </strong>'
-              . uc_currency_format($balance) .'</div>',
-  );
 
+  // Let the administrator set the amount to charge.
   $form['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Charge Amount'),
-    '#default_value' => uc_currency_format($balance, FALSE, FALSE, '.'),
+    '#default_value' => $balance > 0 ? uc_currency_format($balance, FALSE, FALSE) : 0,
     '#size' => 10,
     '#disabled' => $lock_amount,
     '#field_prefix' => variable_get('uc_sign_after_amount', FALSE) ? '' : variable_get('uc_currency_sign', '$'),
     '#field_suffix' => variable_get('uc_sign_after_amount', FALSE) ? variable_get('uc_currency_sign', '$') : '',
   );
-  $form['order_id'] = array(
-    '#type' => 'hidden',
-    '#value' => $order->order_id,
+
+  // Build a credit card form.
+  $form['specify_card'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Credit card details'),
+    '#description' => t('Use the available buttons in this fieldset to process with the specified card details.'),
   );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Charge card'),
-    '#weight' => 10,
+  $form['specify_card']['cc_data'] = array(
+    '#theme' => 'uc_payment_method_credit_form',
+    '#tree' => TRUE,
   );
+  $form['specify_card']['cc_data'] += uc_payment_method_credit_form(array(), $order);
+  unset($form['specify_card']['cc_data']['cc_policy']);
+
+  // If available, let the card be charged now.
+  if (in_array(UC_CREDIT_AUTH_CAPTURE, $types)) {
+    $form['specify_card']['charge_card'] = array(
+      '#type' => 'submit',
+      '#value' => t('Charge amount'),
+    );
+  }
+
+  // If available, let the amount be authorized.
+  if (in_array(UC_CREDIT_AUTH_ONLY, $types)) {
+    $form['specify_card']['authorize_card'] = array(
+      '#type' => 'submit',
+      '#value' => t('Authorize amount only'),
+    );
+  }
+
+  // If available, create a reference at the gateway.
+  if (in_array(UC_CREDIT_REFERENCE_SET, $types)) {
+    $form['specify_card']['reference_set'] = array(
+      '#type' => 'submit',
+      '#value' => t('Set a reference only'),
+    );
+  }
+
+  // If available, create a reference at the gateway.
+  if (in_array(UC_CREDIT_CREDIT, $types)) {
+    $form['specify_card']['credit_card'] = array(
+      '#type' => 'submit',
+      '#value' => t('Credit amount to this card'),
+    );
+  }
+
+  // Find any uncaptured authorizations.
+  $options = array();
+
+  foreach ((array) $order->data['cc_txns']['authorizations'] as $auth_id => $data) {
+    if (empty($data['captured'])) {
+      $options[$auth_id] = t('@auth_id - @date - @amount authorized', array('@auth_id' => strtoupper($auth_id), '@date' => format_date($data['authorized'], 'small'), '@amount' => uc_currency_format($data['amount'])));
+    }
+  }
+
+  // If any authorizations existed...
+  if (!empty($options)) {
+    // Display a fieldset with the authorizations and available action buttons.
+    $form['authorizations'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Prior authorizations'),
+      '#description' => t('Use the available buttons in this fieldset to select and act on a prior authorization. The charge amount specified above will be captured against the authorization listed below.  Only one capture is possible per authorization, and a capture for more than the amount of the authorization may result in additional fees to you.'),
+    );
+
+    $form['authorizations']['select_auth'] = array(
+      '#type' => 'radios',
+      '#title' => t('Select authorization'),
+      '#options' => $options,
+    );
+
+    // If available, capture a prior authorization.
+    if (in_array(UC_CREDIT_PRIOR_AUTH_CAPTURE, $types)) {
+      $form['authorizations']['auth_capture'] = array(
+        '#type' => 'submit',
+        '#value' => t('Capture amount to this authorization'),
+      );
+    }
+
+    // If available, void a prior authorization.
+    if (in_array(UC_CREDIT_VOID, $types)) {
+      $form['authorizations']['auth_void'] = array(
+        '#type' => 'submit',
+        '#value' => t('Void authorization'),
+      );
+    }
+
+    // Collapse this fieldset if no actions are available.
+    if (!isset($form['authorizations']['auth_capture']) && !isset($form['authorizations']['auth_void'])) {
+      $form['authorizations']['#collapsible'] = TRUE;
+      $form['authorizations']['#collapsed'] = TRUE;
+    }
+  }
+
+  // Find any uncaptured authorizations.
+  $options = array();
+
+  // Log a reference to the order for testing.
+  // $order->data = uc_credit_log_reference($order->order_id, substr(md5(time()), 0, 16), '4111111111111111');
+
+  foreach ((array) $order->data['cc_txns']['references'] as $ref_id => $data) {
+    $options[$ref_id] = t('@ref_id - @date - (Last 4) @card', array('@ref_id' => strtoupper($ref_id), '@date' => format_date($data['created'], 'small'), '@card' => $data['card']));
+  }
+
+  // If any references existed...
+  if (!empty($options)) {
+    // Display a fieldset with the authorizations and available action buttons.
+    $form['references'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Customer references'),
+      '#description' => t('Use the available buttons in this fieldset to select and act on a customer reference.'),
+    );
+
+    $form['references']['select_ref'] = array(
+      '#type' => 'radios',
+      '#title' => t('Select references'),
+      '#options' => $options,
+    );
+
+    // If available, capture a prior references.
+    if (in_array(UC_CREDIT_REFERENCE_TXN, $types)) {
+      $form['references']['ref_capture'] = array(
+        '#type' => 'submit',
+        '#value' => t('Charge amount to this reference'),
+      );
+    }
+
+    // If available, remove a previously stored reference.
+    if (in_array(UC_CREDIT_REFERENCE_REMOVE, $types)) {
+      $form['references']['ref_remove'] = array(
+        '#type' => 'submit',
+        '#value' => t('Remove reference'),
+      );
+    }
+
+    // If available, remove a previously stored reference.
+    if (in_array(UC_CREDIT_REFERENCE_CREDIT, $types)) {
+      $form['references']['ref_credit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Credit amount to this reference'),
+      );
+    }
+
+    // Collapse this fieldset if no actions are available.
+    if (!isset($form['references']['ref_capture']) && !isset($form['references']['ref_remove']) && !isset($form['references']['ref_credit'])) {
+      $form['references']['#collapsible'] = TRUE;
+      $form['references']['#collapsed'] = TRUE;
+    }
+  }
 
   return $form;
 }
 
 function uc_credit_terminal_form_validate($form, &$form_state) {
-  if (!is_numeric($form_state['values']['amount']) || $form_state['values']['amount'] <= 0) {
-    form_set_error('amount', t('You must enter a positive number for the amount.'));
+  switch ($form_states['values']['op']) {
+    case t('Charge amount'):
+    case t('Authorize amount only'):
+    case t('Capture amount to this authorization'):
+    case t('Charge amount to this reference'):
+      if (!is_numeric($form_state['values']['amount']) || $form_state['values']['amount'] <= 0) {
+        form_set_error('amount', t('You must enter a positive number for the amount.'));
+      }
   }
 
-  $order = uc_order_load($form_state['values']['order_id']);
-  if ($order === FALSE) {
+  if (uc_order_load($form_state['values']['order_id']) === FALSE) {
     form_set_error('', t('Invalid order ID.  Unable to process payment.'));
   }
 }
@@ -92,7 +234,52 @@ function uc_credit_terminal_form_submit($form, &$form_state) {
   // Cache the values for use during processing.
   uc_credit_cache('save', $cc_data, FALSE);
 
-  $result = uc_payment_process('credit', $form_state['values']['order_id'], $form_state['values']['amount'], NULL, TRUE, NULL, FALSE);
+  // Build the data array passed on to the payment gateway.
+  $data = array();
+
+  switch ($form_state['values']['op']) {
+    case t('Charge amount'):
+      $data['txn_type'] = UC_CREDIT_AUTH_CAPTURE;
+      break;
+
+    case t('Authorize amount only'):
+      $data['txn_type'] = UC_CREDIT_AUTH_ONLY;
+      break;
+
+    case t('Set a reference only'):
+      $data['txn_type'] = UC_CREDIT_REFERENCE_SET;
+      break;
+
+    case t('Credit amount to this card'):
+      $data['txn_type'] = UC_CREDIT_CREDIT;
+      break;
+
+    case t('Capture amount to this authorization'):
+      $data['txn_type'] = UC_CREDIT_PRIOR_AUTH_CAPTURE;
+      $data['auth_id'] = $form_state['values']['select_auth'];
+      break;
+
+    case t('Void authorization'):
+      $data['txn_type'] = UC_CREDIT_VOID;
+      $data['auth_id'] = $form_state['values']['select_auth'];
+      break;
+
+    case t('Charge amount to this reference'):
+      $data['txn_type'] = UC_CREDIT_REFERENCE_TXN;
+      $data['ref_id'] = $form_state['values']['select_ref'];
+      break;
+
+    case t('Remove reference'):
+      $data['txn_type'] = UC_CREDIT_REFERENCE_REMOVE;
+      $data['ref_id'] = $form_state['values']['select_ref'];
+      break;
+
+    case t('Credit amount to this reference'):
+      $data['txn_type'] = UC_CREDIT_REFERENCE_CREDIT;
+      $data['ref_id'] = $form_state['values']['select_ref'];
+  }
+
+  $result = uc_payment_process('credit', $form_state['values']['order_id'], $form_state['values']['amount'], $data, TRUE, NULL, FALSE);
 
   if ($result) {
     $crypt = new uc_encryption_class;
@@ -119,7 +306,7 @@ function uc_credit_terminal_form_submit($form, &$form_state) {
     // Save it again.
     db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($data), $form_state['values']['order_id']);
 
-    drupal_set_message(t('The credit card payment was successful. See the admin comments for more details.'));
+    drupal_set_message(t('The credit card was processed successfully. See the admin comments for more details.'));
   }
   else {
     if (variable_get('uc_credit_debug', FALSE)) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.ca.inc,v 1.1.2.4 2008/10/15 14:47:42 islandusurper Exp $
+// $Id: uc_payment.ca.inc,v 1.1.2.5 2008/11/07 21:13:25 islandusurper Exp $
 
 /**
  * @file
@@ -169,7 +169,7 @@ function uc_payment_condition_order_balance($order, $settings) {
     case 'less_equal':
       return $balance <= .01;
     case 'equal':
-      return $balance < .01 and $balance > -.01;
+      return $balance < .01 && $balance > -.01;
     case 'greater':
       return $balance >= .01;
   }

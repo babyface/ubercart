@@ -1,5 +1,5 @@
 <?php
-// $Id: customer.itpl.php,v 1.5 2008/07/10 12:41:03 islandusurper Exp $
+// $Id: customer.itpl.php,v 1.5.2.1 2008/11/07 21:13:25 islandusurper Exp $
 
 /**
  * This file is the default customer invoice template for Ubercart.
@@ -54,11 +54,11 @@
               <tr>
                 <td colspan="2" bgcolor="#006699">
                   <b><?php echo t('Purchasing Information:'); ?></b>
-	              </td>
+                </td>
               </tr>
               <tr>
-	              <td nowrap="nowrap">
-             	    <b><?php echo t('E-mail Address:'); ?></b>
+                <td nowrap="nowrap">
+                  <b><?php echo t('E-mail Address:'); ?></b>
                 </td>
                 <td width="98%">
                   [order-email]
@@ -161,13 +161,13 @@
 
                     <tr>
                       <td nowrap="nowrap">
-                        <?php echo $item['title']; ?>: 
+                        <?php echo $item['title']; ?>:
                       </td>
                       <td>
                         <?php echo uc_currency_format($item['amount']); ?>
                       </td>
                     </tr>
-                    
+
                     <?php } ?>
 
                     <tr>
@@ -178,7 +178,7 @@
                     <tr>
                       <td nowrap="nowrap">
                         <b><?php echo t('Total for this Order:'); ?>&nbsp;</b>
-                      </td>            
+                      </td>
                       <td>
                         <b>[order-total]</b>
                       </td>
@@ -197,7 +197,7 @@
                               <b><?php echo $product->qty; ?> x </b>
                             </td>
                             <td width="98%">
-                              <b><?php echo $product->title .' - '. uc_currency_format($product->price * $product->qty); ?></b> 
+                              <b><?php echo $product->title .' - '. uc_currency_format($product->price * $product->qty); ?></b>
                               <?php if ($product->qty > 1) {
                                 echo t('(!price each)', array('!price' => uc_currency_format($product->price)));
                               } ?>

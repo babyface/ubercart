@@ -1,4 +1,4 @@
-; $Id: uc_file.info,v 1.2.2.4 2008/10/15 14:47:57 islandusurper Exp $
+; $Id: uc_file.info,v 1.2.2.5 2008/11/07 21:13:23 islandusurper Exp $
 name = File Downloads
 description = Allows products to be associated with downloadable files.
 dependencies[] = uc_product
