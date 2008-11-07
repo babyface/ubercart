@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.admin.inc,v 1.1.2.4 2008/10/24 21:06:44 islandusurper Exp $
+// $Id: uc_google_checkout.admin.inc,v 1.1.2.5 2008/11/07 21:05:08 islandusurper Exp $
 
 /**
  * @file
@@ -283,7 +283,7 @@ function uc_google_checkout_taxes_settings_submit($form, &$form_state) {
       db_query("DELETE FROM {uc_gc_taxes} WHERE zone = '%s'", $tax_values['zone']);
       db_query("INSERT INTO {uc_gc_taxes} (zone, rate, tax_shipping) VALUES ('%s', %f, %d)", uc_get_zone_code($tax_values['zone']), $tax_values['rate'], $tax_values['tax_shipping']);
     }
-    else if ($tax_values['delete']) {
+    elseif ($tax_values['delete']) {
       db_query("DELETE FROM {uc_gc_taxes} WHERE zone = '%s'", $tax_values['zone']);
     }
     else {
@@ -414,7 +414,7 @@ function uc_google_checkout_terminal_form_submit($form, &$form_state) {
   if ($form_state['values']['action'] == 'charge') {
     $form_state['redirect'] = uc_google_checkout_charge($form_state['values']['order_id'], $form_state['values']['amount']);
   }
-  else if ($form_state['values']['action'] == 'refund') {
+  elseif ($form_state['values']['action'] == 'refund') {
     $form_state['redirect'] = uc_google_checkout_refund($form_state['values']['order_id'], $form_state['values']['amount'], $form_state['values']['reason'], $form_state['values']['comment']);
   }
 }

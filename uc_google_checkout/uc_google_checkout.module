@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.9 2008/11/03 21:34:01 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.10 2008/11/07 21:05:08 islandusurper Exp $
 
 /**
  * @file
@@ -116,19 +116,19 @@ function uc_google_checkout_form_alter(&$form, &$form_state, $form_id) {
       '#description' => t('To be a Google Checkout approved merchant, your items must conform to the Google Checkout content policies found <a href="!url">here</a>.', array('!url' => $policy_url)),
     );
   }
-  else if ($form_id == 'uc_payment_methods_form') {
+  elseif ($form_id == 'uc_payment_methods_form') {
     // Make sure no one enables this for Ubercart checkout.
     $form['pmtable']['google_checkout']['uc_payment_method_google_checkout_checkout']['#disabled'] = TRUE;
     $form['pmtable']['google_checkout']['uc_payment_method_google_checkout_checkout']['#value'] = FALSE;
   }
-  else if ($form_id == 'uc_payment_by_order_form') {
+  elseif ($form_id == 'uc_payment_by_order_form') {
     // Don't use Google Checkout for manual payments either.
     unset($form['payments']['new']['method']['#options']['google_checkout']);
   }
-  else if ($form_id == 'uc_order_view_update_form') {
+  elseif ($form_id == 'uc_order_view_update_form') {
     $form['#submit'][] = 'uc_google_checkout_notify_update';
   }
-  else if ($form_id == 'uc_store_format_settings_form') {
+  elseif ($form_id == 'uc_store_format_settings_form') {
     $form['currency']['uc_currency_code']['#description'] .= ' '. t('Google Checkout only accepts the following currencies: @list', array('@list' => implode(', ', _uc_google_checkout_currency_codes())));
   }
 }
@@ -277,7 +277,7 @@ function uc_google_checkout_shipment($op, $shipment) {
           if ($package->tracking_number) {
             $tracking_number = $package->tracking_number;
           }
-          else if ($shipment->tracking_number) {
+          elseif ($shipment->tracking_number) {
             $tracking_number = $shipment->tracking_number;
           }
           if ($tracking_number) {
@@ -727,7 +727,7 @@ function uc_google_checkout_new_order($xml) {
           uc_order_line_item_add($order_id, 'gc_coupon', check_plain($adjustment['code']['VALUE']), -$adjustment['applied-amount']['VALUE']);
           $comments[] = check_plain($adjustment['message']['VALUE']);
         }
-        else if ($type == 'gift-certificate-adjustment') {
+        elseif ($type == 'gift-certificate-adjustment') {
           uc_order_line_item_add($order_id, 'gc_gift_certificate', check_plain($adjustment['code']['VALUE']), -$adjustment['applied-amount']['VALUE']);
           $comments[] = check_plain($adjustment['message']['VALUE']);
         }
@@ -852,7 +852,7 @@ function uc_google_checkout_order_state_change($xml) {
       }
       unset($_SESSION['google_updates']);
     }
-    else if ($new_fulfillment != $prev_fulfillment) {
+    elseif ($new_fulfillment != $prev_fulfillment) {
       $_SESSION['google_updates'] = TRUE;
       switch ($new_fulfillment) {
         case 'PROCESSING':
