@@ -1,0 +1,505 @@
+# $Id: ja.po,v 1.1.2.1 2008/11/18 07:56:58 pineray Exp $
+#
+# Japanese translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  uc_payment.admin.inc,v 1.1.2.3 2008/11/07 21:13:25 islandusurper
+#  uc_payment_checkout_pane.inc,v 1.5.2.4 2008/11/07 21:13:25 islandusurper
+#  uc_payment.module,v 1.5.2.6 2008/11/07 21:13:25 islandusurper
+#  uc_payment.ca.inc,v 1.1.2.5 2008/11/07 21:13:25 islandusurper
+#  uc_payment_order_pane.inc,v 1.5.2.4 2008/11/07 21:13:25 islandusurper
+#  uc_payment.info,v 1.4.2.2 2008/11/07 21:13:25 islandusurper
+#  uc_payment.install,v 1.5.2.3 2008/11/07 21:13:25 islandusurper
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2008-11-18 15:55+0900\n"
+"PO-Revision-Date: 2008-11-18 16:52+0900\n"
+"Last-Translator: PineRay <matsudaterutaka@gmail.com>\n"
+"Language-Team: Japanese <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: uc_payment.admin.inc:28
+msgid "Enable payment tracking."
+msgstr "決済のトラッキングを有効化。"
+
+#: uc_payment.admin.inc:31
+msgid "Payment tracking is enabled."
+msgstr "決済のトラッキングは有効です。"
+
+#: uc_payment.admin.inc:32
+msgid "Payment tracking is disabled."
+msgstr "決済のトラッキングは無効です。"
+
+#: uc_payment.admin.inc:38
+msgid "Allow payments to be deleted by users with permission."
+msgstr "適切なアクセス権限を持つユーザが決済を削除できるようにする。"
+
+#: uc_payment.admin.inc:41
+msgid "Payments can be deleted by users with permission."
+msgstr "権限のあるユーザは決済を削除することができます。"
+
+#: uc_payment.admin.inc:42
+msgid "Payments cannot be deleted, even if the user has permission."
+msgstr "たとえ権限があっても、ユーザは決済を削除できません。"
+
+#: uc_payment.admin.inc:48
+msgid "Log payments entered and deleted to order log."
+msgstr "注文のログに決済の入力と削除を記録する。"
+
+#: uc_payment.admin.inc:51
+msgid "Log payments are being entered to and deleted from the order log."
+msgstr "決済に関するログが注文ログに追加され、また削除されます。"
+
+#: uc_payment.admin.inc:52
+msgid "Log payments are not being entered to and deleted from the order log."
+msgstr "決済に関するログは注文ログに追加されず、また削除もされません。"
+
+#: uc_payment.admin.inc:59
+msgid "Default payment details message"
+msgstr "決済の詳細情報のデフォルトメッセージ"
+
+#: uc_payment.admin.inc:60
+msgid "Message displayed when a payment method does not display any further details."
+msgstr "決済方法が何の詳細情報も表示しない場合に表示するメッセージ。"
+
+#: uc_payment.admin.inc:61;62
+#: uc_payment_checkout_pane.inc:16
+msgid "Continue with checkout to complete payment."
+msgstr "購入手続きを進めて決済を完了させてください。"
+
+#: uc_payment.admin.inc:62
+msgid "Default payment details message is: <br /> %message"
+msgstr "デフォルトの決済に関する詳細メッセージ: <br /> %message"
+
+#: uc_payment.admin.inc:72
+#: uc_payment.module:60
+msgid "Payment methods"
+msgstr "決済方法"
+
+#: uc_payment.admin.inc:73
+msgid "The settings forms below are for the payment methods defined by enabled modules. Click a name to expand its options and adjust the settings accordingly. Methods are listed in order of appearance on the checkout screen, determined by the weight setting (current value shown in parentheses)."
+msgstr "下記の設定フォームは有効なモジュールによって定義される決済方法のためのものです。名前をクリックしてオプションを展開し、表示にしたがって設定を調整してください。ウェイト（現在の値は括弧で表示）で決定される決済画面の表示順通りに、決済方法は並べられています。"
+
+#: uc_payment.admin.inc:90
+msgid "@payment is enabled for checkout."
+msgstr "@payment は購入手続きで利用可能です。"
+
+#: uc_payment.admin.inc:91
+msgid "@payment is disabled for checkout."
+msgstr "@payment は購入手続きで利用不可です。"
+
+#: uc_payment.admin.inc:121
+msgid "None available."
+msgstr "利用可能なものがありません。"
+
+#: uc_payment.admin.inc:137
+msgid "!method settings"
+msgstr "!methodの設定"
+
+#: uc_payment.admin.inc:150
+msgid "Enabled"
+msgstr "有効"
+
+#: uc_payment.admin.inc:150
+#: uc_payment.ca.inc:213
+#: uc_payment_checkout_pane.inc:60
+#: uc_payment_order_pane.inc:69
+#: uc_payment.module:290
+msgid "Payment method"
+msgstr "決済方法"
+
+#: uc_payment.admin.inc:150
+msgid "Weight"
+msgstr "ウェイト"
+
+#: uc_payment.admin.inc:150
+msgid "Default gateway"
+msgstr "デフォルトのゲートウェイ"
+
+#: uc_payment.admin.inc:163
+msgid "No payment methods founds."
+msgstr "決済方法がありません。"
+
+#: uc_payment.admin.inc:176
+#: uc_payment.module:70
+msgid "Payment gateways"
+msgstr "決済ゲートウェイ"
+
+#: uc_payment.admin.inc:177
+msgid "Payment gateways are web services that allow you to process various types of payments remotely.  The settings forms below are for the payment gateways you have installed.  Click a name to expand its options and adjust the settings accordingly."
+msgstr "決済ゲートウェイとは、様々な種類の決済を処理することができるウェブサービスです。下記の設定フォームは、インストール済みの決済ゲートウェイに関するものです。名前をクリックしてオプションを展開し、表示にしたがって設定を行ってください。"
+
+#: uc_payment.admin.inc:183
+msgid "@gateway_name settings"
+msgstr "@gateway_nameの設定"
+
+#: uc_payment.admin.inc:198
+msgid "This gateway supports the following payment methods:"
+msgstr "このゲートウェイは以下の決済方法をサポートしています:"
+
+#: uc_payment.admin.inc:204
+msgid "Enable this payment gateway for use."
+msgstr "この決済ゲートウェイを利用可能です。"
+
+#: uc_payment.admin.inc:207
+msgid "@payment is enabled."
+msgstr "@payment は有効です。"
+
+#: uc_payment.admin.inc:208
+msgid "@payment is disabled."
+msgstr "@payment は無効です。"
+
+#: uc_payment.admin.inc:236
+msgid "Please choose a payment gateway to use for that payment."
+msgstr "決済に使用する決済ゲートウェイを選択してください。"
+
+#: uc_payment.admin.inc:264
+msgid "Use gateway"
+msgstr "使用ゲートウェイ"
+
+#: uc_payment.admin.inc:270
+msgid "Process"
+msgstr "処理"
+
+#: uc_payment.admin.inc:305
+msgid "Unknown"
+msgstr "不明"
+
+#: uc_payment.admin.inc:318;418
+msgid "Delete"
+msgstr "削除"
+
+#: uc_payment.admin.inc:364
+msgid "Enter"
+msgstr "入力"
+
+#: uc_payment.admin.inc:372
+#: uc_payment.module:359
+msgid "Order total:"
+msgstr "注文合計:"
+
+#: uc_payment.admin.inc:373
+msgid "Current balance:"
+msgstr "現在の残高:"
+
+#: uc_payment.admin.inc:383
+msgid "You must enter a number for the amount."
+msgstr "値を数字で指定してください。"
+
+#: uc_payment.admin.inc:395
+msgid "Payment entered."
+msgstr "決済が入力されました。"
+
+#: uc_payment.admin.inc:402
+msgid "An error loading the payment information occurred."
+msgstr "決済情報の読み込みでエラーが発生しました。"
+
+#: uc_payment.admin.inc:406
+msgid "Payment information:"
+msgstr "決済情報:"
+
+#: uc_payment.admin.inc:407
+msgid "@method payment of @amount received on @date."
+msgstr "@methodによる@amountの決済を@dateに受領しました。"
+
+#: uc_payment.admin.inc:418
+msgid "Are you sure you want to delete this payment?"
+msgstr "この決済を本当に削除しますか？"
+
+#: uc_payment.admin.inc:424
+msgid "Payment deleted."
+msgstr "決済を削除しました。"
+
+#: uc_payment.ca.inc:22
+msgid "Update order status on full payment"
+msgstr "決済がすべて終了した時点で注文ステータスを更新"
+
+#: uc_payment.ca.inc:23
+msgid "Only happens when a payment is entered and the balance is <= $0.00."
+msgstr "決済が入力され、残高が $0.00 以下の場合にのみ発生。"
+
+#: uc_payment.ca.inc:32;81
+msgid "If the balance is less than or equal to $0.00."
+msgstr "残額が $0.00 以下の場合。"
+
+#: uc_payment.ca.inc:43
+msgid "If the order status is not already Payment Received."
+msgstr "注文ステータスがまだ入金済みでない場合。"
+
+#: uc_payment.ca.inc:57
+msgid "Update the order status to Payment Received."
+msgstr "注文ステータスを入金済みに更新。"
+
+#: uc_payment.ca.inc:71
+msgid "Update order status upon checkout completion with full payment"
+msgstr "完全な決済とともに購入手続きが完了すれば注文ステータスを更新。"
+
+#: uc_payment.ca.inc:92
+msgid "If the order is not shippable."
+msgstr "注文が配送不可の場合。"
+
+#: uc_payment.ca.inc:105
+msgid "Update the order status to Completed."
+msgstr "注文ステータスを完了に更新。"
+
+#: uc_payment.ca.inc:124
+msgid "A payment gets entered for an order"
+msgstr "注文への決済が入力される"
+
+#: uc_payment.ca.inc:125;143
+#: uc_payment.module:306
+#: uc_payment.info:0
+msgid "Payment"
+msgstr "決済"
+
+#: uc_payment.ca.inc:129;149
+msgid "Order"
+msgstr "並べ替え順"
+
+#: uc_payment.ca.inc:142
+msgid "Check the order balance"
+msgstr "注文残高の確認"
+
+#: uc_payment.ca.inc:148
+msgid "Check the payment method"
+msgstr "決済方法を確認"
+
+#: uc_payment.ca.inc:181
+msgid "Balance is less than !zero."
+msgstr "残高が !zero より小さい。"
+
+#: uc_payment.ca.inc:182
+msgid "Balance is less than or equal to !zero."
+msgstr "残高が !zero 以下。"
+
+#: uc_payment.ca.inc:183
+msgid "Balance is equal to !zero."
+msgstr "残高が !zero 。"
+
+#: uc_payment.ca.inc:184
+msgid "Balance is greater than !zero."
+msgstr "残高が !zero より大きい。"
+
+#: uc_payment.ca.inc:189
+msgid "Balance comparison type"
+msgstr "残高の比較方法"
+
+#: uc_payment_checkout_pane.inc:26
+msgid "Javascript must be enabled to view the order total preview."
+msgstr "注文合計のプレビューを表示するにはJavaScriptが有効である必要があります。"
+
+#: uc_payment_checkout_pane.inc:52
+msgid "Select a payment method from the following options."
+msgstr "決済方法を以下の選択肢の中から選択してください。"
+
+#: uc_payment_checkout_pane.inc:110
+msgid "Paying by"
+msgstr "決済者"
+
+#: uc_payment_checkout_pane.inc:123
+msgid "Show the order total preview on the payment pane."
+msgstr "決済区画で注文合計のプレビューを表示。"
+
+#: uc_payment_checkout_pane.inc:137
+msgid "Checkout cannot be completed without any payment methods enabled. Please contact an administrator to resolve the issue."
+msgstr "有効な決済方法がなければ購入手続きを完了させることができません。管理者に連絡して問題を解決してもらってください。"
+
+#: uc_payment_order_pane.inc:21
+msgid "Balance: @balance"
+msgstr "残高: @balance"
+
+#: uc_payment_order_pane.inc:22
+msgid "View"
+msgstr "表示"
+
+#: uc_payment_order_pane.inc:28;43
+msgid "Method: @payment_method"
+msgstr "決済方法: @payment_method"
+
+#: uc_payment_order_pane.inc:59
+msgid "Modify 'Payment info'"
+msgstr "「決済情報」を修正"
+
+#: uc_payment_order_pane.inc:71
+msgid "None available"
+msgstr "利用不可"
+
+#: uc_payment.module:156
+msgid "The payment method of the order."
+msgstr "注文の決済方法"
+
+#: uc_payment.module:157
+msgid "The payment balance of the order"
+msgstr "注文の決済残高"
+
+#: uc_payment.module:224
+msgid "The payments table on the order payments screen."
+msgstr "注文の決済画面での決済テーブル。"
+
+#: uc_payment.module:291
+msgid "Select a payment method from the enabled payment modules."
+msgstr "有効な決済モジュールの中から決済方法を選択。"
+
+#: uc_payment.module:307
+msgid "Specify and collect payment for an order."
+msgstr "注文に対する決済を指定して情報を収集します。"
+
+#: (duplicate) uc_payment.module:322
+#: uc_payment.install:69
+#: ;133
+msgid "Payment received"
+msgstr "決済受領済"
+
+#: uc_payment.module:345
+msgid "Order total preview:"
+msgstr "注文合計のプレビュー"
+
+#: uc_payment.module:402
+msgid "Received"
+msgstr "受領"
+
+#: uc_payment.module:407
+msgid "User"
+msgstr "ユーザ"
+
+#: uc_payment.module:412
+msgid "Method"
+msgstr "方法"
+
+#: uc_payment.module:417
+msgid "Amount"
+msgstr "金額"
+
+#: uc_payment.module:422
+msgid "Balance"
+msgstr "残高"
+
+#: uc_payment.module:427
+msgid "Comment"
+msgstr "コメント"
+
+#: uc_payment.module:432
+msgid "Action"
+msgstr "アクション"
+
+#: uc_payment.module:497
+msgid "You are not able to process %type payments."
+msgstr "%typeによる決済を処理することができません。"
+
+#: uc_payment.module:516
+msgid "Attempted to process a %type payment but the gateway's function was not found."
+msgstr "%typeによる決済を処理しようとしましたが、ゲートウェイの関数が見つかりませんでした。"
+
+#: uc_payment.module:549
+msgid "An error has occurred with your payment gateway.  The charge function could not be found."
+msgstr "決済ゲートウェイでエラーが発生しました。課金に関する関数が見つかりません。"
+
+#: uc_payment.module:602
+msgid "Other"
+msgstr "その他"
+
+#: uc_payment.module:610
+msgid "@method payment for @amount entered by @user."
+msgstr "@method による @amount の決済を @user が入力しました。"
+
+#: uc_payment.module:631
+msgid "@method payment for @amount deleted by @user."
+msgstr "@method による @amount の決済を @user が削除しました。"
+
+#: uc_payment.module:576;0
+msgid "uc_payment"
+msgstr "uc_payment"
+
+#: uc_payment.module:576
+msgid "Payment failed: @message"
+msgstr "決済失敗: @message"
+
+#: uc_payment.module:167
+msgid "view payments"
+msgstr "決済を表示"
+
+#: uc_payment.module:167
+msgid "manual payments"
+msgstr "手動決済"
+
+#: uc_payment.module:167
+msgid "delete payments"
+msgstr "決済を削除"
+
+#: uc_payment.module:29;53
+msgid "Payment settings"
+msgstr "決済の設定"
+
+#: uc_payment.module:30
+msgid "Configure the payment settings."
+msgstr "決済に関する設定を行います。"
+
+#: uc_payment.module:36
+msgid "Overview"
+msgstr "概観"
+
+#: uc_payment.module:37
+msgid "View the payment settings."
+msgstr "決済に関する設定を表示します。"
+
+#: uc_payment.module:43
+msgid "Edit"
+msgstr "編集"
+
+#: uc_payment.module:44
+msgid "Edit the payment settings."
+msgstr "決済に関する設定を編集します。"
+
+#: uc_payment.module:54
+msgid "Edit the basic payment settings."
+msgstr "決済に関する基本的な設定を編集します。"
+
+#: uc_payment.module:61
+msgid "Edit the payment method settings."
+msgstr "決済方法に関する設定を編集します。"
+
+#: uc_payment.module:71
+msgid "Edit the payment gateway settings."
+msgstr "決済ゲートウェイに関する設定を編集します。"
+
+#: uc_payment.module:81
+msgid "Return order totals"
+msgstr "注文合計を戻す"
+
+#: uc_payment.module:87;96
+msgid "Payment details"
+msgstr "決済の詳細"
+
+#: uc_payment.module:88
+msgid "Add the payment details to the checkout pane."
+msgstr "購入手続きの区画に決済の詳細を追加。"
+
+#: uc_payment.module:97
+msgid "Add the payment details to the order pane."
+msgstr "注文の区画に決済の詳細を追加。"
+
+#: uc_payment.module:105
+msgid "Select payment gateway"
+msgstr "決済ゲートウェイを選択"
+
+#: uc_payment.module:112
+msgid "Payments"
+msgstr "決済"
+
+#: uc_payment.module:121;122
+msgid "Delete payment?"
+msgstr "決済を削除しますか？"
+
+#: uc_payment.info:0
+msgid "Defines an API to let payment modules interact with the cart."
+msgstr "カートと決済モジュールを組み合わせるAPIを定義します。"
+
+#: uc_payment.info:0
+msgid "Ubercart - core (optional)"
+msgstr "Ubercart - コア (任意)"
+
