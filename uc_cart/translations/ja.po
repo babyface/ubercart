@@ -1,0 +1,1084 @@
+# $Id: ja.po,v 1.1.2.1 2008/11/18 07:30:43 pineray Exp $
+#
+# Japanese translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  uc_cart.admin.inc,v 1.1.2.3 2008/11/07 21:13:22 islandusurper
+#  uc_cart.module,v 1.15.2.9 2008/11/07 21:13:21 islandusurper
+#  uc_cart.pages.inc,v 1.1.2.4 2008/11/07 21:13:22 islandusurper
+#  uc_cart.ca.inc,v 1.1.2.6 2008/11/07 21:13:20 islandusurper
+#  uc_cart.info,v 1.7.2.2 2008/11/07 21:13:22 islandusurper
+#  uc_cart_checkout_pane.inc,v 1.5.2.2 2008/11/07 21:13:21 islandusurper
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2008-11-17 18:39+0900\n"
+"PO-Revision-Date: 2008-11-18 15:58+0900\n"
+"Last-Translator: PineRay <matsudaterutaka@gmail.com>\n"
+"Language-Team: Japanese <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: uc_cart.admin.inc:21
+msgid "Help text is shown in block:"
+msgstr "ヘルプテキストをブロックに表示:"
+
+#: uc_cart.admin.inc:22
+#: uc_cart.module:323;380
+msgid "Click title to display cart contents."
+msgstr "クリックしてカートの中身を表示。"
+
+#: uc_cart.admin.inc:25
+msgid "Help text is not shown in block."
+msgstr "ヘルプテキストをブロックに非表示。"
+
+#: uc_cart.admin.inc:30
+#: uc_cart.module:69
+msgid "Cart block"
+msgstr "カートブロック"
+
+#: uc_cart.admin.inc:32
+msgid "Cart block is !option when empty."
+msgstr "カートが空の場合、カートブロックを!option。"
+
+#: uc_cart.admin.inc:32
+msgid "hidden"
+msgstr "非表示"
+
+#: uc_cart.admin.inc:32
+msgid "shown"
+msgstr "表示"
+
+#: uc_cart.admin.inc:33
+msgid "Cart block is !option by default."
+msgstr "カートブロックはデフォルトで!optionです。"
+
+#: uc_cart.admin.inc:33
+msgid "expanded"
+msgstr "折りたたみ(開)"
+
+#: uc_cart.admin.inc:33
+msgid "collapsed"
+msgstr "折りたたみ（閉）"
+
+#: uc_cart.admin.inc:45
+msgid "General cart settings"
+msgstr "共通のカート設定"
+
+#: uc_cart.admin.inc:50
+msgid "Add to cart redirect"
+msgstr "カートに入れるのリダイレクト先"
+
+#: uc_cart.admin.inc:51
+msgid "Enter the Drupal page to redirect to when a customer adds an item to their cart.<br />Enter &lt;none&gt; for no redirect."
+msgstr "顧客が商品をカートに加えた際にリダイレクトする先のDrupalページを入力します。<br />リダイレクトしない場合は &lt;none&gt; を入力します。"
+
+#: uc_cart.admin.inc:52
+msgid "Add to cart is redirecting to <br /><a href=\"!url\">!url</a>"
+msgstr "カートに入れるのリダイレクト先<br /><a href=\"!url\">!url</a>"
+
+#: uc_cart.admin.inc:59
+msgid "Minimum order subtotal"
+msgstr "最低注文小計"
+
+#: uc_cart.admin.inc:60
+msgid "Optionally specify a minimum allowed subtotal for a cart to proceed to checkout."
+msgstr "購入手続きへ進むのに最低限必要なカートの小計を任意で指定できます。"
+
+#: uc_cart.admin.inc:61
+msgid "The minimum subtotal is @subtotal"
+msgstr "最低限の小計は @subtotal です。"
+
+#: uc_cart.admin.inc:70
+msgid "Anonymous cart duration"
+msgstr "匿名ユーザのカートの持続時間"
+
+#: uc_cart.admin.inc:71
+msgid "Set the length of time products remain in the cart for customers who <strong>have not</strong> logged in."
+msgstr "ログイン<strong>していない</strong>顧客のカートに商品がとどまっている時間の長さを設定してください。"
+
+#: uc_cart.admin.inc:72
+msgid "Anonymous cart duration is @duration"
+msgstr "匿名ユーザのカート有効期間は @duration です。"
+
+#: uc_cart.admin.inc:76;105
+msgid "Duration"
+msgstr "期間"
+
+#: uc_cart.admin.inc:84;113
+msgid "Unit of time"
+msgstr "時間の単位"
+
+#: uc_cart.admin.inc:86
+msgid "Minute(s)"
+msgstr "分"
+
+#: uc_cart.admin.inc:87;115
+msgid "Hour(s)"
+msgstr "時"
+
+#: uc_cart.admin.inc:88;116
+msgid "Day(s)"
+msgstr "日"
+
+#: uc_cart.admin.inc:89;117
+msgid "Week(s)"
+msgstr "週"
+
+#: uc_cart.admin.inc:90;118
+msgid "Year(s)"
+msgstr "年"
+
+#: uc_cart.admin.inc:99
+msgid "Authenticated cart duration"
+msgstr "登録ユーザのカートの持続時間"
+
+#: uc_cart.admin.inc:100
+msgid "Set the length of time products remain in the cart for customers who <strong>have</strong> logged in."
+msgstr "ログイン<strong>済み</strong>の顧客のカートに商品がとどまっている時間の長さを設定してください。"
+
+#: uc_cart.admin.inc:101
+msgid "Authenticated cart duration is @duration"
+msgstr "登録ユーザのカート有効期間は @duration です。"
+
+#: uc_cart.admin.inc:127
+msgid "Continue shopping link"
+msgstr "ショッピングを続けるリンク"
+
+#: uc_cart.admin.inc:128
+msgid "Continue shopping !type is: <br />!link"
+msgstr "買い物を続ける!type: <br />!link"
+
+#: uc_cart.admin.inc:128
+msgid "link"
+msgstr "リンク"
+
+#: uc_cart.admin.inc:128
+msgid "button"
+msgstr "ボタン"
+
+#: uc_cart.admin.inc:128;151
+#: uc_cart.module:672;707
+msgid "Continue shopping"
+msgstr "ショッピングを続ける"
+
+#: uc_cart.admin.inc:132
+msgid "Display the continue shopping link as"
+msgstr "ショッピングを続けるリンクを以下の形式で表示: "
+
+#: uc_cart.admin.inc:134
+msgid "A text link"
+msgstr "テキストリンク"
+
+#: uc_cart.admin.inc:135
+msgid "A button link"
+msgstr "ボタンリンク"
+
+#: uc_cart.admin.inc:141
+msgid "Continue shopping link URL"
+msgstr "ショッピングを続けるリンクのURL"
+
+#: uc_cart.admin.inc:142
+msgid "Enter the Drupal page for the link to continue shopping from the cart view page.<br />Enter &lt;none&gt; for no link to appear."
+msgstr "カートのページに表示するショッピングを続けるリンクの宛先となるDrupalページを入力してください。<br />&lt;none&gt;と入力すれば、リンクが非表示になります。"
+
+#: uc_cart.admin.inc:149
+msgid "Continue shopping link text"
+msgstr "ショッピングを続けるリンクの文章"
+
+#: uc_cart.admin.inc:150
+msgid "Enter the text for the continue shopping link."
+msgstr "ショッピングを続けるリンクで表示する文章を入力してください。"
+
+#: uc_cart.admin.inc:156
+msgid "Cart breadcrumb"
+msgstr "カートのパンくず"
+
+#: uc_cart.admin.inc:157
+msgid "Default cart breadcrumb is: <br />!breadcrumb"
+msgstr "デフォルトのカートのパンくず: <br />!breadcrumb"
+
+#: uc_cart.admin.inc:157;171
+#: uc_cart.pages.inc:40
+msgid "Home"
+msgstr "ホーム"
+
+#: uc_cart.admin.inc:161
+msgid "Default cart breadcrumb URL"
+msgstr "カートのパンくずのデフォルトURL"
+
+#: uc_cart.admin.inc:162
+msgid "Enter the Drupal page linked to in the default breadcrumb on the cart view page."
+msgstr "カートページに表示するデフォルトのパンくず用のDrupalページリンクを入力してください。"
+
+#: uc_cart.admin.inc:169
+msgid "Default cart breadcrumb text"
+msgstr "カートのパンくずのデフォルトテキスト"
+
+#: uc_cart.admin.inc:170
+msgid "Enter the text for the default breadcrumb on the cart page."
+msgstr "カートページに表示するデフォルトのパンくず用の文字列を入力してください。"
+
+#: uc_cart.admin.inc:179
+msgid "Minimum order subtotal should be a non-negative number."
+msgstr "最低注文小計には負の値を指定できません。"
+
+#: uc_cart.admin.inc:211
+msgid "Drupal handles all the block settings forms automatically."
+msgstr "Drupalはすべてのブロック設定フォームを自動的に扱います。"
+
+#: uc_cart.admin.inc:212
+msgid "<a href=\"!url\">Click here</a> to goto the shopping cart block configuration page."
+msgstr "<a href=\"!url\">こちらをクリック</a>して、ショッピングカートのブロック設定ページに移動してください。"
+
+#: uc_cart.admin.inc:233
+msgid "General checkout settings"
+msgstr "購入手続きの共通設定"
+
+#: uc_cart.admin.inc:238
+msgid "Enable checkout (disable to only use third party checkout service like PayPal Express Checkout)."
+msgstr "購入を許可 (PayPal Express Checkoutのようなサードパーティのチェックアウトサービスを利用する場合にのみ無効)"
+
+#: uc_cart.admin.inc:241
+msgid "Ubercart checkout is enabled."
+msgstr "購入手続きは有効です。"
+
+#: uc_cart.admin.inc:242
+msgid "Ubercart checkout is disabled."
+msgstr "購入手続きは無効です。"
+
+#: uc_cart.admin.inc:248
+msgid "Enable anonymous checkout (users can checkout without logging in)."
+msgstr "匿名ユーザの購入を許可 (ログインなしで購入可能)"
+
+#: uc_cart.admin.inc:251
+msgid "Anonymous checkout is enabled."
+msgstr "匿名ユーザによる購入は有効です。"
+
+#: uc_cart.admin.inc:252
+msgid "Anonymous checkout is disabled."
+msgstr "匿名ユーザによる購入は無効です。"
+
+#: uc_cart.admin.inc:258
+msgid "Review order button text"
+msgstr "注文を確認するボタンの文字列"
+
+#: uc_cart.admin.inc:259
+msgid "Change the text on the review order button at the bottom of the checkout screen."
+msgstr "購入手続き画面の最下部にある、注文を確認するボタンの文字列を変更。"
+
+#: uc_cart.admin.inc:260
+msgid "Review order button says @button_text"
+msgstr "注文の確認ボタンの文字列は @button_text です。"
+
+#: uc_cart.admin.inc:260;261
+#: uc_cart.pages.inc:196
+#: uc_cart.module:158
+msgid "Review order"
+msgstr "注文を確認"
+
+#: uc_cart.admin.inc:265
+msgid "Submit order button text"
+msgstr "注文を送信するボタンの文字列"
+
+#: uc_cart.admin.inc:266
+msgid "Change the text on the submit order button at the bottom of the review screen."
+msgstr "注文確認画面の最下部にある、注文を送信するボタンの文字列を変更。"
+
+#: uc_cart.admin.inc:267
+msgid "Submit order button says @button_text"
+msgstr "注文の送信ボタンの文字列は @button_text です。"
+
+#: uc_cart.admin.inc:267;268
+#: uc_cart.pages.inc:390
+#: uc_cart.module:533
+msgid "Submit order"
+msgstr "注文を送信"
+
+#: uc_cart.admin.inc:272
+msgid "Hide shipping information when possible for carts with no shippable items."
+msgstr "カートの中に配送可能な商品がなければ、配送先情報を非表示。"
+
+#: uc_cart.admin.inc:275
+msgid "Shipping fields are hidden when applicable."
+msgstr "配送先のフィールドを状況に応じて非表示。"
+
+#: uc_cart.admin.inc:276
+msgid "Shipping fields are always shown."
+msgstr "配送先のフィールドを常に表示。"
+
+#: uc_cart.admin.inc:283
+msgid "Checkout pane display options"
+msgstr "購入手続きの区画表示オプション"
+
+#: uc_cart.admin.inc:288
+msgid "Use collapsing checkout panes with next buttons during checkout."
+msgstr "購入手続きで、「次へ」ボタンがあって折りたたむことのできる区画を使用。"
+
+#: uc_cart.admin.inc:291
+msgid "Checkout panes are collapsed with next buttons."
+msgstr "購入手続きの区画は「次へ」ボタンがあって折りたたまれています。"
+
+#: uc_cart.admin.inc:292
+msgid "Checkout panes are expanded by default."
+msgstr "購入手続きの区画はデフォルトで展開されています。"
+
+#: uc_cart.admin.inc:298
+msgid "Collapse a pane when its next button is clicked."
+msgstr "「次へ」ボタンがクリックされると、その区画を折りたたみます。"
+
+#: uc_cart.admin.inc:301
+msgid "Collapsible panes will collapse when their next buttons are clicked."
+msgstr "折りたたみ可能な区画は、そこの「次へ」ボタンがクリックされると折りたたまれます。"
+
+#: uc_cart.admin.inc:302
+msgid "Collapsible panes will not collapse when their next buttons are clicked."
+msgstr "折りたたみ可能な区画は、そこの「次へ」ボタンがクリックされても折りたたまれません。"
+
+#: uc_cart.admin.inc:308
+msgid "Next pane button text"
+msgstr "次の区画へ進むボタンの文字列"
+
+#: uc_cart.admin.inc:309
+msgid "Change the text on the checkout pane buttons to expand the next pane."
+msgstr "購入手続きの区画にある、次の区画を展開するためのボタンの文字列を変更してください。"
+
+#: uc_cart.admin.inc:310;311
+#: uc_cart.pages.inc:179
+msgid "Next"
+msgstr "次へ"
+
+#: uc_cart.admin.inc:311
+msgid "Next buttons on checkout panes say %text"
+msgstr "購入手続きの区画にある、次へ進むためのボタンの文字列は %text です。"
+
+#: uc_cart.admin.inc:316
+msgid "Checkout completion settings"
+msgstr "購入手続き完了の設定"
+
+#: uc_cart.admin.inc:321
+msgid "Send new customers a separate e-mail with their account details."
+msgstr "新しい顧客へアカウント詳細とは別にメールを送信する。"
+
+#: uc_cart.admin.inc:324
+msgid "New customers receive an e-mail with their account details."
+msgstr "新しい顧客は、アカウントの詳細が記されたメールを受け取ります。"
+
+#: uc_cart.admin.inc:325
+msgid "New customers will only see their details in their initial order e-mail."
+msgstr "新しい顧客のアカウント詳細は、最初の注文メールにのみ記されます。"
+
+#: uc_cart.admin.inc:331
+msgid "Login users when new customer accounts are created at checkout."
+msgstr "購入手続きで顧客アカウントを作成した場合、そのユーザでログインする。"
+
+#: uc_cart.admin.inc:337
+msgid "New customer accounts will be set to active."
+msgstr "新しい顧客アカウントをアクティブに設定する。"
+
+#: uc_cart.admin.inc:338
+msgid "Uncheck to create new accounts but make them blocked."
+msgstr "チェックを外すと、新しいアカウントを作成しても、そのユーザはブロックされます。"
+
+#: uc_cart.admin.inc:341
+msgid "New customer account status will be active."
+msgstr "新しい顧客のアカウント状態は有効です。"
+
+#: uc_cart.admin.inc:342
+msgid "New customer account status will be blocked."
+msgstr "新しい顧客のアカウント状態は拒否です。"
+
+#: uc_cart.admin.inc:348
+msgid "Alternate checkout completion page"
+msgstr "異なる購入手続き完了ページ"
+
+#: uc_cart.admin.inc:349
+msgid "Leave blank to use the default completion page (recommended)."
+msgstr "空白の場合はデフォルトの完了ページを使用します。(推奨)"
+
+#: uc_cart.admin.inc:350
+msgid "Checkout completion page has been set to <a href=\"!url\">!url</a>."
+msgstr "購入手続き完了ページは <a href=\"!url\">!url</a> に設定されています。"
+
+#: uc_cart.admin.inc:350
+msgid "Checkout completion page will be the default page."
+msgstr "購入手続き完了ページはデフォルトのページです。"
+
+#: uc_cart.admin.inc:376
+msgid "!title is !enabled."
+msgstr "!title は !enabled です。"
+
+#: uc_cart.admin.inc:376
+msgid "enabled"
+msgstr "有効"
+
+#: uc_cart.admin.inc:376
+msgid "disabled"
+msgstr "無効"
+
+#: uc_cart.admin.inc:410
+msgid "!pane settings"
+msgstr "!paneの設定"
+
+#: uc_cart.admin.inc:424
+msgid "Checkout instructions"
+msgstr "購入手続きでの案内"
+
+#: uc_cart.admin.inc:425
+msgid "Provide instructions for customers at the top of the checkout screen."
+msgstr "購入手続き画面の最上部に表示する、顧客への案内を入力してください。"
+
+#: uc_cart.admin.inc:426
+msgid "Checkout instructions are set."
+msgstr "購入手続きの案内は設定されています。"
+
+#: uc_cart.admin.inc:426
+msgid "Checkout instructions are not set."
+msgstr "購入手続きの案内は設定されていません。"
+
+#: uc_cart.admin.inc:434
+msgid "Checkout review instructions"
+msgstr "注文確認での案内"
+
+#: uc_cart.admin.inc:435
+msgid "Provide instructions for customers at the top of the checkout review screen."
+msgstr "注文確認ページの最上部に表示する、顧客への案内を入力してください。"
+
+#: uc_cart.admin.inc:437
+msgid "Review instructions are set."
+msgstr "確認の案内は設定されています。"
+
+#: uc_cart.admin.inc:438
+msgid "Review instructions are not set."
+msgstr "確認の案内は設定されていません。"
+
+#: uc_cart.admin.inc:446
+msgid "Checkout completion message header"
+msgstr "購入手続き完了メッセージのヘッダ"
+
+#: uc_cart.admin.inc:447
+msgid "Header for message displayed after a user checks out. <a href=\"!url\">Uses order and global tokens</a>."
+msgstr "ユーザの購入手続き完了後に表示するメッセージのヘッダ。<a href=\"!url\">orderとglobalのトークンを使用できます</a>。"
+
+#: uc_cart.admin.inc:449
+msgid "Completion message is set."
+msgstr "完了メッセージは設定されています。"
+
+#: uc_cart.admin.inc:450
+msgid "Completion message is not set."
+msgstr "完了メッセージは設定されていません。"
+
+#: uc_cart.admin.inc:458
+msgid "Checkout completion message body"
+msgstr "購入手続き完了メッセージの本文"
+
+#: uc_cart.admin.inc:459
+msgid "In the following three boxes, you may use the special tokens !new_username for the username of a newly created account and !new_password for that account's password."
+msgstr "以下の3つのボックスで、新しいアカウントのユーザ名を表す !new_username とそのアカウントのパスワードを表す !new_password という特別なトークンを使用できます"
+
+#: uc_cart.admin.inc:465
+msgid "Checkout completion for logged-in users"
+msgstr "ログインユーザの購入手続き完了"
+
+#: uc_cart.admin.inc:466
+msgid "Message displayed upon checkout for a user who has logged in. <a href=\"!url\">Uses order and global tokens</a>."
+msgstr "ログイン状態にあるユーザの購入手続きで表示するメッセージ。<a href=\"!url\">orderとglobalのトークンを使用できます</a>。"
+
+#: uc_cart.admin.inc:468
+msgid "Completion text for logged in users is set."
+msgstr "ログインユーザ用の完了テキストは設定されています。"
+
+#: uc_cart.admin.inc:469
+msgid "Completion text for logged in users is not set."
+msgstr "ログインユーザ用の完了テキストは設定されていません。"
+
+#: uc_cart.admin.inc:477
+msgid "Checkout completion for existing users"
+msgstr "既存ユーザの購入手続き完了"
+
+#: uc_cart.admin.inc:478
+msgid "Message displayed upon checkout for a user who has an account but wasn't logged in. <a href=\"!url\">Uses order and global tokens</a>."
+msgstr "アカウントを持ってはいるがログインしていないユーザの購入手続きで表示するメッセージ。<a href=\"!url\">orderとglobalのトークンを使用できます</a>。"
+
+#: uc_cart.admin.inc:480
+msgid "Completion text for users who aren't logged in is set."
+msgstr "未ログインユーザ用の完了テキストは設定されています。"
+
+#: uc_cart.admin.inc:481
+msgid "Completion text for users who aren't logged in is not set."
+msgstr "未ログインユーザ用の完了テキストは設定されていません。"
+
+#: uc_cart.admin.inc:490
+msgid "Checkout completion for new users"
+msgstr "新規ユーザの購入手続き完了"
+
+#: uc_cart.admin.inc:491
+msgid "Message displayed upon checkout for a new user whose account was just created. <a href=\"!url\">Uses order and global tokens</a>."
+msgstr "アカウントを新しく作成したユーザの購入手続きで表示するメッセージ。<a href=\"!url\">orderとglobalのトークンを使用できます</a>。"
+
+#: uc_cart.admin.inc:493
+msgid "Completion text for new users is set."
+msgstr "新しいユーザ用の完了テキストは設定されています。"
+
+#: uc_cart.admin.inc:494
+msgid "Completion text for new users is not set."
+msgstr "新しいユーザ用の完了テキストは設定されていません。"
+
+#: uc_cart.admin.inc:502
+msgid "Continue shopping message"
+msgstr "買い物を続けるメッセージ"
+
+#: uc_cart.admin.inc:503
+msgid "Message displayed upon checkout to direct customers to another part of your site. <a href=\"!url\">Uses order and global tokens</a>."
+msgstr "サイトの特定の場所へ顧客を誘導するために購入手続きで表示するメッセージ。<a href=\"!url\">orderとglobalのトークンを使用できます</a>。"
+
+#: uc_cart.admin.inc:505
+msgid "Continue shopping text is set."
+msgstr "買い物を続けるボタンの文字列は設定されています。"
+
+#: uc_cart.admin.inc:506
+msgid "Continue shopping text is not set."
+msgstr "買い物を続けるボタンの文字列は設定されていません。"
+
+#: uc_cart.ca.inc:20
+msgid "Order has a product of a particular class"
+msgstr "特定のクラスの商品が注文に含まれる"
+
+#: uc_cart.ca.inc:21
+msgid "Order: Product"
+msgstr "注文: 商品"
+
+#: uc_cart.ca.inc:26;44
+msgid "Order"
+msgstr "並べ替え順"
+
+#: uc_cart.ca.inc:39
+msgid "Customer completes checkout"
+msgstr "顧客が購入手続きを完了する"
+
+#: uc_cart.ca.inc:40
+#: uc_cart.info:0
+msgid "Cart"
+msgstr "カート"
+
+#: uc_cart.ca.inc:48
+msgid "Customer user account"
+msgstr "顧客ユーザのアカウント"
+
+#: uc_cart.ca.inc:61
+msgid "E-mail checkout notifications"
+msgstr "購入手続き完了のお知らせをメール送信"
+
+#: uc_cart.ca.inc:62
+msgid "Send an e-mail about the new order."
+msgstr "新しい注文に関してメール送信"
+
+#: uc_cart.ca.inc:69
+msgid "Send an e-mail to the customer"
+msgstr "顧客へメール送信"
+
+#: uc_cart.ca.inc:76
+msgid "Your Order at [store-name]"
+msgstr "[store-name]でのあなたのご注文"
+
+#: uc_cart.ca.inc:83
+msgid "Send an e-mail to the administrator(s)"
+msgstr "管理者へメール送信"
+
+#: uc_cart.ca.inc:90
+msgid "New Order at [store-name]"
+msgstr "[store-name]への新しい注文"
+
+#: uc_cart.ca.inc:138
+msgid "Product class"
+msgstr "商品クラス"
+
+#: uc_cart.pages.inc:36;379;386
+msgid "Back"
+msgstr "戻る"
+
+#: uc_cart.pages.inc:72
+msgid "The minimum order subtotal for checkout is !min."
+msgstr "購入手続きに必要な注文小計の最低額は !min です。"
+
+#: uc_cart.pages.inc:79
+msgid "You must login before you can proceed to checkout."
+msgstr "購入手続きへ進む前にログインしてください。"
+
+#: uc_cart.pages.inc:80
+msgid "If you do not have an account, you can <a href=\"!url\">click here</a> to create one."
+msgstr "もしもアカウントをお持ちでないならば、<a href=\"!url\">こちらをクリック</a>してユーザ登録してください。"
+
+#: uc_cart.pages.inc:105;195
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: uc_cart.pages.inc:107
+msgid "Customer cancelled this order from the checkout form."
+msgstr "顧客がこの注文を購入手続きフォームからキャンセルしました。"
+
+#: uc_cart.pages.inc:446
+msgid "We're sorry.  An error occurred while processing your order that prevents us from completing it at this time. Please contact us and we will resolve the issue as soon as possible."
+msgstr "申し訳ございません。あなたの注文を処理している最中にエラーが発生したため、注文を完了できません。どうか私達に連絡してください。できるだけ早くこの問題を解決いたします。"
+
+#: uc_cart.pages.inc:454
+msgid "Order created through website."
+msgstr "ウェブサイトからの注文。"
+
+#: uc_cart.pages.inc:447
+#: uc_cart.module:0
+msgid "uc_cart"
+msgstr "uc_cart"
+
+#: uc_cart.pages.inc:447
+msgid "An empty order made it to checkout! Cart order ID: @cart_order"
+msgstr "空の注文で購入手続きがなされました！ カート注文ID: @cart_order"
+
+#: uc_cart_checkout_pane.inc:33;558
+msgid "@attribute: @option"
+msgstr "@attribute: @option"
+
+#: uc_cart_checkout_pane.inc:56
+msgid "Order information will be sent to your account e-mail listed below."
+msgstr "注文情報を下記のメールアドレスに送信します。"
+
+#: uc_cart_checkout_pane.inc:59
+msgid "<b>E-mail address:</b> @email (<a href=\"!url\">edit</a>)"
+msgstr "<strong>メールアドレス:</strong> @email (<a href=\"!url\">変更</a>)"
+
+#: uc_cart_checkout_pane.inc:63
+msgid "Enter a valid email address for this order or <a href=\"!url\">click here</a> to login with an existing account and return to checkout."
+msgstr "正しいメールアドレスを入力するか、または<a href=\"!url\">こちらをクリック</a>して既存のアカウントでログインしてから再び購入手続きを行ってください。"
+
+#: uc_cart_checkout_pane.inc:64
+msgid "E-mail address"
+msgstr "メールアドレス"
+
+#: uc_cart_checkout_pane.inc:68
+msgid "Confirm e-mail address"
+msgstr "確認用メールアドレス"
+
+#: uc_cart_checkout_pane.inc:81
+msgid "Username"
+msgstr "ユーザ名"
+
+#: uc_cart_checkout_pane.inc:90
+msgid "Password"
+msgstr "パスワード"
+
+#: uc_cart_checkout_pane.inc:96
+msgid "Confirm password"
+msgstr "パスワードの確認"
+
+#: uc_cart_checkout_pane.inc:97
+msgid "Passwords must match to proceed."
+msgstr "パスワードが一致する必要があります。"
+
+#: uc_cart_checkout_pane.inc:106
+msgid "New account details"
+msgstr "新しいアカウントの詳細"
+
+#: uc_cart_checkout_pane.inc:107;204
+msgid "<b>Optional.</b> New customers may supply custom account details.<br />We will create these for you if no values are entered."
+msgstr "<strong>任意</strong>。新しい顧客は自身のアカウント情報を指定することができます。<br />何も指定が無ければこれらの情報を元に作成します。"
+
+#: uc_cart_checkout_pane.inc:128
+msgid "You must enter a valid e-mail address."
+msgstr "有効なメールアドレスを入力する必要があります。"
+
+#: uc_cart_checkout_pane.inc:136
+msgid "The e-mail address did not match."
+msgstr "メールアドレスが一致しません。"
+
+#: uc_cart_checkout_pane.inc:148
+msgid "An account already exists for your e-mail address. The new account details you entered will be disregarded."
+msgstr "あなたのメールアドレスはすでに登録されています。あなたが入力したアカウントの情報は無視されます。"
+
+#: uc_cart_checkout_pane.inc:159
+msgid "The username %name is already taken. Please enter a different name or leave the field blank for your username to be your e-mail address."
+msgstr "ユーザ名 %name はすでに登録されています。別の名前を入力するか、または空欄にしてメールアドレスをユーザ名にするかしてください。"
+
+#: uc_cart_checkout_pane.inc:167
+msgid "The passwords you entered did not match. Please try again."
+msgstr "入力されたパスワードが一致しません。もう一度試してください。"
+
+#: uc_cart_checkout_pane.inc:181
+msgid "E-mail"
+msgstr "メール"
+
+#: uc_cart_checkout_pane.inc:187
+msgid "Require e-mail confirmation in checkout for anonymous customers."
+msgstr "匿名の顧客であれば購入手続きでメールによる確認を必須とする。"
+
+#: uc_cart_checkout_pane.inc:192
+msgid "Allow anonymous customers to specify a new user account name."
+msgstr "匿名の顧客が新しいユーザアカウントの名前を指定できるようにする。"
+
+#: uc_cart_checkout_pane.inc:197
+msgid "Allow anonymous customers to specify a new user account password."
+msgstr "匿名の顧客が新しいユーザアカウントのパスワードを指定できるようにする。"
+
+#: uc_cart_checkout_pane.inc:202
+msgid "New account details help message"
+msgstr "新しいアカウントの詳細に表示するヘルプメッセージ"
+
+#: uc_cart_checkout_pane.inc:203
+msgid "Enter the help message displayed in the new account details fieldset when shown."
+msgstr "新しいアカウントの詳細のフィールドセットが表示される場合に表示するヘルプメッセージを入力してください。"
+
+#: uc_cart_checkout_pane.inc:218
+msgid "Enter your delivery address and information here."
+msgstr "商品のお届け先に関する情報を入力してください。"
+
+#: uc_cart_checkout_pane.inc:225
+msgid "My delivery information is the same as my billing information."
+msgstr "請求先の情報を配送先に使用する。"
+
+#: uc_cart_checkout_pane.inc:231;322
+msgid "Saved addresses"
+msgstr "記録済みの住所"
+
+#: uc_cart_checkout_pane.inc:293;383
+msgid "Address"
+msgstr "住所"
+
+#: uc_cart_checkout_pane.inc:295;385
+msgid "Phone"
+msgstr "電話番号"
+
+#: uc_cart_checkout_pane.inc:309
+msgid "Enter your billing address and information here."
+msgstr "請求先に関する情報を入力してください。"
+
+#: uc_cart_checkout_pane.inc:316
+msgid "My billing information is the same as my delivery information."
+msgstr "請求先の情報は配送先と同じ。"
+
+#: uc_cart_checkout_pane.inc:397
+msgid "Use this area for special instructions or questions regarding your order."
+msgstr "注文に関して指示や質問がございましたら入力してください。"
+
+#: uc_cart_checkout_pane.inc:404
+#: uc_cart.module:596
+msgid "Order comments"
+msgstr "注文コメント"
+
+#: uc_cart_checkout_pane.inc:420
+msgid "Comment"
+msgstr "コメント"
+
+#: uc_cart_checkout_pane.inc:546
+msgid "Qty"
+msgstr "数量"
+
+#: uc_cart_checkout_pane.inc:547
+#: uc_cart.module:735
+msgid "Products"
+msgstr "商品"
+
+#: uc_cart_checkout_pane.inc:548
+msgid "Price"
+msgstr "価格"
+
+#: uc_cart_checkout_pane.inc:571
+msgid "!qtyx"
+msgstr "!qtyx"
+
+#: uc_cart_checkout_pane.inc:578
+#: uc_cart.module:773
+msgid "Subtotal:"
+msgstr "小計:"
+
+#: uc_cart.module:256;349;142
+msgid "Shopping cart"
+msgstr "ショッピングカート"
+
+#: uc_cart.module:289
+msgid "Hide block if cart is empty."
+msgstr "カートが空の場合にブロックを非表示。"
+
+#: uc_cart.module:294
+msgid "Display the shopping cart icon in the block title."
+msgstr "ブロックのタイトルにショッピングカートのアイコンを表示。"
+
+#: uc_cart.module:299
+msgid "Cart name"
+msgstr "カート名"
+
+#: uc_cart.module:300
+msgid "This name will be displayed when using the default block title.<br />Leaving this blank defaults to the translatable name \"Shopping Cart.\""
+msgstr "デフォルトのブロックタイトルを使用する場合にこの名前を表示します。<br />「Shopping Cart」の訳語を使用する場合には空欄にします。"
+
+#: uc_cart.module:305
+msgid "Make the shopping cart block collapsible by clicking the name or arrow."
+msgstr "名前や矢印をクリックすることでショッピングカートのブロックを折りたたみ可能に。"
+
+#: uc_cart.module:310
+msgid "Display the shopping cart block collapsed by default."
+msgstr "ショッピングカートのブロックをデフォルトで展開して表示。"
+
+#: uc_cart.module:315
+msgid "Display small help text in the shopping cart block."
+msgstr "ショッピングカートのブロックにヘルプテキストを小さく表示。"
+
+#: uc_cart.module:320
+msgid "Cart help text"
+msgstr "カートのヘルプテキスト"
+
+#: uc_cart.module:321
+msgid "Displayed if the above box is checked."
+msgstr "上記のボックスにチェックがあれば表示。"
+
+#: uc_cart.module:361
+msgid "Expand cart block."
+msgstr "カートのブロックを展開。"
+
+#: uc_cart.module:409;644
+msgid "There are no products in your shopping cart."
+msgstr "ショッピングカートは空です。"
+
+#: uc_cart.module:415
+msgid "View cart"
+msgstr "カートを表示"
+
+#: uc_cart.module:417;684;150
+msgid "Checkout"
+msgstr "購入手続き"
+
+#: uc_cart.module:422
+msgid "Total:"
+msgstr "合計:"
+
+#: uc_cart.module:512
+msgid "Display information on products in a customer's cart."
+msgstr "カートにある商品の情報を表示します。"
+
+#: uc_cart.module:533
+msgid "Your order is almost complete. Please review the details below and click '!submit' if all the information is correct.  You may use the 'Back' button to make changes to your order if necessary."
+msgstr "あともう少しでご注文が完了します。下記の詳細をご確認いただき、間違いが無ければ「!submit」をクリックしてください。必要があれば「戻る」ボタンを使用して、変更を加えることができます。"
+
+#: uc_cart.module:534
+msgid "Your order is complete! Your order number is [order-id]."
+msgstr "注文が完了しました！注文番号は [order-id] です。"
+
+#: uc_cart.module:535
+msgid "Thank you for shopping at [store-name]. While logged in, you may continue shopping or <a href=\"[order-url]\">click here</a> to view your current order status and order history."
+msgstr "[store-name]にてお買い上げいただき誠にありがとうございます。ログイン状態であれば、引き続き買い物していただけます。また、<a href=\"[order-url]\">こちらをクリック</a>して現在の注文状態や注文履歴をご確認いただけます。"
+
+#: uc_cart.module:536
+msgid "Thank you for shopping at [store-name]. Your current order has been attached to the account we found matching your e-mail address."
+msgstr "[store-name]にてお買い上げいただき誠にありがとうございます。あなたのメールアドレスが一致するアカウントに、今回の注文を紐付けいたしました。"
+
+#: uc_cart.module:536
+msgid "<a href=\"!url\">Click here</a> to login and view your current order status and order history. Remember to login when you make your next purchase for a faster checkout experience!"
+msgstr "<a href=\"!url\">こちらをクリック</a>してログインし、現在の注文状態と注文履歴をご確認ください。ログインすると購入手続きがとても簡単になりますので、次回ご購入の際にはお忘れなく！"
+
+#: uc_cart.module:537
+msgid "Thank you for shopping at [store-name]. A new account has been created for you here that you may use to view your current order status."
+msgstr "[store-name]にてお買い上げいただき誠にありがとうございます。あなたのアカウントを作成しましたので、現在の注文状態をご確認いただけます。"
+
+#: uc_cart.module:537
+msgid "<p><a href=\"!url\">Click here</a> to login to your new account using the following information:"
+msgstr "<p><a href=\"!url\">こちらをクリック</a>し、以下の情報を使用して新しいアカウントにログインしてください:"
+
+#: uc_cart.module:537
+msgid "<p><strong>Username:</strong> !new_username<br /><strong>Password:</strong> !new_password"
+msgstr "<p><strong>ユーザ名:</strong> !new_username<br /><strong>パスワード:</strong> !new_password"
+
+#: uc_cart.module:538
+msgid "Click to return to the front page."
+msgstr "クリックすればフロントページに戻ります。"
+
+#: uc_cart.module:549
+msgid "Default cart form"
+msgstr "デフォルトのカートフォーム"
+
+#: uc_cart.module:565
+msgid "Cart contents"
+msgstr "カートの中身"
+
+#: uc_cart.module:566
+msgid "Display the contents of a customer's shopping cart."
+msgstr "顧客のショッピングカートの中身を表示。"
+
+#: uc_cart.module:574
+msgid "Customer information"
+msgstr "顧客情報"
+
+#: uc_cart.module:575
+msgid "Get the necessary information to create a customer on the site."
+msgstr "サイトで顧客を作成するのに必要な情報を入手します。"
+
+#: uc_cart.module:581
+msgid "Delivery information"
+msgstr "配送情報"
+
+#: uc_cart.module:582
+msgid "Get the information for where the order needs to ship."
+msgstr "注文いただいた商品を配送するのに必要な情報を入手します。"
+
+#: uc_cart.module:589
+msgid "Billing information"
+msgstr "請求情報"
+
+#: uc_cart.module:590
+msgid "Get basic information needed to collect payment."
+msgstr "支払いを受けるのに必要な基本情報を入手します。"
+
+#: uc_cart.module:597
+msgid "Allow a customer to put comments on an order."
+msgstr "顧客が注文に対してコメントを残せるようにする。"
+
+#: uc_cart.module:679
+msgid "Update cart"
+msgstr "カートを更新"
+
+#: uc_cart.module:730
+msgid "Remove"
+msgstr "除去"
+
+#: uc_cart.module:745
+msgid "Qty."
+msgstr "数量"
+
+#: uc_cart.module:750
+msgid "Total"
+msgstr "合計"
+
+#: uc_cart.module:810
+msgid "Your cart has been updated."
+msgstr "カートを更新しました。"
+
+#: uc_cart.module:1033
+msgid "!title is not a product. Unable to add to cart."
+msgstr "!titleは商品ではありません。カートに入れることはできません。"
+
+#: uc_cart.module:1045
+msgid "Sorry, that item is not available for purchase at this time."
+msgstr "申し訳ございませんが、現在その商品を購入いただけません。"
+
+#: uc_cart.module:1076
+msgid "<strong>@product-title</strong> added to <a href=\"!url\">your shopping cart</a>."
+msgstr "<strong>@product-title</strong> を<a href=\"!url\">ショッピングカート</a>に入れました。"
+
+#: uc_cart.module:1082
+msgid "Your item(s) have been updated."
+msgstr "商品を更新しました。"
+
+#: uc_cart.module:414
+msgid "@count Item"
+msgid_plural "@count Items"
+msgstr[0] "商品 @count 個"
+msgstr[1] "商品 @count 個"
+
+#: uc_cart.module:28;52
+msgid "Cart settings"
+msgstr "カートの設定"
+
+#: uc_cart.module:29
+msgid "Configure the cart settings."
+msgstr "カートの設定を行います。"
+
+#: uc_cart.module:35;86
+msgid "Overview"
+msgstr "概観"
+
+#: uc_cart.module:36
+msgid "View the cart settings."
+msgstr "カートの設定を表示"
+
+#: uc_cart.module:42;94
+msgid "Edit"
+msgstr "編集"
+
+#: uc_cart.module:43;95
+msgid "Edit the cart settings."
+msgstr "カートの設定を編集"
+
+#: uc_cart.module:53
+msgid "Edit the basic cart settings."
+msgstr "基本的なカートの設定を編集"
+
+#: uc_cart.module:59
+msgid "Cart panes"
+msgstr "カートの区画"
+
+#: uc_cart.module:60
+msgid "Edit the pane settings for the cart view page."
+msgstr "カートの中身ページの区画の設定を編集します。"
+
+#: uc_cart.module:70
+msgid "Edit the settings for the shopping cart block."
+msgstr "ショッピングカートブロックの設定を編集します。"
+
+#: uc_cart.module:79;104
+msgid "Checkout settings"
+msgstr "購入手続きの設定"
+
+#: uc_cart.module:80
+msgid "Configure the checkout settings."
+msgstr "購入手続きの設定を行います。"
+
+#: uc_cart.module:87
+msgid "View the checkout settings."
+msgstr "購入手続きの設定を表示。"
+
+#: uc_cart.module:105
+msgid "Edit the basic checkout settings."
+msgstr "購入手続きに関する基本的な設定を編集します。"
+
+#: uc_cart.module:111
+msgid "Checkout panes"
+msgstr "購入手続きの区画"
+
+#: uc_cart.module:112
+msgid "Edit the pane settings for the checkout page."
+msgstr "購入手続きページの区画の設定を編集します。"
+
+#: uc_cart.module:121
+msgid "Checkout messages"
+msgstr "購入手続きのメッセージ"
+
+#: uc_cart.module:122
+msgid "Edit the messages for the checkout completion page."
+msgstr "購入手続き完了ページのメッセージを編集。"
+
+#: uc_cart.module:131
+msgid "Address fields"
+msgstr "住所欄"
+
+#: uc_cart.module:132
+msgid "Edit the address field settings."
+msgstr "住所欄の設定を編集。"
+
+#: uc_cart.module:143
+msgid "View/modify the contents of your shopping cart or proceed to checkout."
+msgstr "ショッピングカードや購入手続きの内容を表示/修正"
+
+#: uc_cart.module:151
+msgid "Purchase the items in your shopping cart."
+msgstr "ショッピングカートにある商品を購入。"
+
+#: uc_cart.module:159
+msgid "Review an order before final submission."
+msgstr "送信前の最終段階で注文を確認。"
+
+#: uc_cart.module:166
+msgid "Order complete"
+msgstr "注文完了"
+
+#: uc_cart.module:167
+msgid "Display information upon completion of an order."
+msgstr "注文完了時に情報を表示。"
+
+#: uc_cart.info:0
+msgid "REQUIRED. Controls the shopping cart for an Ubercart e-commerce site."
+msgstr "必須。Ubercartオンラインショップサイト用のショッピングカートを制御します。"
+
+#: uc_cart.info:0
+msgid "Ubercart - core"
+msgstr "Ubercart - コア"
+

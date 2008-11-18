@@ -1,0 +1,873 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: 2008-11-17 19:02+0900\n"
+"Last-Translator: PineRay <matsudaterutaka@nifty.com>\n"
+"Language-Team: Japanese <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: uc_product.admin.inc:49;587
+msgid "Class ID"
+msgstr "クラスID"
+
+#: uc_product.admin.inc:49
+#: uc_product.module:364;449;901
+msgid "Name"
+msgstr "名前"
+
+#: uc_product.admin.inc:49;400;435;601
+#: uc_product.module:365
+msgid "Description"
+msgstr "説明"
+
+#: uc_product.admin.inc:49;435
+msgid "Operations"
+msgstr "操作"
+
+#: uc_product.admin.inc:53;440
+msgid "edit"
+msgstr "編集"
+
+#: uc_product.admin.inc:54;441
+msgid "delete"
+msgstr "削除"
+
+#: uc_product.admin.inc:64
+msgid "No product classes have been defined yet."
+msgstr "商品クラスが設定されていません。"
+
+#: uc_product.admin.inc:68
+msgid "Add a class"
+msgstr "クラスの追加"
+
+#: uc_product.admin.inc:103
+msgid "Products per page"
+msgstr "1ページあたりの商品数"
+
+#: uc_product.admin.inc:104
+msgid "The number of products per page in a list."
+msgstr "リストに表示する1ページあたりの商品数。"
+
+#: uc_product.admin.inc:107
+msgid "Showing %products products per page."
+msgstr "1ページあたり%products個の商品を表示。"
+
+#: uc_product.admin.inc:113
+msgid "Display an optional quantity field in the <em>Add to Cart</em> form."
+msgstr "<em>カートに入れる</em>フォームで数量フィールドを表示。"
+
+#: uc_product.admin.inc:116
+msgid "The Quantity field in the <em>Add to Cart</em> form is enabled."
+msgstr "<em>カートに入れる</em>フォームで数量フィールドが有効です。"
+
+#: uc_product.admin.inc:117
+msgid "The Quantity field in the <em>Add to Cart</em> form is disabled."
+msgstr "<em>カートに入れる</em>フォームで数量フィールドが無効です。"
+
+#: uc_product.admin.inc:122
+msgid "Enable <em>Add to cart</em> forms in product node teasers."
+msgstr "<em>カートに入れる</em>フォームをティーザーで表示。"
+
+#: uc_product.admin.inc:125
+msgid "The <em>Add to Cart</em> form is enabled in product teasers."
+msgstr "<em>カートに入れる</em>フォームがティーザーで有効です。"
+
+#: uc_product.admin.inc:126
+msgid "The <em>Add to Cart</em> form is disabled in product teasers."
+msgstr "<em>カートに入れる</em>フォームがティーザーで無効です。"
+
+#: uc_product.admin.inc:132
+msgid "<em>Add to cart</em> button text"
+msgstr "<em>カートに入れる</em>ボタンのテキスト"
+
+#: uc_product.admin.inc:133
+msgid "Use the textboxes to adjust the text of the submit button for <em>Add to Cart</em> forms in various places on the site."
+msgstr "このテキストボックスで、サイトの各所にある<em>カートへ入れる</em>フォームの送信ボタンに使用するテキストを指定します。"
+
+#: uc_product.admin.inc:140
+msgid "Teaser forms"
+msgstr "ティーザーフォーム"
+
+#: uc_product.admin.inc:141
+msgid "For the form displayed on teasers and catalog pages."
+msgstr "ティーザーやカタログページに表示されるフォーム用。"
+
+#: uc_product.admin.inc:142;143;150;151;191
+#: uc_product.module:917;989;1313
+msgid "Add to cart"
+msgstr "カートに入れる"
+
+#: uc_product.admin.inc:143
+msgid "Teaser and catalog pages: %text"
+msgstr "ティーザーとカタログページ: %text"
+
+#: uc_product.admin.inc:148
+msgid "Product view"
+msgstr "商品表示"
+
+#: uc_product.admin.inc:149
+msgid "For the form displayed on the product view page."
+msgstr "商品ページに表示されるフォーム用。"
+
+#: uc_product.admin.inc:151
+msgid "Product view pages: %text"
+msgstr "商品表示ページ: %text"
+
+#: uc_product.admin.inc:163
+msgid "<em>Add to Cart</em> submit button text:"
+msgstr "<em>カートに入れる</em>送信ボタンのテキスト:"
+
+#: uc_product.admin.inc:183
+msgid "Model"
+msgstr "型番"
+
+#: uc_product.admin.inc:184
+#: uc_product.module:895;1626
+msgid "Image"
+msgstr "画像"
+
+#: uc_product.admin.inc:185
+msgid "Display price"
+msgstr "価格を表示"
+
+#: uc_product.admin.inc:186
+#: uc_product.module:485;906
+#: views/uc_product.views.inc:45
+msgid "List price"
+msgstr "通常価格"
+
+#: uc_product.admin.inc:187
+msgid "Cost (seen only by 'administer products' permission)"
+msgstr "費用 (「商品の管理」権限にのみ表示)"
+
+#: uc_product.admin.inc:188
+#: uc_product.module:509
+#: views/uc_product.views.inc:75
+msgid "Sell price"
+msgstr "販売価格"
+
+#: uc_product.admin.inc:189;281
+#: uc_product.module:532
+#: views/uc_product.views.inc:90
+msgid "Weight"
+msgstr "ウェイト"
+
+#: uc_product.admin.inc:190
+#: uc_product.module:549
+msgid "Dimensions"
+msgstr "寸法"
+
+#: uc_product.admin.inc:239
+msgid "Save configuration"
+msgstr "設定の保存"
+
+#: uc_product.admin.inc:242
+msgid "Reset to defaults"
+msgstr "デフォルトに戻す"
+
+#: uc_product.admin.inc:267
+msgid "Displayed product fields:"
+msgstr "表示する商品フィールド:"
+
+#: uc_product.admin.inc:281
+msgid "Enable"
+msgstr "有効"
+
+#: uc_product.admin.inc:281
+msgid "Product field"
+msgstr "商品フィールド"
+
+#: uc_product.admin.inc:300
+msgid "The configuration options have been reset to their default values."
+msgstr "設定オプションがデフォルトの値に戻されました。"
+
+#: uc_product.admin.inc:316
+msgid "The configuration options have been saved."
+msgstr "設定オプションが保存されました。"
+
+#: uc_product.admin.inc:331
+msgid "No product features found."
+msgstr "商品フィーチャーがありません。"
+
+#: uc_product.admin.inc:334
+msgid "The following product features are enabled"
+msgstr "以下の商品フィーチャーが有効です"
+
+#: uc_product.admin.inc:344
+msgid "!feature settings"
+msgstr "!featureの設定"
+
+#: uc_product.admin.inc:363
+msgid "The following features are enabled:"
+msgstr "下記のフィーチャーが有効:"
+
+#: uc_product.admin.inc:393
+msgid "The product feature has been deleted."
+msgstr "商品フィーチャーを削除しました。"
+
+#: uc_product.admin.inc:399
+msgid "Are you sure you wish to delete this %feature?"
+msgstr "%feature を本当に削除しますか？"
+
+#: uc_product.admin.inc:401
+msgid "Delete"
+msgstr "削除"
+
+#: uc_product.admin.inc:401;663
+#: uc_product.module:1582
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: uc_product.admin.inc:404
+msgid "That product feature doesn't exist."
+msgstr "商品フィーチャーがありません。"
+
+#: uc_product.admin.inc:423
+msgid "Error: Attempted to add a non-existent product feature type."
+msgstr "エラー: 存在しない商品フィーチャーのタイプを追加しようとする試み。"
+
+#: uc_product.admin.inc:428
+msgid "Error: No form data was returned for that operation."
+msgstr "エラー: 操作から何のフォームデータも返ってきませんでした。"
+
+#: uc_product.admin.inc:435
+msgid "Type"
+msgstr "タイプ"
+
+#: uc_product.admin.inc:455
+msgid "No features found for this product."
+msgstr "この商品にはフィーチャーがありません。"
+
+#: uc_product.admin.inc:479
+msgid "Add a new feature"
+msgstr "新しいフィーチャーを追加"
+
+#: uc_product.admin.inc:485
+msgid "Add"
+msgstr "追加"
+
+#: uc_product.admin.inc:590
+msgid "The machine-readable name of this content type. This text will be used for constructing the URL of the <em>create content</em> page for this content type. This name may consist only of lowercase letters, numbers, and underscores. Dashes are not allowed. Underscores will be converted into dashes when constructing the URL of the <em>create content</em> page. This name must be unique to this content type."
+msgstr "このコンテンツタイプの「コンピュータが扱える名前」を入力してください。 このテキストは、このコンテンツタイプ用の「コンテンツの作成」ページのURLを構築するために使用されます。 名前には小文字・数字・アンダースコア（下線）のみが含まれる必要があります。 アンダースコアは「コンテンツの作成」ページのURLを構築する際、ハイフンに変換されます。 この名前は固有である必要があります。"
+
+#: uc_product.admin.inc:595
+msgid "Class name"
+msgstr "クラス名"
+
+#: uc_product.admin.inc:602
+msgid "This text describes the content type created for this product class to administrators."
+msgstr "この商品クラスから作成されるコンテンツタイプを説明する文章です。"
+
+#: uc_product.admin.inc:607
+msgid "Submit"
+msgstr "送信"
+
+#: uc_product.admin.inc:661
+msgid "Be very sure you want to delete the %type product class. It will become a standard node type."
+msgstr "%type商品クラスを削除してよいか、よく確認してください。通常のコンテンツタイプとなります。"
+
+#: uc_product.admin.inc:663
+msgid "Continue"
+msgstr "継続"
+
+#: uc_product.admin.inc:684
+msgid "Product class %type deleted."
+msgstr "商品クラス %type を削除しました。"
+
+#: uc_product.admin.inc:662
+msgid "There is @count node of this type."
+msgid_plural "There are @count nodes of this type."
+msgstr[0] "このタイプには @count 個のノードがあります。"
+msgstr[1] "このタイプには @count 個のノードがあります。"
+
+#: uc_product.module:159
+msgid "Create products for sale in an online store."
+msgstr "オンラインストアで販売する商品を作成します。"
+
+#: uc_product.module:370;100
+#: uc_product.info:0
+#: views/uc_product.views.inc:13;125;144
+msgid "Product"
+msgstr "商品"
+
+#: uc_product.module:372
+msgid ""
+"This node displays the representation of a product for sale on the website. It includes\n"
+"        all the unique information that can be attributed to a specific model number."
+msgstr ""
+"このノードは、ウェブサイトで販売する商品の解説を表しています。\n"
+"固有の情報が含まれており、特定の型番と結び付けることができます。"
+
+#: uc_product.module:453
+msgid "Name of the product."
+msgstr "商品の名前。"
+
+#: uc_product.module:458
+msgid "Enter the product description used for product teasers and pages."
+msgstr "商品のティーザーやページで使用する説明を入力。"
+
+#: uc_product.module:463
+msgid "Product information"
+msgstr "商品情報"
+
+#: uc_product.module:470
+#: views/uc_product.views.inc:27
+msgid "SKU"
+msgstr "SKU"
+
+#: uc_product.module:473
+msgid "Product SKU/model."
+msgstr "商品SKU/型番"
+
+#: uc_product.module:488
+msgid "The listed MSRP."
+msgstr "希望小売価格。"
+
+#: uc_product.module:497
+#: views/uc_product.views.inc:60
+msgid "Cost"
+msgstr "費用"
+
+#: uc_product.module:500
+msgid "Your store's cost."
+msgstr "店舗にかかる費用"
+
+#: uc_product.module:512
+msgid "Customer purchase price."
+msgstr "顧客の購入価格"
+
+#: uc_product.module:522
+msgid "Product and its derivatives are shippable."
+msgstr "商品とその付属品は配送可能です。"
+
+#: uc_product.module:538
+msgid "Pounds"
+msgstr "ポンド"
+
+#: uc_product.module:539
+msgid "Kilograms"
+msgstr "キログラム"
+
+#: uc_product.module:540
+msgid "Ounces"
+msgstr "オンス"
+
+#: uc_product.module:541
+msgid "Grams"
+msgstr "グラム"
+
+#: uc_product.module:544
+msgid "Unit of measurement"
+msgstr "単位"
+
+#: uc_product.module:550
+msgid "Physical dimensions of the packaged product."
+msgstr "梱包した商品の物理的な寸法。"
+
+#: uc_product.module:555
+msgid "Units of measurement"
+msgstr "単位"
+
+#: uc_product.module:557
+msgid "Inches"
+msgstr "インチ"
+
+#: uc_product.module:558
+msgid "Feet"
+msgstr "フィート"
+
+#: uc_product.module:559
+msgid "Centimeters"
+msgstr "センチメートル"
+
+#: uc_product.module:560
+msgid "Millimeters"
+msgstr "ミリメートル"
+
+#: uc_product.module:565
+msgid "Length"
+msgstr "長さ"
+
+#: uc_product.module:570
+msgid "Width"
+msgstr "幅"
+
+#: uc_product.module:575
+msgid "Height"
+msgstr "高さ"
+
+#: uc_product.module:580
+msgid "Package quantity"
+msgstr "パッケージ数量"
+
+#: uc_product.module:582
+msgid "For a package containing only this product, how many are in it?"
+msgstr "パッケージにこの商品だけがあるとき、何個含ませますか？"
+
+#: uc_product.module:586
+msgid "Default quantity to add to cart"
+msgstr "デフォルトのカートに入れる数量"
+
+#: uc_product.module:588
+msgid "Leave blank or zero to disable the quantity field in the add to cart form."
+msgstr "空欄または 0(ゼロ) を入力すると、カートに入れるフォームで数量のフィールドが無効となります。"
+
+#: uc_product.module:594
+msgid "List position"
+msgstr "リストでの位置"
+
+#: uc_product.module:595
+msgid "Specify a value to set this product's position in product lists.<br />Products in the same position will be sorted alphabetically."
+msgstr "商品リストにおけるこの商品の位置を決定する値を指定してください。<br />同じ位置にある商品同士はアルファベット順で並びます。"
+
+#: uc_product.module:639
+msgid "Price must be in a valid number format. No commas and only one decimal point."
+msgstr "適切な書式で価格を入力してください。コンマ無しで小数点は1つだけです。"
+
+#: uc_product.module:650
+msgid "Weight must be in a valid number format. No commas and only one decimal point."
+msgstr "正しい数字の書式でウェイトを指定してください。コンマ無しで小数点は1つだけです。"
+
+#: uc_product.module:654
+msgid "Quantities should be numeric."
+msgstr "数量には数字を入力してください。"
+
+#: uc_product.module:657
+msgid "Adding negative items to the cart doesn't make sense, so don't make it easy."
+msgstr "負の数量をカートに入れるのは意味を成さないのでお控えください。"
+
+#: uc_product.module:799;856
+msgid "Advanced search"
+msgstr "高度な検索"
+
+#: uc_product.module:810
+msgid "Containing any of the words"
+msgstr "以下のいずれかのワードを含む"
+
+#: uc_product.module:816
+msgid "Containing the phrase"
+msgstr "以下のフレーズを含む"
+
+#: uc_product.module:822
+msgid "Containing none of the words"
+msgstr "以下のいずれのワードも含まない"
+
+#: uc_product.module:831
+msgid "Only in the category(s)"
+msgstr "カテゴリを限定"
+
+#: uc_product.module:849
+msgid "Only of the type(s)"
+msgstr "コンテンツタイプを限定"
+
+#: uc_product.module:879
+msgid "Lists a group of products in an abbreviated format."
+msgstr "商品のグループを簡易な形式で一覧表示します。"
+
+#: uc_product.module:911
+msgid "Price"
+msgstr "価格"
+
+#: uc_product.module:943
+msgid "n/a"
+msgstr "N/A"
+
+#: uc_product.module:959
+msgid "No products available."
+msgstr "商品がありません。"
+
+#: uc_product.module:1003;1010
+msgid "This product has options that need to be selected before purchase. Please select them in the form below."
+msgstr "この商品には、購入の前に選択しなければならないオプションがあります。下記のフォームから選択してください。"
+
+#: uc_product.module:1053
+msgid "The product's model number."
+msgstr "商品の型番。"
+
+#: uc_product.module:1054
+msgid "The product's list price."
+msgstr "商品の通常価格。"
+
+#: uc_product.module:1055
+msgid "The product's cost."
+msgstr "商品の費用"
+
+#: uc_product.module:1056
+msgid "The product's sell price."
+msgstr "商品の販売価格"
+
+#: uc_product.module:1057
+msgid "The unit of measurement for the product's weight."
+msgstr "商品の重さを量る単位。"
+
+#: uc_product.module:1058
+msgid "The numerical value of the product's weight."
+msgstr "商品の重さの数値。"
+
+#: uc_product.module:1059
+msgid "The product's formatted weight."
+msgstr "書式化された商品の重さ。"
+
+#: uc_product.module:1060
+msgid "The unit of measurement for the product's length, width, and height."
+msgstr "商品の長さや幅、高さを測る単位。"
+
+#: uc_product.module:1061
+msgid "The numerical value of the product's length."
+msgstr "商品の長さの数値。"
+
+#: uc_product.module:1062
+msgid "The product's formatted length."
+msgstr "書式化された商品の長さ。"
+
+#: uc_product.module:1063
+msgid "The numerical value of the product's width."
+msgstr "商品の幅の数値。"
+
+#: uc_product.module:1064
+msgid "The product's formatted width."
+msgstr "書式化された商品の幅。"
+
+#: uc_product.module:1065
+msgid "The numerical value of the product's height."
+msgstr "商品の高さの数値。"
+
+#: uc_product.module:1066
+msgid "The product's formatted height."
+msgstr "書式化された商品の高さ。"
+
+#: uc_product.module:1086
+msgid "To automatically configure core image support, <a href=\"!url\">enable</a> the <a href=\"http://drupal.org/project/cck\">Content</a>, <a href=\"http://drupal.org/project/imagefield\">CCK Image field</a>, and <a href=\"http://drupal.org/project/imagecache\">Imagecache</a> modules."
+msgstr "コアの画像サポートを自動的に設定するには、<a href=\"http://drupal.org/project/cck\">Content</a>、および<a href=\"http://drupal.org/project/imagefield\">CCK Image field</a>、<a href=\"http://drupal.org/project/imagecache\">Imagecache</a>モジュールを<a href=\"!url\">有効</a>にしてください。"
+
+#: uc_product.module:1126
+msgid "Product image support has been automatically configured by Ubercart."
+msgstr "商品画像のサポート機能は、Ubercartによって自動的に設定されました。"
+
+#: uc_product.module:1130
+msgid "<a href=\"!url\">Click here</a> to automatically configure the following items for core image support:"
+msgstr "<a href=\"!url\">こちらをクリック</a>することで、以下の商品のコア画像サポートを自動的に調整します:"
+
+#: uc_product.module:1132
+msgid "The Image file field has not been created for products."
+msgstr "商品の画像ファイルフィールドが作成されていません。"
+
+#: uc_product.module:1135
+msgid "Some or all of the expected Imagecache presets (\"!presets\") have not been created. Ubercart will not display images in certain places."
+msgstr "期待されるImagecacheプリセット (\"!presets\") のいくつか、またはすべてが作成されていません。Ubercartは画像を特定の位置に表示できません。"
+
+#: uc_product.module:1138
+msgid "Some Imagecache presets do not contain actions to perform on images. Images may be displayed in their original formats."
+msgstr "Imagecacheのプリセットのなかで、画像を変更するアクションのないものがあります。画像はオリジナルのままで表示されます。"
+
+#: uc_product.module:1140
+msgid "(This action is not required and should not be taken if you do not need images or have implemented your own image support.)"
+msgstr "(もしも画像が必要でないか、または画像をサポートしていなければ、このアクションは必要でなく行ってはいけません。)"
+
+#: uc_product.module:1144
+msgid "Images"
+msgstr "画像"
+
+#: uc_product.module:1160
+msgid "@attribute: @option"
+msgstr "@attribute: @option"
+
+#: uc_product.module:1264
+msgid "SKU: @sku"
+msgstr ""
+
+#: uc_product.module:1302
+msgid "Quantity"
+msgstr "数量"
+
+#: uc_product.module:1327
+msgid "You have entered an invalid quantity."
+msgstr "数量を正しく入力してください。"
+
+#: uc_product.module:1351
+msgid "List Price: !price"
+msgstr "通常価格: !price"
+
+#: uc_product.module:1354
+msgid "Cost: !price"
+msgstr "費用: !price"
+
+#: uc_product.module:1358;1382
+msgid "Price: !price"
+msgstr "価格: !price"
+
+#: uc_product.module:1396
+msgid "Weight: !weight"
+msgstr "重さ: !weight"
+
+#: uc_product.module:1408
+msgid "Dimensions: !length × !width × !height"
+msgstr "寸法: !length × !width × !height"
+
+#: uc_product.module:1579
+msgid "Save feature"
+msgstr "フィーチャーを保存"
+
+#: uc_product.module:1615
+msgid "The product feature has been added."
+msgstr "商品フィーチャーを追加しました。"
+
+#: uc_product.module:1618
+msgid "The product feature has been updated."
+msgstr "商品フィーチャーを更新しました。"
+
+#: uc_product.module:1683
+msgid "Created field %label."
+msgstr "%label フィールドを作成しました。"
+
+#: uc_product.module:1686
+msgid "There was a problem creating field %label."
+msgstr "%label フィールドの作成中に問題が発生しました。"
+
+#: uc_product.module:172
+msgid "administer products"
+msgstr "商品の管理"
+
+#: uc_product.module:172
+msgid "administer product classes"
+msgstr "商品クラスの管理"
+
+#: uc_product.module:172
+msgid "administer product features"
+msgstr "商品のフィーチャーを管理"
+
+#: uc_product.module:174;0
+msgid "uc_product"
+msgstr "uc_product"
+
+#: uc_product.module:176
+msgid "product"
+msgstr "商品"
+
+#: uc_product.module:26
+msgid "Products"
+msgstr "商品"
+
+#: uc_product.module:27
+msgid "Administer products, classes, and more."
+msgstr "商品、クラスその他を管理します。"
+
+#: uc_product.module:35
+msgid "View products"
+msgstr "商品を表示"
+
+#: uc_product.module:36
+msgid "Build and view a list of product nodes."
+msgstr "商品ノードの一覧を作成して表示します。"
+
+#: uc_product.module:43
+msgid "Manage classes"
+msgstr "クラス管理"
+
+#: uc_product.module:44
+msgid "Create and edit product node types."
+msgstr "商品のコンテンツタイプの作成と編集を行います。"
+
+#: uc_product.module:52;74
+msgid "Product settings"
+msgstr "商品の設定"
+
+#: uc_product.module:53
+msgid "Configure product settings."
+msgstr "商品の設定を行います。"
+
+#: uc_product.module:60
+msgid "Overview"
+msgstr "概観"
+
+#: uc_product.module:65;136
+msgid "Edit"
+msgstr "編集"
+
+#: uc_product.module:81
+msgid "Product fields"
+msgstr "商品のフィールド"
+
+#: uc_product.module:90
+msgid "Product features"
+msgstr "商品フィーチャー"
+
+#: uc_product.module:110
+msgid "Features"
+msgstr "フィーチャー"
+
+#: uc_product.module:128
+msgid "Product class"
+msgstr "商品クラス"
+
+#: uc_product.install:16
+msgid "The list of product node types."
+msgstr "商品コンテンツタイプのリスト。"
+
+#: uc_product.install:19
+msgid "The node type identifier."
+msgstr "コンテンツタイプ識別子。"
+
+#: uc_product.install:26
+msgid "The human-readable name."
+msgstr "人間が読み取れる名前。"
+
+#: uc_product.install:42
+msgid "The product feature id."
+msgstr "商品フィーチャーID。"
+
+#: uc_product.install:48
+msgid "The identifier of the node that has a feature."
+msgstr "フィーチャーがあるノードの識別子。"
+
+#: uc_product.install:71
+msgid "Product information for nodes."
+msgstr "ノードの商品情報。"
+
+#: uc_product.install:74
+msgid "Revision id of the product node."
+msgstr "商品ノードのリビジョンID。"
+
+#: uc_product.install:81
+msgid "The product node id."
+msgstr "商品ノードID。"
+
+#: uc_product.install:88
+msgid "SKU or model number."
+msgstr "SKUまたは型番。"
+
+#: uc_product.install:95
+msgid "Suggested retail price."
+msgstr "提案された小売金額。"
+
+#: uc_product.install:104
+msgid "The amount the store pays to sell the product."
+msgstr "店舗が商品を売るために費やす金額。"
+
+#: uc_product.install:113
+msgid "The amount the customer pays for the product."
+msgstr "顧客が商品に対して支払う金額。"
+
+#: uc_product.install:122
+msgid "Physical weight."
+msgstr "物理的な重さ。"
+
+#: uc_product.install:129
+msgid "Unit of measure for the weight field."
+msgstr "重さの単位。"
+
+#: uc_product.install:136
+msgid "Physical length of the product or its packaging."
+msgstr "商品やパッケージの物理的な長さ"
+
+#: uc_product.install:143
+msgid "Physical width of the product or its packaging."
+msgstr "商品やパッケージの物理的な重さ"
+
+#: uc_product.install:150
+msgid "Physical height of the product or its packaging."
+msgstr "商品やパッケージの物理的な高さ"
+
+#: uc_product.install:157
+msgid "Unit of measure for the length, width, and height."
+msgstr "長さや横幅、高さの単位。"
+
+#: uc_product.install:164
+msgid "The number of this product that fit in one package."
+msgstr "ひとつのパッケージに収まる商品数。"
+
+#: uc_product.install:172
+msgid "The default value for the quantity field in the \"Add to Cart\" form."
+msgstr "「カートに入れる」フォームにある数量フィールドのデフォルトの値。"
+
+#: uc_product.install:180
+msgid "A multi-site unique identifier for a product."
+msgstr "複数サイトにおける商品固有の識別子。"
+
+#: uc_product.install:187
+msgid "The sort criteria for products."
+msgstr "商品の並び順。"
+
+#: uc_product.install:194
+msgid "Boolean flag signifying that the product can be shipped."
+msgstr "商品が配送可能かどうかの論理フラグ。"
+
+#: uc_product.install:322
+msgid "Added the following node types to the Catalog vocabulary: %list"
+msgstr "以下のコンテンツタイプをカタログの分類用語に追加しました: %list"
+
+#: uc_product.info:0
+msgid "REQUIRED. A module to represent items in an online store. Imagecache and CCK Image field recommended."
+msgstr "必須。オンラインストアで商品を表すモジュール。ImagecacheモジュールとCCK Image fieldモジュールをオススメします。"
+
+#: uc_product.info:0
+msgid "Ubercart - core"
+msgstr "Ubercart - コア"
+
+#: views/uc_product.views.inc:28
+msgid "The model number."
+msgstr "型番。"
+
+#: views/uc_product.views.inc:46
+msgid "The manufacturer's suggested price."
+msgstr "製造者が示した価格。"
+
+#: views/uc_product.views.inc:61
+msgid "The cost of the product to the store."
+msgstr "商品の店舗にかかる費用。"
+
+#: views/uc_product.views.inc:76
+msgid "The price for which the product is sold."
+msgstr "商品購入時の価格。"
+
+#: views/uc_product.views.inc:91
+msgid "The physical weight."
+msgstr "物理的な重さ。"
+
+#: views/uc_product.views.inc:105
+msgid "Ordering"
+msgstr "並び順"
+
+#: views/uc_product.views.inc:106
+msgid "The default sort criteria in the catalog."
+msgstr "カタログのデフォルトの並び順。"
+
+#: views/uc_product.views.inc:113;118
+msgid "Is a product"
+msgstr "商品である"
+
+#: views/uc_product.views.inc:114
+msgid "Check for the fields provided by the Ubercart product module."
+msgstr "Ubercartのproductモジュールによって提供されたフィールドを確認。"
+
+#: views/uc_product.views.inc:115
+msgid "Node"
+msgstr "ノード"
+
+#: views/uc_product.views.inc:123
+msgid "Add to cart form"
+msgstr "カートに入れるフォーム"
+
+#: views/uc_product.views.inc:124
+msgid "Form to put the product in the customer's cart."
+msgstr "商品をカートにいれるためのフォーム。"
+
+#: views/uc_product.views.inc:142
+msgid "Buy it now button"
+msgstr "今すぐ買うボタン"
+
+#: views/uc_product.views.inc:143
+msgid "A button to add a product to the cart without quantity or attribute fields."
+msgstr "数量や属性の選択なしに商品をカートに追加するボタン。"
+
+#: views/uc_product.views.inc:196;203;209;216;222;229;235;242;248;255
+msgid "Editable"
+msgstr "編集可能"
+
+#: views/uc_product.views.inc:202;215;228;241;254
+msgid "Display"
+msgstr "表示"
+
