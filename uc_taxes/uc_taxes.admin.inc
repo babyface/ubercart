@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.admin.inc,v 1.1.2.2 2008/11/07 21:13:26 islandusurper Exp $
+// $Id: uc_taxes.admin.inc,v 1.1.2.3 2008/11/21 21:17:25 islandusurper Exp $
 
 /**
  * @file
@@ -12,13 +12,13 @@
  * Display a list of tax rates.
  */
 function uc_taxes_admin_settings() {
-  $header = array(t('Name'), t('Rate'), t('Taxed product types'), t('Taxed line items'), t('Weight'), array('data' => t('Actions'), 'colspan' => 3));
+  $header = array(t('Name'), t('Rate'), t('Taxed product types'), t('Taxed line items'), t('Weight'), array('data' => t('Operations'), 'colspan' => 4));
   $rows = array();
   $result = db_query("SELECT * FROM {uc_taxes} ORDER BY weight");
   while ($rule = db_fetch_object($result)) {
     $rule->taxed_product_types = (array)unserialize($rule->taxed_product_types);
     $rule->taxed_line_items = (array)unserialize($rule->taxed_line_items);
-    $rows[] = array($rule->name, $rule->rate * 100 .'%', implode(', ', $rule->taxed_product_types), implode(', ', $rule->taxed_line_items), $rule->weight, l(t('edit'), 'admin/store/settings/taxes/edit/'. $rule->id), l(t('copy'), 'admin/store/settings/taxes/copy/'. $rule->id), l(t('delete'), 'admin/store/settings/taxes/delete/'. $rule->id));
+    $rows[] = array($rule->name, $rule->rate * 100 .'%', implode(', ', $rule->taxed_product_types), implode(', ', $rule->taxed_line_items), $rule->weight, l(t('edit'), 'admin/store/settings/taxes/edit/'. $rule->id), l(t('conditions'), CA_UI_PATH .'/uc_taxes_'. $rule->id .'/edit/conditions'), l(t('copy'), 'admin/store/settings/taxes/copy/'. $rule->id), l(t('delete'), 'admin/store/settings/taxes/delete/'. $rule->id));
   }
   $output = theme('table', $header, $rows);
   $output .= l(t('Make a new tax rule.'), 'admin/store/settings/taxes/edit');

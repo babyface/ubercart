@@ -1,14 +1,10 @@
 <?php
-// $Id: summaries.inc,v 1.1.2.6 2008/11/07 21:13:26 islandusurper Exp $
+// $Id: summaries.inc,v 1.1.2.7 2008/11/21 21:17:30 islandusurper Exp $
 
 /**
  * @file
  * Provides summaries of forms and fieldsets to give "at-a-glance" settings
  * information.
- *
- * This is a work in progress.
- *
- * -Ryan
  */
 
 
@@ -28,8 +24,7 @@ function summarize_form($form) {
   foreach (element_children($form) as $key) {
     // Set the callback for the summary to the default if not specified.
     if (!isset($form[$key]['#summary callback'])) {
-
-      // watch out for those filter_form()s...
+      // Default filter forms to have no summary.
       if (in_array('filter_form_validate', (array) $form[$key]['#element_validate'])) {
         $form[$key]['#summary callback'] = 'summarize_null';
       }
@@ -90,8 +85,10 @@ function summarize_element($form, $title = FALSE) {
     switch ($form['#type']) {
       case 'fieldset':
         return array(
-          'data' => $form['#title'],
-          'children' => summarize_form($form),
+          array(
+            'data' => $form['#title'] .':',
+            'children' => summarize_form($form),
+          ),
         );
 
       case 'textfield':
@@ -119,10 +116,22 @@ function summarize_element($form, $title = FALSE) {
   }
 }
 
+// Returns an empty summary string.
 function summarize_null($form) {
   return array();
 }
 
+/**
+ * Returns the correct summary string for a checkbox element based on its
+ *   current value.
+ *
+ * @param $true
+ *   The summary string to use if the checkbox has been checked.
+ * @param $false
+ *   The summary string to use if the checkbox has not been checked.
+ * @return
+ *   The correct supplied string based on the current value of the checkbox.
+ */
 function summarize_checkbox($form, $true, $false) {
   if ($form['#default_value']) {
     return $true;
@@ -198,7 +207,27 @@ function summarize_child_form_pages($path, $trim = FALSE, $only_parent = FALSE) 
   return $summaries;
 }
 
+/**
+ * Themes a summaries array into a handy div for use with some JS enhancement.
+ *
+ * @param $summaries
+ *   An array of summary arrays each containing the following keys:
+ *   - path - the path of the settings form the array is summarizing.
+ *   - title - the title of the settings form.
+ *   - href - the actual URL of the summary's form page.
+ *   - items - an array of items formatted for theme_item_list().
+ * @param $link
+ *   TRUE or FALSE indicating whether or not to display an edit icon linking to
+ *     the settings form the summary represents.
+ * @return
+ *   The HTML output of the summary.
+ * @ingroup themeable
+ */
 function theme_summary_overview($summaries, $link = TRUE) {
+  // Add some Ubercart specific JS for modifying summaries.
+  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
+  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
+
   $output = '';
 
   foreach ($summaries as $summary) {

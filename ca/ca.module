@@ -1,10 +1,12 @@
 <?php
-// $Id: ca.module,v 1.1.2.8 2008/11/07 21:13:20 islandusurper Exp $
+// $Id: ca.module,v 1.1.2.9 2008/11/21 21:17:30 islandusurper Exp $
 
 /**
  * @file
  * This is a demonstration module for the new conditional actions API.
  */
+
+define('CA_UI_PATH', 'admin/settings/ca');
 
 require_once('ca.ca.inc');
 

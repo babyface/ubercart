@@ -1,11 +1,29 @@
-/* $Id: uc_file.css,v 1.2.2.4 2008/11/07 21:13:23 islandusurper Exp $ */
+/* $Id: uc_file.css,v 1.2.2.5 2008/11/21 21:17:26 islandusurper Exp $ */
+
+.download-table-row {
+  vertical-align: top;
+}
+
+.download-expiration {
+  text-align: center;
+}
+
+.download-table-index {
+  display:inline;
+}
+
+.download-table-index .form-item {
+  display:inline;
+}
 
 .duration  {
   display:inline;
+  white-space: nowrap;
 }
 
 .duration .form-item {
   display:inline;
+  white-space: nowrap;
 }
 
 tr.group {
@@ -14,4 +32,9 @@ tr.group {
 
 .file-name {
   font-style: italic;
+}
+
+.uc-file-directory-view {
+  font-style: italic;
+  font-weight: bold;
 }

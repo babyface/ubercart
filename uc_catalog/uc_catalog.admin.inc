@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.admin.inc,v 1.1.2.4 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: uc_catalog.admin.inc,v 1.1.2.5 2008/11/21 21:17:26 islandusurper Exp $
 
 /**
  * @file
@@ -7,19 +7,11 @@
  *
  */
 
-/**
- * Display an overview of all catalog settings.
- */
+
+// Displays an overview of the catalog settings.
 function uc_catalog_settings_overview() {
-  // Add some Ubercart specific JS for modifying summaries.
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
-  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
-
-  // Load the form summaries for pages beneath this path.
-  $summaries = summarize_child_form_pages('admin/store/settings/catalog/edit');
-
-  // Theme it all up in a summaries overview.
-  return theme('summary_overview', $summaries);
+  // Theme all the pages beneath this path into summary overviews.
+  return theme('summary_overview', summarize_child_form_pages('admin/store/settings/catalog/edit'));
 }
 
 /**

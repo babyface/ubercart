@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.admin.inc,v 1.1.2.3 2008/11/07 21:13:27 islandusurper Exp $
+// $Id: uc_flatrate.admin.inc,v 1.1.2.4 2008/11/21 21:17:31 islandusurper Exp $
 
 /**
  * @file
@@ -23,7 +23,7 @@ function uc_flatrate_admin_methods() {
     $row[] = check_plain($method->label);
     $row[] = uc_currency_format($method->base_rate);
     $row[] = uc_currency_format($method->product_rate);
-    $row[] = l(t('edit'), 'admin/store/settings/quotes/methods/flatrate/'. $method->mid .'/edit');
+    $row[] = l(t('edit'), 'admin/store/settings/quotes/methods/flatrate/'. $method->mid);
     $rows[] = $row;
   }
   if (count($rows)) {
@@ -96,7 +96,7 @@ function uc_flatrate_admin_method_edit_form_validate($form, &$form_state) {
 }
 
 function uc_flatrate_admin_method_edit_form_delete($form, &$form_state) {
-  drupal_goto('admin/store/settings/quotes/methods/flatrate/'. $form_state['values']['mid'] .'/delete');
+  drupal_goto('admin/store/settings/quotes/flatrate/'. $form_state['values']['mid'] .'/delete');
 }
 
 function uc_flatrate_admin_method_edit_form_submit($form, &$form_state) {

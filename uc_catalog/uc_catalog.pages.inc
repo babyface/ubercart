@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.pages.inc,v 1.1.2.3 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: uc_catalog.pages.inc,v 1.1.2.4 2008/11/21 21:17:26 islandusurper Exp $
 
 /**
  * @file
@@ -79,15 +79,15 @@ function theme_uc_catalog_browse($tid = 0) {
   if ($catalog->image) {
     $output .= theme('imagecache', 'uc_thumbnail', $catalog->image['filepath'], $catalog->name, $catalog->name, array('class' => 'category'));
   }
-  $header = array();
-  $tbl_columns = uc_product_table_header();
-  foreach ($tbl_columns as $column) {
-    $header[] = $column['cell'];
-  }
-  $order = substr(tablesort_sql($header), 10);
+
+  // Build an ORDER BY clause for the SELECT query based on table sort info.
   if (empty($_REQUEST['order'])) {
-    $order = 'p.ordering, n.title, n.nid';
+    $order = 'ORDER BY p.ordering, n.title, n.nid';
   }
+  else {
+    $order = tapirsort_sql(uc_product_table_header());
+  }
+
   $product_types = module_invoke_all('product_types');
 
   $sql = "SELECT DISTINCT(n.nid), n.sticky, n.title, n.created, p.model, p.sell_price, p.ordering
@@ -95,8 +95,7 @@ function theme_uc_catalog_browse($tid = 0) {
       INNER JOIN {term_node} tn ON n.vid = tn.vid
       INNER JOIN {uc_products} AS p ON n.vid = p.vid
     WHERE tn.tid = %d AND n.status = 1
-      AND n.type IN (". db_placeholders($product_types, 'varchar') .")
-    ORDER BY ". $order;
+      AND n.type IN (". db_placeholders($product_types, 'varchar') .") ". $order;
   $sql_count = '';
   switch ($GLOBALS['db_type']) {
     case 'mysql':

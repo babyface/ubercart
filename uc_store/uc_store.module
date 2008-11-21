@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.8 2008/11/07 21:13:27 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.9 2008/11/21 21:17:26 islandusurper Exp $
 
 /**
  * @file
@@ -328,6 +328,8 @@ function uc_store_init() {
   $dir = drupal_get_path('module', 'uc_store');
 
   require_once($dir .'/includes/summaries.inc');
+  require_once($dir .'/includes/tapir.inc');
+
   drupal_add_css($dir .'/uc_store.css');
 }
 
@@ -1752,68 +1754,6 @@ function uc_add_js($data = NULL, $type = 'module', $scope = 'header', $defer = F
   }
 }
 
-// The actual theme function that parses the form data into a table.
-function theme_tapir_table($form) {
-  $header = array();
-  $rows = array();
-
-  // First sort the columns by weight.
-  usort($form['#value']['columns'], 'uc_weight_sort');
-
-  // Loop through the columns and create the header array.
-  foreach ($form['#value']['columns'] as $col) {
-    $header[] = $col['cell'];
-  }
-
-  // Loop through the row data and create rows with the data in the right order.
-  foreach ((array) $form['#value']['rows'] as $data) {
-    $row = array();
-
-    $attributes = array();
-    if (isset($data['data'])) {
-      $attributes = $data;
-      $data = $data['data'];
-      unset($attributes['data']);
-    }
-
-    foreach ($form['#value']['columns'] as $col) {
-      if (isset($data[$col['id']])) {
-        $row[] = $data[$col['id']]['cell'];
-      }
-    }
-    $row = array('data' => $row);
-
-    foreach ($attributes as $attribute => $value) {
-      $row[$attribute] = $value;
-    }
-    $rows[] = $row;
-  }
-
-  return theme('table', $header, $rows, is_array($form['#attributes']) ? $form['#attributes'] : array(), $form['caption']);
-}
-
-// Wrapper for drupal_get_form() so we can keep tapir_get_table().
-function tapir_get_table() {
-  $args = func_get_args();
-  $form_id = array_shift($args);
-  $form_state = array('storage' => NULL, 'submitted' => FALSE, 'post' => $_POST);
-  array_unshift($args, $form_state);
-  array_unshift($args, $form_id);
-  $form = call_user_func_array('drupal_retrieve_form', $args);
-  return drupal_render_form($form_id, $form);
-}
-
-// Wrapper for tablesort_sql() that pulls header data out of the columns array.
-function tapirsort_sql($data) {
-  $header = array();
-
-  foreach ($data as $col) {
-    $header[] = $col['cell'];
-  }
-
-  return tablesort_sql($header);
-}
-
 // Builds the version info reported to Ubercart.org.
 function uc_store_report_data() {
   // Build the data array.
@@ -1890,6 +1830,6 @@ function uc_referer_uri() {
 
 // Returns the current version of Ubercart.
 function uc_version() {
-  return '2.0';
+  return '2.0-beta1';
 }
 

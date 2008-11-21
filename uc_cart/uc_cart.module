@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.9 2008/11/07 21:13:21 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.10 2008/11/21 21:17:27 islandusurper Exp $
 
 /**
  * @file
@@ -500,26 +500,6 @@ function uc_cart_form_alter(&$form, $form_state, $form_id) {
 
 
 /*******************************************************************************
- * Hook Functions (TAPIr)
- ******************************************************************************/
-
-/**
- * Implementation of hook_table_settings().
- */
-function uc_cart_table_settings() {
-  $tables[] = array(
-    'id' => 'uc_cart_view_table',
-    'description' => t("Display information on products in a customer's cart."),
-    'path' => 'admin/store/settings/tables',
-    'access' => 'administer store',
-    'preview' => FALSE,
-  );
-
-  return $tables;
-}
-
-
-/*******************************************************************************
  * Hook Functions (Ubercart)
  ******************************************************************************/
 
@@ -724,34 +704,26 @@ function theme_uc_cart_view_form($form) {
 function uc_cart_view_table($form_state, $items) {
   $table = array();
 
-  $fields = array();
-  $fields[] = array(
-    'id' => 'remove',
+  $table['columns']['remove'] = array(
     'cell' => t('Remove'),
     'weight' => 0,
   );
-  $fields[] = array(
-    'id' => 'image',
+  $table['columns']['image'] = array(
     'cell' => t('Products'),
     'weight' => 1,
   );
-  $fields[] = array(
-    'id' => 'desc',
+  $table['columns']['desc'] = array(
     'cell' => '',
     'weight' => 2,
   );
-  $fields[] = array(
-    'id' => 'qty',
+  $table['columns']['qty'] = array(
     'cell' => t('Qty.'),
     'weight' => 3,
   );
-  $fields[] = array(
-    'id' => 'total',
+  $table['columns']['total'] = array(
     'cell' => t('Total'),
     'weight' => 4,
   );
-
-  $table['columns'] = $fields;
 
   foreach (element_children($items) as $i) {
     $nid = $items[$i]['nid']['#value'];
@@ -779,12 +751,10 @@ function uc_cart_view_table($form_state, $items) {
     ),
   );
 
-  $attributes = array('width' => '100%');
-
   $form['table'] = array(
     '#value' => $table,
     '#theme' => 'tapir_table',
-    '#attributes' => $attributes,
+    '#attributes' => array('width' => '100%'),
   );
 
   return $form;

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.12.2.5 2008/11/07 21:13:26 islandusurper Exp $
+// $Id: uc_taxes.module,v 1.12.2.6 2008/11/21 21:17:25 islandusurper Exp $
 
 /**
  * @file
@@ -15,14 +15,9 @@
  ******************************************************************************/
 
 function uc_taxes_help($path, $arg) {
-  $output = '';
   switch ($path) {
     case 'admin/store/settings/taxes':
-      $output .= t('After setting up tax rates and rules on this page, go to the
-  <a href="!link">Conditional actions settings</a> to add
-  conditions to the taxes. Especially important are the geographic area
-  conditions for the delivery address.', array('!link' => url('admin/settings/ca')));
-    break;
+      return t('Add tax rates through this page and then use the <a href="!url">conditional actions interface</a> to add conditions to the taxes that limit which orders they are applied to. Especially important are the geographic area conditions for the delivery address.  Use the conditions link to jump to a particular tax rate conditions configuration page.', array('!url' => url(CA_UI_PATH)));
   }
   return $output;
 }

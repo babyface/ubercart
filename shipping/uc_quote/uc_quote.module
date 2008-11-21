@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.7 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.8 2008/11/21 21:17:31 islandusurper Exp $
 
 /**
  * @file
@@ -193,7 +193,8 @@ function uc_quote_form_alter(&$form, &$form_state, $form_id) {
   ) || $form_id == 'uc_manufacturer_form';
 
   $is_product_form = (
-    $form_id == $node->type .'_node_form'
+    isset($node)
+    && $form_id == $node->type .'_node_form'
     && isset($form['base']['dimensions'])
     && in_array($node->type, module_invoke_all('product_types'))
   );
@@ -270,8 +271,23 @@ function uc_quote_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+function uc_quote_content_extra_fields($type_name) {
+  $type = node_get_types('type', $type_name);
+  $extra = array();
+
+  if ($type->module == 'uc_product') {
+    $extra['shipping'] = array(
+      'label' => t('Shipping'),
+      'description' => t('Shipping settings form.'),
+      'weight' => 1,
+    );
+  }
+
+  return $extra;
+}
+
 /******************************************************************************
- * Workflow-ng Hooks                                                          *
+ * Conditional Actions Hooks                                                  *
  ******************************************************************************/
 
 /**
@@ -1066,9 +1082,6 @@ function uc_order_pane_quotes($op, $arg1) {
           $order->quote['rate'] = $quote_data[$quote_option[1]]['rate'];
           $result = db_query("SELECT line_item_id FROM {uc_order_line_items} WHERE order_id = %d AND type = 'shipping'", $arg1['order_id']);
           if ($lid = db_result($result)) {
-            dpm($lid);
-            dpm($label);
-            dpm($order->quote['rate']);
             uc_order_update_line_item($lid,
               $label,
               $order->quote['rate']

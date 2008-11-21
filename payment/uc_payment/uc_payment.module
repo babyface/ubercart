@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.5.2.6 2008/11/07 21:13:25 islandusurper Exp $
+// $Id: uc_payment.module,v 1.5.2.7 2008/11/21 21:17:28 islandusurper Exp $
 
 /**
  * @file
@@ -212,26 +212,6 @@ function uc_payment_form_alter(&$form, &$form_state, $form_id) {
 
 
 /*******************************************************************************
- * Hook Functions (TAPIr)
- ******************************************************************************/
-
-/**
- * Implementation of hook_table_settings().
- */
-function uc_payment_table_settings() {
-  $tables[] = array(
-    'id' => 'uc_payments_table',
-    'description' => t('The payments table on the order payments screen.'),
-    'path' => 'admin/store/settings/tables',
-    'access' => 'view all orders',
-    'preview' => FALSE,
-  );
-
-  return $tables;
-}
-
-
-/*******************************************************************************
  * Hook Functions (Ubercart)
  ******************************************************************************/
 
@@ -397,42 +377,34 @@ function _total_sort($a, $b) {
 function uc_payments_table($form_state, $cells) {
   $table = array();
 
-  $fields[] = array(
-    'id' => 'received',
+  $table['columns']['received'] = array(
     'cell' => t('Received'),
     'weight' => 0,
   );
-  $fields[] = array(
-    'id' => 'user',
+  $table['columns']['user'] = array(
     'cell' => t('User'),
     'weight' => 1,
   );
-  $fields[] = array(
-    'id' => 'method',
+  $table['columns']['method'] = array(
     'cell' => t('Method'),
     'weight' => 2,
   );
-  $fields[] = array(
-    'id' => 'amount',
+  $table['columns']['amount'] = array(
     'cell' => t('Amount'),
     'weight' => 3,
   );
-  $fields[] = array(
-    'id' => 'balance',
+  $table['columns']['balance'] = array(
     'cell' => t('Balance'),
     'weight' => 4,
   );
-  $fields[] = array(
-    'id' => 'comment',
+  $table['columns']['comment'] = array(
     'cell' => t('Comment'),
     'weight' => 5,
   );
-  $fields[] = array(
-    'id' => 'action',
+  $table['columns']['action'] = array(
     'cell' => t('Action'),
     'weight' => 6,
   );
-  $table['columns'] = $fields;
 
   foreach (element_children($cells['payments']) as $i) {
     $data = array();

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.4 2008/11/07 21:13:27 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.5 2008/11/21 21:17:25 islandusurper Exp $
 
 /**
  * @file
@@ -344,20 +344,10 @@ function uc_store_ubercart_help_tokens() {
   return $output;
 }
 
-/**
- * Display the country settings overview.
- */
+// Displays an overview of the country settings.
 function uc_country_settings_overview() {
-
-  // Add some Ubercart specific JS for modifying summaries.
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
-  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
-
-  // Load the form summaries for pages beneath this path.
-  $summaries = summarize_child_form_pages('admin/store/settings/countries/edit');
-
-  // Theme it all up in a summaries overview.
-  return theme('summary_overview', $summaries);
+  // Theme all the pages beneath this path into summary overviews.
+  return theme('summary_overview', summarize_child_form_pages('admin/store/settings/countries/edit'));
 
 }
 
@@ -553,20 +543,10 @@ function uc_country_formats_form_submit($form, &$form_state) {
   drupal_set_message(t('Country settings saved.'));
 }
 
-/**
- * Display the store settings overview page.
- */
+// Displays an overview of the store settings.
 function uc_store_store_settings_overview() {
-
-  // Add some Ubercart specific JS for modifying summaries.
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
-  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
-
-  // Load the form summaries for pages beneath this path.
-  $summaries = summarize_child_form_pages('admin/store/settings/store/edit');
-
-  // Theme it all up in a summaries overview.
-  return theme('summary_overview', $summaries);
+  // Theme all the pages beneath this path into summary overviews.
+  return theme('summary_overview', summarize_child_form_pages('admin/store/settings/store/edit'));
 }
 
 /**
@@ -687,7 +667,7 @@ function uc_store_display_settings_form() {
       $user_footer = 'no message.';
     break;
 
-    case '0':
+    case 0:
       $user_footer = 'a random message.';
     break;
 

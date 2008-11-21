@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.ca.inc,v 1.1.2.5 2008/11/03 21:33:53 islandusurper Exp $
+// $Id: uc_taxes.ca.inc,v 1.1.2.6 2008/11/21 21:17:25 islandusurper Exp $
 
 /**
  * @file
@@ -98,8 +98,8 @@ function uc_taxes_action_apply_tax($order, $tax) {
     }
   }
   if (isset($taxed_line_items['tax'])) {
-    foreach ($_SESSION['taxes'] as $other_tax) {
-      $amount += $other_tax['amount'] * $tax->rate;
+    foreach ($order->taxes as $other_tax) {
+      $amount += $other_tax->amount * $tax->rate;
     }
   }
   if ($amount) {

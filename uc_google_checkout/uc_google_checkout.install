@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.install,v 1.1.2.9 2008/11/07 21:12:46 islandusurper Exp $
+// $Id: uc_google_checkout.install,v 1.1.2.10 2008/11/21 21:17:11 islandusurper Exp $
 
 /**
  * @file
@@ -94,7 +94,7 @@ function uc_google_checkout_schema() {
         'default' => 0,
       ),
     ),
-    'primary key' => array(array('zone', 2)),
+    'primary key' => array('zone'),
   );
 
   return $schema;

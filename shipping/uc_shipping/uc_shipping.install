@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.install,v 1.4.2.3 2008/11/07 21:13:25 islandusurper Exp $
+// $Id: uc_shipping.install,v 1.4.2.4 2008/11/21 21:17:27 islandusurper Exp $
 
 /**
  * @file
@@ -234,8 +234,8 @@ function uc_shipping_schema() {
         'type' => 'numeric',
         'precision' => 10,
         'scale' => 2,
-        'unsigned' => TRUE,
         'not null' => FALSE,
+        'default' => 0.0,
       ),
       'sid' => array(
         'type' => 'int',
@@ -343,6 +343,14 @@ function uc_shipping_update_6001() {
     }
     db_change_field($ret, 'uc_packages', $field, 'value', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => FALSE));
   }
+
+  return $ret;
+}
+
+function uc_shipping_update_6002() {
+  $ret = array();
+
+  db_change_field($ret, 'uc_packages', 'value', 'value', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => FALSE));
 
   return $ret;
 }

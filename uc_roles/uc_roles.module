@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.2.2.7 2008/11/07 21:13:26 islandusurper Exp $
+// $Id: uc_roles.module,v 1.2.2.8 2008/11/21 21:17:27 islandusurper Exp $
 
 /**
  * @file
@@ -87,13 +87,13 @@ function uc_roles_menu() {
     'type' => MENU_LOCAL_TASK,
     'file' => 'uc_roles.admin.inc',
   );
-  $items['admin/store/settings/notify/edit/role'] = array(
+  $items['admin/store/settings/roles'] = array(
     'title' => 'Role assignment',
     'description' => 'Edit the notification settings for roles granted by Ubercart.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_roles_notify_settings'),
     'access arguments' => array('administer store'),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
     'file' => 'uc_roles.admin.inc',
   );
   $items['admin/user/user/expiration/delete/%user/%'] = array(

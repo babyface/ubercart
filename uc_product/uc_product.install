@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.install,v 1.12.2.3 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: uc_product.install,v 1.12.2.4 2008/11/21 21:17:29 islandusurper Exp $
 
 /**
  * @file
@@ -96,7 +96,6 @@ function uc_product_schema() {
         'type' => 'numeric',
         'precision' => 10,
         'scale' => 2,
-        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -105,7 +104,6 @@ function uc_product_schema() {
         'type' => 'numeric',
         'precision' => 10,
         'scale' => 2,
-        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -114,7 +112,6 @@ function uc_product_schema() {
         'type' => 'numeric',
         'precision' => 10,
         'scale' => 2,
-        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -500,6 +497,17 @@ function uc_product_update_6001() {
   db_change_field($ret, 'uc_products', 'list_price', 'list_price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_products', 'sell_price', 'sell_price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
+}
+
+function uc_product_update_6002() {
+  $ret = array();
+
+  // Make the numeric fields signed for Postgres compatibility.
+  db_change_field($ret, 'uc_products', 'list_price', 'list_price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_products', 'sell_price', 'sell_price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }

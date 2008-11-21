@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.3 2008/11/07 21:13:23 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.4 2008/11/21 21:17:25 islandusurper Exp $
 
 /**
  * @file
@@ -679,25 +679,21 @@ function uc_order_view_update_form_submit($form, &$form_state) {
 function op_products_view_table($form_state, $products) {
   $table = array();
 
-  $fields = array();
-  $fields[] = array(
-    'id' => 'qty',
+  $table['columns']['qty'] = array(
     'cell' => array(
       'data' => t('Qty'),
       'class' => 'text-right',
     ),
     'weight' => 0,
   );
-  $fields[] = array(
-    'id' => 'product',
+  $table['columns']['product'] = array(
     'cell' => array(
       'data' => t('Product'),
       'width' => '80%',
     ),
     'weight' => 1,
   );
-  $fields[] = array(
-    'id' => 'model',
+  $table['columns']['model'] = array(
     'cell' => array(
       'data' => t('Model'),
       'class' => 'text-center',
@@ -706,8 +702,7 @@ function op_products_view_table($form_state, $products) {
     'weight' => 2,
   );
   if (user_access('administer products')) {
-    $fields[] = array(
-      'id' => 'cost',
+    $table['columns']['cost'] = array(
       'cell' => array(
         'data' => t('Cost'),
         'class' => 'text-right',
@@ -715,24 +710,20 @@ function op_products_view_table($form_state, $products) {
       'weight' => 3,
     );
   }
-  $fields[] = array(
-    'id' => 'price',
+  $table['columns']['price'] = array(
     'cell' => array(
       'data' => t('Price'),
       'class' => 'text-right',
     ),
     'weight' => 4,
   );
-  $fields[] = array(
-    'id' => 'total',
+  $table['columns']['total'] = array(
     'cell' => array(
       'data' => t('Total'),
       'class' => 'text-right',
     ),
     'weight' => 5,
   );
-
-  $table['columns'] = $fields;
 
   if (is_array($products)) {
     foreach ($products as $product) {
@@ -773,39 +764,30 @@ function op_products_view_table($form_state, $products) {
 function op_products_customer_table($form_state, $products) {
   $table = array();
 
-  $fields = array();
-  $fields[] = array(
-    'id' => 'qty',
+  $table['columns']['qty'] = array(
     'cell' => array('data' => t('Qty'), 'class' => 'text-right'),
     'weight' => 0,
   );
-  $fields[] = array(
-    'id' => 'product',
+  $table['columns']['product'] = array(
     'cell' => array('data' => t('Product'), 'width' => '80%'),
     'weight' => 1,
   );
-  $fields[] = array(
-    'id' => 'model',
+  $table['columns']['model'] = array(
     'cell' => array('data' => t('Model'), 'class' => 'text-center', 'nowrap' => 'nowrap'),
     'weight' => 2,
   );
-  $fields[] = array(
-    'id' => 'cost',
+  $table['columns']['cost'] = array(
     'cell' => array('data' => t('Cost'), 'class' => 'text-right'),
     'weight' => 3,
   );
-  $fields[] = array(
-    'id' => 'price',
+  $table['columns']['price'] = array(
     'cell' => array('data' => t('Price'), 'class' => 'text-right'),
     'weight' => 4,
   );
-  $fields[] = array(
-    'id' => 'total',
+  $table['columns']['total'] = array(
     'cell' => array('data' => t('Total'), 'class' => 'text-right'),
     'weight' => 5,
   );
-
-  $table['columns'] = $fields;
 
   if (is_array($products)) {
     foreach ($products as $product) {
@@ -845,34 +827,26 @@ function op_products_customer_table($form_state, $products) {
 function op_order_comments_view_table($form_state, $comments) {
   $table = array();
 
-  $fields = array();
-  $fields[] = array(
-    'id' => 'date',
+  $table['columns']['date'] = array(
     'cell' => array('data' => t('Date'), 'class' => 'text-center'),
     'weight' => 0,
   );
-  $fields[] = array(
-    'id' => 'user',
+  $table['columns']['user'] = array(
     'cell' => t('User'),
     'weight' => 1,
   );
-  $fields[] = array(
-    'id' => 'notified',
+  $table['columns']['notified'] = array(
     'cell' => t('Notified'),
     'weight' => 2,
   );
-  $fields[] = array(
-    'id' => 'status',
+  $table['columns']['status'] = array(
     'cell' => array('data' => t('Status'), 'class' => 'text-center'),
     'weight' => 3,
   );
-  $fields[] = array(
-    'id' => 'comment',
+  $table['columns']['comment'] = array(
     'cell' => array('data' => t('Comment'), 'width' => '80%'),
     'weight' => 4,
   );
-
-  $table['columns'] = $fields;
 
   if (is_array($comments)) {
     foreach ($comments as $comment) {
@@ -904,24 +878,18 @@ function op_order_comments_view_table($form_state, $comments) {
 function op_admin_comments_view_table($form_state, $comments) {
   $table = array();
 
-  $fields = array();
-  $fields[] = array(
-    'id' => 'date',
+  $table['columns']['date'] = array(
     'cell' => array('data' => t('Date'), 'class' => 'text-center'),
     'weight' => 0,
   );
-  $fields[] = array(
-    'id' => 'user',
+  $table['columns']['user'] = array(
     'cell' => array('data' => t('User'), 'class' => 'text-center'),
     'weight' => 1,
   );
-  $fields[] = array(
-    'id' => 'comment',
+  $table['columns']['comment'] = array(
     'cell' => array('data' => t('Comment'), 'width' => '80%'),
     'weight' => 2,
   );
-
-  $table['columns'] = $fields;
 
   if (is_array($comments)) {
     foreach ($comments as $comment) {

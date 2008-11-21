@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.5.2.6 2008/11/07 21:13:23 islandusurper Exp $
+// $Id: uc_credit.module,v 1.5.2.7 2008/11/21 21:17:28 islandusurper Exp $
 
 /**
  * @file
@@ -151,7 +151,7 @@ function uc_credit_form_alter(&$form, &$form_state, $form_id) {
 
     case 'uc_payment_gateways_form':
       // Loop through each of the gateways on the form.
-      foreach ((array) $form['gateways'] as $key => $value) {
+      foreach (element_children($form['gateways']) as $key) {
         // Get the transaction types associated with this gateway.
         $gateway_types = uc_credit_gateway_txn_types($key);
 
@@ -1412,11 +1412,12 @@ function uc_credit_default_gateway() {
 
   // If we only found one gateway for this payment method...
   if (count($gateways) == 1) {
-    // Get the right key for the payment gateway in the array.
-    $gateway_id = array_shift(array_keys($gateways));
+    // Get the payment gateway array and store its ID.
+    $gateway = array_shift($gateways);
+    $gateway_id = $gateway['id'];
 
     // Store the callback for this gateway.
-    $callback = $gateways[$gateway_id]['credit'];
+    $callback = $gateway['credit'];
   }
   else {
     // Otherwise attempt to find the appropriate gateway function in the array.

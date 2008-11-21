@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.11 2008/11/07 21:12:46 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.12 2008/11/21 21:17:11 islandusurper Exp $
 
 /**
  * @file
@@ -447,7 +447,15 @@ function uc_google_checkout_cart_request($order) {
       $output .= '<item-name>'. check_plain($product->model) .'</item-name>';
       $output .= '<item-description>'. check_plain($product->title) .'</item-description>';
       $output .= '<unit-price currency="'. variable_get('uc_currency_code', 'USD') .'">'. $product->price .'</unit-price>';
-      $output .= '<item-weight unit="LB" value="'. $product->weight * uc_weight_conversion($product->weight_units, 'lb') .'" />';
+      if (uc_cart_product_is_shippable($product)) {
+        $output .= '<item-weight unit="LB" value="'. $product->weight * uc_weight_conversion($product->weight_units, 'lb') .'" />';
+      }
+      else {
+        $output .= '<digital-content>';
+          $output .= '<display-disposition>PESSIMISTIC</display-disposition>';
+          $output .= '<email-delivery>true</email-delivery>';
+        $output .= '</digital-content>';
+      }
       $output .= '<quantity>'. $product->qty .'</quantity>';
       $output .= '<merchant-item-id>'. $product->nid .'|'. $product->model .'</merchant-item-id>';
       $output .= '</item>';

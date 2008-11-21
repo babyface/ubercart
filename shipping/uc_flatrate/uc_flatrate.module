@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.module,v 1.5.2.3 2008/11/07 21:13:27 islandusurper Exp $
+// $Id: uc_flatrate.module,v 1.5.2.4 2008/11/21 21:17:31 islandusurper Exp $
 
 /**
  * @file
@@ -33,10 +33,10 @@ function uc_flatrate_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'uc_flatrate.admin.inc',
   );
-  $items['admin/store/settings/quotes/methods/flatrate/%/delete'] = array(
+  $items['admin/store/settings/quotes/flatrate/%/delete'] = array(
     'title' => 'Delete flat rate method',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('uc_flatrate_admin_method_confirm_delete', 6),
+    'page arguments' => array('uc_flatrate_admin_method_confirm_delete', 5),
     'access arguments' => array('configure quotes'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_flatrate.admin.inc',

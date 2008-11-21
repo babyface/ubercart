@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.admin.inc,v 1.1.2.3 2008/11/07 21:13:25 islandusurper Exp $
+// $Id: uc_payment.admin.inc,v 1.1.2.4 2008/11/21 21:17:28 islandusurper Exp $
 
 /**
  * @file
@@ -7,19 +7,11 @@
  *
  */
 
-/**
- * Display the payment settings overview.
- */
+
+// Displays an overview of the payment settings.
 function uc_payment_settings_overview() {
-  // Add some Ubercart specific JS for modifying summaries.
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
-  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
-
-  // Load the form summaries for pages beneath this path.
-  $summaries = summarize_child_form_pages('admin/store/settings/payment/edit');
-
-  // Theme it all up in a summaries overview.
-  return theme('summary_overview', $summaries);
+  // Theme all the pages beneath this path into summary overviews.
+  return theme('summary_overview', summarize_child_form_pages('admin/store/settings/payment/edit'));
 }
 
 function uc_payment_settings_form() {
@@ -170,18 +162,24 @@ function theme_uc_payment_method_table($form) {
 function uc_payment_gateways_form() {
   $gateways = _payment_gateway_list();
   $methods = _payment_method_list();
+  $form = array();
+
+  $form['gateways'] = array(
+    '#summary callback' => '_uc_payment_gateways_summarize',
+    '#summary arguments' => array($gateways),
+  );
 
   if (is_array($gateways) && count($gateways) > 0) {
     $form['gateways_info'] = array(
       '#value' => '<div><strong>'. t('Payment gateways') .'</strong><br />'
                 . t('Payment gateways are web services that allow you to process various types of payments remotely.  The settings forms below are for the payment gateways you have installed.  Click a name to expand its options and adjust the settings accordingly.') .'</div>',
+      '#weight' => -10,
     );
 
     foreach ($gateways as $gateway) {
       $form['gateways'][$gateway['id']] = array(
         '#type' => 'fieldset',
         '#title' => t('@gateway_name settings', array('@gateway_name' => $gateway['title'])),
-        '#summary callback' => 'summarize_form',
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       );
@@ -192,8 +190,6 @@ function uc_payment_gateways_form() {
         }
       }
 
-      $form['gateways'][$gateway['id']]['#summary callback'] = 'summarize_form';
-
       $form['gateways'][$gateway['id']]['supported_methods'] = array(
         '#value' => '<div>'. t('This gateway supports the following payment methods:')
                    .'<br />'. implode(',', $supported_methods) .'</div>',
@@ -202,11 +198,6 @@ function uc_payment_gateways_form() {
       $form['gateways'][$gateway['id']]['uc_pg_'. $gateway['id'] .'_enabled'] = array(
         '#type' => 'checkbox',
         '#title' => t('Enable this payment gateway for use.'),
-        '#summary callback' => 'summarize_checkbox',
-        '#summary arguments' => array(
-          t('@payment is enabled.', array('@payment' => $gateway['title'])),
-          t('@payment is disabled.', array('@payment' => $gateway['title'])),
-        ),
         '#default_value' => variable_get('uc_pg_'. $gateway['id'] .'_enabled', TRUE),
       );
 
@@ -221,6 +212,21 @@ function uc_payment_gateways_form() {
   }
 
   return system_settings_form($form);
+}
+
+// Returns an array of enabled payment gateways for the form summary.
+function _uc_payment_gateways_summarize($form, $gateways) {
+  $items = array();
+
+  foreach ($gateways as $gateway) {
+    $items[] = t('@title is @enabled.', array('@title' => $gateway['title'], '@enabled' => $gateway['enabled'] ? t('enabled') : t('disabled')));
+  }
+
+  if (count($items)) {
+    $items[] = t('No payment gateway modules are installed.');
+  }
+
+  return $items;
 }
 
 /**
@@ -408,14 +414,14 @@ function uc_payment_delete_confirm_form($form_state, $order, $payment) {
 
   $form['order_id'] = array(
     '#type' => 'value',
-    '#value' => $order_id
+    '#value' => $order->order_id
   );
   $form['receipt_id'] = array(
     '#type' => 'value',
-    '#value' => $receipt_id,
+    '#value' => $payment->receipt_id,
   );
 
-  return confirm_form($form, t('Are you sure you want to delete this payment?'), 'admin/store/orders/'. $order_id .'/payments', $desc, t('Delete'));
+  return confirm_form($form, t('Are you sure you want to delete this payment?'), 'admin/store/orders/'. $order->order_id .'/payments', $desc, t('Delete'));
 }
 
 function uc_payment_delete_confirm_form_submit($form, &$form_state) {

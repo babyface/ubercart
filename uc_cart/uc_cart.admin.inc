@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.admin.inc,v 1.1.2.3 2008/11/07 21:13:22 islandusurper Exp $
+// $Id: uc_cart.admin.inc,v 1.1.2.4 2008/11/21 21:17:27 islandusurper Exp $
 
 /**
  * @file
@@ -7,12 +7,8 @@
  *
  */
 
-// Displays the cart settings overview page.
+// Displays an overview of the cart settings.
 function uc_cart_cart_settings_overview() {
-  // Add some Ubercart specific JS for modifying summaries.
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
-  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
-
   // Load the form summaries for pages beneath this path.
   $summaries = summarize_child_form_pages('admin/store/settings/cart/edit');
 
@@ -215,16 +211,10 @@ function uc_cart_block_edit_info() {
   return $output;
 }
 
+// Displays an overview of the checkout settings.
 function uc_cart_checkout_settings_overview() {
-  // Add some Ubercart specific JS for modifying summaries.
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
-  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
-
-  // Load the form summaries for pages beneath this path.
-  $summaries = summarize_child_form_pages('admin/store/settings/checkout/edit');
-
-  // Theme it all up in a summaries overview.
-  return theme('summary_overview', $summaries);
+  // Theme all the pages beneath this path into summary overviews.
+  return theme('summary_overview', summarize_child_form_pages('admin/store/settings/checkout/edit'));
 }
 
 function uc_cart_checkout_settings_form() {
@@ -373,7 +363,7 @@ function _uc_cart_panes_summarize($form, $panes) {
   $items = array();
 
   foreach ($panes as $pane) {
-    $items[] = t('!title is !enabled.', array('!title' => $pane['title'], '!enabled' => $pane['enabled'] ? t('enabled') : t('disabled')));
+    $items[] = t('@title is @enabled.', array('@title' => $pane['title'], '@enabled' => $pane['enabled'] ? t('enabled') : t('disabled')));
   }
 
   return $items;

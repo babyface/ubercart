@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.6 2008/11/07 21:13:26 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.7 2008/11/21 21:17:27 islandusurper Exp $
 
 /**
  * @file
@@ -151,29 +151,30 @@ function uc_product_kit_update(&$node) {
 
   $values = array();
   $placeholders = array();
-  foreach ($node->products as $i => $product) {
+  foreach ($node->products as $nid) {
     $values[] = $node->vid;
     $values[] = $node->nid;
-    $values[] = $product;
+    $values[] = $nid;
     $values[] = $node->mutable;
-    $product = node_load($product);
-    if (is_null($node->items[$i]['qty']) || $node->items[$i]['qty'] === '') {
-      $node->items[$i]['qty'] = 1;
+    $product = node_load($nid, NULL, TRUE);
+
+    if (is_null($node->items[$nid]['qty']) || $node->items[$nid]['qty'] === '') {
+      $node->items[$nid]['qty'] = 1;
     }
-    $values[] = $node->items[$i]['qty'];
-    if (is_null($node->items[$i]['discount']) || $node->items[$i]['discount'] === '') {
-      $node->items[$i]['discount'] = $product->sell_price;
+    $values[] = $node->items[$nid]['qty'];
+    if (is_null($node->items[$nid]['discount']) || $node->items[$nid]['discount'] === '') {
+      $node->items[$nid]['discount'] = $product->sell_price;
     }
-    $values[] = $node->items[$i]['discount'];
-    $values[] = $node->items[$i]['ordering'];
+    $values[] = $node->items[$nid]['discount'];
+    $values[] = $node->items[$nid]['ordering'];
     $placeholders[] = '(%d, %d, %d, %d, %d, %f, %d)';
 
-    $product->qty = $node->items[$i]['qty'];
-    if ($node->items[$i]['discount'] < 0) {
-      $product->sell_price += $node->items[$i]['discount'];
+    $product->qty = $node->items[$nid]['qty'];
+    if ($node->items[$nid]['discount'] < 0) {
+      $product->sell_price += $node->items[$nid]['discount'];
     }
     else {
-      $product->sell_price = $node->items[$i]['discount'];
+      $product->sell_price = $node->items[$nid]['discount'];
     }
     $obj->model .= $product->model .' / ';
     $obj->list_price += $product->list_price * $product->qty;
@@ -262,11 +263,13 @@ function uc_product_kit_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
   switch ($op) {
     case 'update':
       $result = db_query("SELECT nid FROM {uc_product_kits} WHERE product_id = %d", $node->nid);
-      while ($nid = db_fetch_object($result)) {
-        $kit = node_load($nid, NULL, TRUE);
-        node_object_prepare($kit);
-        $form_state = array();
-        $redirect = drupal_execute('product_kit_node_form', $form_state, $kit);
+      while ($k = db_fetch_object($result)) {
+        $kit = node_load($k->nid, NULL, TRUE);
+        $form_state = array(
+          'values' => array('nid' => $kit->nid),
+          'submit_handlers' => array('node_form_submit'),
+        );
+        drupal_execute('product_kit_node_form', $form_state, $kit);
       }
     break;
   }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.4 2008/11/07 21:13:23 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.5 2008/11/21 21:17:25 islandusurper Exp $
 
 /**
  * @file
@@ -7,14 +7,8 @@
  *
  */
 
-/**
- * Display the order settings overview.
- */
+// Displays an overview of the order settings.
 function uc_order_settings_overview() {
-  // Add some Ubercart specific JS for modifying summaries.
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
-  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
-
   $summaries = array();
 
   // don't load admin/store/settings/orders/edit/workflow/create
@@ -1527,7 +1521,7 @@ function uc_order_log($order) {
 }
 
 // Confirmation form to delete an order.
-function uc_order_delete_confirm_form($form_state, $order_id) {
+function uc_order_delete_confirm_form($form_state, $order) {
   if (!uc_order_can_delete($order)) {
     drupal_set_message(t('It is not possible to delete order @id.', array('@id' => $order->order_id)));
     drupal_goto('admin/store/orders');
@@ -1535,10 +1529,10 @@ function uc_order_delete_confirm_form($form_state, $order_id) {
 
   $form['order_id'] = array(
     '#type' => 'value',
-    '#value' => $order_id
+    '#value' => $order->order_id
   );
 
-  return confirm_form($form, t('Are you sure you want to delete order @order_id?', array('@order_id' => $order_id)), 'admin/store/orders', NULL, t('Delete'));
+  return confirm_form($form, t('Are you sure you want to delete order @order_id?', array('@order_id' => $order->order_id)), 'admin/store/orders', NULL, t('Delete'));
 }
 
 function uc_order_delete_confirm_form_submit($form, &$form_state) {

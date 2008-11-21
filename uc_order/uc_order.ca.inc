@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.8 2008/11/07 21:13:23 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.9 2008/11/21 21:17:25 islandusurper Exp $
 
 /**
  * @file
@@ -974,12 +974,12 @@ function uc_order_action_email_invoice_form($form_state, $settings = array()) {
     '#default_value' => $settings['template'],
   );
   $form['view'] = array(
-    '#type' => 'select',
+    '#type' => 'radios',
     '#title' => t('Included information'),
     '#options' => array(
-      'print' => t('Show the business header and shipping method'),
-      'admin-mail' => t('...and the help text, email text, and store footer'),
-      'checkout-mail' => t('...and also the "thank you" message.'),
+      'print' => t('Show the business header and shipping method.'),
+      'admin-mail' => t('Show all of the above plus the help text, email text, and store footer.'),
+      'checkout-mail' => t('Show all of the above plus the "thank you" message.'),
     ),
     '#default_value' => $settings['view'],
   );

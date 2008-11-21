@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.9.2.4 2008/11/07 21:13:23 islandusurper Exp $
+// $Id: uc_order.install,v 1.9.2.5 2008/11/21 21:17:25 islandusurper Exp $
 
 /**
  * @file
@@ -474,7 +474,6 @@ function uc_order_schema() {
         'type' => 'numeric',
         'precision' => 10,
         'scale' => 2,
-        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -483,7 +482,6 @@ function uc_order_schema() {
         'type' => 'numeric',
         'precision' => 10,
         'scale' => 2,
-        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -856,6 +854,16 @@ function uc_order_update_6002() {
     // Add the ability to log IPs with each order taken
     db_add_field($ret, 'uc_orders', 'host', $host_schema);
   }
+
+  return $ret;
+}
+
+function uc_order_update_6003() {
+  $ret = array();
+
+  // Make the numeric fields signed for Postgres compatibility.
+  db_change_field($ret, 'uc_order_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_order_products', 'price', 'price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }

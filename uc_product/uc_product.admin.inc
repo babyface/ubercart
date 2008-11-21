@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.admin.inc,v 1.1.2.4 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: uc_product.admin.inc,v 1.1.2.5 2008/11/21 21:17:29 islandusurper Exp $
 
 /**
  * @file
@@ -98,16 +98,6 @@ function uc_product_settings_overview() {
  * @see uc_product_settings_overview()
  */
 function uc_product_settings_form() {
-  $form['uc_product_nodes_per_page'] = array(
-    '#type' => 'select',
-    '#title' => t('Products per page'),
-    '#description' => t('The number of products per page in a list.'),
-    '#default_value' => variable_get('uc_product_nodes_per_page', 10),
-    '#options' => drupal_map_assoc(uc_range(10, 100, 10)),
-    '#summary' => t('Showing %products products per page.', array('%products' => variable_get('uc_product_nodes_per_page', 10))),
-    '#summary arguments' => array(FALSE),
-  );
-
   $form['uc_product_add_to_cart_qty'] = array(
     '#type' => 'checkbox',
     '#title' => t('Display an optional quantity field in the <em>Add to Cart</em> form.'),
@@ -133,7 +123,6 @@ function uc_product_settings_form() {
     '#description' => t('Use the textboxes to adjust the text of the submit button for <em>Add to Cart</em> forms in various places on the site.'),
     '#collapsed' => FALSE,
     '#collapsible' => FALSE,
-    '#summary callback' => '_uc_submit_text_summarize',
   );
   $form['uc_add_to_cart_text']['uc_teaser_add_to_cart_text'] = array(
     '#type' => 'textfield',
@@ -153,19 +142,6 @@ function uc_product_settings_form() {
   );
 
   return system_settings_form($form);
-}
-
-function _uc_submit_text_summarize($form) {
-
-  $item = summarize_form($form);
-
-  $items[] = array(
-    'data' => t('<em>Add to Cart</em> submit button text:'),
-    'children' => $item,
-  );
-
-  return $items;
-
 }
 
 /**

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.ca.inc,v 1.1.2.6 2008/11/07 21:13:20 islandusurper Exp $
+// $Id: uc_cart.ca.inc,v 1.1.2.7 2008/11/21 21:17:27 islandusurper Exp $
 
 /**
  * @file
@@ -127,7 +127,7 @@ function uc_cart_condition_product_class($order, $settings) {
   return $result;
 }
 
-function uc_cart_condition_product_class_form($settings = array()) {
+function uc_cart_condition_product_class_form($form_state, $settings = array()) {
   $options = array();
   $types = module_invoke_all('node_info');
   $product_types = module_invoke_all('product_types');

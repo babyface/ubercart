@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.7 2008/11/07 21:13:22 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.8 2008/11/21 21:17:28 islandusurper Exp $
 
 /**
  * @file
@@ -52,8 +52,7 @@ function uc_attribute_menu() {
   $items['admin/store/attributes'] = array(
     'title' => 'Attributes',
     'description' => 'Create and edit attributes and options.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('uc_attribute_admin'),
+    'page callback' => 'uc_attribute_admin',
     'access arguments' => array('administer products'),
     'type' => MENU_NORMAL_ITEM,
     'weight' => -1,
@@ -100,7 +99,7 @@ function uc_attribute_menu() {
   $items['admin/store/attributes/%uc_attribute/options'] = array(
     'title' => 'Options',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('uc_attribute_options', 3),
+    'page arguments' => array('uc_attribute_options_form', 3),
     'access arguments' => array('administer products'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_attribute.admin.inc',
@@ -215,9 +214,8 @@ function uc_attribute_init() {
  */
 function uc_attribute_theme() {
   return array(
-    'uc_attribute_admin' => array(
+    'uc_attribute_add_to_cart' => array(
       'arguments' => array('form' => NULL),
-      'file' => 'uc_attribute.admin.inc',
     ),
     'uc_object_attributes_form' => array(
       'arguments' => array('form' => NULL),
@@ -230,7 +228,7 @@ function uc_attribute_theme() {
     'uc_attribute' => array(
       'arguments' => array('type' => NULL, 'data' => NULL, 'nid' => NULL),
     ),
-    'uc_attribute_options' => array(
+    'uc_attribute_options_form' => array(
       'arguments' => array('form' => NULL),
       'file' => 'uc_attribute.admin.inc',
     ),
@@ -639,3 +637,6 @@ function uc_attribute_priced_attributes($nid) {
   return $aids;
 }
 
+function theme_uc_attribute_add_to_cart($form) {
+  return drupal_render($form);
+}

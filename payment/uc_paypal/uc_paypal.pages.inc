@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.pages.inc,v 1.1.2.3 2008/11/07 21:13:25 islandusurper Exp $
+// $Id: uc_paypal.pages.inc,v 1.1.2.4 2008/11/21 21:17:26 islandusurper Exp $
 
 /**
  * @file
@@ -43,12 +43,14 @@ function uc_paypal_ipn($order_id = 0) {
   $txn_type = check_plain($_POST['txn_type']);
   $payer_email = check_plain($_POST['payer_email']);
 
-  $req = 'cmd=_notify-validate';
+  $req = '';
 
   foreach ($_POST as $key => $value) {
     $value = urlencode(stripslashes($value));
-    $req .= '&'. $key .'='. $value;
+    $req .= $key .'='. $value .'&';
   }
+
+  $req .= 'cmd=_notify-validate';
 
   if (variable_get('uc_paypal_wpp_server', '') == 'https://api-3t.paypal.com/nvp') {
     $host = 'https://www.paypal.com/cgi-bin/webscr';
@@ -57,104 +59,82 @@ function uc_paypal_ipn($order_id = 0) {
     $host = variable_get('uc_paypal_wps_server', 'https://www.sandbox.paypal.com/cgi-bin/webscr');
   }
 
-  $host = explode('/', substr($host, 8));
+  $response = drupal_http_request($host, array(), 'POST', $req);
 
-  // Post back to PayPal to validate
-  $header = "POST /cgi-bin/webscr HTTP/1.0\r\n";
-  $header .= 'Host: '. $host[0] ."\r\n";
-  $header .= "Content-Type: application/x-www-form-urlencoded\r\n";
-  $header .= 'Content-Length: '. strlen($req) ."\r\n\r\n";
-
-  // Address a screw-up on PayPal's Sandbox that prevents normal validation.
-  if (strpos($host[0], 'sandbox') !== FALSE && function_exists('openssl_open')) {
-    $fp = fsockopen('ssl://www.sandbox.paypal.com', 443, $errno, $errstr, 30);
-  }
-  else {
-    // The old "normal" way of validating an IPN.
-    $fp = fsockopen($host[0], 80, $errno, $errstr, 30);
-  }
-
-  if (!$fp) {
-    watchdog('uc_paypal', 'IPN failed with HTTP error.', array(), WATCHDOG_ERROR);
+  // TODO: Change this to property_exists when we have a PHP requirement >= 5.1.
+  if (array_key_exists('error', $response)) {
+    watchdog('uc_paypal', 'IPN failed with HTTP error @error, code @code.', array('@error' => $response->error, '@code' => $response->code), WATCHDOG_ERROR);
     return;
   }
 
-  fputs($fp, $header . $req);
-  while (!feof($fp)) {
-    $res = fgets($fp, 1024);
-    if (strcmp ($res, 'VERIFIED') == 0) {
-      watchdog('uc_paypal', 'IPN transaction verified.');
+  if (strcmp($response->data, 'VERIFIED') == 0) {
+    watchdog('uc_paypal', 'IPN transaction verified.');
 
-      $duplicate = db_result(db_query("SELECT COUNT(*) FROM {uc_payment_paypal_ipn} WHERE txn_id = '%s' AND status <> 'Pending'", $txn_id));
-      if ($duplicate > 0) {
-        if ($order->payment_method != 'credit') {
-          watchdog('uc_paypal', 'IPN transaction ID has been processed before.', array(), WATCHDOG_NOTICE);
-        }
-        fclose($fp);
-        return;
+    $duplicate = db_result(db_query("SELECT COUNT(*) FROM {uc_payment_paypal_ipn} WHERE txn_id = '%s' AND status <> 'Pending'", $txn_id));
+    if ($duplicate > 0) {
+      if ($order->payment_method != 'credit') {
+        watchdog('uc_paypal', 'IPN transaction ID has been processed before.', array(), WATCHDOG_NOTICE);
       }
-
-      db_query("INSERT INTO {uc_payment_paypal_ipn} (order_id, txn_id, txn_type, mc_gross, status, receiver_email, payer_email, received) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d)",
-        $order_id, $txn_id, $txn_type, $payment_amount, $payment_status,
-        $receiver_email, $payer_email, time());
-
-      switch ($payment_status) {
-        case 'Canceled_Reversal':
-          uc_order_comment_save($order_id, 0, t('PayPal has cancelled the reversal and returned !amount !currency to your account.', array('!amount' => uc_currency_format($payment_amount, FALSE), '!currency' => $payment_currency)), 'admin');
-          break;
-
-        case 'Completed':
-          $comment = t('PayPal transaction ID: @txn_id', array('@txn_id' => $txn_id));
-          uc_payment_enter($order_id, 'paypal_wps', $payment_amount, $order->uid, NULL, $comment);
-          uc_cart_complete_sale($order);
-          uc_order_comment_save($order_id, 0, t('Payment of @amount @currency submitted through PayPal.', array('@amount' => uc_currency_format($payment_amount, FALSE), '@currency' => $payment_currency)), 'order', 'payment_received');
-          uc_order_comment_save($order_id, 0, t('PayPal IPN reported a payment of @amount @currency.', array('@amount' => uc_currency_format($payment_amount, FALSE), '@currency' => $payment_currency)));
-          break;
-
-        case 'Denied':
-          uc_order_comment_save($order_id, 0, t("You have denied the customer's payment."), 'admin');
-          break;
-
-        case 'Expired':
-          uc_order_comment_save($order_id, 0, t('The authorization has failed and cannot be captured.'), 'admin');
-          break;
-
-        case 'Failed':
-          uc_order_comment_save($order_id, 0, t("The customer's attempted payment from a bank account failed."), 'admin');
-          break;
-
-        case 'Pending':
-          uc_order_update_status($order_id, 'paypal_pending');
-          uc_order_comment_save($order_id, 0, t('Payment is pending at PayPal: @reason', array('@reason' => _uc_paypal_pending_message(check_plain($_POST['pending_reason'])))), 'admin');
-          break;
-
-        // You, the merchant, refunded the payment.
-        case 'Refunded':
-          $comment = t('PayPal transaction ID: @txn_id', array('@txn_id' => $txn_id));
-          uc_payment_enter($order_id, 'paypal_wps', $payment_amount, $order->uid, NULL, $comment);
-          break;
-
-        case 'Reversed':
-          watchdog('uc_paypal', 'PayPal has reversed a payment!', array(), WATCHDOG_ERROR);
-          uc_order_comment_save($order_id, 0, t('Payment has been reversed by PayPal: @reason', array('@reason' => _uc_paypal_reversal_message(check_plain($_POST['reason_code'])))), 'admin');
-          break;
-
-        case 'Processed':
-          uc_order_comment_save($order_id, 0, t('A payment has been accepted.'), 'admin');
-          break;
-
-        case 'Voided':
-          uc_order_comment_save($order_id, 0, t('The authorization has been voided.'), 'admin');
-          break;
-      }
+      return;
     }
-    elseif (strcmp($res, 'INVALID') == 0) {
-      watchdog('uc_paypal', 'IPN transaction failed verification.', array(), WATCHDOG_ERROR);
-      uc_order_comment_save($order_id, 0, t('An IPN transaction failed verification for this order.'), 'admin');
+
+    db_query("INSERT INTO {uc_payment_paypal_ipn} (order_id, txn_id, txn_type, mc_gross, status, receiver_email, payer_email, received) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d)",
+      $order_id, $txn_id, $txn_type, $payment_amount, $payment_status, $receiver_email, $payer_email, time());
+
+    switch ($payment_status) {
+      case 'Canceled_Reversal':
+        uc_order_comment_save($order_id, 0, t('PayPal has cancelled the reversal and returned !amount !currency to your account.', array('!amount' => uc_currency_format($payment_amount, FALSE), '!currency' => $payment_currency)), 'admin');
+        break;
+
+      case 'Completed':
+        $comment = t('PayPal transaction ID: @txn_id', array('@txn_id' => $txn_id));
+        uc_payment_enter($order_id, 'paypal_wps', $payment_amount, $order->uid, NULL, $comment);
+        uc_cart_complete_sale($order);
+        uc_order_comment_save($order_id, 0, t('Payment of @amount @currency submitted through PayPal.', array('@amount' => uc_currency_format($payment_amount, FALSE), '@currency' => $payment_currency)), 'order', 'payment_received');
+        uc_order_comment_save($order_id, 0, t('PayPal IPN reported a payment of @amount @currency.', array('@amount' => uc_currency_format($payment_amount, FALSE), '@currency' => $payment_currency)));
+        break;
+
+      case 'Denied':
+        uc_order_comment_save($order_id, 0, t("You have denied the customer's payment."), 'admin');
+        break;
+
+      case 'Expired':
+        uc_order_comment_save($order_id, 0, t('The authorization has failed and cannot be captured.'), 'admin');
+        break;
+
+      case 'Failed':
+        uc_order_comment_save($order_id, 0, t("The customer's attempted payment from a bank account failed."), 'admin');
+        break;
+
+      case 'Pending':
+        uc_order_update_status($order_id, 'paypal_pending');
+        uc_order_comment_save($order_id, 0, t('Payment is pending at PayPal: @reason', array('@reason' => _uc_paypal_pending_message(check_plain($_POST['pending_reason'])))), 'admin');
+        break;
+
+      // You, the merchant, refunded the payment.
+      case 'Refunded':
+        $comment = t('PayPal transaction ID: @txn_id', array('@txn_id' => $txn_id));
+        uc_payment_enter($order_id, 'paypal_wps', $payment_amount, $order->uid, NULL, $comment);
+        break;
+
+      case 'Reversed':
+        watchdog('uc_paypal', 'PayPal has reversed a payment!', array(), WATCHDOG_ERROR);
+        uc_order_comment_save($order_id, 0, t('Payment has been reversed by PayPal: @reason', array('@reason' => _uc_paypal_reversal_message(check_plain($_POST['reason_code'])))), 'admin');
+        break;
+
+      case 'Processed':
+        uc_order_comment_save($order_id, 0, t('A payment has been accepted.'), 'admin');
+        break;
+
+      case 'Voided':
+        uc_order_comment_save($order_id, 0, t('The authorization has been voided.'), 'admin');
+        break;
     }
   }
-
-  fclose($fp);
+  elseif (strcmp($response->data, 'INVALID') == 0) {
+    watchdog('uc_paypal', 'IPN transaction failed verification.', array(), WATCHDOG_ERROR);
+    uc_order_comment_save($order_id, 0, t('An IPN transaction failed verification for this order.'), 'admin');
+  }
 }
 
 // Handles the review page for Express Checkout Mark Flow.

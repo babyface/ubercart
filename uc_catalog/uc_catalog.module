@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.8 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.9 2008/11/21 21:17:26 islandusurper Exp $
 
 /**
  * @file
@@ -159,6 +159,15 @@ function uc_catalog_enable() {
         ),
       );
       imagecache_action_save($action);
+    }
+  }
+
+  if ($vid = variable_get('uc_catalog_vid', 0)) {
+    $vocab = taxonomy_vocabulary_load($vid);
+    if (empty($vocab->nodes)) {
+      foreach (module_invoke_all('product_types') as $type) {
+        db_query("INSERT INTO {vocabulary_node_types} (vid, type) VALUES (%d, '%s')", $vid, $type);
+      }
     }
   }
 }
@@ -693,7 +702,7 @@ function theme_uc_catalog_product_grid($products) {
 
     $titlelink = l($product->title, "node/$nid", array('html' => TRUE));
     if (module_exists('imagecache') && isset($product->field_image_cache) && file_exists($product->field_image_cache[0]['filepath'])) {
-      $imagelink = l(theme('imagecache', 'product_list', $product->field_image_cache[0]['filepath']), "node/$nid", array('html' => TRUE));
+      $imagelink = l(theme('imagecache', 'product_list', $product->field_image_cache[0]['filepath'], $product->title, $product->title), "node/$nid", array('html' => TRUE));
     }
     else {
       $imagelink = '';
