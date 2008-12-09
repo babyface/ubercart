@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.install,v 1.12.2.4 2008/11/21 21:17:29 islandusurper Exp $
+// $Id: uc_product.install,v 1.12.2.5 2008/12/09 15:20:36 islandusurper Exp $
 
 /**
  * @file
@@ -94,24 +94,24 @@ function uc_product_schema() {
       'list_price' => array(
         'description' => t('Suggested retail price.'),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
       ),
       'cost' => array(
         'description' => t('The amount the store pays to sell the product.'),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
       ),
       'sell_price' => array(
         'description' => t('The amount the customer pays for the product.'),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -233,13 +233,13 @@ function uc_product_update_1() {
       $ret[] = update_sql("ALTER TABLE {uc_products} CHANGE model model varchar(255) NOT NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_class_choices', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
-      db_change_column($ret, 'uc_class_fields', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_class_choices', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
+      db_change_column($ret, 'uc_class_fields', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
       $ret[] = update_sql("ALTER TABLE {uc_class_fields} DROP title");
-      db_change_column($ret, 'uc_product_classes', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
-      db_change_column($ret, 'uc_product_class_choices', 'value', 'value', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_product_classes', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
+      db_change_column($ret, 'uc_product_class_choices', 'value', 'value', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
       $ret[] = update_sql("ALTER TABLE {uc_product_class_choices} ADD PRIMARY KEY (nid, cfid, value)");
-      db_change_column($ret, 'uc_products', 'model', 'model', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_products', 'model', 'model', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
     break;
   }
 
@@ -261,7 +261,7 @@ function uc_product_update_2() {
     break;
     case 'pgsql':
       $ret[] = update_sql("ALTER TABLE {uc_product_class_choices} DROP CONSTRAINT {uc_product_class_choices}_pkey");
-      db_change_column($ret, 'uc_product_class_choices', 'value', 'value', 'text', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_product_class_choices', 'value', 'value', 'text', array('not null' => TRUE, 'default' => "''"));
       $ret[] = update_sql("ALTER TABLE {uc_product_class_choices} ADD PRIMARY KEY (nid, cfid, value (3))");
     break;
   }
@@ -301,7 +301,7 @@ function uc_product_update_4() {
       $ret[] = update_sql("DROP TABLE {uc_class_fields}");
       $ret[] = update_sql("DROP TABLE {uc_product_class_choices}");
       $ret[] = update_sql("DROP INDEX {uc_product_classes}_pcid_idx");
-      db_change_column($ret, 'uc_product_classes', 'pcid', 'pcid', 'varchar(32)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_product_classes', 'pcid', 'pcid', 'varchar(32)', array('not null' => TRUE, 'default' => "''"));
       db_add_column($ret, 'uc_product_classes', 'description', 'text');
       $ret[] = update_sql("ALTER TABLE {uc_products} DROP COLUMN pcid");
     break;
@@ -508,6 +508,17 @@ function uc_product_update_6002() {
   db_change_field($ret, 'uc_products', 'list_price', 'list_price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_products', 'sell_price', 'sell_price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
+}
+
+function uc_product_update_6003() {
+  $ret = array();
+
+  // Geez. Can't we get these columns right?
+  db_change_field($ret, 'uc_products', 'list_price', 'list_price', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_products', 'sell_price', 'sell_price', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }

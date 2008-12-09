@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.install,v 1.4.2.8 2008/11/21 21:17:26 islandusurper Exp $
+// $Id: uc_recurring.install,v 1.4.2.9 2008/12/09 15:20:37 islandusurper Exp $
 
 /**
  * @file
@@ -28,8 +28,8 @@ function uc_recurring_schema() {
       'fee_amount' => array(
         'description' => t('The amount of the recurring fee.'),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -89,8 +89,8 @@ function uc_recurring_schema() {
       'fee_amount' => array(
         'description' => t('The amount of the recurring fee.'),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -212,6 +212,15 @@ function uc_recurring_update_6002() {
   // Make the numeric fields signed for Postgres compatibility.
   db_change_field($ret, 'uc_recurring_products', 'fee_amount', 'fee_amount', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_recurring_users', 'fee_amount', 'fee_amount', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
+}
+
+function uc_recurring_update_6003() {
+  $ret = array();
+
+  db_change_field($ret, 'uc_recurring_products', 'fee_amount', 'fee_amount', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_recurring_users', 'fee_amount', 'fee_amount', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }

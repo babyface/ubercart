@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.pages.inc,v 1.1.2.5 2008/11/07 21:12:46 islandusurper Exp $
+// $Id: uc_google_checkout.pages.inc,v 1.1.2.6 2008/12/09 15:20:42 islandusurper Exp $
 
 /**
  * @file
@@ -8,8 +8,6 @@
  */
 
 function uc_google_checkout_callback() {
-  require_once(drupal_get_path('module', 'uc_google_checkout') .'/includes/xmlparser.php');
-
   if (variable_get('uc_google_checkout_mode', 'checkout') == 'checkout') {
     $merchant_id = variable_get('uc_google_checkout_merchant_id', '');
     $merchant_key = variable_get('uc_google_checkout_merchant_key', '');
@@ -29,8 +27,8 @@ function uc_google_checkout_callback() {
   }
   $input = file_get_contents('php://input');
   //watchdog('google', print_r(check_plain($input), TRUE), NULL, WATCHDOG_NOTICE);
-  $xml = new XMLParser($input);
-  switch ($xml->root) {
+  $xml = new SimpleXMLElement($input);
+  switch ($xml->getName()) {
     case 'merchant-calculation-callback':
       //uc_google_checkout_merchant_calculation($xml);
     break;
@@ -51,7 +49,7 @@ function uc_google_checkout_callback() {
     break;
     default:
       watchdog('google', 'Unknown notification document: @xml', array('@xml' => $input), WATCHDOG_ERROR);
-      $output = uc_google_checkout_notification_acknowledgement($xml->params[$xml->root]['serial-number']);
+      $output = uc_google_checkout_notification_acknowledgement($xml->{'serial-number'});
   }
 }
 

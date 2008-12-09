@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.9.2.5 2008/11/21 21:17:25 islandusurper Exp $
+// $Id: uc_order.install,v 1.9.2.6 2008/12/09 15:20:36 islandusurper Exp $
 
 /**
  * @file
@@ -38,8 +38,8 @@ function uc_order_schema() {
       'order_total' => array(
         'description' => t('The total amount to be paid for the order.'),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -358,8 +358,8 @@ function uc_order_schema() {
       'amount' => array(
         'description' => t("The amount of the line item in the store's currency."),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -472,16 +472,16 @@ function uc_order_schema() {
       'cost' => array(
         'description' => t('The cost to the store for the product.'),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
       ),
       'price' => array(
         'description' => t('The price paid for the ordered product.'),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -587,8 +587,8 @@ function uc_order_update_1() {
       $ret[] = update_sql("ALTER TABLE {uc_orders} CHANGE billing_zip billing_postal_code VARCHAR(10) CHARACTER SET utf8 NOT NULL");
       break;
     case 'pgsql':
-      db_change_column($ret, 'uc_orders', 'delivery_zip', 'delivery_postal_code', 'varchar(10) CHARACTER SET utf8', array('not null' => TRUE, 'default' => ''));
-      db_change_column($ret, 'uc_orders', 'billing_zip', 'billing_postal_code', 'varchar(10) CHARACTER SET utf8', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_orders', 'delivery_zip', 'delivery_postal_code', 'varchar(10) CHARACTER SET utf8', array('not null' => TRUE, 'default' => "''"));
+      db_change_column($ret, 'uc_orders', 'billing_zip', 'billing_postal_code', 'varchar(10) CHARACTER SET utf8', array('not null' => TRUE, 'default' => "''"));
       break;
   }
   $result = db_query("SELECT order_id FROM {uc_orders} ORDER BY order_id DESC LIMIT 1");
@@ -622,8 +622,8 @@ function uc_order_update_3() {
       $ret[] = update_sql("ALTER TABLE {uc_order_comments} CHANGE order_status order_status VARCHAR(32) NOT NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_orders', 'order_status', 'order_status', 'varchar(32)', array('not null' => TRUE, 'default' => ''));
-      db_change_column($ret, 'uc_order_comments', 'order_status', 'order_status', 'varchar(32)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_orders', 'order_status', 'order_status', 'varchar(32)', array('not null' => TRUE, 'default' => "''"));
+      db_change_column($ret, 'uc_order_comments', 'order_status', 'order_status', 'varchar(32)', array('not null' => TRUE, 'default' => "''"));
     break;
   }
   $ret[] = update_sql("UPDATE {uc_orders} SET order_status = 'in_checkout' WHERE order_status = '0'");
@@ -648,9 +648,9 @@ function uc_order_update_3() {
         $ret[] = update_sql("ALTER TABLE {uc_order_statuses} ADD locked TINYINT NOT NULL DEFAULT '0'");
       break;
       case 'pgsql':
-        db_change_column($ret, 'uc_order_statuses', 'order_status_id', 'order_status_id', 'varchar(32) CHARACTER SET utf8', array('not null' => TRUE, 'default' => ''));
-        db_change_column($ret, 'uc_order_statuses', 'title', 'title', 'varchar(48) CHARACTER SET utf8', array('not null' => TRUE, 'default' => ''));
-        db_change_column($ret, 'uc_order_statuses', 'notify', 'state', 'varchar(32) CHARACTER SET utf8', array('not null' => TRUE, 'default' => ''));
+        db_change_column($ret, 'uc_order_statuses', 'order_status_id', 'order_status_id', 'varchar(32) CHARACTER SET utf8', array('not null' => TRUE, 'default' => "''"));
+        db_change_column($ret, 'uc_order_statuses', 'title', 'title', 'varchar(48) CHARACTER SET utf8', array('not null' => TRUE, 'default' => "''"));
+        db_change_column($ret, 'uc_order_statuses', 'notify', 'state', 'varchar(32) CHARACTER SET utf8', array('not null' => TRUE, 'default' => "''"));
         db_add_column($ret, 'uc_order_statuses', 'weight', 'integer', array('not null' => TRUE, 'default' => 0));
         db_add_column($ret, 'uc_order_statuses', 'locked', 'smallint', array('not null' => TRUE, 'default' => 0));
       break;
@@ -680,7 +680,7 @@ function uc_order_update_4() {
       $ret[] = update_sql("ALTER TABLE {uc_order_comments} CHANGE order_status order_status VARCHAR(32) NOT NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_order_comments', 'order_status', 'order_status', 'varchar(32)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_order_comments', 'order_status', 'order_status', 'varchar(32)', array('not null' => TRUE, 'default' => "''"));
     break;
   }
 
@@ -718,7 +718,7 @@ function uc_order_update_7() {
       $ret[] = update_sql("ALTER TABLE {uc_order_products} CHANGE model model VARCHAR(255) CHARACTER SET utf8 NOT NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_order_products', 'model', 'model', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_order_products', 'model', 'model', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
     break;
   }
 
@@ -735,7 +735,7 @@ function uc_order_update_8() {
       $ret[] = update_sql("ALTER TABLE {uc_orders} ADD host VARCHAR(16) NOT NULL DEFAULT ''");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_orders', 'host', 'VARCHAR(16)', array('not null' => TRUE, 'default' => ''));
+      db_add_column($ret, 'uc_orders', 'host', 'VARCHAR(16)', array('not null' => TRUE, 'default' => "''"));
     break;
   }
 
@@ -864,6 +864,17 @@ function uc_order_update_6003() {
   // Make the numeric fields signed for Postgres compatibility.
   db_change_field($ret, 'uc_order_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_order_products', 'price', 'price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
+}
+
+function uc_order_update_6004() {
+  $ret = array();
+
+  db_change_field($ret, 'uc_orders', 'order_total', 'order_total', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0.0));
+  db_change_field($ret, 'uc_order_line_items', 'amount', 'amount', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0.0));
+  db_change_field($ret, 'uc_order_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_order_products', 'price', 'price', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }

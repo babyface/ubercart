@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.install,v 1.5.2.3 2008/11/07 21:13:25 islandusurper Exp $
+// $Id: uc_payment.install,v 1.5.2.4 2008/12/09 15:20:35 islandusurper Exp $
 
 /**
  * @file
@@ -30,8 +30,8 @@ function uc_payment_schema() {
       ),
       'amount' => array(
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0,
       ),
@@ -143,6 +143,14 @@ function uc_payment_update_6000() {
   db_change_field($ret, 'uc_payment_receipts', 'receipt_id', 'receipt_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('receipt_id')));
   db_change_field($ret, 'uc_payment_receipts', 'order_id', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('order_id' => array('order_id'))));
   db_change_field($ret, 'uc_payment_receipts', 'uid', 'uid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
+}
+
+function uc_payment_update_6001() {
+  $ret = array();
+
+  db_change_field($ret, 'uc_payment_receipts', 'amount', 'amount', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }

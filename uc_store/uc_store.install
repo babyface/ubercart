@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.install,v 1.9.2.2 2008/10/15 14:47:39 islandusurper Exp $
+// $Id: uc_store.install,v 1.9.2.3 2008/12/09 15:20:37 islandusurper Exp $
 
 /**
  * @file
@@ -161,7 +161,7 @@ function uc_store_update_2() {
     break;
     case 'pgsql':
       db_change_column($ret, 'uc_zones', 'zone_id', 'zone_id', 'integer', array('not null' => TRUE, 'default' => 0));
-      db_change_column($ret, 'uc_zones', 'zone_name', 'zone_name', 'varchar(255) CHARACTER SET utf8', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_zones', 'zone_name', 'zone_name', 'varchar(255) CHARACTER SET utf8', array('not null' => TRUE, 'default' => "''"));
       db_change_column($ret, 'uc_countries', 'country_id', 'country_id', 'integer', array('not null' => TRUE, 'default' => 0));
     break;
   }

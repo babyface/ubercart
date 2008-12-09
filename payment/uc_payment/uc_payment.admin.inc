@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.admin.inc,v 1.1.2.4 2008/11/21 21:17:28 islandusurper Exp $
+// $Id: uc_payment.admin.inc,v 1.1.2.5 2008/12/09 15:20:35 islandusurper Exp $
 
 /**
  * @file
@@ -298,9 +298,10 @@ function uc_payment_by_order_form($form_state, $order) {
   $payments = uc_payment_load_payments($order->order_id);
 
   $form['order_total'] = array('#value' => uc_currency_format($total));
-  $form['payments'] = array('#tree' => TRUE);
+  $form['payments'] = tapir_get_table('uc_payments_table');
   if ($payments !== FALSE) {
     foreach ($payments as $payment) {
+      $form['payments'][$payment->receipt_id]['#attributes'] = array('valign' => 'top');
       $form['payments'][$payment->receipt_id]['received'] = array(
         '#value' => format_date($payment->received, 'custom', variable_get('uc_date_format_default', 'm/d/Y') .'<b\r>H:i:s'),
       );
@@ -339,6 +340,7 @@ function uc_payment_by_order_form($form_state, $order) {
   );
 
   if (user_access('manual payments')) {
+    $form['payments']['new']['#attributes'] = array('valign' => 'top');
     $form['payments']['new']['received'] = array(
       '#value' => '-',
     );
@@ -378,7 +380,7 @@ function theme_uc_payment_by_order_form($form) {
   $output = '<p><strong>'. t('Order total:') .'</strong> '. drupal_render($form['order_total'])
            .'<br /><strong>'. t('Current balance:') .'</strong> '
           . drupal_render($form['balance']) .'</p>';
-  $output .= '<p>'. tapir_get_table('uc_payments_table', $form) .'</p>'
+  $output .= '<p>'. drupal_render($form['payments']) .'</p>'
            .'<p>'. drupal_render($form['form_id'])
            . drupal_render($form['form_token']) .'</p>';
   return $output;

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.9 2008/11/21 21:17:24 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.10 2008/12/09 15:20:36 islandusurper Exp $
 
 /**
  * @file
@@ -323,6 +323,10 @@ function uc_order_theme() {
       'file' => 'uc_order.admin.inc',
     ),
     'uc_order_edit_products_form' => array(
+      'arguments' => array('form' => NULL),
+      'file' => 'uc_order.admin.inc',
+    ),
+    'uc_order_remove_product' => array(
       'arguments' => array('form' => NULL),
       'file' => 'uc_order.admin.inc',
     ),
@@ -893,72 +897,43 @@ function uc_order_search_form_submit($form, &$form_state) {
   drupal_goto('admin/store/orders/search/results/'. implode('/', $args));
 }
 
-function op_products_edit_table($form_state, $form) {
-  $table = array();
+function op_products_edit_table() {
+  $table = array(
+    '#type' => 'tapir_table',
+    '#tree' => TRUE,
+    '#attributes' => array('class' => 'order-pane-table'),
+  );
 
-  $table['columns']['remove'] = array(
+  $table['#columns']['remove'] = array(
     'cell' => t('Remove'),
     'weight' => 0,
   );
-  $table['columns']['qty'] = array(
+  $table['#columns']['qty'] = array(
     'cell' => t('Qty'),
     'weight' => 1,
   );
-  $table['columns']['title'] = array(
+  $table['#columns']['title'] = array(
     'cell' => t('Name'),
     'weight' => 2,
   );
-  $table['columns']['model'] = array(
+  $table['#columns']['model'] = array(
     'cell' => t('Model'),
     'weight' => 4,
   );
-  $table['columns']['weight'] = array(
+  $table['#columns']['weight'] = array(
     'cell' => t('Weight'),
     'weight' => 5,
   );
-  $table['columns']['cost'] = array(
+  $table['#columns']['cost'] = array(
     'cell' => t('Cost'),
     'weight' => 6,
   );
-  $table['columns']['price'] = array(
+  $table['#columns']['price'] = array(
     'cell' => t('Price'),
     'weight' => 7,
   );
 
-  if (isset($form['products'])) {
-    foreach (element_children($form['products']) as $product) {
-      $data = array();
-      $data['remove']['cell'] = '<img id="'. $form['products'][$product]['order_product_id']['#value'] .'" src="'.  base_path() . drupal_get_path('module', 'uc_store')
-                         .'/images/error.gif" style="padding-top: 1px; padding-left: .8em; '
-                         .'padding-right: 2px; float: left; cursor: pointer;" '
-                         .'alt="'. t('Remove this product.') .'" onclick="'
-                         .'remove_product_button(\''. t('Remove product from order?') .'\', this.id);" />'
-                        . drupal_render($form['products'][$product]['order_product_id'])
-                        . drupal_render($form['products'][$product]['nid'])
-                        . drupal_render($form['products'][$product]['data'])
-                        . drupal_render($form['products'][$product]['remove']);
-      $data['qty']['cell'] = drupal_render($form['products'][$product]['qty']);
-      $data['title']['cell'] = drupal_render($form['products'][$product]['title']);
-      $data['model']['cell'] = drupal_render($form['products'][$product]['model']);
-      $data['weight']['cell'] = drupal_render($form['products'][$product]['weight']);
-      $data['cost']['cell'] = drupal_render($form['products'][$product]['cost']);
-      $data['price']['cell'] = drupal_render($form['products'][$product]['price']);
-      $table['rows'][] = $data;
-    }
-  }
-  else {
-    $data['remove']['cell'] = array('data' => t('This order contains no products.'), 'colspan' => count($fields));
-    $table['rows'][] = $data;
-  }
-
-  $attributes = array('class' => 'order-pane-table');
-
-  $form['table'] = array(
-    '#value' => $table,
-    '#theme' => 'tapir_table',
-    '#attributes' => $attributes,
-  );
-  return $form;
+  return $table;
 }
 
 

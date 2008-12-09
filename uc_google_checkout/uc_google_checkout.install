@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.install,v 1.1.2.10 2008/11/21 21:17:11 islandusurper Exp $
+// $Id: uc_google_checkout.install,v 1.1.2.11 2008/12/09 15:20:42 islandusurper Exp $
 
 /**
  * @file
@@ -62,8 +62,8 @@ function uc_google_checkout_schema() {
       ),
       'gc_total' => array(
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -178,4 +178,12 @@ function uc_google_checkout_update_6001() {
 
   variable_set('uc_google_checkout_merchant_key', variable_get('uc_google_merchant_key', ''));
   variable_del('uc_google_merchant_key');
+}
+
+function uc_google_checkout_update_6002() {
+  $ret = array();
+
+  db_change_field($ret, 'uc_gc_orders', 'gc_total', 'gc_total', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0.0));
+
+  return $ret;
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.12 2008/11/21 21:17:11 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.13 2008/12/09 15:20:42 islandusurper Exp $
 
 /**
  * @file
@@ -422,7 +422,7 @@ function uc_google_checkout_cart_form_submit($form, &$form_state) {
 
   $request = uc_google_checkout_cart_request($order);
   if ($response = uc_google_checkout_send_request('merchantCheckout', $request)) {
-    $redirect = $response->params['checkout-redirect']['redirect-url']['VALUE'];
+    $redirect = (string)$response->{'redirect-url'};
     drupal_goto($redirect);
   }
 }
@@ -582,8 +582,6 @@ function uc_google_checkout_headers() {
 }
 
 function uc_google_checkout_send_request($api, $request) {
-  require_once(drupal_get_path('module', 'uc_google_checkout') .'/includes/xmlparser.php');
-
   if (variable_get('uc_google_checkout_mode', 'checkout') == 'checkout') {
     $merchant_id = variable_get('uc_google_checkout_merchant_id', '');
     $checkout_url = 'https://checkout.google.com';
@@ -596,11 +594,14 @@ function uc_google_checkout_send_request($api, $request) {
   // Google's XML parser doesn't like named entities apparently.
   str_replace(array('&amp;', '&lt;', '&gt;'), array('&#x26;', '&#x3c;', '&#x3e;'), $request);
   $response_obj = drupal_http_request($checkout_url .'/api/checkout/v2/'. $api .'/Merchant/'. $merchant_id, uc_google_checkout_headers(), 'POST', $request);
-  $response = new XMLParser($response_obj->data);
-  if ($response->root == 'error') {
-    $error = $response->params['error']['error-message']['VALUE'];
+  if ($response_obj->error) {
+    watchdog('google', check_plain($response_obj->error), NULL, WATCHDOG_ERROR);
+  }
+  $response = new SimpleXMLElement($response_obj->data);
+  if ($response->getName() == 'error') {
+    $error = $response->{'error-message'};
     drupal_set_message($error, 'error');
-    watchdog('google', $error, NULL, WATCHDOG_ERROR);
+    watchdog('google', check_plain($error), NULL, WATCHDOG_ERROR);
     return NULL;
   }
 
@@ -662,50 +663,49 @@ function uc_payment_method_google_checkout($op, &$arg1) {
   }
 }
 
-function uc_google_checkout_new_order($xml) {
-  $new_order = $xml->params['new-order-notification'];
-  $order_id = $new_order['shopping-cart']['merchant-private-data']['order-id']['VALUE'];
-  $cart_id = $new_order['shopping-cart']['merchant-private-data']['cart-id']['VALUE'];
+function uc_google_checkout_new_order($new_order) {
+  $order_id = $new_order->{'shopping-cart'}->{'merchant-private-data'}->{'order-id'};
+  $cart_id = $new_order->{'shopping-cart'}->{'merchant-private-data'}->{'cart-id'};
 
   $order = uc_order_load($order_id);
   if ($order) {
-    $shipping_address = $new_order['buyer-shipping-address'];
-    $order->delivery_company = $shipping_address['company-name']['VALUE'];
-    $order->delivery_first_name = $shipping_address['structured-name']['first-name']['VALUE'];
-    $order->delivery_last_name = $shipping_address['structured-name']['last-name']['VALUE'];
-    $order->delivery_phone = $shipping_address['phone']['VALUE'];
-    $order->delivery_street1 = $shipping_address['address1']['VALUE'];
-    $order->delivery_street2 = $shipping_address['address2']['VALUE'];
-    $order->delivery_city = $shipping_address['city']['VALUE'];
-    $zone_id = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code = '%s'", $shipping_address['region']['VALUE']));
+    $shipping_address = $new_order->{'buyer-shipping-address'};
+    $order->delivery_company = $shipping_address->{'company-name'};
+    $order->delivery_first_name = $shipping_address->{'structured-name'}->{'first-name'};
+    $order->delivery_last_name = $shipping_address->{'structured-name'}->{'last-name'};
+    $order->delivery_phone = $shipping_address->phone;
+    $order->delivery_street1 = $shipping_address->address1;
+    $order->delivery_street2 = $shipping_address->address2;
+    $order->delivery_city = $shipping_address->city;
+    $zone_id = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code = '%s'", $shipping_address->region));
     $order->delivery_zone = $zone_id;
-    $countries = uc_get_country_data(array('country_iso_code_2' => $shipping_address['country-code']['VALUE']));
+    $countries = uc_get_country_data(array('country_iso_code_2' => $shipping_address->{'country-code'}));
     $order->delivery_country = $countries[0]['country_id'];
-    $order->delivery_postal_code = $shipping_address['postal-code']['VALUE'];
+    $order->delivery_postal_code = $shipping_address->{'postal-code'};
 
-    $billing_address = $new_order['buyer-billing-address'];
-    $order->billing_company = $billing_address['company-name']['VALUE'];
-    $order->billing_first_name = $billing_address['structured-name']['first-name']['VALUE'];
-    $order->billing_last_name = $billing_address['structured-name']['last-name']['VALUE'];
-    $order->billing_phone = $billing_address['phone']['VALUE'];
-    $order->billing_street1 = $billing_address['address1']['VALUE'];
-    $order->billing_street2 = $billing_address['address2']['VALUE'];
-    $order->billing_city = $billing_address['city']['VALUE'];
-    if ($billing_address['region'] != $shipping_address['region']['VALUE']) {
-      $zone_id = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code = '%s'", $billing_address['region']));
+    $billing_address = $new_order->{'buyer-billing-address'};
+    $order->billing_company = $billing_address->{'company-name'};
+    $order->billing_first_name = $billing_address->{'structured-name'}->{'first-name'};
+    $order->billing_last_name = $billing_address->{'structured-name'}->{'last-name'};
+    $order->billing_phone = $billing_address->phone;
+    $order->billing_street1 = $billing_address->address1;
+    $order->billing_street2 = $billing_address->address2;
+    $order->billing_city = $billing_address->city;
+    if ($billing_address['region'] != $shipping_address->region) {
+      $zone_id = db_result(db_query("SELECT zone_id FROM {uc_zones} WHERE zone_code = '%s'", $billing_address->region));
     }
     $order->billing_zone = $zone_id;
-    if ($billing_address['country-code'] != $shipping_address['country-code']['VALUE']) {
-      $countries = uc_get_country_data(array('country_iso_code_2' => $billing_address['country-code']['VALUE']));
+    if ($billing_address->{'country-code'} != $shipping_address->{'country-code'}) {
+      $countries = uc_get_country_data(array('country_iso_code_2' => $billing_address->{'country-code'}));
     }
     $order->billing_country = $countries[0]['country_id'];
-    $order->billing_postal_code = $billing_address['postal-code']['VALUE'];
+    $order->billing_postal_code = $billing_address->{'postal-code'};
 
     if (!$order->primary_email) {
-      $order->primary_email = $billing_address['email']['VALUE'];
+      $order->primary_email = $billing_address->email;
     }
 
-    if ($new_order['buyer-marketing-preferences']['email-allowed']['VALUE'] == 'true') {
+    if ($new_order->{'buyer-marketing-preferences'}->{'email-allowed'} == 'true') {
       $order->data['email_allowed'] = TRUE;
       if (module_exists('simplenews')) {
         simplenews_subscribe_user($order->primary_email, variable_get('uc_google_checkout_simplenews_tid', 0), TRUE);
@@ -722,22 +722,21 @@ function uc_google_checkout_new_order($xml) {
 
     $comments = array();
 
-    uc_order_line_item_add($order_id, 'tax', t('Total tax'), $new_order['order-adjustment']['total-tax']['VALUE']);
-    $shipping_lines = $new_order['order-adjustment']['shipping'];
-    if (is_array($shipping_lines)) {
-      $shipping_line = array_pop($shipping_lines);
-      uc_order_line_item_add($order_id, 'shipping', check_plain($shipping_line['shipping-name']['VALUE']), $shipping_line['shipping-cost']['VALUE']);
+    uc_order_line_item_add($order_id, 'tax', t('Total tax'), $new_order->{'order-adjustment'}->{'total-tax'});
+    if (isset($new_order->{'order-adjustment'}->shipping)) {
+      $shipping_line = $new_order->{'order-adjustment'}->shipping[0];
+      uc_order_line_item_add($order_id, 'shipping', check_plain($shipping_line->{'shipping-name'}), $shipping_line->{'shipping-cost'});
     }
-    $discount_lines = $new_order['order-adjustment']['merchant-codes'];
-    if (is_array($discount_lines)) {
-      foreach ($discount_lines as $type => $adjustment) {
+    if (isset($new_order->{'order-adjustment'}->{'merchant-codes'})) {
+      foreach ($new_order->{'order-adjustment'}->{'merchant-codes'}->children() as $adjustment) {
+        $type = $adjustment->getName();
         if ($type == 'coupon-adjustment') {
-          uc_order_line_item_add($order_id, 'gc_coupon', check_plain($adjustment['code']['VALUE']), -$adjustment['applied-amount']['VALUE']);
-          $comments[] = check_plain($adjustment['message']['VALUE']);
+          uc_order_line_item_add($order_id, 'gc_coupon', check_plain($adjustment->code), -$adjustment->{'applied-amount'});
+          $comments[] = check_plain($adjustment->message);
         }
         elseif ($type == 'gift-certificate-adjustment') {
-          uc_order_line_item_add($order_id, 'gc_gift_certificate', check_plain($adjustment['code']['VALUE']), -$adjustment['applied-amount']['VALUE']);
-          $comments[] = check_plain($adjustment['message']['VALUE']);
+          uc_order_line_item_add($order_id, 'gc_gift_certificate', check_plain($adjustment->code), -($adjustment->{'applied-amount'}));
+          $comments[] = check_plain($adjustment->message);
         }
       }
     }
@@ -749,7 +748,7 @@ function uc_google_checkout_new_order($xml) {
     // API's cart) so we must empty the customer's manually.
     uc_cart_empty($cart_id);
     // Add a comment to let sales team know this came in through the site.
-    uc_order_comment_save($order->order_id, 0, t('Order created through Google Checkout (#@gco_order).', array('@gco_order' => $new_order['google-order-number']['VALUE'])), 'admin');
+    uc_order_comment_save($order->order_id, 0, t('Order created through Google Checkout (#@gco_order).', array('@gco_order' => $new_order->{'google-order-number'})), 'admin');
 
     // Add messages from order adjustments (coupons, gift certificates, etc.).
     foreach ($comments as $comment) {
@@ -759,7 +758,7 @@ function uc_google_checkout_new_order($xml) {
       }
     }
 
-    db_query("INSERT INTO {uc_gc_orders} (order_id, gc_order_number, gc_total) VALUES (%d, '%s', %f)", $order_id, $new_order['google-order-number']['VALUE'], $new_order['order-total']['VALUE']);
+    db_query("INSERT INTO {uc_gc_orders} (order_id, gc_order_number, gc_total) VALUES (%d, '%s', %f)", $order_id, $new_order->{'google-order-number'}, $new_order->{'order-total'});
 
     uc_google_checkout_notification_acknowledgement($new_order['serial-number']);
   }
@@ -768,13 +767,13 @@ function uc_google_checkout_new_order($xml) {
   }
 }
 
-function uc_google_checkout_accept_risk($xml) {
-  $risk = $xml->params['risk-information-notification'];
-  $order_id = uc_google_checkout_get_order($risk['google-order-number']['VALUE']);
+function uc_google_checkout_accept_risk($risk) {
+  $order_id = uc_google_checkout_get_order($risk->{'google-order-number'});
   if ($order_id) {
-    $risk_info = $risk['risk-information'];
+    $risk_info = $risk->{'risk-information'};
     $assessment = t('Risk information notification:') .'<br />';
-    switch ($risk_info['avs-response']['VALUE']) {
+    $avs_response = $risk_info->{'avs-response'};
+    switch ($avs_response) {
       case 'Y':
         $assessment .= t('- Full AVS match (address and postal code)');
       break;
@@ -795,7 +794,9 @@ function uc_google_checkout_accept_risk($xml) {
       break;
     }
     $assessment .= '<br />';
-    switch ($risk_info['cvn-response']['VALUE']) {
+
+    $cvs_response = $risk_info->{'cvs-response'};
+    switch ($cvn_response) {
       case 'M':
         $assessment .= t('- CVN match');
       break;
@@ -813,24 +814,23 @@ function uc_google_checkout_accept_risk($xml) {
       break;
     }
     $assessment .= '<br />';
-    $assessment .= t('Partial CC number: %s', array('%s' => $risk_info['partial-cc-number']['VALUE']));
+    $assessment .= t('Partial CC number: %s', array('%s' => $risk_info->{'partial-cc-number'}));
     $assessment .= '<br />';
-    $assessment .= format_plural($risk_info['buyer-account-age']['VALUE'], 'Google Checkout member for @count month.', 'Google Checkout member for @count months.');
+    $assessment .= format_plural($risk_info->{'buyer-account-age'}, 'Google Checkout member for @count month.', 'Google Checkout member for @count months.');
     $assessment .= '<br />';
-    $assessment .= t('Eligible for protection: <strong>@bool</strong', array('@bool' => strtoupper($risk_info['eligible-for-protection']['VALUE'])));
+    $assessment .= t('Eligible for protection: <strong>@bool</strong', array('@bool' => drupal_strtoupper($risk_info->{'eligible-for-protection'})));
     uc_order_comment_save($order_id, 0, $assessment, 'admin', 'chargeable');
     uc_google_checkout_notification_acknowledgement($risk['serial-number']);
   }
 }
 
-function uc_google_checkout_order_state_change($xml) {
-  $change = $xml->params['order-state-change-notification'];
-  $order_id = uc_google_checkout_get_order($change['google-order-number']['VALUE']);
+function uc_google_checkout_order_state_change($change) {
+  $order_id = uc_google_checkout_get_order($change->{'google-order-number'});
   if ($order_id) {
-    $new_financial = $change['new-financial-order-state']['VALUE'];
-    $new_fulfillment = $change['new-fulfillment-order-state']['VALUE'];
-    $prev_financial = $change['previous-financial-order-state']['VALUE'];
-    $prev_fulfillment = $change['previous-fulfillment-order-state']['VALUE'];
+    $new_financial = $change->{'new-financial-order-state'};
+    $new_fulfillment = $change->{'new-fulfillment-order-state'};
+    $prev_financial = $change->{'previous-financial-order-state'};
+    $prev_fulfillment = $change->{'previous-fulfillment-order-state'};
     db_query("UPDATE {uc_gc_orders} SET financial_state = '%s', fulfillment_state = '%s' WHERE order_id = %d AND financial_state = '%s' AND fulfillment_state = '%s'", array($new_financial, $new_fulfillment, $order_id, $prev_financial, $prev_fulfillment));
     if ($new_financial != $prev_financial) {
       $_SESSION['google_updates'] = TRUE;
@@ -848,7 +848,7 @@ function uc_google_checkout_order_state_change($xml) {
           watchdog('google', 'Payment declined @order_id', array('@order_id' => $order_id));
         break;
         case 'CANCELLED_BY_GOOGLE':
-          $message = t('Order %order canceled by Google: %reason', array('%order' => $order_id, '%reason' => $change['reason']['VALUE']));
+          $message = t('Order %order canceled by Google: %reason', array('%order' => $order_id, '%reason' => $change->reason));
           uc_order_comment_save($order_id, 0, $message, 'admin', 'canceled');
         case 'CANCELLED':
           uc_order_comment_save($order_id, 0, t('Order canceled.'), 'order', 'canceled');
@@ -879,10 +879,7 @@ function uc_google_checkout_order_state_change($xml) {
     uc_google_checkout_notification_acknowledgement($change['serial-number']);
   }
   else {
-    // TODO: Get rid of this when the bad updates stop coming in.
-    uc_google_checkout_notification_acknowledgement($change['serial-number']);
-    // TODO: uncomment this when the above TODO is done.
-    // uc_google_checkout_notification_error();
+    uc_google_checkout_notification_error();
   }
 }
 
@@ -902,13 +899,12 @@ function uc_google_checkout_charge($order_id, $amount) {
   return 'admin/store/orders/'. $order_id;
 }
 
-function uc_google_checkout_charge_order($xml) {
-  $charge = $xml->params['charge-amount-notification'];
-  $order_id = uc_google_checkout_get_order($charge['google-order-number']['VALUE']);
+function uc_google_checkout_charge_order($charge) {
+  $order_id = uc_google_checkout_get_order($charge->{'google-order-number'});
   if ($order_id) {
-    uc_payment_enter($order_id, 'google_checkout', $charge['latest-charge-amount']['VALUE'], 0,
+    uc_payment_enter($order_id, 'google_checkout', $charge->{'latest-charge-amount'}, 0,
                      '', t('Payment received by Google Checkout'));
-    uc_order_comment_save($order_id, 0, t('Payment of %amount received by Google Checkout.', array('%amount' => uc_currency_format($charge['latest-charge-amount']['VALUE']))), 'admin', 'chargeable');
+    uc_order_comment_save($order_id, 0, t('Payment of %amount received by Google Checkout.', array('%amount' => uc_currency_format($charge->{'latest-charge-amount'}))), 'admin', 'chargeable');
     uc_google_checkout_notification_acknowledgement($charge['serial-number']);
   }
   else {
@@ -934,13 +930,12 @@ function uc_google_checkout_refund($order_id, $amount, $reason, $comment = '') {
   return 'admin/store/orders/'. $order_id;
 }
 
-function uc_google_checkout_refund_order($xml) {
-  $refund = $xml->params['refund-amount-notification'];
-  $order_id = uc_google_checkout_get_order($refund['google-order-number']['VALUE']);
+function uc_google_checkout_refund_order($refund) {
+  $order_id = uc_google_checkout_get_order($refund->{'google-order-number'});
   if ($order_id) {
-    uc_payment_enter($order_id, 'google_checkout', -$refund['latest-refund-amount']['VALUE'],
+    uc_payment_enter($order_id, 'google_checkout', -$refund->{'latest-refund-amount'},
                      0, '', t('Refund received by Google Checkout'));
-    uc_order_comment_save($order_id, 0, t('Refund of %amount received by Google Checkout.', array('%amount' => uc_currency_format($refund['latest-refund-amount']['VALUE']))),
+    uc_order_comment_save($order_id, 0, t('Refund of %amount received by Google Checkout.', array('%amount' => uc_currency_format($refund->{'latest-refund-amount'}))),
                           'admin', 'processing');
     uc_google_checkout_notification_acknowledgement($refund['serial-number']);
   }
@@ -951,7 +946,7 @@ function uc_google_checkout_refund_order($xml) {
 
 function uc_google_checkout_notify_update($form, &$form_state) {
   $order = uc_order_load($form_state['values']['order_id']);
-  if ($order !== FALSE && isset($form_state['values']['order_comment']) && strlen($form_state['values']['order_comment'])) {
+  if ($order !== FALSE && isset($form_state['values']['order_comment']) && drupal_strlen($form_state['values']['order_comment'])) {
     $request = uc_google_checkout_buyer_message_request($form_state['values']['order_id'], $form_state['values']['order_comment']);
     $response = uc_google_checkout_send_request('request', $request);
   }

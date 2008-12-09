@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.5 2008/11/21 21:17:25 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.6 2008/12/09 15:20:36 islandusurper Exp $
 
 /**
  * @file
@@ -1191,12 +1191,14 @@ function uc_order_edit_products($order) {
 
 function uc_order_edit_products_form($form_state, $products) {
   if (($product_count = count($products)) > 0) {
-    $form['products'] = array('#tree' => TRUE);
+    $form['products'] = tapir_get_table('op_products_edit_table');
     for ($i = 0; $i < $product_count; $i++) {
       $form['products'][$i]['remove'] = array(
         '#type' => 'checkbox',
         '#name' => "products[$i][remove]",
+        '#theme' => 'uc_order_remove_product',
         '#parents' => array(),
+        '#img_id' => $products[$i]->order_product_id,
       );
       $form['products'][$i]['order_product_id'] = array(
         '#type' => 'hidden',
@@ -1261,12 +1263,27 @@ function uc_order_edit_products_form($form_state, $products) {
       );
     }
   }
-
+  else {
+    $form['products'][]['remove'] = array(
+      '#value' => t('This order contains no products.'),
+      '#cell_attributes' => array('colspan' => 'full'),
+    );
+  }
   return $form;
 }
 
 function theme_uc_order_edit_products_form($form) {
-  return tapir_get_table('op_products_edit_table', $form);
+  return drupal_render($form);
+}
+
+function theme_uc_order_remove_product($form) {
+  return '<img id="'. $form['#img_id'] .'" src="'
+    .  base_path() . drupal_get_path('module', 'uc_store')
+    .'/images/error.gif" style="padding-top: 1px; padding-left: .8em; '
+    .'padding-right: 2px; float: left; cursor: pointer;" '
+    .'alt="'. t('Remove this product.') .'" onclick="'
+    .'remove_product_button(\''. t('Remove product from order?') .'\', this.id);" />'
+    . drupal_render($form);
 }
 
 /**

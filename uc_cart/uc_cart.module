@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.10 2008/11/21 21:17:27 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.11 2008/12/09 15:20:37 islandusurper Exp $
 
 /**
  * @file
@@ -216,7 +216,10 @@ function uc_cart_theme() {
       'arguments' => array(),
     ),
     'uc_cart_view_form' => array(
-      'arguments' => array('items' => NULL),
+      'arguments' => array('form' => NULL),
+    ),
+    'uc_cart_view_price' => array(
+      'arguments' => array('form' => NULL),
     ),
     'address_pane' => array(
       'arguments' => array('form' => NULL),
@@ -513,9 +516,9 @@ function uc_cart_uc_message() {
   $messages['review_instructions'] = t("Your order is almost complete. Please review the details below and click '!submit' if all the information is correct.  You may use the 'Back' button to make changes to your order if necessary.", array('!submit' => variable_get('uc_checkout_submit_button', t('Submit order'))));
   $messages['completion_message'] = t('Your order is complete! Your order number is [order-id].');
   $messages['completion_logged_in'] = t('Thank you for shopping at [store-name]. While logged in, you may continue shopping or <a href="[order-url]">click here</a> to view your current order status and order history.');
-  $messages['completion_existing_user'] = t('Thank you for shopping at [store-name]. Your current order has been attached to the account we found matching your e-mail address.') .'<p>'. t('<a href="!url">Click here</a> to login and view your current order status and order history. Remember to login when you make your next purchase for a faster checkout experience!', array('!url' => url('user', array('absolute' => TRUE))));
-  $messages['completion_new_user'] = t('Thank you for shopping at [store-name]. A new account has been created for you here that you may use to view your current order status.') . t('<p><a href="!url">Click here</a> to login to your new account using the following information:', array('!url' => url('user', array('absolute' => TRUE)))) . t('<p><strong>Username:</strong> !new_username<br /><strong>Password:</strong> !new_password');
-  $messages['continue_shopping'] = l(t('Click to return to the front page.'), '<front>', array('absolute' => TRUE));
+  $messages['completion_existing_user'] = t('Thank you for shopping at [store-name]. Your current order has been attached to the account we found matching your e-mail address.') .'<p>'. t('<a href="[site-url]/user">Click here</a> to login and view your current order status and order history. Remember to login when you make your next purchase for a faster checkout experience!');
+  $messages['completion_new_user'] = t('Thank you for shopping at [store-name]. A new account has been created for you here that you may use to view your current order status.') . t('<p><a href="[site-url]/user">Click here</a> to login to your new account using the following information:') . t('<p><strong>Username:</strong> !new_username<br /><strong>Password:</strong> !new_password');
+  $messages['continue_shopping'] = t('<a href="[site-url]">Return to the front page.</a>');
 
   return $messages;
 }
@@ -632,7 +635,10 @@ function theme_uc_empty_cart() {
  * customer.
  */
 function uc_cart_view_form($form_state, $items = NULL) {
-  $form['items'] = array('#tree' => TRUE);
+  $form['items'] = array(
+    '#type' => 'tapir_table',
+    '#tree' => TRUE,
+  );
 
   $i = 0;
   foreach ($items as $item) {
@@ -640,9 +646,24 @@ function uc_cart_view_form($form_state, $items = NULL) {
     if (!empty($display_item)) {
       $form['items'][$i] = $display_item;
       $form['items'][$i]['image']['#value'] = uc_product_get_picture($display_item['nid']['#value'], 'cart');
+      $form['items'][$i]['desc']['#value'] = $display_item['title']['#value']
+        .'<br />'. $display_item['options']['#value'];
+      $form['items'][$i]['title']['#type'] = 'value';
+      $form['items'][$i]['options']['#type'] = 'value';
+      if (empty($display_item['qty'])) {
+        $form['items'][$i]['qty'] = array(
+          '#value' => '',
+        );
+      }
+      $form['items'][$i]['total'] = array(
+        '#value' => $display_item['#total'],
+        '#theme' => 'uc_cart_view_price',
+      );
       $i++;
     }
   }
+
+  $form['items'] = uc_cart_view_table($form['items']);
 
   if (($page = variable_get('uc_continue_shopping_url', '')) != '<none>' &&
       variable_get('uc_continue_shopping_type', 'link') == 'button') {
@@ -672,7 +693,7 @@ function theme_uc_cart_view_form($form) {
   drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart.css');
 
   $output = '<div id="cart-form-products">'
-          . tapir_get_table('uc_cart_view_table', $form['items']) .'</div>';
+          . drupal_render($form['items']) .'</div>';
 
   foreach (element_children($form['items']) as $i) {
     foreach (array('title', 'options', 'remove', 'image', 'qty') as $column) {
@@ -701,49 +722,51 @@ function theme_uc_cart_view_form($form) {
   return $output;
 }
 
-function uc_cart_view_table($form_state, $items) {
-  $table = array();
+function theme_uc_cart_view_price($form) {
+  return uc_currency_format($form['#value']);
+}
 
-  $table['columns']['remove'] = array(
-    'cell' => t('Remove'),
-    'weight' => 0,
-  );
-  $table['columns']['image'] = array(
-    'cell' => t('Products'),
-    'weight' => 1,
-  );
-  $table['columns']['desc'] = array(
-    'cell' => '',
-    'weight' => 2,
-  );
-  $table['columns']['qty'] = array(
-    'cell' => t('Qty.'),
-    'weight' => 3,
-  );
-  $table['columns']['total'] = array(
-    'cell' => t('Total'),
-    'weight' => 4,
-  );
+function uc_cart_view_table($table) {
+  $table['#attributes'] = array('width' => '100%');
 
-  foreach (element_children($items) as $i) {
-    $nid = $items[$i]['nid']['#value'];
-    $subtotal += $items[$i]['#total'];
-    $desc = drupal_render($items[$i]['title']) .'<br />';
-    $desc .= drupal_render($items[$i]['options']);
-
-    $data = array();
-    $data['remove']['cell'] = array('data' => drupal_render($items[$i]['remove']), 'align' => 'center', 'class' => 'remove');
-    $data['image']['cell'] = array('data' => drupal_render($items[$i]['image']), 'class' => 'image');
-    $data['desc']['cell'] = array('data' => $desc, 'width' => '100%', 'class' => 'desc');
-    $data['qty']['cell'] = array('data' => $items[$i]['qty'] ? drupal_render($items[$i]['qty']) : '', 'class' => 'qty');
-    $data['total']['cell'] = array('data' => uc_currency_format($items[$i]['#total']), 'nowrap' => 'nowrap', 'class' => 'price');
-    $table['rows'][] = array('data' => $data, 'valign' => 'top');
-  }
-  $table['rows'][] = array(
+  $table['#columns'] = array(
+    'remove' => array(
+      'cell' => t('Remove'),
+      'weight' => 0,
+    ),
+    'image' => array(
+      'cell' => t('Products'),
+      'weight' => 1,
+    ),
+    'desc' => array(
+      'cell' => '',
+      'weight' => 2,
+    ),
+    'qty' => array(
+      'cell' => t('Qty.'),
+      'weight' => 3,
+    ),
     'total' => array(
-      'cell' => array(
-        'data' => '<strong>'. t('Subtotal:') .'</strong> '. uc_currency_format($subtotal),
-        'colspan' => 5,
+      'cell' => t('Total'),
+      'weight' => 4,
+    ),
+  );
+
+  foreach (element_children($table) as $i) {
+    $subtotal += $table[$i]['#total'];
+
+    $table[$i]['remove']['#cell_attributes'] = array('align' => 'center', 'class' => 'remove');
+    $table[$i]['image']['#cell_attributes'] = array('class' => 'image');
+    $table[$i]['desc']['#cell_attributes'] = array('width' => '100%', 'class' => 'desc');
+    $table[$i]['qty']['#cell_attributes'] = array('class' => 'qty');
+    $table[$i]['total']['#cell_attributes'] = array('nowrap' => 'nowrap', 'class' => 'price');
+    $table[$i]['#attributes'] = array('valign' => 'top');
+  }
+  $table[] = array(
+    'total' => array(
+      '#value' => '<strong>'. t('Subtotal:') .'</strong> '. uc_currency_format($subtotal),
+      '#cell_attributes' => array(
+        'colspan' => 'full',
         'align' => 'right',
         'nowrap' => 'nowrap',
         'class' => 'subtotal',
@@ -751,13 +774,7 @@ function uc_cart_view_table($form_state, $items) {
     ),
   );
 
-  $form['table'] = array(
-    '#value' => $table,
-    '#theme' => 'tapir_table',
-    '#attributes' => array('width' => '100%'),
-  );
-
-  return $form;
+  return $table;
 }
 
 function uc_cart_view_form_continue_submit($form, &$form_state) {
@@ -1000,7 +1017,7 @@ function uc_cart_add_item($nid, $qty = 1, $data = NULL, $cid = NULL, $msg = TRUE
   }
 
   if (!in_array($node->type, module_invoke_all('product_types'))) {
-    drupal_set_message(t('!title is not a product. Unable to add to cart.', array('!title' => $node->title)), 'error');
+    drupal_set_message(t('@title is not a product. Unable to add to cart.', array('@title' => $node->title)), 'error');
     return;
   }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.admin.inc,v 1.1.2.1 2008/10/15 14:47:56 islandusurper Exp $
+// $Id: uc_stock.admin.inc,v 1.1.2.2 2008/12/09 15:20:35 islandusurper Exp $
 
 /**
  * @file
@@ -129,7 +129,10 @@ function uc_stock_edit_form($form_state, $node) {
   $form = array();
   $form['stock'] = array('#tree' => TRUE);
 
-  $skus = uc_stock_skus($node->nid);
+  $skus = uc_product_get_models($node);
+
+  // Remove 'Any'.
+  unset($skus[NULL]);
 
   if (!$skus) {
     drupal_set_message(t('No SKU found.'), 'error');

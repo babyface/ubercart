@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.2.2.8 2008/11/21 21:17:26 islandusurper Exp $
+// $Id: uc_file.module,v 1.2.2.9 2008/12/09 15:20:38 islandusurper Exp $
 
 /**
  * @file
@@ -680,7 +680,7 @@ function uc_file_feature_form($form_state, $node, $feature) {
   uc_file_refresh();
 
   // Grab all the models on this product.
-  $models = _uc_file_product_model_list($node);
+  $models = uc_product_get_models($node);
 
   // Use the feature's values to fill the form, if they exist.
   if (!empty($feature)) {
@@ -1389,34 +1389,6 @@ function uc_file_remove_by_id($fid, $recur) {
   }
 
   return $result;
-}
-
-/**
- * Return a list of model adjustments for a given product node
- *
- * @param $nid
- *   The product node id
- * @return:
- *   An associative array containing the models created by different product
- *   attributes or FALSE if none exist.
- *
- * TODO: hook_product_list ?
- */
-function _uc_file_product_model_list($node) {
-
-  $models = array();
-
-  // Get all the models on this product.
-  if (module_exists('uc_attribute')) {
-    $adjustments = db_query("SELECT model FROM {uc_product_adjustments} WHERE nid = %d", $node->nid);
-    while ($adjustment = db_fetch_object($adjustments)) {
-      if (!in_array($adjustment->model, $models)) {
-        $models[$adjustment->model] = $adjustment->model;
-      }
-    }
-  }
-
-  return $models + array(NULL => t('Any'), $node->model => $node->model);
 }
 
 /**

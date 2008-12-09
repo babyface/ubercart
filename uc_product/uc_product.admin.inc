@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.admin.inc,v 1.1.2.5 2008/11/21 21:17:29 islandusurper Exp $
+// $Id: uc_product.admin.inc,v 1.1.2.6 2008/12/09 15:20:36 islandusurper Exp $
 
 /**
  * @file
@@ -30,13 +30,10 @@ function uc_product_administration() {
     $nids[] = $product->nid;
   }
 
-  // Setup the arguments to pass to the table builder function.
-  $args = array(
-    'nids' => $nids,
-  );
+  $table = tapir_get_table('uc_product_table', $nids);
 
   // Display the product table and pager if necessary.
-  $output .= tapir_get_table('uc_product_table', $args) . theme('pager');
+  $output .= drupal_render($table) . theme('pager');
 
   return $output;
 }
@@ -78,11 +75,6 @@ function uc_product_class_default() {
  * @see uc_product_field_settings_form()
  */
 function uc_product_settings_overview() {
-
-  // Add some Ubercart specific JS for modifying summaries.
-  drupal_add_js(drupal_get_path('module', 'uc_store') .'/includes/summaries.js');
-  drupal_add_js(array('editIconPath' => base_path() . drupal_get_path('module', 'uc_store') .'/images/order_edit.gif'), 'setting');
-
   // Load the form summaries for pages beneath this path.
   $summaries = summarize_child_form_pages('admin/store/settings/products/edit');
 

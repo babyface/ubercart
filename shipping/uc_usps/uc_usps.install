@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.install,v 1.5.2.3 2008/11/07 21:13:23 islandusurper Exp $
+// $Id: uc_usps.install,v 1.5.2.4 2008/12/09 15:20:35 islandusurper Exp $
 
 /**
  * @file
@@ -116,7 +116,7 @@ function uc_usps_update_4() {
       $ret[] = update_sql("ALTER TABLE {uc_usps_products} CHANGE container container varchar(255) NOT NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_usps_products', 'container', 'container', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_usps_products', 'container', 'container', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
     break;
   }
   return $ret;

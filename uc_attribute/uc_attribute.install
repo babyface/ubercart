@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.install,v 1.10.2.3 2008/11/07 21:13:22 islandusurper Exp $
+// $Id: uc_attribute.install,v 1.10.2.4 2008/12/09 15:20:35 islandusurper Exp $
 
 /**
  * @file
@@ -84,16 +84,16 @@ function uc_attribute_schema() {
       'cost' => array(
         'description' => t("The adjustment to a product's cost with the chosen option."),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0,
       ),
       'price' => array(
         'description' => t("The adjustment to a product's price with the chosen option."),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0,
       ),
@@ -185,16 +185,16 @@ function uc_attribute_schema() {
       'cost' => array(
         'description' => t("The adjustment to a product's cost with the chosen option."),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0,
       ),
       'price' => array(
         'description' => t("The adjustment to a product's price with the chosen option."),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0,
       ),
@@ -286,16 +286,16 @@ function uc_attribute_schema() {
       'cost' => array(
         'description' => t("The adjustment to a product's cost with the chosen option."),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0,
       ),
       'price' => array(
         'description' => t("The adjustment to a product's price with the chosen option."),
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0,
       ),
@@ -383,10 +383,10 @@ function uc_attribute_update_1() {
       );");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_attributes', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
-      db_change_column($ret, 'uc_attributes_options', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_attributes', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
+      db_change_column($ret, 'uc_attributes_options', 'name', 'name', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
       $ret[] = update_sql("ALTER TABLE {uc_attributes_options} RENAME TO {uc_attribute_options}");
-      db_change_column($ret, 'uc_product_adjustments', 'model', 'model', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_product_adjustments', 'model', 'model', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
       $ret[] = update_sql("CREATE TABLE IF NOT EXISTS {uc_class_attributes} (
         pcid integer NOT NULL default '0',
         aid integer NOT NULL '0',
@@ -438,8 +438,8 @@ function uc_attribute_update_3() {
       $ret[] = update_sql("ALTER TABLE {uc_class_attribute_options} CHANGE pcid pcid varchar(32) NOT NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_class_attributes', 'pcid', 'pcid', 'varchar(32)', array('not null' => TRUE, 'default' => ''));
-      db_change_column($ret, 'uc_class_attribute_options', 'pcid', 'pcid', 'varchar(32)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_class_attributes', 'pcid', 'pcid', 'varchar(32)', array('not null' => TRUE, 'default' => "''"));
+      db_change_column($ret, 'uc_class_attribute_options', 'pcid', 'pcid', 'varchar(32)', array('not null' => TRUE, 'default' => "''"));
     break;
   }
   return $ret;
@@ -454,7 +454,7 @@ function uc_attribute_update_4() {
       $ret[] = update_sql("ALTER TABLE {uc_product_adjustments} ADD PRIMARY KEY  (`nid`, `combination`)");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_product_adjustments', 'combination', 'combination', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_change_column($ret, 'uc_product_adjustments', 'combination', 'combination', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
       $ret[] = update_sql("ALTER TABLE {uc_product_adjustments} ADD PRIMARY KEY  (nid, combiination)");
   }
   return $ret;
@@ -546,7 +546,7 @@ function uc_attribute_update_10() {
       $ret[] = update_sql("ALTER TABLE {uc_attributes} ADD COLUMN description varchar(255) NOT NULL");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_attributes', 'description', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_add_column($ret, 'uc_attributes', 'description', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
     break;
   }
   return $ret;
@@ -601,6 +601,19 @@ function uc_attribute_update_6000() {
 
   db_drop_primary_key($ret, 'uc_product_adjustments');
   db_change_field($ret, 'uc_product_adjustments', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('nid' => array('nid'))));
+
+  return $ret;
+}
+
+function uc_attribute_update_6001() {
+  $ret = array();
+
+  db_change_field($ret, 'uc_attribute_options', 'cost', 'cost', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_attribute_options', 'price', 'price', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_class_attribute_options', 'cost', 'cost', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_class_attribute_options', 'price', 'price', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_product_options', 'cost', 'cost', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_product_options', 'price', 'price', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }

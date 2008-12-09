@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.9 2008/11/21 21:17:25 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.10 2008/12/09 15:20:36 islandusurper Exp $
 
 /**
  * @file
@@ -810,15 +810,18 @@ function uc_order_action_email($order, $settings) {
     'user' => $account,
   );
 
-  $recipients = array();
+  // Apply token replacements to from and recipient e-mail addressses.
+  $addresses = token_replace_multiple($settings['from'], $settings['replacements']);
   $addresses = token_replace_multiple($settings['addresses'], $settings['replacements']);
 
+  // Split up our recipient e-mail addresses.
+  $recipients = array();
   foreach (explode("\n", $addresses) as $address) {
     $recipients[] = trim($address);
   }
 
   foreach ($recipients as $email) {
-    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
+    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, empty($settings['from']) ? uc_store_email_from() : $settings['from']);
 
     if (!$sent['result']) {
       watchdog('ca', 'Attempt to e-mail @email concerning order @order_id failed.', array('@email' => $email, '@order_id' => $order->order_id), WATCHDOG_ERROR);
@@ -830,7 +833,7 @@ function uc_order_action_email_form($form_state, $settings = array()) {
   $form['from'] = array(
     '#type' => 'textfield',
     '#title' => t('Sender'),
-    '#default_value' => isset($settings['from']) ? $settings['from'] : variable_get('site_mail', ini_get('sendmail_from')),
+    '#default_value' => isset($settings['from']) ? $settings['from'] : uc_store_email_from(),
     '#description' => t('The "From" address.'),
     '#required' => TRUE,
   );
@@ -857,7 +860,7 @@ function uc_order_action_email_form($form_state, $settings = array()) {
   $form['token_help'] = array(
     '#type' => 'fieldset',
     '#title' => t('Replacement patterns'),
-    '#description' => t('You can make use of the replacement patterns in the recipients field, the subject, and the message body.'),
+    '#description' => t('You can make use of the replacement patterns in the e-mail from and recipients fields, the subject, and the message body.'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
@@ -917,7 +920,7 @@ function uc_order_action_email_invoice($order, $settings) {
 
 
   foreach ($recipients as $email) {
-    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
+    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, empty($settings['from']) ? uc_store_email_from() : $settings['form']);
 
     if (!$sent['result']) {
       watchdog('ca', 'Attempt to e-mail invoice for order @order_id to @email failed.', array('@email' => $email, '@order_id' => $order->order_id), WATCHDOG_ERROR);
@@ -929,7 +932,7 @@ function uc_order_action_email_invoice_form($form_state, $settings = array()) {
   $form['from'] = array(
     '#type' => 'textfield',
     '#title' => t('Sender'),
-    '#default_value' => isset($settings['from']) ? $settings['from'] : variable_get('site_mail', ini_get('sendmail_from')),
+    '#default_value' => isset($settings['from']) ? $settings['from'] : uc_store_email_from(),
     '#description' => t('The "From" address.'),
     '#required' => TRUE,
   );

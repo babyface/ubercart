@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, getTax; -*-
-// $Id: uc_quote.js,v 1.5.2.3 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: uc_quote.js,v 1.5.2.4 2008/12/09 15:20:38 islandusurper Exp $
 
 var page;
 var details;
@@ -21,7 +21,7 @@ function setQuoteCallbacks(products, context) {
   $("select[@name*=delivery_address_select]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').change(function() {
     $("input[@name*=delivery_postal_code]").trigger('change');
   });
-  $("input[@name*=copy_address]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').change(function() {
+  $("input[@name*=copy_address]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').click(function() {
     if (copy_box_checked == true) {
       $("input[@name*=billing_postal_code]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').bind('change', triggerQuoteCallback);
       $("select[@name*=billing_address_select]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').bind('change', triggerQuoteCallback);

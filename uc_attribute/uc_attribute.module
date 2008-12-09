@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.8 2008/11/21 21:17:28 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.9 2008/12/09 15:20:35 islandusurper Exp $
 
 /**
  * @file
@@ -316,6 +316,23 @@ function uc_attribute_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
 /******************************************************************************
  * Ubercart Hooks                                                             *
  ******************************************************************************/
+
+/*
+ * Implementation of hook_uc_produt_models().
+ */
+function uc_attribute_uc_product_models($node) {
+  $models = array();
+
+  // Get all the SKUs for all the attriibutes.
+  $adjustments = db_query("SELECT model FROM {uc_product_adjustments} WHERE nid = %d", $node->nid);
+  while ($adjustment = db_fetch_object($adjustments)) {
+    if (!in_array($adjustment->model, $models)) {
+      $models[$adjustment->model] = $adjustment->model;
+    }
+  }
+
+  return $models;
+}
 
 /**
  * Stores the customer's choices in the cart.

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.10 2008/11/21 21:17:29 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.11 2008/12/09 15:20:36 islandusurper Exp $
 
 /**
  * @file
@@ -729,26 +729,26 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
 
   //drupal_set_message('<pre>'. print_r($node->field_image_cache, TRUE) .'</pre>');
   if (isset($node->field_image_cache) && file_exists($node->field_image_cache[0]['filepath'])) {
-    $node->content['image'] = array('#value' => theme('uc_product_image', $node->field_image_cache),
+    $node->content['image'] = array('#value' => theme('uc_product_image', $node->field_image_cache, $teaser, $page),
       '#access' => $enabled['image'] && module_exists('imagecache'),
       '#weight' => $weight['image'],
     );
   }
-  $node->content['display_price'] = array('#value' => theme('uc_product_display_price', $node->sell_price),
+  $node->content['display_price'] = array('#value' => theme('uc_product_display_price', $node->sell_price, $teaser, $page),
     '#access' => $enabled['display_price'],
     '#weight' => $weight['display_price'],
   );
   if (!$teaser) {
-    $node->content['model'] = array('#value' => theme('uc_product_model', $node->model),
+    $node->content['model'] = array('#value' => theme('uc_product_model', $node->model, $teaser, $page),
       '#access' => $enabled['model'],
       '#weight' => $weight['model'],
     );
     $node->content['body']['#weight'] = 1;
-    $node->content['list_price'] = array('#value' => theme('uc_product_price', $node->list_price, 'list_price'),
+    $node->content['list_price'] = array('#value' => theme('uc_product_price', $node->list_price, 'list_price', $teaser, $page),
       '#access' => $enabled['list_price'],
       '#weight' => $weight['list_price'],
     );
-    $node->content['cost'] = array('#value' => theme('uc_product_price', $node->cost, 'cost'),
+    $node->content['cost'] = array('#value' => theme('uc_product_price', $node->cost, 'cost', $teaser, $page),
       '#access' => $enabled['cost'] && user_access('administer products'),
       '#weight' => $weight['cost'],
     );
@@ -757,29 +757,29 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
     $node->content['#attributes'] = array('style' => 'display: inline');
   }
 
-  $node->content['sell_price'] = array('#value' => theme('uc_product_sell_price', $node->sell_price, $teaser),
+  $node->content['sell_price'] = array('#value' => theme('uc_product_sell_price', $node->sell_price, $teaser, $page),
     '#access' => $enabled['sell_price'],
     '#weight' => $weight['sell_price'],
   );
 
   if (!$teaser) {
-    $node->content['weight'] = array('#value' => theme('uc_product_weight', $node->weight, $node->weight_units),
+    $node->content['weight'] = array('#value' => theme('uc_product_weight', $node->weight, $node->weight_units, $teaser, $page),
       '#access' => $enabled['weight'],
       '#weight' => $weight['weight'],
     );
-    $node->content['dimensions'] = array('#value' => theme('uc_product_dimensions', $node->length, $node->width, $node->height, $node->length_units),
+    $node->content['dimensions'] = array('#value' => theme('uc_product_dimensions', $node->length, $node->width, $node->height, $node->length_units, $teaser, $page),
       '#access' => $enabled['dimensions'],
       '#weight' => $weight['dimensions'],
     );
     if (module_exists('uc_cart')) {
-      $node->content['add_to_cart'] = array('#value' => theme('uc_product_add_to_cart', $node),
+      $node->content['add_to_cart'] = array('#value' => theme('uc_product_add_to_cart', $node, $teaser, $page),
         '#access' => $enabled['add_to_cart'],
         '#weight' => $weight['add_to_cart'],
       );
     }
   }
   elseif (module_exists('uc_cart') && variable_get('uc_product_add_to_cart_teaser', TRUE)) {
-    $node->content['add_to_cart'] = array('#value' => theme('uc_product_add_to_cart', $node),
+    $node->content['add_to_cart'] = array('#value' => theme('uc_product_add_to_cart', $node, $teaser, $page),
       '#access' => $enabled['add_to_cart'],
       '#weight' => $weight['add_to_cart'],
     );
@@ -1119,7 +1119,7 @@ function uc_product_table_header() {
   );
   $columns['list_price'] = array(
     'weight' => 3,
-    'access' => FALSE,
+    'access' => arg(0) == 'admin',
     'cell' => array('data' => t('List price'), 'field' => 'p.list_price'),
   );
   $columns['price'] = array(
@@ -1141,52 +1141,51 @@ function uc_product_table_header() {
  *
  * Display image, name, price, and add to cart form.
  */
-function uc_product_table($form_state, $args = array()) {
-  $table = array();
+function uc_product_table($args = array()) {
+  $table = array(
+    '#type' => 'tapir_table',
+    '#attributes' => array(
+      'class' => 'category-products',
+    ),
+    '#columns' => uc_product_table_header(),
+    '#rows' => array(),
+  );
 
-  $table['columns'] = uc_product_table_header();
-
-  $table['rows'] = array();
-  foreach ($args['nids'] as $nid) {
+  foreach ($args as $nid) {
     $data = array();
     $node = node_load($nid);
     if ($node->type != 'image') {
       if (module_exists('imagecache') && isset($node->field_image_cache) && file_exists($node->field_image_cache[0]['filepath'])) {
-        $data['image'] = array('cell' => l(theme('imagecache', 'product_list', $node->field_image_cache[0]['filepath'], $node->field_image_cache[0]['alt'], $node->field_image_cache[0]['title']), 'node/'. $node->nid, array('html' => TRUE)));
+        $data['image'] = array('#value' => l(theme('imagecache', 'product_list', $node->field_image_cache[0]['filepath'], $node->field_image_cache[0]['alt'], $node->field_image_cache[0]['title']), 'node/'. $node->nid, array('html' => TRUE)));
       }
       else {
-        $data['image'] = array('cell' => t('n/a'));
+        $data['image'] = array('#value' => t('n/a'));
       }
-      $data['name'] = array('value' => $node->title, 'cell' => array('data' => l($node->title, 'node/'. $node->nid), 'width' => '100%'));
-      $data['list_price'] = array('value' => $node->list_price, 'cell' => array('data' => theme('uc_product_price', $node->list_price, 'list_price'), 'nowrap' => 'nowrap'));
-      $data['price'] = array('value' => $node->sell_price, 'cell' => array('data' => theme('uc_product_sell_price', $node->sell_price, TRUE), 'nowrap' => 'nowrap'));
+      $data['name'] = array(
+        '#value' => l($node->title, 'node/'. $node->nid),
+        '#cell_attributes' => array('width' => '100%'),
+      );
+      $data['list_price'] = array('#value' => uc_currency_format($node->list_price), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
+      $data['price'] = array('#value' => theme('uc_product_sell_price', $node->sell_price, TRUE), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
       if (module_exists('uc_cart') && arg(0) != 'admin') {
-        $data['add_to_cart'] = array('cell' => drupal_get_form('uc_catalog_buy_it_now_form_'. $node->nid, $node));
+        $data['add_to_cart'] = array('#value' => drupal_get_form('uc_catalog_buy_it_now_form_'. $node->nid, $node));
       }
-      $table['rows'][] = $data;
+      $table[] = $data;
     }
   }
 
-  if (empty($table['rows'])) {
-    $table['rows'][] = array(
+  if (!count(element_children($table))) {
+    $table[] = array(
       'name' => array(
-        'cell' => array(
-          'data' => t('No products available.'),
-          'colspan' => count($table['columns']),
+        '#value' => t('No products available.'),
+        '#cell_attributes' => array(
+          'colspan' => 'full',
         ),
       ),
     );
   }
 
-  $form['table'] = array(
-    '#value' => $table,
-    '#theme' => 'tapir_table',
-    '#attributes' => array(
-      'class' => 'category-products',
-    ),
-  );
-
-  return $form;
+  return $table;
 }
 
 /**
@@ -1268,7 +1267,7 @@ function uc_product_is_product($node) {
  *
  * @ingroup themeable
  */
-function theme_uc_product_model($model) {
+function theme_uc_product_model($model, $teaser = 0, $page = 0) {
   $output = '<div class="model">';
   $output .= t('SKU: @sku', array('@sku' => $model));
   $output .= '</div>';
@@ -1280,7 +1279,7 @@ function theme_uc_product_model($model) {
  *
  * @ingroup themeable
  */
-function theme_uc_product_add_to_cart($node) {
+function theme_uc_product_add_to_cart($node, $teaser = 0, $page = 0) {
   $output = '<div class="add_to_cart">';
   if ($node->nid) {
     $output .= drupal_get_form('uc_product_add_to_cart_form_'. $node->nid, $node);
@@ -1353,7 +1352,7 @@ function uc_product_add_to_cart_form_submit($form, &$form_state) {
  *   Determines the label and the CSS class of the <div>.
  * @ingroup themeable
  */
-function theme_uc_product_price($price, $class) {
+function theme_uc_product_price($price, $class, $teaser = 0, $page = 0) {
   $output = '<div class="'. $class .'">';
   switch ($class) {
     case 'list_price':
@@ -1380,7 +1379,7 @@ function theme_uc_product_price($price, $class) {
  *   Passed from uc_product_view().
  * @ingroup themeable
  */
-function theme_uc_product_sell_price($price, $teaser) {
+function theme_uc_product_sell_price($price, $teaser = 0, $page = 0) {
   if ($teaser) {
     $output = '<div class="sell_price">';
     $output .= uc_currency_format($price);
@@ -1400,7 +1399,7 @@ function theme_uc_product_sell_price($price, $teaser) {
  *
  * @ingroup themeable
  */
-function theme_uc_product_weight($weight, $unit = NULL) {
+function theme_uc_product_weight($weight, $unit = NULL, $teaser = 0, $page = 0) {
   $output = '<div class="weight">';
   $output .= t('Weight: !weight', array('!weight' => uc_weight_format($weight, $unit)));
   $output .= '</div>';
@@ -1412,7 +1411,7 @@ function theme_uc_product_weight($weight, $unit = NULL) {
  *
  * @ingroup themeable
  */
-function theme_uc_product_dimensions($length, $width, $height, $units = NULL) {
+function theme_uc_product_dimensions($length, $width, $height, $units = NULL, $teaser = 0, $page = 0) {
   $output = '<div class="dimensions">';
   $output .= t('Dimensions: !length × !width × !height', array('!length' => uc_length_format($length, $units), '!width' => uc_length_format($width, $units), '!height' => uc_length_format($height, $units)));
   $output .= '</div>';
@@ -1424,7 +1423,7 @@ function theme_uc_product_dimensions($length, $width, $height, $units = NULL) {
  *
  * @ingroup themeable
  */
-function theme_uc_product_image($images) {
+function theme_uc_product_image($images, $teaser = 0, $page = 0) {
   static $rel_count = 0;
   $thickbox_enabled = module_exists('thickbox');
   $first = array_shift($images);
@@ -1457,11 +1456,27 @@ function theme_uc_product_image($images) {
 /**
  * @ingroup themeable
  */
-function theme_uc_product_display_price($price) {
+function theme_uc_product_display_price($price, $teaser = 0, $page = 0) {
   $output = '<div class="display_price">';
   $output .= uc_currency_format($price);
   $output .= '</div>';
   return $output;
+}
+
+/**
+ * Get all models of a product (node).
+ *
+ * @param $nid
+ *   The node ID of the product.
+ *
+ * Add the generic 'Any' option and the node SKU, then gather any modules'
+ * models on this node.
+ */
+function uc_product_get_models($node) {
+  $models = array_merge(array(NULL => t('Any'), $node->model => $node->model), module_invoke_all('uc_product_models', $node));
+
+  asort($models);
+  return $models;
 }
 
 /**

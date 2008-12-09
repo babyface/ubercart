@@ -1,4 +1,4 @@
-// $Id: uc_order.js,v 1.9.2.3 2008/11/07 21:13:23 islandusurper Exp $
+// $Id: uc_order.js,v 1.9.2.4 2008/12/09 15:20:36 islandusurper Exp $
 
 var customer_select = '';
 var add_product_browser = '';
@@ -336,6 +336,11 @@ function fetch_product_data() {
   var pdata = { };
 
   $('.order-pane-table :input').each(
+    function() {
+      pdata[$(this).attr('name')] = $(this).val();
+    }
+  );
+  $('.order-pane-table ~ :input').each(
     function() {
       pdata[$(this).attr('name')] = $(this).val();
     }

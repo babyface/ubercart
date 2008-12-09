@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.5.2.7 2008/11/21 21:17:28 islandusurper Exp $
+// $Id: uc_payment.module,v 1.5.2.8 2008/12/09 15:20:35 islandusurper Exp $
 
 /**
  * @file
@@ -374,57 +374,44 @@ function _total_sort($a, $b) {
   return ($a[0] < $b[0]) ? -1 : 1;
 }
 
-function uc_payments_table($form_state, $cells) {
-  $table = array();
-
-  $table['columns']['received'] = array(
-    'cell' => t('Received'),
-    'weight' => 0,
-  );
-  $table['columns']['user'] = array(
-    'cell' => t('User'),
-    'weight' => 1,
-  );
-  $table['columns']['method'] = array(
-    'cell' => t('Method'),
-    'weight' => 2,
-  );
-  $table['columns']['amount'] = array(
-    'cell' => t('Amount'),
-    'weight' => 3,
-  );
-  $table['columns']['balance'] = array(
-    'cell' => t('Balance'),
-    'weight' => 4,
-  );
-  $table['columns']['comment'] = array(
-    'cell' => t('Comment'),
-    'weight' => 5,
-  );
-  $table['columns']['action'] = array(
-    'cell' => t('Action'),
-    'weight' => 6,
-  );
-
-  foreach (element_children($cells['payments']) as $i) {
-    $data = array();
-    $data['#attributes'][] = array('valign' => 'top');
-    $data['received']['cell'] = drupal_render($cells['payments'][$i]['received']);
-    $data['user']['cell'] = drupal_render($cells['payments'][$i]['user']);
-    $data['method']['cell'] = drupal_render($cells['payments'][$i]['method']);
-    $data['amount']['cell'] = drupal_render($cells['payments'][$i]['amount']);
-    $data['balance']['cell'] = drupal_render($cells['payments'][$i]['balance']);
-    $data['comment']['cell'] = drupal_render($cells['payments'][$i]['comment']);
-    $data['action']['cell'] = drupal_render($cells['payments'][$i]['action']);
-    $table['rows'][] = $data;
-  }
-
-  $form['table'] = array(
-    '#value' => $table,
-    '#theme' => 'tapir_table',
+function uc_payments_table() {
+  $table = array(
+    '#type' => 'tapir_table',
+    '#tree' => TRUE,
+    '#columns' => array(
+      'received' => array(
+        'cell' => t('Received'),
+        'weight' => 0,
+      ),
+      'user' => array(
+        'cell' => t('User'),
+        'weight' => 1,
+      ),
+      'method' => array(
+        'cell' => t('Method'),
+        'weight' => 2,
+      ),
+      'amount' => array(
+        'cell' => t('Amount'),
+        'weight' => 3,
+      ),
+      'balance' => array(
+        'cell' => t('Balance'),
+        'weight' => 4,
+      ),
+      'comment' => array(
+        'cell' => t('Comment'),
+        'weight' => 5,
+      ),
+      'action' => array(
+        'cell' => t('Action'),
+        'weight' => 6,
+      ),
+    ),
+    '#rows' => array(),
   );
 
-  return $form;
+  return $table;
 }
 
 /*******************************************************************************
@@ -579,7 +566,7 @@ function uc_payment_enter($order_id, $method, $amount, $uid, $data, $comment) {
 
   if (variable_get('uc_payment_logging', TRUE)) {
     global $user;
-    $log_message = t('@method payment for @amount entered by @user.', array('!method' => $method_name, '!amount' => uc_currency_format($amount), '!user' => uc_get_initials($user->uid)));
+    $log_message = t('@method payment for @amount entered by @user.', array('@method' => $method_name, '@amount' => uc_currency_format($amount), '@user' => uc_get_initials($user->uid)));
     uc_order_log_changes($order_id, array($log_message));
   }
 
@@ -715,10 +702,21 @@ function _payment_gateway_list($filter = NULL, $enabled_only = FALSE) {
 
 /**
  * Return data from a payment gateway by gateway ID and the array key.
+ *
+ * @param $gateway_id
+ *   The ID of the payment gateway to query.
+ * @param $key
+ *   The key of the data being requested.
+ * @return
+ *   The requested data.
  */
-function _payment_gateway_data($method_id, $key) {
+function _payment_gateway_data($gateway_id, $key) {
+  // Load all the payment gateways.
   $gateways = _payment_gateway_list();
+
+  // Loop through the array to find the matching gateway.
   foreach ($gateways as $gateway) {
+    // If this is it, return the requested data.
     if ($gateway['id'] == $gateway_id) {
       return $gateway[$key];
     }

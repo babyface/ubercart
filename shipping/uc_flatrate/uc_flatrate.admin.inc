@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.admin.inc,v 1.1.2.4 2008/11/21 21:17:31 islandusurper Exp $
+// $Id: uc_flatrate.admin.inc,v 1.1.2.5 2008/12/09 15:20:38 islandusurper Exp $
 
 /**
  * @file
@@ -27,7 +27,7 @@ function uc_flatrate_admin_methods() {
     $rows[] = $row;
   }
   if (count($rows)) {
-    $header = array(t('Title'), t('Label'), t('Base rate'), t('Default product rate'), t('Actions'));
+    $header = array(t('Title'), t('Label'), t('Base rate'), t('Default product rate'), t('Operations'));
     $output .= theme('table', $header, $rows);
   }
   $output .= l(t('Add a new flat rate shipping method.'), 'admin/store/settings/quotes/methods/flatrate/add');

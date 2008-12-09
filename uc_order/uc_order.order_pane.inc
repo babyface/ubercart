@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.4 2008/11/21 21:17:25 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.5 2008/12/09 15:20:36 islandusurper Exp $
 
 /**
  * @file
@@ -268,10 +268,10 @@ function uc_order_pane_customer($op, $arg1) {
 function uc_order_pane_products($op, $arg1) {
   switch ($op) {
     case 'view':
-      return tapir_get_table('op_products_view_table', $arg1->products);
+      return drupal_render(tapir_get_table('op_products_view_table', $arg1->products));
 
     case 'customer':
-      return tapir_get_table('op_products_customer_table', $arg1->products);
+      return drupal_render(tapir_get_table('op_products_customer_table', $arg1->products));
 
     case 'edit-theme':
       drupal_add_js('uc_order_load_product_edit_div('. $arg1['order_id']['#value'] .');', 'inline');
@@ -491,7 +491,7 @@ function uc_order_pane_order_comments($op, $arg1) {
   switch ($op) {
     case 'view':
       $comments = uc_order_comments_load($arg1->order_id);
-      return tapir_get_table('op_order_comments_view_table', $comments);
+      return drupal_render(tapir_get_table('op_order_comments_view_table', $comments));
 
     case 'customer':
       $comments = uc_order_comments_load($arg1->order_id);
@@ -526,7 +526,7 @@ function uc_order_pane_admin_comments($op, $arg1) {
   switch ($op) {
     case 'view':
       $comments = uc_order_comments_load($arg1->order_id, TRUE);
-      return tapir_get_table('op_admin_comments_view_table', $comments);
+      return drupal_render(tapir_get_table('op_admin_comments_view_table', $comments));
 
     case 'edit-form':
       $form['admin_comment_field'] = array(
@@ -676,24 +676,27 @@ function uc_order_view_update_form_submit($form, &$form_state) {
 /**
  * Build the order view products table.
  */
-function op_products_view_table($form_state, $products) {
-  $table = array();
+function op_products_view_table($products) {
+  $table = array(
+    '#type' => 'tapir_table',
+    '#attributes' => array('class' => 'order-pane-table'),
+  );
 
-  $table['columns']['qty'] = array(
+  $table['#columns']['qty'] = array(
     'cell' => array(
       'data' => t('Qty'),
       'class' => 'text-right',
     ),
     'weight' => 0,
   );
-  $table['columns']['product'] = array(
+  $table['#columns']['product'] = array(
     'cell' => array(
       'data' => t('Product'),
       'width' => '80%',
     ),
     'weight' => 1,
   );
-  $table['columns']['model'] = array(
+  $table['#columns']['model'] = array(
     'cell' => array(
       'data' => t('Model'),
       'class' => 'text-center',
@@ -702,7 +705,7 @@ function op_products_view_table($form_state, $products) {
     'weight' => 2,
   );
   if (user_access('administer products')) {
-    $table['columns']['cost'] = array(
+    $table['#columns']['cost'] = array(
       'cell' => array(
         'data' => t('Cost'),
         'class' => 'text-right',
@@ -710,14 +713,14 @@ function op_products_view_table($form_state, $products) {
       'weight' => 3,
     );
   }
-  $table['columns']['price'] = array(
+  $table['#columns']['price'] = array(
     'cell' => array(
       'data' => t('Price'),
       'class' => 'text-right',
     ),
     'weight' => 4,
   );
-  $table['columns']['total'] = array(
+  $table['#columns']['total'] = array(
     'cell' => array(
       'data' => t('Total'),
       'class' => 'text-right',
@@ -728,7 +731,10 @@ function op_products_view_table($form_state, $products) {
   if (is_array($products)) {
     foreach ($products as $product) {
       $data = array();
-      $data['qty']['cell'] = array('data' => $product->qty .'x', 'align' => 'right');
+      $data['qty'] = array(
+        '#value' => $product->qty .'x',
+        '#cell_attributes' => array('align' => 'right'),
+      );
       $options = $product->data['attributes'];
       $option_rows = array();
       if (module_exists('uc_attribute') && is_array($options)) {
@@ -736,114 +742,165 @@ function op_products_view_table($form_state, $products) {
           $option_rows[] = t('@attribute: @option', array('@attribute' => $attribute, '@option' => $option));
         }
       }
-      $data['product']['cell'] = check_plain($product->title) . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-options'));
-      $data['model']['cell'] = array('data' => check_plain($product->model), 'align' => 'center', 'nowrap' => 'nowrap');
+      $data['product'] = array(
+        '#value' => check_plain($product->title) . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-options')),
+      );
+      $data['model'] = array(
+        '#value' => check_plain($product->model),
+        '#cell_attributes' => array('align' => 'center', 'nowrap' => 'nowrap'),
+      );
       if (user_access('administer products')) {
-        $data['cost']['cell'] = array('data' => uc_currency_format($product->cost), 'align' => 'right', 'nowrap' => 'nowrap');
+        $data['cost'] = array(
+          '#value' => uc_currency_format($product->cost),
+          '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
+        );
       }
-      $data['price']['cell'] = array('data' => uc_currency_format($product->price), 'align' => 'right', 'nowrap' => 'nowrap');
-      $data['total']['cell'] = array('data' => uc_currency_format($product->qty * $product->price), 'align' => 'right', 'nowrap' => 'nowrap');
-      $table['rows'][] = array('data' => $data, 'valign' => 'top');
+      $data['price'] = array(
+        '#value' => uc_currency_format($product->price),
+        '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
+      );
+      $data['total'] = array(
+        '#value' => uc_currency_format($product->qty * $product->price),
+        '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
+      );
+      $data['#attributes'] = array('valign' => 'top');
+      $table['#rows'][] = $data;
     }
   }
   else {
-    $table['rows'][]['product']['cell'] = array('data' => t('This order contains no products.'), 'colspan' => 10);
+    $table['#rows'][]['product'] = array(
+      '#value' => t('This order contains no products.'),
+      '#cell_attributes' => array('colspan' => 'full'),
+    );
   }
 
-  $attributes = array('class' => 'order-pane-table');
-
-  $form['table'] = array(
-    '#value' => $table,
-    '#theme' => 'tapir_table',
-    '#attributes' => $attributes,
-  );
-
-  return $form;
+  return $table;
 }
 
-function op_products_customer_table($form_state, $products) {
-  $table = array();
+function op_products_customer_table($products) {
+  $table = array(
+    '#type' => 'tapir_table',
+    '#attributes' => array('class' => 'order-pane-table'),
+  );
 
-  $table['columns']['qty'] = array(
-    'cell' => array('data' => t('Qty'), 'class' => 'text-right'),
+  $table['#columns']['qty'] = array(
+    'cell' => array(
+      'data' => t('Qty'),
+      'class' => 'text-right',
+    ),
     'weight' => 0,
   );
-  $table['columns']['product'] = array(
-    'cell' => array('data' => t('Product'), 'width' => '80%'),
+  $table['#columns']['product'] = array(
+    'cell' => array(
+      'data' => t('Product'),
+      'width' => '80%',
+    ),
     'weight' => 1,
   );
-  $table['columns']['model'] = array(
-    'cell' => array('data' => t('Model'), 'class' => 'text-center', 'nowrap' => 'nowrap'),
+  $table['#columns']['model'] = array(
+    'cell' => array(
+      'data' => t('Model'),
+      'class' => 'text-center',
+      'nowrap' => 'nowrap',
+    ),
     'weight' => 2,
   );
-  $table['columns']['cost'] = array(
-    'cell' => array('data' => t('Cost'), 'class' => 'text-right'),
-    'weight' => 3,
-  );
-  $table['columns']['price'] = array(
-    'cell' => array('data' => t('Price'), 'class' => 'text-right'),
+  if (user_access('administer products')) {
+    $table['#columns']['cost'] = array(
+      'cell' => array(
+        'data' => t('Cost'),
+        'class' => 'text-right',
+      ),
+      'weight' => 3,
+    );
+  }
+  $table['#columns']['price'] = array(
+    'cell' => array(
+      'data' => t('Price'),
+      'class' => 'text-right',
+    ),
     'weight' => 4,
   );
-  $table['columns']['total'] = array(
-    'cell' => array('data' => t('Total'), 'class' => 'text-right'),
+  $table['#columns']['total'] = array(
+    'cell' => array(
+      'data' => t('Total'),
+      'class' => 'text-right',
+    ),
     'weight' => 5,
   );
 
   if (is_array($products)) {
     foreach ($products as $product) {
       $data = array();
-      $data['qty']['cell'] = array('data' => $product->qty .'x', 'align' => 'right');
+      $data['qty'] = array(
+        '#value' => $product->qty .'x',
+        '#cell_attributes' => array('align' => 'right'),
+      );
       $options = $product->data['attributes'];
       $option_rows = array();
-      if (is_array($options)) {
+      if (module_exists('uc_attribute') && is_array($options)) {
         foreach ($options as $attribute => $option) {
           $option_rows[] = t('@attribute: @option', array('@attribute' => $attribute, '@option' => $option));
         }
       }
-      $data['product']['cell'] = check_plain($product->title) . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-options'));
-      $data['model']['cell'] = array('data' => check_plain($product->model), 'align' => 'center', 'nowrap' => 'nowrap');
-      $data['cost']['cell'] = array('data' => uc_currency_format($product->cost), 'align' => 'right', 'nowrap' => 'nowrap');
-      $data['price']['cell'] = array('data' => uc_currency_format($product->price), 'align' => 'right', 'nowrap' => 'nowrap');
-      $data['total']['cell'] = array('data' => uc_currency_format($product->qty * $product->price), 'align' => 'right', 'nowrap' => 'nowrap');
-      $table['rows'][] = array('data' => $data, 'valign' => 'top');
+      $data['product'] = array(
+        '#value' => check_plain($product->title) . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-options')),
+      );
+      $data['model'] = array(
+        '#value' => check_plain($product->model),
+        '#cell_attributes' => array('align' => 'center', 'nowrap' => 'nowrap'),
+      );
+      if (user_access('administer products')) {
+        $data['cost'] = array(
+          '#value' => uc_currency_format($product->cost),
+          '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
+        );
+      }
+      $data['price'] = array(
+        '#value' => uc_currency_format($product->price),
+        '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
+      );
+      $data['total'] = array(
+        '#value' => uc_currency_format($product->qty * $product->price),
+        '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
+      );
+      $data['#attributes'] = array('valign' => 'top');
+      $table['#rows'][] = $data;
     }
   }
   else {
-    $data['product']['cell'] = array('data' => t('This order contains no products.'), 'colspan' => 10);
-    $table['rows'][] = $data;
+    $table['#rows'][]['product'] = array(
+      '#value' => t('This order contains no products.'),
+      '#cell_attributes' => array('colspan' => 'full'),
+    );
   }
 
-  $attributes = array('class' => 'order-pane-table');
-
-  $form['table'] = array(
-    '#value' => $table,
-    '#theme' => 'tapir_table',
-    '#attributes' => $attributes,
-  );
-
-  return $form;
+  return $table;
 }
 
-function op_order_comments_view_table($form_state, $comments) {
-  $table = array();
+function op_order_comments_view_table($comments) {
+  $table = array(
+    '#type' => 'tapir_table',
+    '#attributes' => array('class' => 'order-pane-table'),
+  );
 
-  $table['columns']['date'] = array(
+  $table['#columns']['date'] = array(
     'cell' => array('data' => t('Date'), 'class' => 'text-center'),
     'weight' => 0,
   );
-  $table['columns']['user'] = array(
+  $table['#columns']['user'] = array(
     'cell' => t('User'),
     'weight' => 1,
   );
-  $table['columns']['notified'] = array(
+  $table['#columns']['notified'] = array(
     'cell' => t('Notified'),
     'weight' => 2,
   );
-  $table['columns']['status'] = array(
+  $table['#columns']['status'] = array(
     'cell' => array('data' => t('Status'), 'class' => 'text-center'),
     'weight' => 3,
   );
-  $table['columns']['comment'] = array(
+  $table['#columns']['comment'] = array(
     'cell' => array('data' => t('Comment'), 'width' => '80%'),
     'weight' => 4,
   );
@@ -851,42 +908,56 @@ function op_order_comments_view_table($form_state, $comments) {
   if (is_array($comments)) {
     foreach ($comments as $comment) {
       $data = array();
-      $data['date']['cell'] = array('data' => format_date($comment->created, 'custom', variable_get('uc_date_format_default', 'm/d/Y') .'<\b\r />g:i:s A'), 'align' => 'center', 'nowrap' => 'true');
-      $data['user']['cell'] = array('data' => uc_get_initials($comment->uid), 'align' => 'center');
-      $data['notified']['cell'] = array('data' => (($comment->notified == 1) ? '<img src="'. base_path() . drupal_get_path('module', 'uc_order') .'/images/true-icon.gif" />': '<img src="'. base_path() . drupal_get_path('module', 'uc_order') .'/images/false-icon.gif" />'), 'align' => 'center');
-      $data['status']['cell'] = array('data' => $comment->title, 'align' => 'center');
-      $data['comment']['cell'] = array('data' => filter_xss_admin($comment->message));
-      $table['rows'][] = $data;
+      $data['date'] = array(
+        '#value' => format_date($comment->created, 'custom', variable_get('uc_date_format_default', 'm/d/Y') .'<\b\r />g:i:s A'),
+        '#cell_attributes' => array('align' => 'center', 'nowrap' => 'true'),
+      );
+      $data['user'] = array(
+        '#value' => uc_get_initials($comment->uid),
+        '#cell_attributes' => array('align' => 'center'),
+      );
+      $data['notified'] = array(
+        '#value' => (($comment->notified == 1)
+          ? '<img src="'. base_path() . drupal_get_path('module', 'uc_order') .'/images/true-icon.gif" />'
+          : '<img src="'. base_path() . drupal_get_path('module', 'uc_order') .'/images/false-icon.gif" />'),
+        '#cell_attributes' => array('align' => 'center'),
+      );
+      $data['status'] = array(
+        '#value' => $comment->title,
+        '#cell_attributes' => array('align' => 'center'),
+      );
+      $data['comment'] = array(
+        '#value' => filter_xss_admin($comment->message),
+      );
+      $table['#rows'][] = $data;
     }
   }
   else {
-    $data['comment']['cell'] = array('data' => t('This order has no comments associated with it.'), 'colspan' => 10);
-    $table['rows'][] = $data;
+    $data['comment'] = array(
+      '#value' => t('This order has no comments associated with it.'),
+      '#cell_attributes' => array('colspan' => 'full'),
+    );
+    $table['#rows'][] = $data;
   }
 
-  $attributes = array('class' => 'order-pane-table');
-
-  $form['table'] = array(
-    '#value' => $table,
-    '#theme' => 'tapir_table',
-    '#attributes' => $attributes,
-  );
-
-  return $form;
+  return $table;
 }
 
-function op_admin_comments_view_table($form_state, $comments) {
-  $table = array();
+function op_admin_comments_view_table($comments) {
+  $table = array(
+    '#type' => 'tapir_table',
+    '#attributes' => array('class' => 'order-pane-table'),
+  );
 
-  $table['columns']['date'] = array(
+  $table['#columns']['date'] = array(
     'cell' => array('data' => t('Date'), 'class' => 'text-center'),
     'weight' => 0,
   );
-  $table['columns']['user'] = array(
+  $table['#columns']['user'] = array(
     'cell' => array('data' => t('User'), 'class' => 'text-center'),
     'weight' => 1,
   );
-  $table['columns']['comment'] = array(
+  $table['#columns']['comment'] = array(
     'cell' => array('data' => t('Comment'), 'width' => '80%'),
     'weight' => 2,
   );
@@ -894,26 +965,30 @@ function op_admin_comments_view_table($form_state, $comments) {
   if (is_array($comments)) {
     foreach ($comments as $comment) {
       $data = array();
-      $data['date']['cell'] = array('data' => format_date($comment->created, 'custom', variable_get('uc_date_format_default', 'm/d/Y') .'<\b\r />g:i:s A'), 'align' => 'center', 'nowrap' => 'true', 'valign' => 'top');
-      $data['user']['cell'] = array('data' => uc_get_initials($comment->uid), 'align' => 'center', 'valign' => 'top');
-      $data['comment']['cell'] = array('data' => filter_xss_admin($comment->message), 'valign' => 'top');
-      $table['rows'][] = $data;
+      $data['date'] = array(
+        '#value' => format_date($comment->created, 'custom', variable_get('uc_date_format_default', 'm/d/Y') .'<\b\r />g:i:s A'),
+        '#cell_attributes' => array('align' => 'center', 'nowrap' => 'true', 'valign' => 'top'),
+      );
+      $data['user'] = array(
+        '#value' => uc_get_initials($comment->uid),
+        '#cell_attributes' => array('align' => 'center', 'valign' => 'top'),
+      );
+      $data['comment'] = array(
+        '#value' => filter_xss_admin($comment->message),
+        '#cell_attributes' => array('valign' => 'top'),
+      );
+      $table['#rows'][] = $data;
     }
   }
   else {
-    $data['comment']['cell'] = array('data' => t('This order has no admin comments associated with it.'), 'colspan' => 10);
-    $table['rows'][] = $data;
+    $data['comment'] = array(
+      '#value' => t('This order has no admin comments associated with it.'),
+      '#cell_attributes' => array('colspan' => 'full'),
+    );
+    $table['#rows'][] = $data;
   }
 
-  $attributes = array('class' => 'order-pane-table');
-
-  $form['table'] = array(
-    '#value' => $table,
-    '#theme' => 'tapir_table',
-    '#attributes' => $attributes,
-  );
-
-  return $form;
+  return $table;
 }
 
 /**

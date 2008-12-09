@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.2.2.8 2008/11/21 21:17:27 islandusurper Exp $
+// $Id: uc_roles.module,v 1.2.2.9 2008/12/09 15:20:38 islandusurper Exp $
 
 /**
  * @file
@@ -633,17 +633,7 @@ function uc_roles_uc_message() {
  * Form builder for hook_product_feature.
  */
 function uc_roles_feature_form($form_state, $node, $feature) {
-  $models = array(NULL => t('Any'), $node->model => $node->model);
-
-  // Check if product adjustments exist and add models.
-  if (module_exists('uc_attribute')) {
-    $adjustments = db_query("SELECT model FROM {uc_product_adjustments} WHERE nid = %d", $node->nid);
-    while ($adjustment = db_fetch_object($adjustments)) {
-      if (!in_array($adjustment->model, $models)) {
-        $models[$adjustment->model] = $adjustment->model;
-      }
-    }
-  }
+  $models = uc_product_get_models($node);
 
   // Check if editing or adding to set default values.
   if (!empty($feature)) {
@@ -850,7 +840,7 @@ function uc_roles_feature_settings() {
       'month' => t('month(s)'),
       'year' => t('year(s)')
     ),
-    '#description' => t('The default amount of time a granted &Uuml;bercart role will last until it expires.'),
+    '#description' => t('The default amount of time a granted Ubercart role will last until it expires.'),
     '#prefix' => '<div class="expiration">',
     '#suffix' => '</div>',
   );

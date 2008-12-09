@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.9 2008/11/21 21:17:26 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.10 2008/12/09 15:20:37 islandusurper Exp $
 
 /**
  * @file
@@ -331,6 +331,24 @@ function uc_store_init() {
   require_once($dir .'/includes/tapir.inc');
 
   drupal_add_css($dir .'/uc_store.css');
+}
+
+/**
+ * Implementation of hook_elements().
+ */
+function uc_store_elements() {
+  $types = array();
+
+  $types['tapir_table'] = array(
+    '#columns' => array(),
+    '#rows' => array(),
+    '#tree' => TRUE,
+    '#value' => NULL,
+    '#pre_render' => array('tapir_gather_rows'),
+    '#process' => 'form_expand_ahah',
+  );
+
+  return $types;
 }
 
 function uc_store_theme() {

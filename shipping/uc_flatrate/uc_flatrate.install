@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.install,v 1.5.2.3 2008/11/07 21:13:27 islandusurper Exp $
+// $Id: uc_flatrate.install,v 1.5.2.4 2008/12/09 15:20:38 islandusurper Exp $
 
 /**
  * @file
@@ -31,8 +31,8 @@ function uc_flatrate_schema() {
       ),
       'rate' => array(
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => FALSE,
       ),
     ),
@@ -60,15 +60,15 @@ function uc_flatrate_schema() {
       ),
       'base_rate' => array(
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
       ),
       'product_rate' => array(
         'type' => 'numeric',
-        'precision' => 10,
-        'scale' => 2,
+        'precision' => 15,
+        'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -244,6 +244,16 @@ function uc_flatrate_update_6001() {
   $ret = array();
 
   db_change_field($ret, 'uc_flatrate_products', 'rate', 'rate', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => FALSE));
+
+  return $ret;
+}
+
+function uc_flatrate_update_6002() {
+  $ret = array();
+
+  db_change_field($ret, 'uc_flatrate_products', 'rate', 'rate', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => FALSE));
+  db_change_field($ret, 'uc_flatrate_methods', 'base_rate', 'base_rate', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => FALSE));
+  db_change_field($ret, 'uc_flatrate_methods', 'product_rate', 'product_rate', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => FALSE));
 
   return $ret;
 }

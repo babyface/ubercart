@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.9 2008/11/21 21:17:26 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.10 2008/12/09 15:20:37 islandusurper Exp $
 
 /**
  * @file
@@ -335,9 +335,9 @@ function uc_catalog_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'taxonomy_form_term' && $form['vid']['#value'] == variable_get('uc_catalog_vid', 0)) {
     $form['#attributes'] = array("enctype" => "multipart/form-data");
 
-    $form['name']['#weight'] = -1;
-    $form['image']['#weight'] = 0;
-    $form['image']['image'] = array('#type' => 'file',
+    $form['identification']['name']['#weight'] = -1;
+    $form['identification']['image']['#weight'] = 0;
+    $form['identification']['image']['image'] = array('#type' => 'file',
       '#title' => t('Image'),
       '#weight' => 0,
     );
@@ -348,15 +348,15 @@ function uc_catalog_form_alter(&$form, &$form_state, $form_id) {
       }
       else {
         $image_display = theme('image', $image->filename, t('Term image'));
-        $form['image']['image']['#description'] = t('The image will not be resized. Consider installing <a href="@url">Image cache</a>.', array('@url' => url('http://drupal.org/project/imagecache')));
+        $form['identification']['image']['image']['#description'] = t('The image will not be resized. Consider installing <a href="@url">Image cache</a>.', array('@url' => url('http://drupal.org/project/imagecache')));
       }
-      $form['image']['remove'] = array('#type' => 'checkbox',
+      $form['identification']['image']['remove'] = array('#type' => 'checkbox',
         '#title' => t('Remove category image: !image', array('!image' => $image_display)),
         '#weight' => 1,
       );
     }
 
-    $form['description']['#description'] = t('A description of the term. Displayed to customers at the top of catalog pages.');
+    $form['identification']['description']['#description'] = t('A description of the term. Displayed to customers at the top of catalog pages.');
   }
 }
 
@@ -681,8 +681,8 @@ function theme_uc_catalog_products($products) {
       return theme('uc_catalog_product_grid', $products);
     }
     else {
-      $table_args = array('nids' => $products);
-      return tapir_get_table('uc_product_table', $table_args);
+      $table = tapir_get_table('uc_product_table', $products);
+      return drupal_render($table);
     }
   }
 }
@@ -943,12 +943,14 @@ function theme_uc_catalog_item($here, $active_link = '', $lis, $expand, $inpath,
  * Create paths to the catalog from taxonomy term.
  */
 function uc_catalog_path($term) {
+  $separator = variable_get('pathauto_separator', '-');
+  $path = preg_replace(array('/\W[_ ]?/', '/[_ ]/'), array('', $separator), strtolower($term->name));
+
   if (function_exists('iconv')) {
-    return 'catalog/'. $term->tid .'/'. iconv('UTF-8', 'ASCII//TRANSLIT', preg_replace(array('/ /', '/\W[_ ]?/'), array('_', ''), strtolower($term->name)));
+    $path = iconv('UTF-8', 'ASCII//TRANSLIT', $path);
   }
-  else {
-    return 'catalog/'. $term->tid .'/'. preg_replace(array('/ /', '/\W[_ ]?/'), array('_', ''), strtolower($term->name));
-  }
+
+  return 'catalog/'. $term->tid .'/'. $path;
 }
 
 /**

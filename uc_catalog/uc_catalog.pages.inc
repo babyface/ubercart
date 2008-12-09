@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.pages.inc,v 1.1.2.4 2008/11/21 21:17:26 islandusurper Exp $
+// $Id: uc_catalog.pages.inc,v 1.1.2.5 2008/12/09 15:20:37 islandusurper Exp $
 
 /**
  * @file
@@ -88,14 +88,12 @@ function theme_uc_catalog_browse($tid = 0) {
     $order = tapirsort_sql(uc_product_table_header());
   }
 
-  $product_types = module_invoke_all('product_types');
-
   $sql = "SELECT DISTINCT(n.nid), n.sticky, n.title, n.created, p.model, p.sell_price, p.ordering
     FROM {node} n
       INNER JOIN {term_node} tn ON n.vid = tn.vid
       INNER JOIN {uc_products} AS p ON n.vid = p.vid
     WHERE tn.tid = %d AND n.status = 1
-      AND n.type IN (". db_placeholders($product_types, 'varchar') .") ". $order;
+      AND n.type IN (". db_placeholders($types, 'varchar') .") ". $order;
   $sql_count = '';
   switch ($GLOBALS['db_type']) {
     case 'mysql':
@@ -106,7 +104,7 @@ function theme_uc_catalog_browse($tid = 0) {
           INNER JOIN {uc_products} AS p ON n.vid = p.vid
         WHERE tn.tid = %d
           AND n.status = 1
-          AND n.type IN (". db_placeholders($product_types, 'varchar') .")";
+          AND n.type IN (". db_placeholders($types, 'varchar') .")";
       break;
     case 'pgsql':
       $sql_count = "SELECT DISTINCT n.nid, COUNT(*)
@@ -115,7 +113,7 @@ function theme_uc_catalog_browse($tid = 0) {
           INNER JOIN {uc_products} AS p ON n.vid = p.vid
         WHERE tn.tid = %d
           AND n.status = 1
-          AND n.type IN (". db_placeholders($product_types) .")
+          AND n.type IN (". db_placeholders($types) .")
         GROUP BY n.nid";
       break;
   }
@@ -123,7 +121,7 @@ function theme_uc_catalog_browse($tid = 0) {
   $sql = db_rewrite_sql($sql);
   $sql_count = db_rewrite_sql($sql_count);
   $sql_args = array($catalog->tid);
-  foreach ($product_types as $type) {
+  foreach ($types as $type) {
     $sql_args[] = $type;
   }
   $catalog->products = array();
