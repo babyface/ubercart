@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.10 2008/12/09 15:20:37 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.11 2008/12/11 15:53:50 islandusurper Exp $
 
 /**
  * @file
@@ -563,7 +563,7 @@ function uc_catalog_store_status() {
     $statuses[] = array(
       'status' => 'error',
       'title' => t('Catalog vocabulary'),
-      'desc' => t('No vocabulary has been recognized as the Ubercart catalog. Choose one on <a href="!admin_catalog">this page</a> or click <a href="!admin_vocab">here</a> to create one first.', array('!admin_catalog' => url('admin/store/settings/catalog'), '!admin_vocab' => url('admin/content/taxonomy'))),
+      'desc' => t('No vocabulary has been recognized as the Ubercart catalog. Choose one on <a href="!admin_catalog">this page</a> or add one on the <a href="!admin_vocab">taxonomy admin page</a> first, if needed.', array('!admin_catalog' => url('admin/store/settings/catalog/edit'), '!admin_vocab' => url('admin/content/taxonomy'))),
     );
   }
   return $statuses;

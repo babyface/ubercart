@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.admin.inc,v 1.1.2.2 2008/10/24 21:06:47 islandusurper Exp $
+// $Id: uc_roles.admin.inc,v 1.1.2.3 2008/12/11 15:53:50 islandusurper Exp $
 
 /**
  * @file
@@ -204,22 +204,22 @@ function uc_roles_notify_settings() {
 /**
  * Form builder for role expirations.
  */
-function uc_roles_deletion_form($form_id, $user, $rid) {
+function uc_roles_deletion_form($form_id, $account, $rid) {
 
-  $expiration = db_result(db_query("SELECT expiration FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d", $user->uid, $rid));
+  $expiration = db_result(db_query("SELECT expiration FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d", $account->uid, $rid));
   if ($expiration) {
 
     $role_name = _uc_roles_get_name($rid);
 
-    $form['user'] = array('#type' => 'value', '#value' => $user->name);
-    $form['uid'] = array('#type' => 'value', '#value' => $user->uid);
+    $form['user'] = array('#type' => 'value', '#value' => $account->name);
+    $form['uid'] = array('#type' => 'value', '#value' => $account->uid);
     $form['role'] = array('#type' => 'value', '#value' => $role_name);
     $form['rid'] = array('#type' => 'value', '#value' => $rid);
 
     $form = confirm_form(
-      $form, t('Delete expiration of %role_name role for the user %user_name?', array('%user_name' => $user->name, '%role_name' => $role_name)),
+      $form, t('Delete expiration of %role_name role for the user %user_name?', array('%user_name' => $account->name, '%role_name' => $role_name)),
       'admin/user/user/expiration',
-      t('Deleting the expiration will give %user_name privileges set by the %role_name role indefinitely unless manually removed.', array('%user_name' => $user->name, '%role_name' => $role_name)),
+      t('Deleting the expiration will give %user_name privileges set by the %role_name role indefinitely unless manually removed.', array('%user_name' => $account->name, '%role_name' => $role_name)),
       t('Yes'), t('No')
     );
   }

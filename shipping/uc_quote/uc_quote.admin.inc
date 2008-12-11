@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.admin.inc,v 1.1.2.4 2008/11/21 21:17:31 islandusurper Exp $
+// $Id: uc_quote.admin.inc,v 1.1.2.5 2008/12/11 15:53:51 islandusurper Exp $
 
 /**
  * @file
@@ -65,10 +65,28 @@ function uc_quote_admin_settings() {
     ),
     '#default_value' => variable_get('uc_quote_require_quote', TRUE),
   );
+
+  $form['uc_quote_pane_description'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Shipping quote pane description'),
+    '#summary callback ' => 'summarize_form',
+    '#tree' => TRUE,
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['uc_quote_pane_description']['text'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Message text'),
+    '#default_value' => variable_get('uc_quote_pane_description', t('Shipping quotes are generated automatically when you enter your address and may be updated manually with the button below.')),
+  );
+  $form['uc_quote_pane_description']['format'] = filter_form(variable_get('uc_quote_desc_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_quote_pane_description', 'format'));
+  $form['uc_quote_pane_description']['format']['#summary callback'] = 'summarize_null';
+
   $form['uc_quote_err_msg'] = array(
     '#type' => 'fieldset',
     '#title' => t('Shipping quote error message'),
     '#summary callback' => 'summarize_form',
+    '#tree' => TRUE,
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
@@ -77,7 +95,7 @@ function uc_quote_admin_settings() {
     '#title' => t('Message text'),
     '#default_value' => variable_get('uc_quote_err_msg', t("There were problems getting a shipping quote. Please verify the delivery and product information and try again.\nIf this does not resolve the issue, please call in to complete your order.")),
   );
-  $form['uc_quote_err_msg']['format'] = filter_form(variable_get('uc_quote_msg_format', FILTER_DEFAULT_FORMAT));
+  $form['uc_quote_err_msg']['format'] = filter_form(variable_get('uc_quote_msg_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_quote_err_msg', 'format'));
   $form['uc_quote_err_msg']['format']['#summary callback'] = 'summarize_null';
 
   $form['default_address'] = array(
@@ -139,8 +157,10 @@ function uc_quote_admin_settings_submit($form, &$form_state) {
   variable_set('uc_quote_log_errors', $form_state['values']['uc_quote_log_errors']);
   variable_set('uc_quote_display_debug', $form_state['values']['uc_quote_display_debug']);
   variable_set('uc_quote_require_quote', $form_state['values']['uc_quote_require_quote']);
-  variable_set('uc_quote_err_msg', $form_state['values']['text']);
-  variable_set('uc_quote_msg_format', $form_state['values']['format']);
+  variable_set('uc_quote_pane_description', $form_state['values']['uc_quote_pane_description']['text']);
+  variable_set('uc_quote_desc_format', $form_state['values']['uc_quote_pane_description']['format']);
+  variable_set('uc_quote_err_msg', $form_state['values']['uc_quote_err_msg']['text']);
+  variable_set('uc_quote_msg_format', $form_state['values']['uc_quote_err_msg']['format']);
 
   drupal_set_message(t('The configuration options have been saved.'));
 }

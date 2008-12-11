@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.module,v 1.5.2.4 2008/11/21 21:17:31 islandusurper Exp $
+// $Id: uc_flatrate.module,v 1.5.2.5 2008/12/11 15:53:51 islandusurper Exp $
 
 /**
  * @file
@@ -51,35 +51,37 @@ function uc_flatrate_menu() {
  * Add a form element for the shipping rate of a product.
  */
 function uc_flatrate_form_alter(&$form, &$form_state, $form_id) {
-  $node = $form['#node'];
-  $product_types = module_invoke_all('product_types');
-  if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && in_array($node->type, $product_types)) {
-    $sign_flag = variable_get('uc_sign_after_amount', FALSE);
-    $currency_sign = variable_get('uc_currency_sign', '$');
-    $enabled = variable_get('uc_quote_enabled', array());
-    $weight = variable_get('uc_quote_method_weight', array());
-    $result = db_query("SELECT mid, title, product_rate FROM {uc_flatrate_methods}");
-    while ($method = db_fetch_object($result)) {
-      if (!isset($form['shipping']['flatrate'])) {
-        $form['shipping']['flatrate'] = array(
-          '#type' => 'fieldset',
-          '#title' => t('Flat shipping rates'),
-          '#description' => t('Override the default shipping rate per product for each flat rate shipping method here. Enter -1 to revert to the default value.'),
-          '#tree' => TRUE,
-          '#collapsible' => TRUE,
-          '#collapsed' => FALSE,
-          '#weight' => 0,
+  if (isset($form['#node'])) {
+    $node = $form['#node'];
+    $product_types = module_invoke_all('product_types');
+    if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && in_array($node->type, $product_types)) {
+      $sign_flag = variable_get('uc_sign_after_amount', FALSE);
+      $currency_sign = variable_get('uc_currency_sign', '$');
+      $enabled = variable_get('uc_quote_enabled', array());
+      $weight = variable_get('uc_quote_method_weight', array());
+      $result = db_query("SELECT mid, title, product_rate FROM {uc_flatrate_methods}");
+      while ($method = db_fetch_object($result)) {
+        if (!isset($form['shipping']['flatrate'])) {
+          $form['shipping']['flatrate'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Flat shipping rates'),
+            '#description' => t('Override the default shipping rate per product for each flat rate shipping method here. Enter -1 to revert to the default value.'),
+            '#tree' => TRUE,
+            '#collapsible' => TRUE,
+            '#collapsed' => FALSE,
+            '#weight' => 0,
+          );
+        }
+        $form['shipping']['flatrate'][$method->mid] = array('#type' => 'textfield',
+          '#title' => $method->title,
+          '#default_value' => $form['#node']->flatrate[$method->mid],
+          '#description' => t('Default rate: %price', array('%price' => uc_currency_format($method->product_rate))),
+          '#size' => 16,
+          '#field_prefix' => $sign_flag ? '' : $currency_sign,
+          '#field_suffix' => $sign_flag ? $currency_sign : '',
+          '#weight' => $weight['flatrate_'. $method->mid],
         );
       }
-      $form['shipping']['flatrate'][$method->mid] = array('#type' => 'textfield',
-        '#title' => $method->title,
-        '#default_value' => $form['#node']->flatrate[$method->mid],
-        '#description' => t('Default rate: %price', array('%price' => uc_currency_format($method->product_rate))),
-        '#size' => 16,
-        '#field_prefix' => $sign_flag ? '' : $currency_sign,
-        '#field_suffix' => $sign_flag ? $currency_sign : '',
-        '#weight' => $weight['flatrate_'. $method->mid],
-      );
     }
   }
 }

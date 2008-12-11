@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.pages.inc,v 1.1.2.2 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: uc_quote.pages.inc,v 1.1.2.3 2008/12/11 15:53:51 islandusurper Exp $
 
 /**
  * @file
@@ -74,6 +74,12 @@ function uc_quote_request_quotes() {
 }
 
 function _uc_quote_assemble_quotes($order) {
+  global $user;
+  $account = user_load($order->uid);
+  if (!$account) {
+    $account = $user;
+  }
+
   $products = $order->products;
   $shipping_types = array();
   foreach ($products as $product) {
@@ -114,7 +120,7 @@ function _uc_quote_assemble_quotes($order) {
     'account' => array(
       '#entity' => 'user',
       '#title' => t('User'),
-      '#data' => $user,
+      '#data' => $account,
     ),
   );
   foreach ($methods as $method) {

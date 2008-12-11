@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.8 2008/11/21 21:17:31 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.9 2008/12/11 15:53:51 islandusurper Exp $
 
 /**
  * @file
@@ -812,7 +812,7 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2) {
   global $user;
   switch ($op) {
     case 'view':
-      $description = t('Shipping quotes are generated automatically when you enter your address and may be updated manually with the button below.');
+      $description = check_markup(variable_get('uc_quote_pane_description', t('Shipping quotes are generated automatically when you enter your address and may be updated manually with the button below.')), variable_get('uc_quote_desc_format', FILTER_FORMAT_DEFAULT));
 
       // Let Javascript know where we are.
       $contents['page'] = array('#type' => 'hidden',

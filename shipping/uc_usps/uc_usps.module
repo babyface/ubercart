@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.6.2.7 2008/11/21 21:17:28 islandusurper Exp $
+// $Id: uc_usps.module,v 1.6.2.8 2008/12/11 15:53:50 islandusurper Exp $
 
 /**
  * @file
@@ -39,22 +39,24 @@ function uc_usps_menu() {
  * @see uc_product_form()
  */
 function uc_usps_form_alter(&$form, &$form_state, $form_id) {
-  $node = $form['#node'];
-  if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && in_array($node->type, module_invoke_all('product_types'))) {
-    $enabled = variable_get('uc_quote_enabled', array());
-    $weight = variable_get('uc_quote_method_weight', array('usps' => 0, 'usps_intl' => 1));
-    $form['shipping']['usps'] = array('#type' => 'fieldset',
-      '#title' => t('USPS product description'),
-      '#collapsible' => TRUE,
-      '#collapsed' => ($enabled['usps'] == FALSE || uc_product_get_shipping_type($node) != 'small_package'),
-      '#weight' => $weight['usps'],
-      '#tree' => TRUE,
-    );
-    $form['shipping']['usps']['container'] = array('#type' => 'select',
-      '#title' => t('Package type'),
-      '#options' => _uc_usps_pkg_types(),
-      '#default_value' => $node->usps['container'] ? $node->usps['container'] : 'RECTANGULAR',
-    );
+  if (isset($form['#node'])) {
+    $node = $form['#node'];
+    if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && in_array($node->type, module_invoke_all('product_types'))) {
+      $enabled = variable_get('uc_quote_enabled', array());
+      $weight = variable_get('uc_quote_method_weight', array('usps' => 0, 'usps_intl' => 1));
+      $form['shipping']['usps'] = array('#type' => 'fieldset',
+        '#title' => t('USPS product description'),
+        '#collapsible' => TRUE,
+        '#collapsed' => ($enabled['usps'] == FALSE || uc_product_get_shipping_type($node) != 'small_package'),
+        '#weight' => $weight['usps'],
+        '#tree' => TRUE,
+      );
+      $form['shipping']['usps']['container'] = array('#type' => 'select',
+        '#title' => t('Package type'),
+        '#options' => _uc_usps_pkg_types(),
+        '#default_value' => $node->usps['container'] ? $node->usps['container'] : 'RECTANGULAR',
+      );
+    }
   }
 }
 

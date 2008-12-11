@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.install,v 1.9.2.5 2008/11/21 21:17:26 islandusurper Exp $
+// $Id: uc_catalog.install,v 1.9.2.6 2008/12/11 15:53:50 islandusurper Exp $
 
 /**
  * @file
@@ -63,7 +63,7 @@ function uc_catalog_install() {
   }
   else { //If none, create one.
     db_query("INSERT INTO {vocabulary} (name, description, help, relations, hierarchy, multiple, required, tags, module, weight)
-      VALUES ('%s', '', '%s', 0, 2, 1, 0, 0, 'uc_catalog', 0)", $t('Catalog'), $t('Hold Ctrl while clicking to select multiple categories.'));
+      VALUES ('%s', '', '%s', 0, 1, 1, 0, 0, 'uc_catalog', 0)", $t('Catalog'), $t('Hold Ctrl while clicking to select multiple categories.'));
     $vid = db_last_insert_id('vocabulary', 'vid');
   }
   variable_set('uc_catalog_vid', $vid);
