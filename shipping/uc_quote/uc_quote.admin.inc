@@ -1,11 +1,9 @@
 <?php
-// $Id: uc_quote.admin.inc,v 1.1.2.5 2008/12/11 15:53:51 islandusurper Exp $
+// $Id: uc_quote.admin.inc,v 1.1.2.6 2009/01/02 20:18:41 islandusurper Exp $
 
 /**
  * @file
  * Shipping quotes administration menu items.
- *
- * Coded by Lyle Mantooth
  */
 
 // Displays an overview of the shipping quote settings.

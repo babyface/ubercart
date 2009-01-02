@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.pages.inc,v 1.1.2.3 2008/12/11 15:53:51 islandusurper Exp $
+// $Id: uc_quote.pages.inc,v 1.1.2.4 2009/01/02 20:18:41 islandusurper Exp $
 
 /**
  * @file
@@ -88,10 +88,13 @@ function _uc_quote_assemble_quotes($order) {
   $shipping_types = array_unique($shipping_types);
   $all_types = uc_quote_get_shipping_types();
   $shipping_type = '';
-  // Use the most prominent shipping type (lightest weight).
-  $type_weight = 1000; // arbitrary large number
+
+  // Use the most prominent shipping type (highest weight).
+  // In theory, you can ship lighter products with heavier by the same
+  // method, but not vice versa.
+  $type_weight = -1000; // arbitrary low number
   foreach ($shipping_types as $type) {
-    if ($all_types[$type]['weight'] < $type_weight) {
+    if ($all_types[$type]['weight'] > $type_weight) {
       $shipping_type = $all_types[$type]['id'];
       $type_weight = $all_types[$type]['weight'];
     }
@@ -127,7 +130,7 @@ function _uc_quote_assemble_quotes($order) {
     $arguments['method']['#data'] = $method;
     $predicates = ca_load_trigger_predicates('get_quote_from_'. $method['id']);
     $predicate = array_shift($predicates);
-    if (ca_evaluate_conditions($predicate, $arguments)) {
+    if ($predicate && ca_evaluate_conditions($predicate, $arguments)) {
       $data = uc_quote_action_get_quote($order, $method, $user);
       $quote_data[$method['id']] = $data;
     }

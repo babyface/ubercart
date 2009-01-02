@@ -1,4 +1,4 @@
-/* $Id: uc_attribute.css,v 1.4.4.1 2008/11/07 21:13:22 islandusurper Exp $ */
+/* $Id: uc_attribute.css,v 1.4.4.2 2009/01/02 20:18:43 islandusurper Exp $ */
 
 .options {
   display: inline;
@@ -8,7 +8,7 @@ tr.draggable div.form-item {
   display: inline;
 }
 
-#option_key td:first-child {
+#option-key td:first-child {
   width: 26%;
 }
 

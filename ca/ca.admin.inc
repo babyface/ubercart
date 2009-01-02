@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.8 2008/11/07 21:13:20 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.9 2009/01/02 20:18:41 islandusurper Exp $
 
 /**
  * @file
@@ -843,7 +843,7 @@ function _ca_conditions_form_condition($condition, $trigger) {
       '#type' => 'select',
       '#title' => check_plain($value['#title']),
       '#options' => $options,
-      '#default_value' => $action['#argument_map'][$key],
+      '#default_value' => $condition['#argument_map'][$key],
     );
   }
 

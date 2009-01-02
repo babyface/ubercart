@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.ca.inc,v 1.1.2.7 2008/11/21 21:17:27 islandusurper Exp $
+// $Id: uc_cart.ca.inc,v 1.1.2.8 2009/01/02 20:18:42 islandusurper Exp $
 
 /**
  * @file
@@ -128,15 +128,11 @@ function uc_cart_condition_product_class($order, $settings) {
 }
 
 function uc_cart_condition_product_class_form($form_state, $settings = array()) {
-  $options = array();
-  $types = module_invoke_all('node_info');
-  $product_types = module_invoke_all('product_types');
-  foreach ($product_types as $id) {
-    $options[$id] = $types[$id]['name'];
-  }
+  $form = array();
+
   $form['class'] = array('#type' => 'select',
     '#title' => t('Product class'),
-    '#options' => $options,
+    '#options' => uc_product_type_names(),
     '#default_value' => $settings['class'],
   );
 

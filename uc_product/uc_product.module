@@ -1,15 +1,12 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.11 2008/12/09 15:20:36 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.12 2009/01/02 20:18:43 islandusurper Exp $
 
 /**
  * @file
  * The product module for Ubercart.
  *
  * Provides information that is common to all products, and user-defined product
- * classes for more specification. Recommends the image and taxonomy modules.
- *
- * Coded by: Lyle Mantooth
- * Product Features by: Ryan Szrama
+ * classes for more specification.
  */
 
 /******************************************************************************
@@ -95,6 +92,17 @@ function uc_product_menu() {
     'type' => MENU_LOCAL_TASK,
     'file' => 'uc_product.admin.inc',
   );
+  $items['admin/store/settings/products/edit/image-widgets'] = array(
+    'title' => 'Product images',
+    'description' => 'Choose and enable an existing image widget.',
+    'access arguments' => array('administer products'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_product_image_widgets'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+    'file' => 'uc_product.admin.inc',
+  );
+
   // Insert subitems into the edit node page for product types.
   $items['node/%node/edit/product'] = array(
     'title' => 'Product',
@@ -443,7 +451,7 @@ function uc_product_form(&$node) {
   $currency_sign = variable_get('uc_currency_sign', '$');
 
   $form['title'] = array('#type' => 'textfield',
-    '#title' => t('Name'),
+    '#title' => $type->title_label,
     '#required' => TRUE,
     '#weight' => -5,
     '#default_value' => $node->title,
@@ -582,7 +590,7 @@ function uc_product_form(&$node) {
   $form['base']['default_qty'] = array('#type' => 'textfield',
     '#title' => t('Default quantity to add to cart'),
     '#default_value' => !is_null($node->default_qty) ? $node->default_qty : 1,
-    '#description' => t('Leave blank or zero to disable the quantity field in the add to cart form.'),
+    '#description' => t('Leave blank or zero to disable the quantity field next to the add to cart button, if it is enabled <a href="!settings_url">in general</a>. If it is disabled, this field is ignored.', array('!settings_url' => url('admin/store/settings/products/edit'))),
     '#weight' => 27,
     '#size' => 5,
     '#maxlength' => 6,
@@ -835,18 +843,12 @@ function uc_product_form_alter(&$form, &$form_state, $form_id) {
     }
 
     // Node types:
-    $types = array();
-    $product_types = module_invoke_all('product_types');
-    $node_types = module_invoke_all('node_info');
-    foreach ($product_types as $id) {
-      $types[$id] = $node_types[$id]['name'];
-    }
     $form['advanced']['type'] = array(
       '#type' => 'checkboxes',
       '#title' => t('Only of the type(s)'),
       '#prefix' => '<div class="criterion">',
       '#suffix' => '</div>',
-      '#options' => $types,
+      '#options' => uc_product_type_names(),
     );
     $form['advanced']['submit'] = array(
       '#type' => 'submit',
@@ -886,14 +888,19 @@ function uc_product_content_extra_fields($type_name) {
 function uc_product_content_extra_fields_alter(&$extra, $type_name) {
   $type = node_get_types('type', $type_name);
 
-  if ($type->module == 'uc_product' && $type->has_body) {
-    $extra['body_field']['weight'] = -4;
-    unset($extra['body_field']['view']);
-    $extra['body'] = array(
-      'label' => t('Description'),
-      'description' => t('Node description. (View tab)'),
-      'weight' => 1,
-    );
+  if ($type->module == 'uc_product') {
+    if (isset($extra['menu'])) {
+      $extra['menu']['weight'] = 0;
+    }
+    if ($type->has_body) {
+      $extra['body_field']['weight'] = -4;
+      unset($extra['body_field']['view']);
+      $extra['body'] = array(
+        'label' => t('Description'),
+        'description' => t('Node description. (View tab)'),
+        'weight' => 1,
+      );
+    }
   }
 }
 
@@ -1033,14 +1040,6 @@ function uc_product_cart_display($item) {
   $element['module'] = array('#type' => 'value', '#value' => 'uc_product');
   $element['remove'] = array('#type' => 'checkbox');
 
-  $element['options'] = '';
-  if (module_exists('uc_attribute') && is_array($item->options)) {
-    foreach ($item->options as $option) {
-      $op_names[] = t('@attribute: @option', array('@attribute' => $option['attribute'], '@option' => $option['name']));
-    }
-    $element['options'] = array('#value' => theme('item_list', $op_names, NULL, 'ul', array('class' => 'cart-options')));
-  }
-
   $element['title'] = array(
     '#value' => node_access('view', $node) ? l($item->title, 'node/'. $node->nid) : check_plain($item->title),
   );
@@ -1052,6 +1051,15 @@ function uc_product_cart_display($item) {
     '#size' => 5,
     '#maxlength' => 6
   );
+
+  $description = '';
+  foreach (module_implements('cart_item_description') as $module) {
+    $description .= module_invoke($module, 'cart_item_description', $item);
+  }
+  if ($description) {
+    $element['description'] = array('#value' => $description);
+  }
+
   return $element;
 }
 
@@ -1234,35 +1242,6 @@ function uc_catalog_buy_it_now_form_submit($form, &$form_state) {
 }
 
 /**
- * Determing if the given node is a product.
- *
- * @param $node If an object or array, it's "type" member is considered. If a
- *   a string, it's value is considered. If an integer, node_load() is called.
- * @return boolean
- */
-function uc_product_is_product($node) {
-  if (is_int($node)) {
-    $node = node_load($node);
-  }
-  if (is_object($node)) {
-    $type = $node->type;
-  }
-  elseif (is_array($node)) {
-    $type = $node['type'];
-  }
-  elseif (is_string($node)) {
-    $type = $node;
-  }
-
-  if (!$type) {
-    return FALSE;
-  }
-
-  $types = module_invoke_all('product_types');
-  return in_array($type, $types);
-}
-
-/**
  * Format a product's model number.
  *
  * @ingroup themeable
@@ -1280,7 +1259,7 @@ function theme_uc_product_model($model, $teaser = 0, $page = 0) {
  * @ingroup themeable
  */
 function theme_uc_product_add_to_cart($node, $teaser = 0, $page = 0) {
-  $output = '<div class="add_to_cart">';
+  $output = '<div class="add-to-cart">';
   if ($node->nid) {
     $output .= drupal_get_form('uc_product_add_to_cart_form_'. $node->nid, $node);
   }
@@ -1381,12 +1360,12 @@ function theme_uc_product_price($price, $class, $teaser = 0, $page = 0) {
  */
 function theme_uc_product_sell_price($price, $teaser = 0, $page = 0) {
   if ($teaser) {
-    $output = '<div class="sell_price">';
+    $output = '<div class="sell-price">';
     $output .= uc_currency_format($price);
     $output .= '</div>';
   }
   else {
-    $output = '<div class="sell_price">';
+    $output = '<div class="sell-price">';
     $output .= t('Price: !price', array('!price' => uc_currency_format($price)));
     $output .= '</div>';
   }
@@ -1425,26 +1404,30 @@ function theme_uc_product_dimensions($length, $width, $height, $units = NULL, $t
  */
 function theme_uc_product_image($images, $teaser = 0, $page = 0) {
   static $rel_count = 0;
-  $thickbox_enabled = module_exists('thickbox');
+
+  // Get the current product image widget.
+  $image_widget = uc_product_get_image_widget();
+  $image_widget_func = $image_widget['callback'];
+
   $first = array_shift($images);
-  $output = '<div class="product_image">';
-  if ($thickbox_enabled) {
-    $output .= '<a href="'. check_url(file_create_url($first['filepath'])) .'" title="'. $first['title'] .'" class="thickbox" rel="field_image_cache_'. $rel_count .'">';
+  $output = '<div class="product-image">';
+  if ($image_widget) {
+    $output .= '<a href="'. check_url(file_create_url($first['filepath'])) .'" title="'. $first['title'] .'"'. $image_widget_func($rel_count) .'>';
   }
   $output .= theme('imagecache', 'product', $first['filepath'], $first['alt'], $first['title']);
   /* if (count($images)) {
     $output .= '<br />'. t('Click for more images.');
   } */
-  if ($thickbox_enabled) {
+  if ($image_widget) {
     $output .= '</a>';
   }
   $output .= '<br />';
   foreach ($images as $thumbnail) {
-    if ($thickbox_enabled) {
-      $output .= '<a href="'. check_url(file_create_url($thumbnail['filepath'])) .'" title="'. $thumbnail['title'] .'" class="thickbox" rel="field_image_cache_'. $rel_count .'">';
+    if ($image_widget) {
+      $output .= '<a href="'. check_url(file_create_url($thumbnail['filepath'])) .'" title="'. $thumbnail['title'] .'"'. $image_widget_func($rel_count) .'>';
     }
     $output .= theme('imagecache', 'uc_thumbnail', $thumbnail['filepath'], $thumbnail['alt'], $thumbnail['title']);
-    if ($thickbox_enabled) {
+    if ($image_widget) {
       $output .= '</a>';
     }
   }
@@ -1457,10 +1440,77 @@ function theme_uc_product_image($images, $teaser = 0, $page = 0) {
  * @ingroup themeable
  */
 function theme_uc_product_display_price($price, $teaser = 0, $page = 0) {
-  $output = '<div class="display_price">';
+  $output = '<div class="display-price">';
   $output .= uc_currency_format($price);
   $output .= '</div>';
   return $output;
+}
+
+// Returns an array of product node types.
+function uc_product_types() {
+  return module_invoke_all('product_types');
+}
+
+// Returns an associative array of product node type names keyed by ID.
+function uc_product_type_names() {
+  $names = array();
+
+  // Get all the node meta data.
+  $node_info = module_invoke_all('node_info');
+
+  // Loop through each product node type.
+  foreach (uc_product_types() as $type) {
+    $names[$type] = $node_info[$type]['name'];
+  }
+
+  return $names;
+}
+
+/**
+ * Determines whether or not a node type is a product node type.
+ *
+ * @param $type
+ *   The node type to check.
+ * @return
+ *   TRUE or FALSE indicating whether or not a node type is a product node type.
+ */
+function uc_product_node_is_product($type) {
+  return in_array($type, uc_product_types());
+}
+
+/**
+ * Determines whether or not a given node or node type is a product.
+ *
+ * @param $node
+ *   Either a full node object/array, a node ID, or a node type to check.
+ * @return
+ *   TRUE or FALSE indicating whether or not a node type is a product node type.
+ */
+function uc_product_is_product($node) {
+  // Load the node object if we received an integer as an argument.
+  if (is_int($node)) {
+    $node = node_load($node);
+  }
+
+  // Determine the node type based on the data type of $node.
+  if (is_object($node)) {
+    $type = $node->type;
+  }
+  elseif (is_array($node)) {
+    $type = $node['type'];
+  }
+  elseif (is_string($node)) {
+    $type = $node;
+  }
+
+  // If no node type was found, go ahead and return FALSE.
+  if (!$type) {
+    return FALSE;
+  }
+
+  // Return TRUE or FALSE depending on whether or not the node type is in the
+  // product types array.
+  return in_array($type, uc_product_types());
 }
 
 /**
@@ -1517,22 +1567,47 @@ function uc_product_get_cost($node_id) {
  *   When $format is 'preview', the image is a link to the image file.
  */
 function uc_product_get_picture($node_id, $format = 'product') {
-  $img = '';
+  $output = '';
   $product = node_load($node_id);
+
   if (!module_exists('imagecache')) {
     return '';
   }
+
+  // Get the current product image widget.
+  $image_widget = uc_product_get_image_widget();
+  $image_widget_func = $image_widget['callback'];
+
   $path = $product->field_image_cache[0]['filepath'];
   if (file_exists($path)) {
     $img = theme('imagecache', $format, $path, $product->field_image_cache[0]['alt'], $product->field_image_cache[0]['title']);
     if ($format == 'product') {
-      $img = '<a href="'. check_url(file_create_url($path)) .'" class="thickbox" rel="field_image_cache">'. $img .'</a>';
+      if ($image_widget) {
+        $output .= '<a title="'. $product->field_image_cache[0]['title'] .'" href="'. check_url(file_create_url($path)) .'" '. $image_widget_func(NULL) .'>';
+      }
+      $output .= $img;
+      if ($image_widget) {
+        $output .= '</a>';
+      }
     }
     else {
-      $img = l($img, 'node/'. $product->nid, array('html' => TRUE));
+      $output = l($img, 'node/'. $product->nid, array('html' => TRUE));
     }
   }
-  return $img;
+  return $output;
+}
+
+function uc_product_get_image_widget() {
+  static $got_widget = FALSE, $image_widget = array();
+
+  // Get the current image widget. (if any)
+  if (!$got_widget) {
+    $image_widgets = uc_store_get_image_widgets();
+    $image_widget = $image_widgets[variable_get('uc_product_image_widget', NULL)];
+    $got_widget = TRUE;
+  }
+
+  return $image_widget;
 }
 
 /**
@@ -1651,13 +1726,16 @@ function uc_product_add_default_image_field($type = NULL) {
   $field = array(
     'label' => $label,
     'field_name' => 'field_image_cache',
-    'type' => 'filefield',
-    'widget_type' => 'filefield_widget',
+    'type' => 'image',
+    'widget_type' => 'imagefield_widget',
     'file_extensions' => 'gif jpg jpeg png bmp',
+    'custom_title' => '1',
+    'custom_alt' => '1',
     'required' => '0',
     'multiple' => '1',
     'list_default' => '0',
     'force_list_default' => '1',
+    'weight' => -2,
     'module' => 'filefield',
     'widget_module' => 'filefield',
     'columns' => array(
@@ -1696,7 +1774,7 @@ function uc_product_add_default_image_field($type = NULL) {
     $types = (array) $type;
   }
   else {
-    $types = module_invoke_all('product_types');
+    $types = uc_product_types();
   }
   foreach ($types as $type) {
     $field['type_name'] = $type;

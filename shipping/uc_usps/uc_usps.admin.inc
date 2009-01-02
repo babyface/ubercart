@@ -1,11 +1,9 @@
 <?php
-// $Id: uc_usps.admin.inc,v 1.1.2.2 2008/11/07 21:13:23 islandusurper Exp $
+// $Id: uc_usps.admin.inc,v 1.1.2.3 2009/01/02 20:18:40 islandusurper Exp $
 
 /**
  * @file
  * USPS administration menu items.
- *
- * Coded by Lyle Mantooth.
  */
 
 /**
@@ -16,24 +14,63 @@
 function uc_usps_admin_settings() {
   $form = array();
 
-  $form['uc_usps_user_id'] = array('#type' => 'textfield',
+  $form['uc_usps_user_id'] = array(
+    '#type' => 'textfield',
     '#title' => t('USPS user ID'),
     '#description' => t('To acquire or locate your user ID, refer to the <a href="!url">USPS documentation</a>.', array('!url' => 'http://www.ubercart.org/docs/user/312/usps_web_tool_shipping_quote_settings')),
     '#default_value' => variable_get('uc_usps_user_id', ''),
   );
-  $form['uc_usps_services'] = array('#type' => 'checkboxes',
-    '#title' => t('USPS services'),
-    '#default_value' => variable_get('uc_usps_services', _uc_usps_services()),
+
+  $form['domestic'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('USPS Domestic'),
+    '#description' => l(t('Set the conditions that will return a USPS quote.'), 'admin/settings/ca/uc_usps_get_quote/edit/conditions'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['domestic']['uc_usps_env_services'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('USPS envelope services'),
+    '#default_value' => variable_get('uc_usps_env_services', array_keys(_uc_usps_env_services())),
+    '#options' => _uc_usps_env_services(),
+    '#description' => t('Select the USPS services that are available to customers. Be sure to include the services that the Postal Service agrees are available to you.'),
+  );
+
+  $form['domestic']['uc_usps_services'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('USPS parcel services'),
+    '#default_value' => variable_get('uc_usps_services', array_keys(_uc_usps_services())),
     '#options' => _uc_usps_services(),
     '#description' => t('Select the USPS services that are available to customers. Be sure to include the services that the Postal Service agrees are available to you.'),
   );
-  $form['uc_usps_intl_services'] = array('#type' => 'checkboxes',
-    '#title' => t('USPS international services'),
-    '#default_value' => variable_get('uc_usps_intl_services', _uc_usps_intl_services()),
+
+  $form['international'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('USPS International.'),
+    '#description' => l(t('Set the conditions that will return a USPS International quote.'), 'admin/settings/ca/uc_usps_get_intl_quote/edit/conditions'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['international']['uc_usps_intl_env_services'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('USPS international envelope services'),
+    '#default_value' => variable_get('uc_usps_intl_env_services', array_keys(_uc_usps_intl_env_services())),
+    '#options' => _uc_usps_intl_env_services(),
+    '#description' => t('Select the USPS services that are available to customers. Be sure to include the services that the Postal Service agrees are available to you.'),
+  );
+
+  $form['international']['uc_usps_intl_services'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('USPS international parcel services'),
+    '#default_value' => variable_get('uc_usps_intl_services', array_keys(_uc_usps_intl_services())),
     '#options' => _uc_usps_intl_services(),
     '#description' => t('Select the USPS services that are available to customers. Be sure to include the services that the Postal Service agrees are available to you.'),
   );
-  $form['uc_usps_markup_type'] = array('#type' => 'select',
+
+  $form['uc_usps_markup_type'] = array(
+    '#type' => 'select',
     '#title' => t('Markup type'),
     '#default_value' => variable_get('uc_usps_markup_type', 'percentage'),
     '#options' => array(
@@ -42,12 +79,14 @@ function uc_usps_admin_settings() {
       'currency' => t('Addition (!currency)', array('!currency' => variable_get('uc_currency_sign', '$'))),
     ),
   );
-  $form['uc_usps_markup'] = array('#type' => 'textfield',
+  $form['uc_usps_markup'] = array(
+    '#type' => 'textfield',
     '#title' => t('Shipping rate markup'),
     '#default_value' => variable_get('uc_usps_markup', '0'),
     '#description' => t('Markup shipping rate quote by dollar amount, percentage, or multiplier.'),
   );
-  $form['uc_usps_all_in_one'] = array('#type' => 'radios',
+  $form['uc_usps_all_in_one'] = array(
+    '#type' => 'radios',
     '#title' => t('Product packages'),
     '#default_value' => variable_get('uc_usps_all_in_one', 1),
     '#options' => array(

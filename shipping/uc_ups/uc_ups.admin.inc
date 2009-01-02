@@ -1,11 +1,9 @@
 <?php
-// $Id: uc_ups.admin.inc,v 1.1.2.2 2008/11/07 21:13:25 islandusurper Exp $
+// $Id: uc_ups.admin.inc,v 1.1.2.3 2009/01/02 20:18:40 islandusurper Exp $
 
 /**
  * @file
  * UPS administration menu items.
- *
- * Coded by Lyle Mantooth.
  */
 
 /**
@@ -19,6 +17,10 @@
  */
 function uc_ups_admin_settings() {
   $form = array();
+
+  $form['uc_ups_conditions'] = array(
+    '#value' => '<p>'. l(t('Set the conditions that will return a UPS quote.'), 'admin/settings/ca/uc_ups_get_quote/edit/conditions') .'</p>',
+  );
 
   $form['uc_ups_access_license'] = array('#type' => 'textfield',
     '#title' => t('UPS OnLine Tools XML Access Key'),
@@ -166,7 +168,7 @@ function uc_ups_confirm_shipment($order) {
 function theme_uc_ups_confirm_shipment($form) {
   $output = '';
 
-  $output .= '<div class="shipping_address"><b>'. t('Ship from:') .'</b><br />';
+  $output .= '<div class="shipping-address"><b>'. t('Ship from:') .'</b><br />';
   $output .= uc_address_format(
     check_plain($_SESSION['ups']['origin']->first_name),
     check_plain($_SESSION['ups']['origin']->last_name),
@@ -181,7 +183,7 @@ function theme_uc_ups_confirm_shipment($form) {
   $output .= '<br />'. check_plain($_SESSION['ups']['origin']->email);
   $output .= '</div>';
 
-  $output .= '<div class="shipping_address"><b>'. t('Ship to:') .'</b><br />';
+  $output .= '<div class="shipping-address"><b>'. t('Ship to:') .'</b><br />';
   $output .= uc_address_format(
     check_plain($_SESSION['ups']['destination']->first_name),
     check_plain($_SESSION['ups']['destination']->last_name),
@@ -195,7 +197,7 @@ function theme_uc_ups_confirm_shipment($form) {
   );
   $output .= '<br />'. check_plain($_SESSION['ups']['destination']->email);
   $output .= '</div>';
-  $output .= '<div class="shipment_data">';
+  $output .= '<div class="shipment-data">';
   $method = uc_ups_shipping_method();
   $output .= '<b>'. $method['ups']['quote']['accessorials'][$_SESSION['ups']['service']] .'</b><br />';
   $output .= '<i>'. check_plain($_SESSION['ups']['rate']['type']) .'</i>: '. uc_currency_format($_SESSION['ups']['rate']['amount']) .' ('. check_plain($_SESSION['ups']['rate']['currency']) .')<br />';
@@ -297,15 +299,15 @@ function theme_uc_ups_label_image() {
   print '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 3.2//EN">
 <html><head><title>
 View/Print Label</title></head><style>
-    .small_text {font-size: 80%;}
-    .large_text {font-size: 115%;}
+    .small-text {font-size: 80%;}
+    .large-text {font-size: 115%;}
 </style>
 <body bgcolor="#FFFFFF">
 <table border="0" cellpadding="0" cellspacing="0" width="600"><tr>
 <td height="410" align="left" valign="top">
-<b class="large_text">View/Print Label</b>
+<b class="large-text">View/Print Label</b>
 &nbsp;<br />
-<ol class="small_text"> <li><b>Print the label:</b> &nbsp;
+<ol class="small-text"> <li><b>Print the label:</b> &nbsp;
 Select Print from the File menu in this browser window to print the label below.<br /><br /><li><b>
 Fold the printed label at the dotted line.</b> &nbsp;
 Place the label in a UPS Shipping Pouch. If you do not have a pouch, affix the folded label using clear plastic shipping tape over the entire label.<br /><br /><li><b>GETTING YOUR SHIPMENT TO UPS<br />
@@ -315,7 +317,7 @@ Air shipments (including Worldwide Express and Expedited) can be picked up or dr
 Your driver will pickup your shipment(s) as usual. </ul>
 </ol></td></tr></table><table border="0" cellpadding="0" cellspacing="0" width="600">
 <tr>
-<td class="small_text" align="left" valign="top">
+<td class="small-text" align="left" valign="top">
 &nbsp;&nbsp;&nbsp;
 FOLD HERE</td>
 </tr>

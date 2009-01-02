@@ -1,14 +1,10 @@
 <?php
-// $Id: uc_googleanalytics.module,v 1.6.2.4 2008/11/07 21:13:29 islandusurper Exp $
+// $Id: uc_googleanalytics.module,v 1.6.2.5 2009/01/02 20:18:39 islandusurper Exp $
 
 /**
  * @file
  * Adds the required HTML and Javascript to the checkout complete page to allow
  * e-commerce statistics tracking through Google Analytics.
- *
- * Originally by Erlend Stromsvik : erlend@nymedia.no / Quaoar at ubercart.org
- *
- * Updated by Ryan; patch for new GA JS courtesy of AntoineSolutions.
  */
 
 

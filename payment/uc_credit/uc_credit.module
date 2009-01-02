@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.5.2.7 2008/11/21 21:17:28 islandusurper Exp $
+// $Id: uc_credit.module,v 1.5.2.8 2009/01/02 20:18:40 islandusurper Exp $
 
 /**
  * @file
@@ -253,7 +253,7 @@ function uc_credit_store_status() {
     $statuses[] = array(
       'status' => 'error',
       'title' => t('Credit card encryption'),
-      'desc' => t('You must <a href="http://www.ubercart.org/docs/user/2731/credit_card_settings#security">review your credit card security settings</a> and enable encryption before you can accept credit card payments.'),
+      'desc' => t('You must review your <a href="!url">credit card security settings</a> and enable encryption before you can accept credit card payments.', array('!url' => url('admin/store/settings/payment/edit/methods'))),
     );
   }
 
@@ -396,7 +396,7 @@ function uc_payment_method_credit($op, &$arg1, $silent = FALSE) {
       $cc_data = array(
         'cc_type' => check_plain($_POST['cc_type']),
         'cc_owner' => check_plain($_POST['cc_owner']),
-        'cc_number' => check_plain($_POST['cc_number']),
+        'cc_number' => check_plain(str_replace(' ', '',  $_POST['cc_number'])),
         'cc_start_month' => check_plain($_POST['cc_start_month']),
         'cc_start_year' => check_plain($_POST['cc_start_year']),
         'cc_exp_month' => check_plain($_POST['cc_exp_month']),

@@ -1,12 +1,9 @@
 <?php
-// $Id: uc_product.admin.inc,v 1.1.2.6 2008/12/09 15:20:36 islandusurper Exp $
+// $Id: uc_product.admin.inc,v 1.1.2.7 2009/01/02 20:18:43 islandusurper Exp $
 
 /**
  * @file
  * Product administration menu items.
- *
- * Coded by: Lyle Mantooth
- * Product Features by: Ryan Szrama
  */
 
 /**
@@ -36,6 +33,27 @@ function uc_product_administration() {
   $output .= drupal_render($table) . theme('pager');
 
   return $output;
+}
+
+/**
+ * Display a list of image widgets, and allow the user to select one.
+ */
+function uc_product_image_widgets() {
+  $widgets = module_invoke_all('uc_image_widget');
+
+  foreach ($widgets as $key => $widget) {
+    $options[$key] = $widget['name'];
+  }
+  $options[NULL] = 'None';
+
+  $form['uc_product_image_widget'] = array(
+    '#type' => 'radios',
+    '#title' => t('Image widget to use when a customer clicks on a product image'),
+    '#options' => $options,
+    '#default_value' => variable_get('uc_product_image_widget', NULL),
+  );
+
+  return system_settings_form($form);
 }
 
 /**
@@ -148,7 +166,7 @@ function uc_product_field_settings_form() {
   $form = array();
 
   $options = array(
-    'model' => t('Model'),
+    'model' => t('SKU'),
     'image' => t('Image'),
     'display_price' => t('Display price'),
     'list_price' => t('List price'),

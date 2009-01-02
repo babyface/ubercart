@@ -1,4 +1,4 @@
-/* $Id: uc_cart_block.css,v 1.7.2.1 2008/11/07 21:13:22 islandusurper Exp $ */
+/* $Id: uc_cart_block.css,v 1.7.2.2 2009/01/02 20:18:42 islandusurper Exp $ */
 
 #block-cart-icon {
   padding-right: 1em;
@@ -72,13 +72,12 @@
   text-align: right;
 }
 
-#block-cart-contents ul.cart-options {
+#block-cart-contents ul.product-description {
   margin: 0pt;
   padding: 0pt 0pt 0.25em 1em;
 }
-#block-cart-contents .cart-options li {
+#block-cart-contents .product-description li {
   margin: 0pt;
   padding-top: 0pt;
   padding-bottom: 0pt;
-  font-size: .7em;
 }

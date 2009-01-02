@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.9 2008/12/11 15:53:51 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.10 2009/01/02 20:18:41 islandusurper Exp $
 
 /**
  * @file
@@ -8,8 +8,6 @@
  * This module collects information that is necessary to transport products from
  * one place to another. Its hook system is used by fulfillment modules to get
  * their specific information so that a shipment may be quoted and requested.
- *
- * Coded by Lyle Mantooth
  */
 
 /******************************************************************************
@@ -125,7 +123,7 @@ function uc_quote_taxonomy($op, $type, $object = NULL) {
  * Load, save, and delete the shipping type and default shipping address of products.
  */
 function uc_quote_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
-  if (in_array($node->type, module_invoke_all('product_types'))) {
+  if (uc_product_is_product($node->type)) {
     switch ($op) {
       case 'presave':
         if (isset($node->shipping_type)) {
@@ -193,17 +191,22 @@ function uc_quote_form_alter(&$form, &$form_state, $form_id) {
   ) || $form_id == 'uc_manufacturer_form';
 
   $is_product_form = (
-    isset($node)
-    && $form_id == $node->type .'_node_form'
-    && isset($form['base']['dimensions'])
-    && in_array($node->type, module_invoke_all('product_types'))
+    isset($node) &&
+    $form_id == $node->type .'_node_form' &&
+    isset($form['base']['dimensions']) &&
+    uc_product_is_product($node->type)
   );
 
   if ($is_term_form || $is_product_form) {
     if (strpos($form_id, 'node_form')) {
       $type = 'product';
       $id = $form['nid']['#value'];
-      $weight = 1;
+      if (module_exists('content')) {
+        $weight = content_extra_field_weight($node->type, 'shipping');
+      }
+      else {
+        $weight = 0;
+      }
       $address = $node->shipping_address;
     }
     else {
@@ -279,7 +282,7 @@ function uc_quote_content_extra_fields($type_name) {
     $extra['shipping'] = array(
       'label' => t('Shipping'),
       'description' => t('Shipping settings form.'),
-      'weight' => 1,
+      'weight' => 0,
     );
   }
 

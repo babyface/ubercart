@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.6 2008/12/09 15:20:36 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.7 2009/01/02 20:18:40 islandusurper Exp $
 
 /**
  * @file
@@ -95,8 +95,8 @@ function uc_order_settings_form() {
   );
   $form['customer']['uc_cust_order_invoice_template'] = array(
     '#type' => 'select',
-    '#title' => t('Invoice template'),
-    '#description' => t('Select the invoice template to use for your site.'),
+    '#title' => t('On-site invoice template'),
+    '#description' => t('Select the invoice template to use when invoices are viewed on the site.<br />This is separate from the template used to e-mail invoices to customers.'),
     '#options' => uc_order_template_options(),
     '#summary' => t('You are using the %template order invoice template.', array('%template' => variable_get('uc_cust_order_invoice_template', 'customer'))),
     '#default_value' => variable_get('uc_cust_order_invoice_template', 'customer'),
@@ -1349,14 +1349,14 @@ function uc_order_add_line_item_form_submit($form, &$form_state) {
     drupal_set_message(t('Line item added to order.'));
   }
 
-  return 'admin/store/orders/'. $form_state['values']['order_id'] .'/edit';
+  $form_state['redirect'] = 'admin/store/orders/'. $form_state['values']['order_id'] .'/edit';
 }
 
 /**
  * When the Catalog module or uBrowser aren't enabled, use this product select.
  */
 function uc_order_load_product_select($order) {
-  $args = module_invoke_all('product_types');
+  $args = uc_product_types();
 
   if (!empty($_POST['search'])) {
     $search = strtolower(str_replace('*', '%', check_plain($_POST['search'])));

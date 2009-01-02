@@ -1,4 +1,4 @@
-/* $Id: uc_cart.css,v 1.5.2.1 2008/11/07 21:13:21 islandusurper Exp $ */
+/* $Id: uc_cart.css,v 1.5.2.2 2009/01/02 20:18:42 islandusurper Exp $ */
 
 /* These classes should really be universal... pretty standard stuff. */
 
@@ -76,17 +76,17 @@
   text-align: right;
 }
 
-#uc_cart_view_form img {
+#uc-cart-view-form img {
   padding-right: .8em;
   float: left;
 }
 
-#uc_cart_view_form ul {
+#uc-cart-view-form ul {
   font-style: italic;
   font-size: 0.75em;
 }
 
-#uc_cart_view_form .sub-product {
+#uc-cart-view-form .sub-product {
   padding-left: 2em;
 }
 
@@ -201,7 +201,7 @@ td.subtotal {
   font-weight: bold;
 }
 
-.product-options {
+.product-description {
   font-size: .7em;
 }
 

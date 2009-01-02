@@ -11,21 +11,21 @@ function _uc_role_expiration_disable_check(granularity, quantity) {
 
 function expiration_switcher() {
   if ($('#edit-expiration').val() == 'abs') {
-    $("#edit-uc-roles-expire-relative-wrapper").hide();
-    $("#edit-uc-roles-granularity-wrapper").hide();
+    $("#edit-uc-roles-expire-relative-duration-wrapper").hide();
+    $("#edit-uc-roles-expire-relative-granularity-wrapper").hide();
     $("#edit-uc-roles-by-quantity-wrapper").hide();
     $("#edit-uc-roles-expire-absolute-wrapper").show();
   }
   else {
     $("#edit-uc-roles-expire-absolute-wrapper").hide();
-    $("#edit-uc-roles-expire-relative-wrapper").show();
-    $("#edit-uc-roles-granularity-wrapper").show();
+    $("#edit-uc-roles-expire-relative-duration-wrapper").show();
+    $("#edit-uc-roles-expire-relative-granularity-wrapper").show();
     $("#edit-uc-roles-by-quantity-wrapper").show();
   }
 }
 
 function expiration_switcher_default() {
-  if ($('#edit-uc-roles-end-expiration').val() == 'abs') {
+  if ($('#edit-uc-roles-default-end-expiration').val() == 'abs') {
     $("#edit-uc-roles-default-length-wrapper").attr('style', 'display:none;');
     $("#edit-uc-roles-default-granularity-wrapper").attr('style', 'display:none;');
     $("#edit-uc-roles-default-by-quantity-wrapper").attr('style', 'display:none;');
@@ -46,16 +46,16 @@ function uc_roles_expiration_default_override() {
 
   if ($('#edit-end-override').attr('checked')) {
     $('#edit-expiration-wrapper').removeAttr('style');
-    $('#edit-uc-roles-expire-relative-wrapper').removeAttr('style');
     $('#edit-uc-roles-expire-absolute-wrapper').removeAttr('style');
-    $('#edit-uc-roles-granularity-wrapper').removeAttr('style');
+    $('#edit-uc-roles-expire-relative-duration-wrapper').removeAttr('style');
+    $('#edit-uc-roles-expire-relative-granularity-wrapper').removeAttr('style');
     $('#edit-uc-roles-by-quantity-wrapper').removeAttr('style');
     expiration_switcher();
   }
   else {
     $('#edit-expiration-wrapper').attr('style', 'display:none;');
-    $('#edit-uc-roles-expire-relative-wrapper').attr('style', 'display:none;');
-    $('#edit-uc-roles-granularity-wrapper').attr('style', 'display:none;');
+    $('#edit-uc-roles-expire-relative-duration-wrapper').attr('style', 'display:none;');
+    $('#edit-uc-roles-expire-relative-granularity-wrapper').attr('style', 'display:none;');
     $('#edit-uc-roles-by-quantity-wrapper').attr('style', 'display:none;');
     $('#edit-uc-roles-expire-absolute-wrapper').attr('style', 'display:none;');
   }
@@ -63,7 +63,7 @@ function uc_roles_expiration_default_override() {
 
 $(document).ready(
   function() {
-    _uc_role_expiration_disable_check('#edit-uc-roles-granularity', '#edit-uc-roles-expire-relative');
+    _uc_role_expiration_disable_check('#edit-uc-roles-expire-relative-granularity', '#edit-uc-roles-expire-relative-duration');
     _uc_role_expiration_disable_check('#edit-uc-roles-default-granularity', '#edit-uc-roles-default-length');
     _uc_role_expiration_disable_check('#edit-uc-roles-reminder-granularity', '#edit-uc-roles-reminder-length');
     uc_roles_expiration_default_override();
@@ -80,6 +80,15 @@ Drupal.behaviors.ucRoleExpirationTime = function(context) {
   );
 }
 
+// When you change the default role expiration time select.
+Drupal.behaviors.ucRoleDefaultExpirationTimeDefault = function(context) {
+  $("#edit-uc-roles-default-end-expiration:not(.ucRoleDefaultExpirationTimeDefault-processed)", context).addClass('ucRoleDefaultExpirationTimeDefault-processed').change(
+    function() {
+      expiration_switcher_default();
+    }
+  );
+}
+
 // When you change the role expiration time select.
 Drupal.behaviors.ucRoleExpirationTimeDefault = function(context) {
   $("#edit-uc-roles-end-expiration:not(.ucRoleExpirationTimeDefault-processed)", context).addClass('ucRoleExpirationTimeDefault-processed').change(
@@ -91,9 +100,9 @@ Drupal.behaviors.ucRoleExpirationTimeDefault = function(context) {
 
 // When you change the role expiration granularity select.
 Drupal.behaviors.ucRoleExpirationGranularity = function(context) {
-  $('#edit-uc-roles-granularity:not(.ucRoleExpirationGranularity-processed)', context).addClass('ucRoleExpirationGranularity-processed').change(
+  $('#edit-uc-roles-expire-relative-granularity:not(.ucRoleExpirationGranularity-processed)', context).addClass('ucRoleExpirationGranularity-processed').change(
     function() {
-      _uc_role_expiration_disable_check('#edit-uc-roles-granularity', '#edit-uc-roles-expire-relative');
+      _uc_role_expiration_disable_check('#edit-uc-roles-expire-relative-granularity', '#edit-uc-roles-expire-relative-duration');
     }
   );
 }

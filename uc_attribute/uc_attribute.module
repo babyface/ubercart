@@ -1,9 +1,9 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.9 2008/12/09 15:20:35 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.10 2009/01/02 20:18:43 islandusurper Exp $
 
 /**
  * @file
- * Übercart Attribute module.
+ * Ubercart Attribute module.
  *
  * Allows customers to buy slightly different products from the same listing.
  *
@@ -11,7 +11,6 @@
  * for store administrators to consolidate these options into one product instead of
  * listing each combination separately. This is accomplished through the use of Drupal's
  * hook system.
- * Coded by: Lyle Mantooth
  */
 
 /******************************************************************************
@@ -267,7 +266,7 @@ function uc_attribute_form_alter(&$form, &$form_state, $form_id) {
  * Implementation of hook_nodeapi().
  */
 function uc_attribute_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
-  if (in_array($node->type, module_invoke_all('product_types'))) {
+  if (uc_product_is_product($node->type)) {
     switch ($op) {
       case 'load':
         $attributes = uc_product_get_attributes($node->nid);
@@ -372,13 +371,13 @@ function uc_attribute_product_class($type, $op) {
 function uc_attribute_cart_item($op, &$item) {
   switch ($op) {
     case 'load':
-      $item->options = _uc_cart_product_get_options($item);
+      $options = _uc_cart_product_get_options($item);
 
       $op_costs = 0;
       $op_prices = 0;
       $op_weight = 0;
 
-      foreach ($item->options as $option) {
+      foreach ($options as $option) {
         $op_costs += $option['cost'];
         $op_prices += $option['price'];
         $op_weight += $option['weight'];
@@ -392,6 +391,19 @@ function uc_attribute_cart_item($op, &$item) {
       }
       break;
   }
+}
+
+function uc_attribute_cart_item_description($item) {
+  $rows = array();
+  foreach (_uc_cart_product_get_options($item) as $option) {
+    $rows[] = t('@attribute: @option', array('@attribute' => $option['attribute'], '@option' => $option['name']));
+  }
+
+  if (count($rows)) {
+    $output = theme('item_list', $rows, NULL, 'ul', array('class' => 'product-description'));
+  }
+
+  return $output;
 }
 
 /******************************************************************************
@@ -502,14 +514,14 @@ function theme_uc_attribute($type, $data, $nid) {
   }
   elseif ($type == 'attributes') {
     if (is_array($data) && count($data)) {
-      $output = '<div id="option_key">';
+      $output = '<div id="option-key">';
       foreach ($data as $aid) {
         $output .= theme('uc_attribute_options', $aid, $nid);
       }
       $output .= '</div>';
     }
     elseif (is_numeric($data)) {
-      $output = '<div id="option_key">';
+      $output = '<div id="option-key">';
       $output .= theme('uc_attribute_options', $data);
       $output .= '</div>';
     }
@@ -540,7 +552,8 @@ function _uc_cart_product_get_options($item) {
         $options[$aid]['attribute'] = $attribute->name;
       }
       else {
-        $options[$aid] = array('attribute' => $attribute->name,
+        $options[$aid] = array(
+          'attribute' => $attribute->name,
           'oid' => 0,
           'name' => $oid,
           'cost' => 0,

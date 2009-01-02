@@ -1,11 +1,9 @@
 <?php
-// $Id: uc_flatrate.module,v 1.5.2.5 2008/12/11 15:53:51 islandusurper Exp $
+// $Id: uc_flatrate.module,v 1.5.2.6 2009/01/02 20:18:41 islandusurper Exp $
 
 /**
  * @file
  * Shipping quote module that defines a flat shipping rate for each product.
- *
- * Coded by Lyle Mantooth
  */
 
 /******************************************************************************
@@ -53,8 +51,8 @@ function uc_flatrate_menu() {
 function uc_flatrate_form_alter(&$form, &$form_state, $form_id) {
   if (isset($form['#node'])) {
     $node = $form['#node'];
-    $product_types = module_invoke_all('product_types');
-    if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && in_array($node->type, $product_types)) {
+
+    if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && uc_product_is_product($node->type)) {
       $sign_flag = variable_get('uc_sign_after_amount', FALSE);
       $currency_sign = variable_get('uc_currency_sign', '$');
       $enabled = variable_get('uc_quote_enabled', array());
@@ -90,7 +88,7 @@ function uc_flatrate_form_alter(&$form, &$form_state, $form_id) {
  * Implementation of hook_nodeapi().
  */
 function uc_flatrate_nodeapi(&$node, $op) {
-  if (in_array($node->type, module_invoke_all('product_types'))) {
+  if (uc_product_is_product($node->type)) {
     switch ($op) {
       case 'insert':
       case 'update':

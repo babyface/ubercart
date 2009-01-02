@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.pages.inc,v 1.1.2.5 2008/12/09 15:20:37 islandusurper Exp $
+// $Id: uc_catalog.pages.inc,v 1.1.2.6 2009/01/02 20:18:42 islandusurper Exp $
 
 /**
  * @file
@@ -26,7 +26,7 @@ function theme_uc_catalog_browse($tid = 0) {
   $catalog = uc_catalog_get_page((int)$tid);
   drupal_set_title(check_plain($catalog->name));
   drupal_set_breadcrumb(uc_catalog_set_breadcrumb($catalog->tid));
-  $types = module_invoke_all('product_types');
+  $types = uc_product_types();
   $links = array();
   $child_list = array();
   foreach ($catalog->children as $child) {

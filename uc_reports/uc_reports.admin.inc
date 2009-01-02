@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_reports.admin.inc,v 1.1.2.1 2008/10/15 14:48:02 islandusurper Exp $
+// $Id: uc_reports.admin.inc,v 1.1.2.2 2009/01/02 20:18:39 islandusurper Exp $
 
 /**
  * @file
@@ -114,11 +114,19 @@ function uc_reports_products() {
   $page = (!is_null($_GET['page'])) ? intval($_GET['page']) : 0;
   $page_size = (!is_null($_GET['nopage'])) ? UC_REPORTS_MAX_RECORDS : variable_get('uc_reports_table_size', 30);
   $order_statuses = _uc_reports_order_statuses();
-  $product_types = array("'product'");
-  $types = db_query("SELECT DISTINCT(pcid) FROM {uc_product_classes}");
   $csv_rows = array();
-  while ($type = db_fetch_object($types)) {
-    $product_types[] = "'". $type->pcid ."'";
+
+  // Hard code the ignore of the product kit for this report.
+  $ignored_types = array('product_kit');
+
+  // Build an array of valid product types to include on the report.
+  $product_types = array();
+
+  foreach (uc_product_types() as $type) {
+    // Pass over any ignored types.
+    if (!in_array($type, $ignored_types)) {
+      $product_types[] = "'". $type ."'";
+    }
   }
 
   if ($statistics && $count_views) {
@@ -626,7 +634,7 @@ function uc_reports_sales_custom() {
 }
 
 // Form builder for the custom sales report.
-function uc_reports_sales_custom_form($values, $statuses) {
+function uc_reports_sales_custom_form($form_state, $values, $statuses) {
   $form['search'] = array(
     '#type' => 'fieldset',
     '#title' => t('Customize sales report parameters'),

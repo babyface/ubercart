@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.11 2008/12/09 15:20:37 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.12 2009/01/02 20:18:41 islandusurper Exp $
 
 /**
  * @file
@@ -398,8 +398,9 @@ function theme_uc_cart_block_content() {
         $output .= '<tr class="cart-block-item"><td class="cart-block-item-qty">'. $display_item['qty']['#default_value'] .'x</td>'
                   .'<td class="cart-block-item-title">'. $display_item['title']['#value'] .'</td>'
                   .'<td class="cart-block-item-price">'. uc_currency_format($display_item['#total']) .'</td></tr>';
-        if ($display_item['options']['#value']) {
-          $output .= '<tr><td colspan="3">'. $display_item['options']['#value'] .'</td></tr>';
+
+        if (isset($display_item['description']['#value'])) {
+          $output .= '<tr><td colspan="3">'. $display_item['description']['#value'] .'</td></tr>';
         }
       }
       $total += ($item->price) * $item->qty;
@@ -449,8 +450,11 @@ function uc_cart_exit() {
   }
 }
 
+/**
+ * Implementation of hook_nodeapi().
+ */
 function uc_cart_nodeapi(&$node, $op, $arg3, $arg4) {
-  if (in_array($node->type, module_invoke_all('product_types'))) {
+  if (uc_product_is_product($node->type)) {
     switch ($op) {
       case 'delete':
         db_query("DELETE FROM {uc_cart_products} WHERE nid = %d", $node->nid);
@@ -646,10 +650,13 @@ function uc_cart_view_form($form_state, $items = NULL) {
     if (!empty($display_item)) {
       $form['items'][$i] = $display_item;
       $form['items'][$i]['image']['#value'] = uc_product_get_picture($display_item['nid']['#value'], 'cart');
-      $form['items'][$i]['desc']['#value'] = $display_item['title']['#value']
-        .'<br />'. $display_item['options']['#value'];
+
+      $description = $display_item['title']['#value'] . $display_item['description']['#value'];
+      $form['items'][$i]['desc']['#value'] = $description;
+
       $form['items'][$i]['title']['#type'] = 'value';
-      $form['items'][$i]['options']['#type'] = 'value';
+      $form['items'][$i]['description']['#type'] = 'value';
+
       if (empty($display_item['qty'])) {
         $form['items'][$i]['qty'] = array(
           '#value' => '',
@@ -982,7 +989,6 @@ function uc_cart_get_contents($cid = NULL, $action = NULL) {
       $item->weight = $product->weight;
       $item->data = unserialize($item->data);
       $item->module = $item->data['module'];
-      $item->options = array();
       $item->model = $product->model;
 
       // Invoke hook_cart_item() with $op = 'load' in enabled modules.
@@ -1016,7 +1022,7 @@ function uc_cart_add_item($nid, $qty = 1, $data = NULL, $cid = NULL, $msg = TRUE
     $data['module'] = 'uc_product';
   }
 
-  if (!in_array($node->type, module_invoke_all('product_types'))) {
+  if (!uc_product_is_product($node->type)) {
     drupal_set_message(t('@title is not a product. Unable to add to cart.', array('@title' => $node->title)), 'error');
     return;
   }

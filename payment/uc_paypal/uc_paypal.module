@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.5.2.7 2008/11/21 21:17:26 islandusurper Exp $
+// $Id: uc_paypal.module,v 1.5.2.8 2009/01/02 20:18:41 islandusurper Exp $
 
 /**
  * @file
@@ -14,9 +14,6 @@
  * Ubercart by using the following link.  Thank you!
  *
  * https://www.paypal.com/us/mrb/pal=6NXAPNGSS6DFJ
- *
- * This is a revision/compilation by Ryan of various work contributed by:
- * cosmo83@drupal.org, izi, olav@drupal.org, and patrickharris
  */
 
 
@@ -279,11 +276,6 @@ function uc_paypal_wpp_settings_form() {
 // Process a credit card payment through Website Payments Pro.
 function uc_paypal_wpp_charge($order_id, $amount, $data) {
   global $user;
-
-  if (!function_exists('curl_init')) {
-    drupal_set_message(t('PayPal Website Payments Pro requires curl for PHP.  Please talk to your system administrator to get this.'));
-    return array('success' => FALSE);
-  }
 
   $order = uc_order_load($order_id);
 
@@ -637,11 +629,6 @@ function uc_paypal_ec_checkout($form, &$form_state) {
 // Returns the form for Express Checkout Shortcut Flow.
 function uc_paypal_ec_form() {
   if (!variable_get('uc_cap_uc_paypal_ec_enabled', FALSE)) {
-    return;
-  }
-
-  if (!function_exists('curl_init')) {
-    drupal_set_message(t('PayPal Express Checkout requires curl for PHP.  Please talk to your system administrator to get this.'));
     return;
   }
 

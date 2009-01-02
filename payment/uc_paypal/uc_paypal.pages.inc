@@ -1,12 +1,9 @@
 <?php
-// $Id: uc_paypal.pages.inc,v 1.1.2.4 2008/11/21 21:17:26 islandusurper Exp $
+// $Id: uc_paypal.pages.inc,v 1.1.2.5 2009/01/02 20:18:41 islandusurper Exp $
 
 /**
  * @file
  * Paypal administration menu items.
- *
- * This is a revision/compilation by Ryan of various work contributed by:
- * cosmo83@drupal.org, izi, olav@drupal.org, and patrickharris
  */
 
 // Process Instant Payment Notifiations from PayPal.

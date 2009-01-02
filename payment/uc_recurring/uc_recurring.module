@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.module,v 1.7.2.9 2008/12/09 15:20:37 islandusurper Exp $
+// $Id: uc_recurring.module,v 1.7.2.10 2009/01/02 20:18:41 islandusurper Exp $
 
 /**
  * @file
@@ -470,7 +470,7 @@ function uc_recurring_feature_form($form_state, $node, $feature) {
 
   $form['model'] = array(
     '#type' => 'select',
-    '#title' => t('Applicable Model/SKU'),
+    '#title' => t('Applicable SKU'),
     '#description' => t('Select the applicable product model/SKU for this fee.'),
     '#options' => $options,
     '#default_value' => $fee['model'],

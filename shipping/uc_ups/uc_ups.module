@@ -1,12 +1,10 @@
 <?php
-// $Id: uc_ups.module,v 1.5.2.5 2008/12/11 15:53:50 islandusurper Exp $
+// $Id: uc_ups.module,v 1.5.2.6 2009/01/02 20:18:40 islandusurper Exp $
 
 /**
  * @file
  * Shipping quote module that interfaces with www.ups.com to get rates for small
  * package shipments.
- *
- * Coded by Lyle Mantooth
  */
 
 /******************************************************************************
@@ -74,7 +72,7 @@ function uc_ups_theme() {
 function uc_ups_form_alter(&$form, &$form_state, $form_id) {
   if (isset($form['#node'])) {
     $node = $form['#node'];
-    if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && in_array($node->type, module_invoke_all('product_types'))) {
+    if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && uc_product_is_product($node->type)) {
       $enabled = variable_get('uc_quote_enabled', array());
       $weight = variable_get('uc_quote_method_weight', array('ups' => 0));
       $ups = array('#type' => 'fieldset',
@@ -113,7 +111,7 @@ function uc_ups_product_alter_validate($form, &$form_state) {
  * Implementation of hook_nodeapi().
  */
 function uc_ups_nodeapi(&$node, $op) {
-  if (in_array($node->type, module_invoke_all('product_types'))) {
+  if (uc_product_is_product($node->type)) {
     switch ($op) {
       case 'insert':
       case 'update':
@@ -806,7 +804,7 @@ function uc_ups_quote($products, $details) {
   foreach ($quotes as $key => $quote) {
     if (isset($quote['rate'])) {
       $quotes[$key]['format'] = uc_currency_format($quote['rate']);
-      $quotes[$key]['option_label'] = '<img class="ups_logo" src="'. base_path() . drupal_get_path('module', 'uc_ups') .'/uc_ups_logo.gif" /> '. t('@method Rate', array('@method' => $method['ups']['quote']['accessorials'][$key]));
+      $quotes[$key]['option_label'] = '<img class="ups-logo" src="'. base_path() . drupal_get_path('module', 'uc_ups') .'/uc_ups_logo.gif" /> '. t('@method Rate', array('@method' => $method['ups']['quote']['accessorials'][$key]));
     }
   }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.admin.inc,v 1.1.2.2 2008/12/09 15:20:35 islandusurper Exp $
+// $Id: uc_stock.admin.inc,v 1.1.2.3 2009/01/02 20:18:42 islandusurper Exp $
 
 /**
  * @file
@@ -67,7 +67,7 @@ function uc_stock_report() {
   while ($stock = db_fetch_object($result)) {
     $op = array();
     if (user_access('administer products')) {
-      $op[] = l(t('edit'), 'node/'. $stock->nid .'/edit/stock', $options = array( 'query' => 'destination=admin/store/reports/stock'));
+      $op[] = l(t('edit'), 'node/'. $stock->nid .'/edit/uc-stock', $options = array('query' => 'destination=admin/store/reports/stock'));
     }
 
     // Add the data to a table row for display.

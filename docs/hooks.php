@@ -1,5 +1,5 @@
 <?php
-// $Id: hooks.php,v 1.1.2.6 2008/11/07 21:13:28 islandusurper Exp $
+// $Id: hooks.php,v 1.1.2.7 2009/01/02 20:18:43 islandusurper Exp $
 
 /**
  * @file
@@ -232,6 +232,32 @@ function hook_cart_item($op, &$item) {
       $arg1->manufacturer = $term->name;
       break;
   }
+}
+
+/**
+ * Format data added to an item in the cart for display.
+ *
+ * Modules that add data to cart items when they are selected should display it
+ * with this hook. The return values from each implementation will be
+ * concatenated.
+ *
+ * @param $item
+ *   One of the values of the array returned by uc_cart_get_contents().
+ * @return
+ *   A formatted string to be displayed in the shopping cart block and on the
+ *   cart page.
+ */
+function hook_cart_item_description($item) {
+  $rows = array();
+  foreach (_uc_cart_product_get_options($item) as $option) {
+    $rows[] = t('@attribute: @option', array('@attribute' => $option['attribute'], '@option' => $option['name']));
+  }
+
+  if (count($rows)) {
+    $output = theme('item_list', $rows, NULL, 'ul', array('class' => 'product-description'));
+  }
+
+  return $output;
 }
 
 /**

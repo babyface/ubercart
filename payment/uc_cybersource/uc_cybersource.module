@@ -1,11 +1,9 @@
 <?php
-// $Id: uc_cybersource.module,v 1.4.2.4 2008/11/07 21:13:27 islandusurper Exp $
+// $Id: uc_cybersource.module,v 1.4.2.5 2009/01/02 20:18:41 islandusurper Exp $
 
 /**
  * @file
  * A module used for CyberSource's Silent Order POST method of payment.
- *
- * Developed by Ryan of Ubercart.org.
  *
  * Development sponsored by Acquia - http://acquia.com
  */
@@ -291,12 +289,6 @@ function uc_cybersource_charge($order_id, $amount, $data) {
 }
 
 function _uc_cybersource_post_charge($order, $amount, $data, $cc_type, $country) {
-  // Check for cURL support.
-  if (!function_exists('curl_init')) {
-    drupal_set_message(t('Cybersource requires cURL.  Please talk to your system administrator to get this configured.'));
-    return array('success' => FALSE);
-  }
-
   // Include the HOP.php per the module instructions.
   $hop = drupal_get_path('module', 'uc_cybersource') .'/HOP.php';
   if (!file_exists($hop)) {
@@ -419,12 +411,6 @@ function _uc_cybersource_post_charge($order, $amount, $data, $cc_type, $country)
 
 // Handles the SOAP charge request and Ubercart order save.
 function _uc_cybersource_soap_charge($order, $amount, $data, $cc_type, $country) {
-  // Check for compatibility.
-  if (!class_exists('SoapClient') || !class_exists('DOMDocument')) {
-    drupal_set_message(t('CyberSource needs PHP to have the SOAP and DOM extensions enabled.  Please talk to your system administrator to get this configured.'));
-    return array('success' => FALSE);
-  }
-
   // Include the SOAP helper file.
   require_once(drupal_get_path('module', 'uc_cybersource') .'/uc_cybersource.soap.inc');
   global $user;
@@ -714,12 +700,6 @@ function uc_cybersource_tax_test($order) {
 function uc_cybersource_calculate_tax($order) {
   // Kick out if the tax service is not enabled.
   if (!variable_set('uc_cybersource_soap_tax_calculate', FALSE)) {
-    return array();
-  }
-
-  // Check for compatibility.
-  if (!class_exists('SoapClient') || !class_exists('DOMDocument')) {
-    drupal_set_message(t('CyberSource needs PHP to have the SOAP and DOM extensions enabled.  Please talk to your system administrator to get this configured.'));
     return array();
   }
 

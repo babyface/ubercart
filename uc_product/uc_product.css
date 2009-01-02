@@ -1,6 +1,6 @@
-/* $Id: uc_product.css,v 1.9.2.2 2008/11/07 21:13:24 islandusurper Exp $ */
+/* $Id: uc_product.css,v 1.9.2.3 2009/01/02 20:18:43 islandusurper Exp $ */
 
-.product_image {
+.product-image {
   float: right;
   clear: right;
   text-align: center;
@@ -9,7 +9,7 @@
   margin-left: 4px;
 }
 
-.display_price {
+.display-price {
   float: right;
   clear: right;
   width: 100px;

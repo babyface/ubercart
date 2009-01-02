@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.5 2008/11/21 21:17:25 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.6 2009/01/02 20:18:40 islandusurper Exp $
 
 /**
  * @file
@@ -698,7 +698,7 @@ function uc_store_format_settings_form() {
   $form['currency']['uc_currency_code'] = array(
     '#type' => 'textfield',
     '#title' => t('Default currency'),
-    '#description' => t('While not used directly in formatting, the currency code is used by other modules as the primary currnecy for your site.  Enter here your three character <a href="!url">ISO 4217</a> currency code.', array('!url' => 'http://en.wikipedia.org/wiki/ISO_4217#Active_codes')),
+    '#description' => t('While not used directly in formatting, the currency code is used by other modules as the primary currency for your site.  Enter here your three character <a href="!url">ISO 4217</a> currency code.', array('!url' => 'http://en.wikipedia.org/wiki/ISO_4217#Active_codes')),
     '#default_value' => variable_get('uc_currency_code', 'USD'),
     '#maxlength' => 3,
     '#size' => 5,
@@ -1035,7 +1035,7 @@ function uc_country_remove_form_submit($form, &$form_state) {
   $result = db_query("SELECT * FROM {uc_countries} WHERE country_id = %d", $country_id);
   if (!($country = db_fetch_object($result))) {
     drupal_set_message(t('Attempted to remove an invalid country.'), 'error');
-    drupal_goto('admin/store/settings/countries');
+    drupal_goto('admin/store/settings/countries/edit');
   }
 
   db_query("DELETE FROM {uc_countries} WHERE country_id = %d", $country_id);

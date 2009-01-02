@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.ca.inc,v 1.1.2.2 2008/12/11 15:53:50 islandusurper Exp $
+// $Id: uc_roles.ca.inc,v 1.1.2.3 2009/01/02 20:18:42 islandusurper Exp $
 
 /**
  * @file
@@ -14,8 +14,13 @@
 
 /**
  * Implementation of hook_ca_entity().
+ *
+ * An entity is defined in order to get a role expiration down
+ * to token in the email.
  */
 function uc_roles_ca_entity() {
+
+  // CA entity for a role expiration object.
   $entities['uc_roles_expiration'] = array(
     '#title' => t('Ubercart role expiration'),
     '#type' => 'object',
@@ -43,7 +48,7 @@ function uc_roles_ca_predicate() {
           '#name' => 'uc_order_status_condition',
           '#title' => t('If the order status is completed.'),
           '#argument_map' => array(
-            'order' => 'order',
+            'order' => 'updated_order',
           ),
           '#settings' => array(
             'order_status' => 'completed',
@@ -172,6 +177,7 @@ function uc_roles_ca_predicate() {
  */
 function uc_roles_ca_action() {
 
+  // Renew a role expiration.
   $actions['uc_roles_order_renew'] = array(
     '#title' => t('Renew the roles on an order.'),
     '#category' => t('renewal'),
@@ -184,6 +190,7 @@ function uc_roles_ca_action() {
     ),
   );
 
+  // Send an email to an order with a role expiration
   $actions['uc_roles_order_email'] = array(
     '#title' => t('Send an order email regarding roles.'),
     '#category' => t('Notification'),
@@ -200,6 +207,7 @@ function uc_roles_ca_action() {
     ),
   );
 
+  // Send an email to a user with a role expiration
   $actions['uc_roles_user_email'] = array(
     '#title' => t('Send an order email regarding roles.'),
     '#category' => t('Notification'),
@@ -279,13 +287,14 @@ function uc_roles_action_order_email($order, $role_expiration, $settings) {
     'uc_roles' => $role_expiration,
   );
 
+  // Replace tokens and parse recipients.
   $recipients = array();
   $addresses = token_replace_multiple($settings['addresses'], $settings['replacements']);
-
   foreach (explode("\n", $addresses) as $address) {
     $recipients[] = trim($address);
   }
 
+  // Send to each recipient.
   foreach ($recipients as $email) {
     $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
 
@@ -295,8 +304,9 @@ function uc_roles_action_order_email($order, $role_expiration, $settings) {
   }
 }
 
+// Email settings form
 function uc_roles_action_order_email_form($form_state, $settings = array()) {
-  return ca_build_email_form($form_state, $settings, array('global', 'roles'));
+  return ca_build_email_form($form_state, $settings, array('global', 'uc_roles'));
 }
 
 /**
@@ -304,23 +314,24 @@ function uc_roles_action_order_email_form($form_state, $settings = array()) {
  *
  * The recipients, subject, and message fields take order token replacements.
  */
-function uc_roles_action_user_email($user, $role_expiration, $settings) {
+function uc_roles_action_user_email($account, $role_expiration, $settings) {
   $language = language_default();
 
   // Token replacements for the subject and body
   $settings['replacements'] = array(
     'global' => NULL,
-    'user' => $user,
+    'user' => $account,
     'uc_roles' => $role_expiration,
   );
 
+  // Replace tokens and parse recipients.
   $recipients = array();
   $addresses = token_replace_multiple($settings['addresses'], $settings['replacements']);
-
   foreach (explode("\n", $addresses) as $address) {
     $recipients[] = trim($address);
   }
 
+  // Send to each recipient.
   foreach ($recipients as $email) {
     $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
 
@@ -330,10 +341,14 @@ function uc_roles_action_user_email($user, $role_expiration, $settings) {
   }
 }
 
+// Email settings form
 function uc_roles_action_user_email_form($form_state, $settings = array()) {
   return ca_build_email_form($form_state, $settings, array('global', 'uc_roles'));
 }
 
+/**
+ * Builds an email settings form.
+ */
 function ca_build_email_form($form_state, $settings, $token_filters) {
   $form = array();
 
@@ -446,10 +461,7 @@ function uc_roles_action_order_renew($order) {
   }
 }
 
+// Borrow the order form for role renewal order state configuration.
 function uc_roles_action_order_renew_form($form_state, $settings = array()) {
   return uc_order_action_update_status_form($form_state, $settings);
-}
-
-function uc_roles_action_order_renew_submit($form, &$form_state) {
-  return uc_order_action_update_status_submit($form, $form_state);
 }

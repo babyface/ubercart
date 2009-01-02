@@ -1,10 +1,29 @@
 <?php
-// $Id: uc_ups.install,v 1.5.2.4 2008/11/07 21:13:25 islandusurper Exp $
+// $Id: uc_ups.install,v 1.5.2.5 2009/01/02 20:18:40 islandusurper Exp $
 
 /**
  * @file
  * Install hooks for uc_ups.module.
  */
+
+/**
+ * Implementation of hook_requirements().
+ */
+function uc_ups_requirements($phase) {
+  $t = get_t();
+
+  $has_simplexml = class_exists('SimpleXMLElement');
+  $requirements['uc_ups_simplexml'] = array(
+    'title' => $t('SimpleXML'),
+    'value' => $has_simplexml ? $t('Enabled') : $t('Not found'),
+  );
+  if (!$has_simplexml) {
+    $requirements['uc_ups_simplexml']['severity'] = REQUIREMENT_ERROR;
+    $requirements['uc_ups_simplexml']['description'] = $t('UPS requires the PHP <a href="!simplexml_url">SimpleXML</a> library.', array('!simplexml_url' => 'http://php.net/manual/en/simplexml.setup.php'));
+  }
+
+  return $requirements;
+}
 
 function uc_ups_schema() {
   $schema = array();

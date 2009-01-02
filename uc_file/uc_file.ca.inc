@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.ca.inc,v 1.1.2.1 2008/11/21 21:17:26 islandusurper Exp $
+// $Id: uc_file.ca.inc,v 1.1.2.2 2009/01/02 20:18:43 islandusurper Exp $
 
 /**
  * @file
@@ -13,11 +13,28 @@
  ******************************************************************************/
 
 /**
+ * Implementation of hook_ca_entity().
+ *
+ * An entity is defined in order to get file expiration(s) down
+ * to token in the email.
+ */
+function uc_file_ca_entity() {
+
+  // CA entity for a file expiration object.
+  $entities['uc_file_expiration'] = array(
+    '#title' => t('Ubercart file expiration(s)'),
+    '#type' => 'array',
+  );
+
+  return $entities;
+}
+
+/**
  * Implementation of hook_ca_predicate().
  */
 function uc_file_ca_predicate() {
 
-  // Renew all the roles on an order when the status matches what's set in the roles admin settings.
+  // Renew all the files on an order when the status matches what's set in the files admin settings.
   $configurations['uc_file_renewal'] = array(
     '#title' => t('Renew purchased files'),
     '#description' => t('Renew purchased files if the order status matches.'),
@@ -31,7 +48,7 @@ function uc_file_ca_predicate() {
           '#name' => 'uc_order_status_condition',
           '#title' => t('If the order status is completed.'),
           '#argument_map' => array(
-            'order' => 'order',
+            'order' => 'updated_order',
           ),
           '#settings' => array(
             'order_status' => 'completed',
@@ -48,6 +65,34 @@ function uc_file_ca_predicate() {
         ),
         '#settings' => array(
           'order_status' => 'completed',
+        ),
+      ),
+    ),
+  );
+
+  $order_args = array(
+    'order' => 'order',
+    'expiration' => 'expiration',
+  );
+
+  // Notify the user when a file is granted.
+  $configurations['uc_file_notify_grant_trigger'] = array(
+    '#title' => t('Notify customer when a file is granted'),
+    '#description' => t('Notify the customer when they have had a file granted on their user.'),
+    '#class' => 'notification',
+    '#trigger' => 'uc_file_notify_grant',
+    '#status' => 1,
+    '#actions' => array(
+      array(
+        '#name' => 'uc_file_order_email',
+        '#title' => t('Send an e-mail to the customer'),
+        '#argument_map' => $order_args,
+        '#settings' => array(
+          'from' => uc_store_email_from(),
+          'addresses' => '[order-email]',
+          'subject' => t("File Downloads for Order# [order-id]"),
+          'message' => t("Your order (order# [order-link]) at [store-name] included file download(s). You may access them with the following link(s):\n\n[file-downloads]\n\nAfter downloading these files these links will have expired. If you need to download the files again, you can login at [site-login] and visit the \"My Account\" section of the site.\n\nThanks again, \n\n[store-name]\n[site-slogan]"),
+          'format' => 1,
         ),
       ),
     ),
@@ -73,7 +118,144 @@ function uc_file_ca_action() {
     ),
   );
 
+  // Send an email to an order with a file expiration
+  $actions['uc_file_order_email'] = array(
+    '#title' => t('Send an order email regarding files.'),
+    '#category' => t('Notification'),
+    '#callback' => 'uc_file_action_order_email',
+    '#arguments' => array(
+      'order' => array(
+        '#entity' => 'uc_order',
+        '#title' => t('Order'),
+      ),
+      'expiration' => array(
+        '#entity' => 'uc_file_expiration',
+        '#title' => t('File expiration'),
+      ),
+    ),
+  );
+
   return $actions;
+}
+
+/**
+ * Implementation of hook_ca_trigger().
+ */
+function uc_file_ca_trigger() {
+
+  $args = array(
+    'order' => array(
+      '#entity' => 'uc_order',
+      '#title' => t('Order'),
+    ),
+    'expiration' => array(
+      '#entity' => 'uc_file_expiration',
+      '#title' => t('File expiration'),
+    ),
+  );
+
+  $triggers['uc_file_notify_grant'] = array(
+    '#title' => t('E-mail for granted files'),
+    '#category' => t('Notification'),
+    '#arguments' => $args,
+  );
+
+  return $triggers;
+}
+
+/**
+ * Send an email with order and file replacement tokens.
+ *
+ * The recipients, subject, and message fields take order token replacements.
+ */
+function uc_file_action_order_email($order, $file_expiration, $settings) {
+
+  $account = user_load(array('uid' => $order->uid));
+  $language = language_default();
+
+  // Token replacements for the subject and body
+  $settings['replacements'] = array(
+    'global' => NULL,
+    'order' => $order,
+    'user' => $account,
+    'uc_file' => $file_expiration,
+  );
+
+  // Replace tokens and parse recipients.
+  $recipients = array();
+  $addresses = token_replace_multiple($settings['addresses'], $settings['replacements']);
+  foreach (explode("\n", $addresses) as $address) {
+    $recipients[] = trim($address);
+  }
+
+  // Send to each recipient.
+  foreach ($recipients as $email) {
+    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
+
+    if (!$sent['result']) {
+      watchdog('ca', 'Attempt to e-mail @email concerning order @order_id failed.', array('@email' => $email, '@order_id' => $order->order_id), WATCHDOG_ERROR);
+    }
+  }
+}
+
+// Email settings form
+function uc_file_action_order_email_form($form_state, $settings = array()) {
+  return uc_file_build_email_form($form_state, $settings, array('global', 'uc_file'));
+}
+
+/**
+ * Builds an email settings form.
+ */
+function uc_file_build_email_form($form_state, $settings, $token_filters) {
+  $form = array();
+
+  $form['from'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Sender'),
+    '#default_value' => $settings['from'],
+    '#description' => t('The "From" address.'),
+    '#required' => TRUE,
+  );
+  $form['addresses'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Recipients'),
+    '#default_value' => $settings['addresses'],
+    '#description' => t('Enter the email addresses to receive the notifications, one on each line. You may use order tokens for dynamic email addresses.'),
+    '#required' => TRUE,
+  );
+  $form['subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $settings['subject'],
+    '#required' => TRUE,
+  );
+  $form['message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Message'),
+    '#default_value' => $settings['message'],
+  );
+  $form['format'] = filter_form($settings['format']);
+
+  $form['token_help'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Replacement patterns'),
+    '#description' => t('You can make use of the replacement patterns in the recipients field, the subject, and the message body.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  foreach ($token_filters as $name) {
+    $form['token_help'][$name] = array(
+      '#type' => 'fieldset',
+      '#title' => t('@name replacement patterns', array('@name' => drupal_ucfirst($name))),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['token_help'][$name]['content'] = array(
+      '#value' => theme('token_help', $name),
+    );
+  }
+
+  return $form;
 }
 
 /**
@@ -140,17 +322,5 @@ function uc_file_action_order_renew($order) {
   }
 
   // Notify the user of their download(s).
-  if (variable_get('uc_file_download_notification', FALSE) && count($user_downloads)) {
-    uc_file_email_download($order_user, $order, $user_downloads);
-  }
-
+  ca_pull_trigger('uc_file_notify_grant', $order, $user_downloads);
 }
-
-function uc_file_action_order_renew_form($form_state, $settings = array()) {
-  return uc_order_action_update_status_form($form_state, $settings);
-}
-
-function uc_file_action_order_renew_submit($form, &$form_state) {
-  return uc_order_action_update_status_submit($form, $form_state);
-}
-

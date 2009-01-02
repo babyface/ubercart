@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.5.2.2 2008/11/07 21:13:21 islandusurper Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.5.2.3 2009/01/02 20:18:41 islandusurper Exp $
 
 /**
  * @file
@@ -28,11 +28,10 @@ function uc_checkout_pane_cart($op) {
       $items = uc_cart_get_contents();
       $output = '<table>';
       foreach ($items as $item) {
-        $rows = array();
-        foreach ($item->options as $option) {
-          $rows[] = t('@attribute: @option', array('@attribute' => $option['attribute'], '@option' => $option['name']));
+        $desc = check_plain($item->title);
+        foreach (module_implements('cart_item_description') as $module) {
+          $desc .= module_invoke($module, 'cart_item_description', $item);
         }
-        $desc = check_plain($item->title) . theme('item_list', $rows, NULL, 'ul', array('class' => 'product-options'));
         $output .= '<tr valign="top"><td>'. $item->qty .'x</td><td width="100%">'. $desc
                   .'</td><td nowrap="nowrap">'. uc_currency_format($item->price * $item->qty) .'</td></tr>';
       }
@@ -538,48 +537,51 @@ function _checkout_pane_data($pane_id, $key) {
   }
 }
 
+/**
+ * Format the cart contents table on the checkout page.
+ *
+ * @param $show_subtotal
+ *   TRUE or FALSE indicating if you want a subtotal row displayed in the table.
+ * @return
+ *   The HTML output for the cart review table.
+ *
+ * @ingroup themeable
+ */
 function theme_cart_review_table($show_subtotal = TRUE) {
-  $items = uc_cart_get_contents();
   $subtotal = 0;
 
-  $output = '<table class="cart-review"><thead>'
-           .'<tr class="first last odd"><td class="first odd qty">'. t('Qty')
-           .'</td><td class="even products">'. t('Products')
-           .'</td><td class="last odd price">'. t('Price')
-           .'</td></tr></thead><tbody>';
+  // Set up table header.
+  $header = array(
+    array('data' => t('Qty'), 'class' => 'qty'),
+    array('data' => t('Products'), 'class' => 'products'),
+    array('data' => t('Price'), 'class' => 'price'),
+  );
 
-  $row = 1;
-  for ($i = 0; $i < count($items); $i++) {
-    $item = $items[$i];
-
-    $rows = array();
-    foreach ($item->options as $option) {
-      // $rows[] = $option['attribute'] .': '. $option['name'];
-      $rows[] = t('@attribute: @option', array('@attribute' => $option['attribute'], '@option' => $option['name']));
-    }
-    $desc = check_plain($item->title) . theme('item_list', $rows, NULL, 'ul', array('class' => 'product-options'));
-
+  // Set up table rows.
+  foreach (uc_cart_get_contents() as $item) {
     $total = ($item->qty) ? $item->qty * $item->price : $item->price;
     $subtotal += $total;
-    $qty = ($item->qty) ? $item->qty : '';
-    $tr_class = ($i % 2 == 0) ? 'even' : 'odd';
-    if ($show_subtotal && $i == count($items)) {
-      $tr_class .= ' last';
+
+    $description = check_plain($item->title);
+    foreach (module_implements('cart_item_description') as $module) {
+      $description .= module_invoke($module, 'cart_item_description', $item);
     }
 
-    $output .= '<tr class="'. $tr_class .'"><td class="qty">'
-             . t('!qtyx', array('!qty' => $qty)) .'</td><td class="products">'
-             . $desc .'</td><td class="price">'. uc_currency_format($total)
-              .'</td></tr>';
+    $rows[] = array(
+      array('data' => t('@qtyx', array('@qty' => $item->qty)), 'class' => 'qty'),
+      array('data' => $description, 'class' => 'products'),
+      array('data' => check_plain(uc_currency_format($total)), 'class' => 'price'),
+    );
   }
-  if ($show_subtotal) {
-    $tr_class = ($tr_class == 'even') ? 'odd' : 'even';
-    $output .= '<tr class="'. $tr_class .' last"><td class="subtotal" '
-              .'colspan="4"><span id="subtotal-title">'. t('Subtotal:')
-              .'</span> '. uc_currency_format($subtotal) .'</td></tr>';
-  }
-  $output .= '</tbody></table>';
 
-  return $output;
+  // Add the subtotal as the final row.
+  if ($show_subtotal) {
+    $rows[] = array(
+      'data' => array(array('data' => '<span id="subtotal-title">' . t('Subtotal:') . '</span> ' . check_plain(uc_currency_format($subtotal)), 'colspan' => 4, 'class' => 'subtotal')),
+      'class' => 'subtotal',
+    );
+  }
+
+  return theme('table', $header, $rows, array('class' => 'cart-review'));
 }
 

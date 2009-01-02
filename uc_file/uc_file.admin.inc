@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.admin.inc,v 1.1.2.3 2008/11/21 21:17:26 islandusurper Exp $
+// $Id: uc_file.admin.inc,v 1.1.2.4 2009/01/02 20:18:43 islandusurper Exp $
 
 /**
  * @file
@@ -43,14 +43,19 @@ function uc_file_admin_files_form_show_files($form_state) {
 
   $form['#tree'] = TRUE;
 
-  $header = _uc_file_admin_files_form_header();
+  $form['#header'] = array(
+    array(),
+    array('data' => t('File'     ), 'field' => 'f.filename', 'sort' => 'asc'),
+    array('data' => t('Product'  ), 'field' => 'n.title'                    ),
+    array('data' => t('SKU'), 'field' => 'fp.model'                   )
+  );
 
   // Create pager.
   $query = pager_query(
     "SELECT n.nid, f.filename, n.title, fp.model, f.fid, pf.pfid FROM {uc_files} as f ".
       "LEFT JOIN {uc_file_products} as fp ON (f.fid = fp.fid) ".
       "LEFT JOIN {uc_product_features} as pf ON (fp.pfid = pf.pfid) ".
-      "LEFT JOIN {node} as n ON (pf.nid = n.nid) ". tablesort_sql($header),
+      "LEFT JOIN {node} as n ON (pf.nid = n.nid) ". tablesort_sql($form['#header']),
     UC_FILE_PAGER_SIZE,
     0,
     "SELECT COUNT(*) FROM {uc_files}"
@@ -155,7 +160,7 @@ function uc_file_admin_files_form_show_submit($form, &$form_state) {
 function theme_uc_file_admin_files_form_show($form) {
   $output = '';
 
-  $header = _uc_file_admin_files_form_header();
+  $header = $form['#header'];
 
   // Format the file table.
   $rows = array();
@@ -189,7 +194,7 @@ function theme_uc_file_admin_files_form_show($form) {
   }
 
   // Render everything.
-  $output .= '<p>'. t('File downloads can be attached to any Ubercart product as a product feature. For security reasons the <a href="!download_url">file downloads directory</a> is separated from the Drupal <a href="!file_url">file system</a>. Here are the list of files (and their associated Ubercart products) that can be used for file downloads.', array('!download_url' => url('admin/store/settings/products/edit/features'), '!file_url' => url('admin/settings/file-system'))) .'</p>';
+  $output .= '<p>'. t('File downloads can be attached to any Ubercart product as a product feature. For security reasons the <a href="!download_url">file downloads directory</a> is separated from the Drupal <a href="!file_url">file system</a>. Here are the list of files (and their associated Ubercart products) that can be used for file downloads.', array('!download_url' => url('admin/store/settings/products/edit/features', array('query' => 'destination=admin/store/products/files')), '!file_url' => url('admin/settings/file-system'))) .'</p>';
   $output .= drupal_render($form['uc_file_action']);
   $output .= drupal_render($form['uc_file_select']);
   $output .= theme('table', $header, $rows);
@@ -222,7 +227,7 @@ function uc_file_admin_files_form_action($form_state) {
       $has_directory = FALSE;
       foreach ($file_ids as $file_id) {
 
-        // Gather a list of user-selcted filenames.
+        // Gather a list of user-selected filenames.
         $file = uc_file_get_by_id($file_id);
         $filename = $file->filename;
         $file_list[] = (substr($filename, -1) == "/") ? $filename .' ('. t('directory') .')' : $filename;
@@ -459,8 +464,7 @@ function _uc_file_build_js_file_display($file_ids) {
   $recursion_file_ids = _uc_file_sort_names(_uc_file_get_dir_file_ids($file_ids, TRUE));
   foreach ($recursion_file_ids as $file_id) {
     $file = uc_file_get_by_id($file_id);
-    $filename = $file->filename;
-    $recursion[] = '<li>'. $filename .'</li>';
+    $recursion[] = '<li>'. $file->filename .'</li>';
   }
 
   // Gather the files if recursion isn't selected. Get 'em all ready to be punched into
@@ -468,8 +472,7 @@ function _uc_file_build_js_file_display($file_ids) {
   $no_recursion_file_ids = $file_ids;
   foreach ($no_recursion_file_ids as $file_id) {
     $file = uc_file_get_by_id($file_id);
-    $filename = $file->filename;
-    $no_recursion[] = '<li>'. $filename .'</li>';
+    $no_recursion[] = '<li>'. $file->filename .'</li>';
   }
 
   // We'll disable the recursion checkbox if they're equal.
@@ -485,41 +488,4 @@ function _uc_file_build_js_file_display($file_ids) {
   drupal_add_js('uc_file_list[true] = '. drupal_to_js('<li>'. implode('</li><li>', $recursion) .'</li>') .';', 'inline');
 
   return $result;
-}
-
-function _uc_file_admin_files_form_header() {
-  // Create the header for the table/pager.
-  return array(
-    array(),
-    array('data' => t('File'     ), 'field' => 'f.filename', 'sort' => 'asc'),
-    array('data' => t('Product'  ), 'field' => 'n.title'                    ),
-    array('data' => t('Model/SKU'), 'field' => 'fp.model'                   )
-  );
-}
-
- /**
- * Form builder for file download notification settings.
- */
-function uc_file_notify_settings() {
-
-  $form['uc_file_download_notification'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Send email to customer with file download link(s).'),
-    '#default_value' => variable_get('uc_file_download_notification', FALSE),
-  );
-  $form['uc_file_download_notification_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Message subject'),
-    '#default_value' => variable_get('uc_file_download_notification_subject', uc_get_message('uc_file_download_subject')),
-  );
-  $form['uc_file_download_notification_message'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Message text'),
-    '#default_value' => variable_get('uc_file_download_notification_message', uc_get_message('uc_file_download_message')),
-    '#description' => t('The message the user receives after purchasing products with file downloads (<a href="!token_url">uses order, uc_file, and global tokens</a>)', array('!token_url' => url('admin/store/help/tokens'))),
-    '#rows' => 10,
-  );
-  $form['uc_file_download_notification_format'] = filter_form(variable_get('uc_file_download_notification_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_file_download_notification_format'));
-
-  return system_settings_form($form);
 }

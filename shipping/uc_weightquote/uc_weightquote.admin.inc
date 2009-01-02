@@ -1,17 +1,19 @@
 <?php
-// $Id: uc_weightquote.admin.inc,v 1.1.2.2 2008/11/07 21:13:28 islandusurper Exp $
+// $Id: uc_weightquote.admin.inc,v 1.1.2.3 2009/01/02 20:18:42 islandusurper Exp $
 
 /**
  * @file
  * Shipping quote administration menu items.
- *
- * Coded by Lyle Mantooth.
  */
 
 /**
  * Configure the store default shipping rate.
  */
 function uc_weightquote_admin_settings() {
+  $form['uc_weightquote_conditions'] = array(
+    '#value' => '<p>'. l(t('Set the conditions that will return a weight-based quote.'), 'admin/settings/ca/uc_weightquote_get_quote/edit/conditions') .'</p>',
+  );
+
   $form['uc_weightquote_base_rate'] = array('#type' => 'textfield',
     '#title' => t('Base price'),
     '#description' => t('The starting price of weight based shipping costs.'),

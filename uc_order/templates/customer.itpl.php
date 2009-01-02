@@ -1,5 +1,5 @@
 <?php
-// $Id: customer.itpl.php,v 1.5.2.1 2008/11/07 21:13:25 islandusurper Exp $
+// $Id: customer.itpl.php,v 1.5.2.2 2009/01/02 20:18:41 islandusurper Exp $
 
 /**
  * This file is the default customer invoice template for Ubercart.
@@ -202,7 +202,7 @@
                                 echo t('(!price each)', array('!price' => uc_currency_format($product->price)));
                               } ?>
                               <br />
-                              <?php echo t('Model: ') . $product->model; ?><br />
+                              <?php echo t('SKU: ') . $product->model; ?><br />
                               <?php if (is_array($product->data['attributes']) && count($product->data['attributes']) > 0) {?>
                               <?php foreach ($product->data['attributes'] as $key => $value) {
                                 echo '<li>'. $key .': '. $value .'</li>';

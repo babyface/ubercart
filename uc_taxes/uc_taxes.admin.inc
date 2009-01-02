@@ -1,11 +1,9 @@
 <?php
-// $Id: uc_taxes.admin.inc,v 1.1.2.3 2008/11/21 21:17:25 islandusurper Exp $
+// $Id: uc_taxes.admin.inc,v 1.1.2.4 2009/01/02 20:18:39 islandusurper Exp $
 
 /**
  * @file
  * Taxes administration menu items.
- *
- * Coded by Lyle Mantooth.
  */
 
 /**
@@ -33,6 +31,7 @@ function uc_taxes_admin_settings() {
  */
 function uc_taxes_form($form_state, $tax_id = 0) {
   $form = array();
+
   if ($tax_id != 0) {
     $form_state['values'] = db_fetch_array(db_query("SELECT * FROM {uc_taxes} WHERE id = %d", $tax_id));
     $form_state['values']['taxed_product_types'] = array_values(unserialize($form_state['values']['taxed_product_types']));
@@ -40,11 +39,13 @@ function uc_taxes_form($form_state, $tax_id = 0) {
   }
 
   $form['id'] = array('#type' => 'hidden', '#value' => $form_state['values']['id']);
+
   $form['name'] = array('#type' => 'textfield',
     '#title' => t('Name'),
     '#default_value' => isset($form_state['values']['name']) ? $form_state['values']['name'] : '',
     '#required' => TRUE,
   );
+
   $form['rate'] = array('#type' => 'textfield',
     '#title' => t('Rate'),
     '#description' => t('The tax rate as a percent or decimal. Examples: 6%, .06'),
@@ -52,25 +53,23 @@ function uc_taxes_form($form_state, $tax_id = 0) {
     '#size' => 15,
     '#required' => TRUE,
   );
-  $types = array();
-  $node_types = module_invoke_all('node_info');
-  $product_types = module_invoke_all('product_types');
-  foreach ($product_types as $type) {
-    $types[$type] = $node_types[$type]['name'];
-  }
+
   $form['taxed_product_types'] = array('#type' => 'checkboxes',
     '#title' => t('Taxed product types'),
     '#multiple' => TRUE,
-    '#options' => $types,
+    '#options' => uc_product_type_names(),
     '#default_value' => isset($form_state['values']['taxed_product_types']) ? $form_state['values']['taxed_product_types'] : array(),
     '#description' => t('Apply taxes to specific product types.'),
   );
+
   $options = array();
+
   foreach (_line_item_list() as $line_item) {
     if (!in_array($line_item['id'], array('subtotal', 'tax_subtotal', 'total'))) {
       $options[$line_item['id']] = $line_item['title'];
     }
   }
+
   $form['taxed_line_items'] = array('#type' => 'checkboxes',
     '#title' => t('Taxed line items'),
     '#multiple' => TRUE,
@@ -78,11 +77,13 @@ function uc_taxes_form($form_state, $tax_id = 0) {
     '#default_value' => isset($form_state['values']['taxed_line_items']) ? $form_state['values']['taxed_line_items'] : array(),
     '#description' => t('Adds the checked line item types to the total before applying this tax.'),
   );
+
   $form['weight'] = array('#type' => 'weight',
     '#title' => t('Weight'),
     '#default_value' => isset($form_state['values']['weight']) ? $form_state['values']['weight'] : 0,
     '#description' => t('Lighter taxes are applied to an order first. This value is unimportant if there are no taxes on tax line items.'),
   );
+
   $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
 
   return $form;

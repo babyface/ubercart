@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.13 2008/12/09 15:20:42 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.14 2009/01/02 20:18:48 islandusurper Exp $
 
 /**
  * @file
@@ -88,6 +88,18 @@ function uc_google_checkout_terminal_title($order) {
   return t('Google Checkout terminal: Order @order_id', array('@order_id' => $order->order_id));
 }
 
+function uc_google_checkout_init() {
+  // When an order comes in from Google Checkout, we need to unset some
+  // $_SESSION data. Since this isn't done under the customer's user, we
+  // do it when they next load a page.
+  global $user;
+  $users = variable_get('uc_google_checkout_order_users', array());
+  if (isset($users[$user->uid])) {
+    unset($_SESSION['cart_order'], $_SESSION['do_complete'], $_SESSION['new_user'], $users[$user->uid]);
+    variable_set('uc_google_checkout_order_users', $users);
+  }
+}
+
 function uc_google_checkout_theme() {
   return array(
     'uc_google_checkout_shipping_settings' => array(
@@ -103,7 +115,7 @@ function uc_google_checkout_theme() {
 
 function uc_google_checkout_form_alter(&$form, &$form_state, $form_id) {
   $node = $form['#node'];
-  if (is_object($node) && $form_id == $node->type .'_node_form' && in_array($node->type, module_invoke_all('product_types'))) {
+  if (is_object($node) && $form_id == $node->type .'_node_form' && uc_product_is_product($node->type)) {
     $policy_url = 'https://checkout.google.com/support/sell/bin/answer.py?answer=75724';
     $form['google_checkout'] = array('#type' => 'fieldset',
       '#title' => t('Google Checkout settings'),
@@ -133,8 +145,11 @@ function uc_google_checkout_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+/**
+ * Implementation of hook_nodeapi().
+ */
 function uc_google_checkout_nodeapi(&$node, $op) {
-  if (in_array($node->type, module_invoke_all('product_types'))) {
+  if (uc_product_is_product($node->type)) {
     switch ($op) {
       case 'insert':
       case 'update':
@@ -389,7 +404,7 @@ function uc_google_checkout_cart_form() {
     '#value' => ($disable ? '<img ' : '<input name="submit" type="image" ') .'alt="'. t('Google Checkout') .'" title="'. t('Fast checkout through Google.') .'" src="'. $checkout_url .'/buttons/checkout.gif?merchant_id='. $merchant_id .'&w='. $width .'&h='. $height .'&style='. variable_get('uc_google_checkout_button_color', 'trans') .'&variant='. ($disable ? 'disabled' : 'text') .'&loc=en_US" height="'. $height .'" width="'. $width .'" />',
   );
   $form['submit_help'] = array(
-    '#value' => '<br /><a href="javascript:void(window.open(\' http://checkout.google.com/seller/what_is_google_checkout.html\',\'whatischeckout\',\'scrollbars=0,resizable=1,directories=0,height=250,width=400\'));" OnMouseOver="return window.status = '. t('What is Google Checkout?') .';" OnMouseOut="return window.status = \'\';">'. t('What is Google Checkout?') .'</a>',
+    '#value' => '<br /><a href="javascript:void(window.open(\' http://checkout.google.com/seller/what_is_google_checkout.html\',\'whatischeckout\',\'scrollbars=0,resizable=1,directories=0,height=250,width=400\'));" OnMouseOver="return window.status = \''. t('What is Google Checkout?') .'\';" OnMouseOut="return window.status = \'\';">'. t('What is Google Checkout?') .'</a>',
   );
 
   return $form;
@@ -412,6 +427,7 @@ function uc_google_checkout_cart_form_submit($form, &$form_state) {
     $order = new stdClass();
     $order->uid = $user->uid;
     $order->order_id = $_SESSION['cart_order'];
+    $order->primary_email = $user->mail;
     $order->order_status = uc_order_state_default('in_checkout');
   }
 
@@ -447,10 +463,8 @@ function uc_google_checkout_cart_request($order) {
       $output .= '<item-name>'. check_plain($product->model) .'</item-name>';
       $output .= '<item-description>'. check_plain($product->title) .'</item-description>';
       $output .= '<unit-price currency="'. variable_get('uc_currency_code', 'USD') .'">'. $product->price .'</unit-price>';
-      if (uc_cart_product_is_shippable($product)) {
-        $output .= '<item-weight unit="LB" value="'. $product->weight * uc_weight_conversion($product->weight_units, 'lb') .'" />';
-      }
-      else {
+      $output .= '<item-weight unit="LB" value="'. $product->weight * uc_weight_conversion($product->weight_units, 'lb') .'" />';
+      if (!uc_cart_product_is_shippable($product)) {
         $output .= '<digital-content>';
           $output .= '<display-disposition>PESSIMISTIC</display-disposition>';
           $output .= '<email-delivery>true</email-delivery>';
@@ -469,56 +483,58 @@ function uc_google_checkout_cart_request($order) {
     $output .= '<checkout-flow-support>';
     $output .= '<merchant-checkout-flow-support>';
 
-    $companies = uc_google_checkout_shipping_companies();
-    $services = uc_google_checkout_shipping_services();
-    $shipping_options = '';
-    foreach ($services as $key => $title) {
-      $settings = variable_get('uc_google_checkout_shipping_'. $key, array());
-      if ($settings['enable']) {
-        $shipping_options .= '<carrier-calculated-shipping-option>';
-        $shipping_options .= '<price currency="'. variable_get('uc_currency_code', 'USD') .'">'. $settings['default'] .'</price>';
-        $temp = explode('_', $key, 2);
-        $shipping_options .= '<shipping-company>'. $companies[$temp[0]] .'</shipping-company>';
-        $shipping_options .= '<carrier-pickup>'. $settings['pickup'] .'</carrier-pickup>';
-        $shipping_options .= '<shipping-type>'. $services[$key] .'</shipping-type>';
-        if ($settings['fixed_charge']) {
-          $shipping_options .= '<additional-fixed-charge currency="'. variable_get('uc_currency_code', 'USD') .'">'. number_format($settings['fixed_charge'], 2, '.', '') .'</additional-fixed-charge>';
+    if (uc_order_is_shippable($order)) {
+      $companies = uc_google_checkout_shipping_companies();
+      $services = uc_google_checkout_shipping_services();
+      $shipping_options = '';
+      foreach ($services as $key => $title) {
+        $settings = variable_get('uc_google_checkout_shipping_'. $key, array());
+        if ($settings['enable']) {
+          $shipping_options .= '<carrier-calculated-shipping-option>';
+          $shipping_options .= '<price currency="'. variable_get('uc_currency_code', 'USD') .'">'. $settings['default'] .'</price>';
+          $temp = explode('_', $key, 2);
+          $shipping_options .= '<shipping-company>'. $companies[$temp[0]] .'</shipping-company>';
+          $shipping_options .= '<carrier-pickup>'. $settings['pickup'] .'</carrier-pickup>';
+          $shipping_options .= '<shipping-type>'. $services[$key] .'</shipping-type>';
+          if ($settings['fixed_charge']) {
+            $shipping_options .= '<additional-fixed-charge currency="'. variable_get('uc_currency_code', 'USD') .'">'. number_format($settings['fixed_charge'], 2, '.', '') .'</additional-fixed-charge>';
+          }
+          if ($settings['percent_adjustment']) {
+            $shipping_options .= '<additional-variable-charge-percent>'. (float)$settings['percent_adjustment'] .'</additional-variable-charge-percent>';
+          }
+          $shipping_options .= '</carrier-calculated-shipping-option>';
         }
-        if ($settings['percent_adjustment']) {
-          $shipping_options .= '<additional-variable-charge-percent>'. (float)$settings['percent_adjustment'] .'</additional-variable-charge-percent>';
+      }
+      if ($shipping_options) {
+        $output .= '<shipping-methods>';
+        $output .= '<carrier-calculated-shipping>';
+        $output .= '<carrier-calculated-shipping-options>';
+        $output .= $shipping_options;
+        $output .= '</carrier-calculated-shipping-options>';
+
+        $address = variable_get('uc_quote_store_default_address', new stdClass());
+        if (empty($address)) {
+          $address->city = variable_get('uc_store_city', NULL);
+          $address->zone = uc_get_zone_code(variable_get('uc_store_zone', NULL));
+          $address->postal_code = variable_get('uc_store_postal_code', NULL);
+          $address->country = uc_store_default_country();
         }
-        $shipping_options .= '</carrier-calculated-shipping-option>';
-      }
-    }
-    if ($shipping_options) {
-      $output .= '<shipping-methods>';
-      $output .= '<carrier-calculated-shipping>';
-      $output .= '<carrier-calculated-shipping-options>';
-      $output .= $shipping_options;
-      $output .= '</carrier-calculated-shipping-options>';
+        $country = uc_get_country_data(array('country_id' => $address->country));
+        $address->country_code = $country[0]['country_iso_code_2'];
+        $output .= '<shipping-packages>';
+        $output .= '<shipping-package>';
+        $output .= '<ship-from id="here">';
+        $output .= '<city>'. $address->city .'</city>';
+        $output .= '<region>'. $address->zone .'</region>';
+        $output .= '<country-code>'. $address->country_code .'</country-code>';
+        $output .= '<postal-code>'. $address->postal_code .'</postal-code>';
+        $output .= '</ship-from>';
+        $output .= '</shipping-package>';
+        $output .= '</shipping-packages>';
 
-      $address = variable_get('uc_quote_store_default_address', new stdClass());
-      if (empty($address)) {
-        $address->city = variable_get('uc_store_city', NULL);
-        $address->zone = uc_get_zone_code(variable_get('uc_store_zone', NULL));
-        $address->postal_code = variable_get('uc_store_postal_code', NULL);
-        $address->country = uc_store_default_country();
+        $output .= '</carrier-calculated-shipping>';
+        $output .= '</shipping-methods>';
       }
-      $country = uc_get_country_data(array('country_id' => $address->country));
-      $address->country_code = $country[0]['country_iso_code_2'];
-      $output .= '<shipping-packages>';
-      $output .= '<shipping-package>';
-      $output .= '<ship-from id="here">';
-      $output .= '<city>'. $address->city .'</city>';
-      $output .= '<region>'. $address->zone .'</region>';
-      $output .= '<country-code>'. $address->country_code .'</country-code>';
-      $output .= '<postal-code>'. $address->postal_code .'</postal-code>';
-      $output .= '</ship-from>';
-      $output .= '</shipping-package>';
-      $output .= '</shipping-packages>';
-
-      $output .= '</carrier-calculated-shipping>';
-      $output .= '</shipping-methods>';
     }
 
     $tax_table = '';
@@ -599,7 +615,7 @@ function uc_google_checkout_send_request($api, $request) {
   }
   $response = new SimpleXMLElement($response_obj->data);
   if ($response->getName() == 'error') {
-    $error = $response->{'error-message'};
+    $error = (string)$response->{'error-message'};
     drupal_set_message($error, 'error');
     watchdog('google', check_plain($error), NULL, WATCHDOG_ERROR);
     return NULL;
@@ -749,6 +765,12 @@ function uc_google_checkout_new_order($new_order) {
     uc_cart_empty($cart_id);
     // Add a comment to let sales team know this came in through the site.
     uc_order_comment_save($order->order_id, 0, t('Order created through Google Checkout (#@gco_order).', array('@gco_order' => $new_order->{'google-order-number'})), 'admin');
+
+    // uc_cart_complete_sale() also unsets some $_SESSION variables. These
+    // are tied to the user-id, so we record that for when they log in later.
+    $users = variable_get('uc_google_checkout_order_users', array());
+    $users[$order->uid] = $order->uid;
+    variable_set('uc_google_checkout_order_users', $users);
 
     // Add messages from order adjustments (coupons, gift certificates, etc.).
     foreach ($comments as $comment) {

@@ -1,4 +1,4 @@
-/* $Id: uc_order.css,v 1.7.2.1 2008/11/07 21:13:23 islandusurper Exp $ */
+/* $Id: uc_order.css,v 1.7.2.2 2009/01/02 20:18:40 islandusurper Exp $ */
 
 .order-overview-form {
   float: left;
@@ -199,7 +199,7 @@
   border-top: 0px;
 }
 
-.product-options {
+.product-description {
   font-size: .7em;
 }
 

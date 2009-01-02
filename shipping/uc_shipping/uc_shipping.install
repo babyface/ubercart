@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.install,v 1.4.2.5 2008/12/09 15:20:37 islandusurper Exp $
+// $Id: uc_shipping.install,v 1.4.2.6 2009/01/02 20:18:40 islandusurper Exp $
 
 /**
  * @file
@@ -339,7 +339,7 @@ function uc_shipping_update_6001() {
       $field = '`values`';
     }
     else {
-      $field = '"values"';
+      $field = 'values';
     }
     db_change_field($ret, 'uc_packages', $field, 'value', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => FALSE));
   }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.admin.inc,v 1.1.2.5 2008/11/21 21:17:26 islandusurper Exp $
+// $Id: uc_catalog.admin.inc,v 1.1.2.6 2009/01/02 20:18:42 islandusurper Exp $
 
 /**
  * @file
@@ -28,14 +28,12 @@ function uc_catalog_settings_form() {
   if ($vid) {
     $catalog = taxonomy_vocabulary_load($vid);
 
-    $form['catalog-vid'] = array(
+    $form['catalog_vid'] = array(
       '#prefix' => '<div>',
-
-      '#summary' => t('Vocabulary %name is set as the product catalog.', array('%name' => $catalog->name)) .' '. l(t('View the catalog here.'), 'admin/content/taxonomy/'. $vid),
-
+      '#summary' => t('The taxonomy vocabulary <a href="!edit-url">%name</a> is set as the product catalog.', array('!edit-url' => url('admin/content/taxonomy/'. $vid), '%name' => $catalog->name)),
       '#suffix' => '</div>',
     );
-    $form['catalog-vid']['#value'] = $form['catalog-vid']['#summary'];
+    $form['catalog_vid']['#value'] = $form['catalog_vid']['#summary'];
   }
 
   $vocabs = array();
@@ -116,15 +114,15 @@ function uc_catalog_settings_form() {
     '#summary callback' => '_uc_catalog_block_summarize',
     '#attributes' => array('class' => 'block-display'),
   );
-  $form['block-display']['uc_catalog_block_title'] = array('#type' => 'checkbox',
-    '#title' => t('Block title links to top-level catalog page'),
+  $form['block-display']['uc_catalog_block_title'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Make the block title a link to the top-level catalog page.'),
     '#summary callback' => 'summarize_checkbox',
     '#summary arguments' => array(
       t('Block title is pointing to the top-level catalog page.'),
       t('Block title is not pointing to the top-level catalog page.'),
     ),
-    '#default_value' => variable_get('uc_catalog_block_title', TRUE),
-    '#description' => t("If selected, the block title is a link, otherwise plain text."),
+    '#default_value' => variable_get('uc_catalog_block_title', FALSE),
   );
   $form['block-display']['uc_catalog_expand_categories'] = array('#type' => 'checkbox',
     '#title' => t('Always expand categories in the catalog block'),
@@ -148,93 +146,66 @@ function uc_catalog_settings_form() {
   return system_settings_form($form);
 }
 
-/**
- * Catalog settings form.
- *
- * Configure the display of the catalog breadcrumb.
- *
- * @ingroup forms
- */
-function uc_catalog_grid_admin_form() {
+// Settings forms for using a product grid instead of a table in the catalog.
+function uc_catalog_grid_settings_form() {
   $form = array();
 
-  // JTR - elements for products grid view administration
-  $form['catalog-grid'] = array('#type' => 'fieldset',
-    '#title' => t('Products grid display'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-    '#summary callback' => 'summarize_form',
-    '#weight' => -3,
-    '#attributes' => array('class' => 'catalog-grid'),
-  );
-  $form['catalog-grid']['uc_catalog_grid_display'] = array(
+  $form['uc_catalog_grid_display'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Display products in grid'),
+    '#title' => t('Display products in the catalog in a grid.'),
     '#summary callback' => 'summarize_checkbox',
     '#summary arguments' => array(
       t('Products are displayed in a grid.'),
-      t('Products are displayed on a list table.'),
+      t('Products are displayed in a table list.'),
     ),
     '#default_value' => variable_get('uc_catalog_grid_display', FALSE),
-    '#description' => t("Select it if you want the products to be displayed on a grid instead of a list table."),
+    '#description' => t('If unchecked, the default table display will be used and the settings on this form will be ignored.'),
   );
-  $form['catalog-grid']['uc_catalog_grid_display_width'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Width of grid'),
+  $form['uc_catalog_grid_display_width'] = array(
+    '#type' => 'select',
+    '#title' => t('Number of columns in the product grid'),
+    '#options' => drupal_map_assoc(uc_range(1, 5)),
     '#default_value' => variable_get('uc_catalog_grid_display_width', 3),
-    '#summary' => t('The grid will be displayed in @columns columns', array('@columns' => variable_get('uc_catalog_grid_display_width', 3))),
-    '#size' => 2,
+    '#summary' => t('The grid will be displayed in @columns columns.', array('@columns' => variable_get('uc_catalog_grid_display_width', 3))),
   );
-  $form['catalog-grid']['uc_catalog_grid_display_title'] = array(
+
+  $form['displayed_fields'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Displayed fields'),
+    '#description' => t('The checked fields will be included in the product grid for each product in your catalog.'),
+  );
+  $form['displayed_fields']['uc_catalog_grid_display_title'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Display product title'),
-    '#summary callback' => 'summarize_checkbox',
-    '#summary arguments' => array(
-      t('Every cell is displaying product titles.'),
-      t('Every cell is hiding product titles.'),
-    ),
+    '#title' => t('Product title'),
     '#default_value' => variable_get('uc_catalog_grid_display_title', TRUE),
   );
-  $form['catalog-grid']['uc_catalog_grid_display_model'] = array(
+  $form['displayed_fields']['uc_catalog_grid_display_model'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Display product model (SKU)'),
-    '#summary callback' => 'summarize_checkbox',
-    '#summary arguments' => array(
-      t('Every cell is displaying product model (SKU).'),
-      t('Every cell is hiding product model (SKU).'),
-    ),
+    '#title' => t('Product SKU'),
     '#default_value' => variable_get('uc_catalog_grid_display_model', TRUE),
   );
-  $form['catalog-grid']['uc_catalog_grid_display_sell_price'] = array(
+  $form['displayed_fields']['uc_catalog_grid_display_image'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Display product sell price'),
-    '#summary callback' => 'summarize_checkbox',
-    '#summary arguments' => array(
-      t('Every cell is displaying product sell price.'),
-      t('Every cell is hiding product sell price.'),
-    ),
+    '#title' => t('Default product image'),
+    '#description' => t('The image will always be included in the product grid.'),
+    '#default_value' => TRUE,
+    '#disabled' => TRUE,
+  );
+  $form['displayed_fields']['uc_catalog_grid_display_sell_price'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Sell price'),
     '#default_value' => variable_get('uc_catalog_grid_display_sell_price', TRUE),
   );
-  $form['catalog-grid']['uc_catalog_grid_display_add_to_cart'] = array(
+  $form['displayed_fields']['uc_catalog_grid_display_add_to_cart'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Display product add To cart'),
-    '#summary callback' => 'summarize_checkbox',
-    '#summary arguments' => array(
-      t('Every cell is displaying product "Add to cart".'),
-      t('Every cell is hiding product "Add to cart".'),
-    ),
+    '#title' => t('Add to cart form'),
     '#default_value' => variable_get('uc_catalog_grid_display_add_to_cart', TRUE),
   );
-  $form['catalog-grid']['uc_catalog_grid_display_attributes'] = array(
+  $form['displayed_fields']['uc_catalog_grid_display_attributes'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Display attributes'),
-    '#summary callback' => 'summarize_checkbox',
-    '#summary arguments' => array(
-      t('Every cell is displaying attributes when "Add to cart button" is selected.'),
-      t('Every cell is hiding attributes when "Add to cart button" is selected.'),
-    ),
+    '#title' => t('Attribute selection elements'),
+    '#description' => t('Adds any available attribute selection form elements to the add to cart form if displayed in the grid.'),
     '#default_value' => variable_get('uc_catalog_grid_display_attributes', TRUE),
-    '#description' => t('Allows displaying attributes when "Add to cart button" is selected.'),
   );
 
   return system_settings_form($form);

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.5 2008/12/09 15:20:36 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.6 2009/01/02 20:18:40 islandusurper Exp $
 
 /**
  * @file
@@ -285,7 +285,7 @@ function uc_order_pane_products($op, $arg1) {
         'div' => '#products-selector',
         'class' => 'product-select-box',
         'vid' => variable_get('uc_catalog_vid', 0),
-        'filter' => implode(',', module_invoke_all('product_types')),
+        'filter' => implode(',', uc_product_types()),
         'search' => 'true',
         'nids' => 'true',
         'close' => 'true',
@@ -698,7 +698,7 @@ function op_products_view_table($products) {
   );
   $table['#columns']['model'] = array(
     'cell' => array(
-      'data' => t('Model'),
+      'data' => t('SKU'),
       'class' => 'text-center',
       'nowrap' => 'nowrap',
     ),
@@ -743,7 +743,7 @@ function op_products_view_table($products) {
         }
       }
       $data['product'] = array(
-        '#value' => check_plain($product->title) . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-options')),
+        '#value' => check_plain($product->title) . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-description')),
       );
       $data['model'] = array(
         '#value' => check_plain($product->model),
@@ -799,7 +799,7 @@ function op_products_customer_table($products) {
   );
   $table['#columns']['model'] = array(
     'cell' => array(
-      'data' => t('Model'),
+      'data' => t('SKU'),
       'class' => 'text-center',
       'nowrap' => 'nowrap',
     ),
@@ -844,7 +844,7 @@ function op_products_customer_table($products) {
         }
       }
       $data['product'] = array(
-        '#value' => check_plain($product->title) . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-options')),
+        '#value' => check_plain($product->title) . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-description')),
       );
       $data['model'] = array(
         '#value' => check_plain($product->model),

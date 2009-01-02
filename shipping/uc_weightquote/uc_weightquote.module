@@ -1,11 +1,9 @@
 <?php
-// $Id: uc_weightquote.module,v 1.5.2.4 2008/11/21 21:17:30 islandusurper Exp $
+// $Id: uc_weightquote.module,v 1.5.2.5 2009/01/02 20:18:42 islandusurper Exp $
 
 /**
  * @file
  * Shipping quote module that defines a shipping rate for each product based on weight.
- *
- * Coded by Lyle Mantooth.
  */
 
 /******************************************************************************
@@ -41,7 +39,7 @@ function uc_weightquote_form_alter(&$form, &$form_state, $form_id) {
   if (isset($form['#node'])) {
     $node = $form['#node'];
 
-    if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && in_array($node->type, module_invoke_all('product_types'))) {
+    if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && uc_product_is_product($node->type)) {
       $enabled = variable_get('uc_quote_enabled', array());
       $weight = variable_get('uc_quote_method_weight', array('weightquote' => 0));
       $form['shipping']['weightquote'] = array('#type' => 'fieldset',
@@ -68,7 +66,7 @@ function uc_weightquote_form_alter(&$form, &$form_state, $form_id) {
  * Implementation of hook_nodeapi().
  */
 function uc_weightquote_nodeapi(&$node, $op) {
-  if (in_array($node->type, module_invoke_all('product_types'))) {
+  if (uc_product_is_product($node->type)) {
     switch ($op) {
       case 'insert':
       case 'update':
