@@ -1,9 +1,9 @@
 <?php
-// $Id: argentina_32_1.cif,v 1.2.4.3 2008/11/03 21:26:37 rszrama Exp $
+// $Id: argentina_32_1.cif,v 1.2.4.4 2009/01/16 22:12:39 rszrama Exp $
 
 function argentina_install() {
   // VALUES = Country ID, Country Name, 2-digit Code, 3-digit Code, File Version
-  db_query("INSERT INTO {uc_countries} VALUES (032, 'Argentina', 'AR', 'ARG', 1)");
+  db_query("INSERT INTO {uc_countries} VALUES (32, 'Argentina', 'AR', 'ARG', 1)");
 
   // VALUES = %d for ID, Parent Country ID, Zone Abbreviation, Zone Name
   db_query("INSERT INTO {uc_zones} VALUES "

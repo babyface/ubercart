@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, getTax; -*-
-// $Id: uc_quote.js,v 1.4.2.10 2008/09/17 21:38:39 rszrama Exp $
+// $Id: uc_quote.js,v 1.4.2.11 2009/01/16 22:12:36 rszrama Exp $
 
 var page;
 var details;
@@ -21,7 +21,7 @@ function setQuoteCallbacks(products) {
   $("select[@name*=delivery_address_select]").change(function() {
     $("input[@name*=delivery_postal_code]").trigger('change');
   });
-  $("input[@name*=copy_address]").change(function() {
+  $("input[@name*=copy_address]").click(function() {
     if (copy_box_checked == true) {
       $("input[@name*=billing_postal_code]").bind('change', triggerQuoteCallback);
       $("select[@name*=billing_address_select]").bind('change', triggerQuoteCallback);

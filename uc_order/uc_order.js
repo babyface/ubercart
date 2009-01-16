@@ -1,4 +1,4 @@
-// $Id: uc_order.js,v 1.8.2.8 2008/11/03 21:26:35 rszrama Exp $
+// $Id: uc_order.js,v 1.8.2.9 2009/01/16 22:12:38 rszrama Exp $
 
 var customer_select = '';
 var add_product_browser = '';
@@ -282,7 +282,14 @@ function add_product_to_order(order_id, node_id) {
   $('#uc-order-add-product-form :input').each(
     function() {
       if ($(this).attr('name').substr(0, 10) == 'attributes') {
-        post_vars[$(this).attr('name')] = $(this).val();
+        if ($(this).attr('type') == 'radio') {
+          if (this.checked) {
+            // Only the checked radio button values should be sent
+            post_vars[$(this).attr('name')] = $(this).val();
+          }
+        } else {
+          post_vars[$(this).attr('name')] = $(this).val();
+        }
       }
     }
   );

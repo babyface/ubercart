@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.install,v 1.9.2.6 2008/07/29 22:22:47 rszrama Exp $
+// $Id: uc_taxes.install,v 1.9.2.7 2009/01/16 22:12:40 rszrama Exp $
 
 function uc_taxes_install() {
   switch ($GLOBALS['db_type']) {
@@ -55,8 +55,8 @@ function uc_taxes_update_1() {
       db_add_column($ret, 'uc_taxes', 'id', 'integer', array('not null' => true, 'default' => 0));
       $ret[] = update_sql("ALTER TABLE {uc_taxes} ADD PRIMARY KEY (id)");
       $ret[] = update_sql("CREATE INDEX {uc_taxes}_id ON {uc_taxes} (id)");
-      db_add_column($ret, 'uc_taxes', 'name', 'varchar(255)', array('not null' => true, 'default' => ''));
-      db_change_column($ret, 'uc_taxes', 'area', 'area', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_add_column($ret, 'uc_taxes', 'name', 'varchar(255)', array('not null' => true, 'default' => "''"));
+      db_change_column($ret, 'uc_taxes', 'area', 'area', 'varchar(255)', array('not null' => true, 'default' => "''"));
       db_change_column($ret, 'uc_taxes', 'type', 'type', "enum('code','zone','country')", array('not null' => true, 'default' => 'code'));
       db_change_column($ret, 'uc_taxes', 'standalone', 'cumulative', 'smallint', array('not null' => true, 'default' => 0));
       db_add_column($ret, 'uc_taxes', 'weight', 'smallint', array('not null' => true, 'default' => 0));
@@ -73,7 +73,7 @@ function uc_taxes_update_2() {
       $ret[] = update_sql("ALTER TABLE {uc_taxes} CHANGE COLUMN shipping taxed_line_items text NOT NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_taxes', 'shipping', 'taxed_line_items', 'text', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_taxes', 'shipping', 'taxed_line_items', 'text', array('not null' => true, 'default' => "''"));
     break;
   }
   return $ret;
@@ -87,10 +87,10 @@ function uc_taxes_update_3() {
       $ret[] = update_sql("ALTER TABLE {uc_taxes} ADD COLUMN conditions text NOT NULL");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_taxes', 'conditions', 'text', array('not null' => true, 'default' => ''));
+      db_add_column($ret, 'uc_taxes', 'conditions', 'text', array('not null' => true, 'default' => "''"));
     break;
   }
-  
+
   return $ret;
 }
 
@@ -105,29 +105,29 @@ function uc_taxes_update_4() {
 
   $ret = array();
   $ret[] = update_sql("ALTER TABLE {uc_taxes} DROP cumulative");
-  
+
   return $ret;
 }
 
 function uc_taxes_update_5() {
   $ret = array();
-  
+
   switch ($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {uc_taxes} ADD COLUMN taxed_product_types text NOT NULL AFTER rate");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_taxes', 'taxed_product_types', 'text', array('not null' => true, 'default' => ''));
+      db_add_column($ret, 'uc_taxes', 'taxed_product_types', 'text', array('not null' => true, 'default' => "''"));
     break;
   }
-  
+
   $types = array();
   foreach (module_invoke_all('product_types') as $type) {
     $types[$type] = $type;
   }
   db_query("UPDATE {uc_taxes} SET taxed_product_types = '%s'", serialize($types));
-  
+
   return $ret;
 }
 

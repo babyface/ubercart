@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.11.2.13 2008/11/03 21:26:35 rszrama Exp $
+// $Id: uc_attribute.module,v 1.11.2.14 2009/01/16 22:12:36 rszrama Exp $
 
 /**
  * @file
@@ -919,10 +919,6 @@ function uc_object_options_form($id, $type) {
   }
 
   foreach ($attributes as $aid => $attribute) {
-    $form['attributes'][$aid] = array(
-      '#prefix' => '<tr>',
-      '#suffix' => '</tr>',
-    );
     $form['attributes'][$aid]['name'] = array(
       '#value' => $attribute->name,
     );
@@ -942,7 +938,7 @@ function uc_object_options_form($id, $type) {
     if ($base_attr->options) {
       $options = array();
 
-      $result = db_query("SELECT ao.aid, ao.oid, ao.name, ao.cost AS default_cost, ao.price AS default_price, ao.weight AS default_weight, ao.ordering AS default_ordering, po.cost, po.price, po.weight, po.ordering FROM {uc_attribute_options} AS ao LEFT JOIN $table AS po ON ao.oid = po.oid AND po.$id_type = $sql_type WHERE aid = %d ORDER BY po.ordering, default_ordering, ao.name", $id, $attribute->aid);
+      $result = db_query("SELECT ao.aid, ao.oid, ao.name, ao.cost AS default_cost, ao.price AS default_price, ao.weight AS default_weight, ao.ordering AS default_ordering, po.cost, po.price, po.weight, po.ordering, po.ordering IS NULL AS null_order FROM {uc_attribute_options} AS ao LEFT JOIN $table AS po ON ao.oid = po.oid AND po.$id_type = $sql_type WHERE aid = %d ORDER BY null_order, po.ordering, default_ordering, ao.name", $id, $attribute->aid);
       while ($option = db_fetch_object($result)) {
         $oid = $option->oid;
         $options[$oid] = '';

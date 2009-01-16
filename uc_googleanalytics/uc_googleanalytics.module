@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_googleanalytics.module,v 1.5.2.6 2008/07/29 22:22:43 rszrama Exp $
+// $Id: uc_googleanalytics.module,v 1.5.2.7 2009/01/16 22:12:37 rszrama Exp $
 
 /**
  * @file
@@ -16,10 +16,8 @@
  * Implementation of hook_footer().
  */
 function uc_googleanalytics_footer($main = 0) {
-  $completion_page = variable_get('uc_cart_checkout_complete_page', '');
-
   // Check to see if we are at the order completion page.
-  if ((arg(0) == 'cart' && arg(1) == 'checkout' && arg(2) == 'complete') || (!empty($completion_page) && $completion_page == $_GET['q'])) {
+  if (uc_googleanalytics_display()) {
     // If we can load the order...
     if ($order = uc_order_load($_SESSION['uc_googleanalytics_order_id'])) {
       // Check for which GA version is being used.
@@ -51,6 +49,37 @@ function uc_googleanalytics_order($op, &$arg1, $arg2) {
       $_SESSION['uc_googleanalytics_order_id'] = $arg1->order_id;
       break;
   }
+}
+
+/**
+ * Determines whether or not to display the e-commerce related JS through GA on
+ * the current page.
+ *
+ * @return
+ *   TRUE or FALSE indicating whether or not to display the GA e-commerce JS.
+ */
+function uc_googleanalytics_display() {
+  // Display the GA e-commerce JS if the URL is cart/checkout/complete...
+  if (arg(0) == 'cart' && arg(1) == 'checkout' && arg(2) == 'complete') {
+    return TRUE;
+  }
+
+  // Or if the URL is the custom completion page.
+  $completion_page = variable_get('uc_cart_checkout_complete_page', '');
+
+  if (!empty($completion_page) && $completion_page == $_GET['q']) {
+    return TRUE;
+  }
+
+  // Or if another module says this is the page through hook_ucga_display().
+  foreach (module_invoke_all('ucga_display') as $result) {
+    if ($result === TRUE) {
+      return TRUE;
+    }
+  }
+
+  // Otherwise return FALSE.
+  return FALSE;
 }
 
 // Creates the script for the legacy GA code.
@@ -86,9 +115,9 @@ function _uc_googleanalytics_ecommerce_legacy_script($order) {
     }
 
     // using the model field as SKU
-    $UTM_I .= 'UTM:I|'. $product->order_id .'|'. $product->model .'|'
-            . $product->title .'|'. $category .'|'. $product->price .'|'
-            . $product->qty ." \n";
+    $UTM_I .= 'UTM:I|'. drupal_to_js($product->order_id) .'|'. drupal_to_js($product->model) .'|'
+            . drupal_to_js($product->title) .'|'. drupal_to_js($category) .'|'. drupal_to_js($product->price) .'|'
+            . drupal_to_js($product->qty) ." \n";
   }
 
   foreach ($order->line_items as $line_item) {
@@ -100,10 +129,10 @@ function _uc_googleanalytics_ecommerce_legacy_script($order) {
     }
   }
 
-  $UTM_T = 'UTM:T|'. $order->order_id .'|'
-         . variable_get('uc_store_name', 'Ubercart') .'|'. $order->order_total
-          .'|'. $tax .'|'. $shipping_cost .'|'. check_plain($order->billing_city)
-          .'|'. check_plain($order->billing_postal_code) .'|'. $country ." \n";
+  $UTM_T = 'UTM:T|'. drupal_to_js($order->order_id) .'|'
+         . drupal_to_js(variable_get('uc_store_name', 'Ubercart')) .'|'. drupal_to_js($order->order_total)
+          .'|'. drupal_to_js($tax) .'|'. drupal_to_js($shipping_cost) .'|'. drupal_to_js($order->billing_city)
+          .'|'. drupal_to_js($order->billing_postal_code) .'|'. drupal_to_js($country) ." \n";
 
   $script .= "<form style=\"display:none;\" name=\"utmform\">\n";
   $script .= "<textarea id=\"utmtrans\">\n";
@@ -144,9 +173,9 @@ function _uc_googleanalytics_ecommerce_script($order) {
     }
 
     // using the model field as SKU
-    $items .= 'pageTracker._addItem("'. $product->order_id .'", "'
-            . $product->model .'", "'. $product->title .'", "'. $category
-             .'", "'. $product->price .'", "'. $product->qty .'");';
+    $items .= 'pageTracker._addItem("'. $order->order_id .'", '
+            . drupal_to_js($product->model) .', '. drupal_to_js($product->title) .', '. drupal_to_js($category)
+             .', "'. $product->price .'", "'. $product->qty .'");';
   }
 
   foreach ($order->line_items as $line_item) {
@@ -158,12 +187,12 @@ function _uc_googleanalytics_ecommerce_script($order) {
     }
   }
 
-  $transaction = 'pageTracker._addTrans("'. $order->order_id .'", "'
-               . variable_get('uc_store_name', 'Ubercart') .'", "'
+  $transaction = 'pageTracker._addTrans("'. $order->order_id .'", '
+               . drupal_to_js(variable_get('uc_store_name', 'Ubercart')) .', "'
                . $order->order_total .'", "'. $tax .'", "'. $shipping_cost
-                .'", "'. check_plain($order->billing_city) .'", "'
-               . check_plain($order->billing_postal_code) .'", "'
-               . $country .'");';
+                .'", '. drupal_to_js($order->billing_city) .', '
+               . drupal_to_js($order->billing_postal_code) .', '
+               . drupal_to_js($country) .');';
 
   $script .= $transaction;
   $script .= $items;

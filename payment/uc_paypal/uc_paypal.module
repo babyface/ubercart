@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.4.2.14 2008/11/03 21:26:34 rszrama Exp $
+// $Id: uc_paypal.module,v 1.4.2.15 2009/01/16 22:12:35 rszrama Exp $
 
 /**
  * @file
@@ -427,6 +427,7 @@ function uc_paypal_wpp_charge($order_id, $amount, $data) {
       uc_credit_log_prior_auth_capture($order_id, $data['auth_id']);
     }
 
+    // Log the IPN to the database.
     db_query("INSERT INTO {uc_payment_paypal_ipn} VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d)",
       $order->order_id, check_plain($nvp_response['TRANSACTIONID']), 'web_accept', $amount, 'Completed', '', $order->primary_email, time());
   }
@@ -1140,11 +1141,8 @@ function uc_paypal_ec_submit_form_submit($form_id, $form_values) {
 
   $tax = 0;
   if (module_exists('uc_taxes')) {
-    $taxes = module_invoke_all('calculate_tax', $order);
-    if (is_array($taxes)) {
-      foreach ($taxes as $tax_item) {
-        $tax += $tax_item['amount'];
-      }
+    foreach (uc_taxes_calculate($order) as $tax_item) {
+      $tax += $tax_item['amount'];
     }
   }
 
@@ -1190,11 +1188,8 @@ function uc_paypal_wps_form($order) {
 
   $tax = 0;
   if (module_exists('uc_taxes')) {
-    $taxes = module_invoke_all('calculate_tax', $order);
-    if (is_array($taxes)) {
-      foreach ($taxes as $tax_item) {
-        $tax += $tax_item['amount'];
-      }
+    foreach (uc_taxes_calculate($order) as $tax_item) {
+      $tax += $tax_item['amount'];
     }
   }
 

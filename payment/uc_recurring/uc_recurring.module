@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.module,v 1.8.2.4 2008/11/03 21:26:34 rszrama Exp $
+// $Id: uc_recurring.module,v 1.8.2.5 2009/01/16 22:12:35 rszrama Exp $
 
 /**
  * @file
@@ -901,7 +901,7 @@ function uc_recurring_fee_save($type, $data) {
 
     case 'user':
       // First attempt to update an existing row.
-      db_query("UPDATE {uc_recurring_users} SET uid = %d, fee_handler = '%s', next_charge = %d, fee_amount = %f, regular_interval = '%s', remaining_intervals = %d, charged_intervals = %d, data = '%s' WHERE rfid = %d",
+      db_query("UPDATE {uc_recurring_users} SET uid = %d, fee_handler = '%s', next_charge = %d, fee_amount = %f, regular_interval = '%s', remaining_intervals = %d, charged_intervals = %d, order_id = %d, data = '%s' WHERE rfid = %d",
         $data['uid'], $data['fee_handler'], $data['next_charge'], $data['fee_amount'], $data['regular_interval'], $data['remaining_intervals'], $data['charged_intervals'], $data['order_id'], $data['data'], $data['rfid']);
 
       // Otherwise insert this feature as a new row.

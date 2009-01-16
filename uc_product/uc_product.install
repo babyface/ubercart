@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.install,v 1.11.2.7 2008/07/29 22:22:44 rszrama Exp $
+// $Id: uc_product.install,v 1.11.2.8 2009/01/16 22:12:38 rszrama Exp $
 
 /**
  * @file
@@ -112,13 +112,13 @@ function uc_product_update_1() {
       $ret[] = update_sql("ALTER TABLE {uc_products} CHANGE model model varchar(255) NOT NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_class_choices', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => ''));
-      db_change_column($ret, 'uc_class_fields', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_class_choices', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => "''"));
+      db_change_column($ret, 'uc_class_fields', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => "''"));
       $ret[] = update_sql("ALTER TABLE {uc_class_fields} DROP title");
-      db_change_column($ret, 'uc_product_classes', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => ''));
-      db_change_column($ret, 'uc_product_class_choices', 'value', 'value', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_product_classes', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => "''"));
+      db_change_column($ret, 'uc_product_class_choices', 'value', 'value', 'varchar(255)', array('not null' => true, 'default' => "''"));
       $ret[] = update_sql("ALTER TABLE {uc_product_class_choices} ADD PRIMARY KEY (nid, cfid, value)");
-      db_change_column($ret, 'uc_products', 'model', 'model', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_products', 'model', 'model', 'varchar(255)', array('not null' => true, 'default' => "''"));
     break;
   }
 
@@ -140,7 +140,7 @@ function uc_product_update_2() {
     break;
     case 'pgsql':
       $ret[] = update_sql("ALTER TABLE {uc_product_class_choices} DROP CONSTRAINT {uc_product_class_choices}_pkey");
-      db_change_column($ret, 'uc_product_class_choices', 'value', 'value', 'text', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_product_class_choices', 'value', 'value', 'text', array('not null' => true, 'default' => "''"));
       $ret[] = update_sql("ALTER TABLE {uc_product_class_choices} ADD PRIMARY KEY (nid, cfid, value (3))");
     break;
   }
@@ -180,7 +180,7 @@ function uc_product_update_4() {
       $ret[] = update_sql("DROP TABLE {uc_class_fields}");
       $ret[] = update_sql("DROP TABLE {uc_product_class_choices}");
       $ret[] = update_sql("DROP INDEX {uc_product_classes}_pcid_idx");
-      db_change_column($ret, 'uc_product_classes', 'pcid', 'pcid', 'varchar(32)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_product_classes', 'pcid', 'pcid', 'varchar(32)', array('not null' => true, 'default' => "''"));
       db_add_column($ret, 'uc_product_classes', 'description', 'text');
       $ret[] = update_sql("ALTER TABLE {uc_products} DROP COLUMN pcid");
     break;

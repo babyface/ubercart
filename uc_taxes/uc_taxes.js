@@ -1,13 +1,20 @@
 // -*- js-var: set_line_item, base_path, li_titles, li_values, tax_weight; -*-
-// $Id: uc_taxes.js,v 1.9.2.9 2008/11/03 21:26:37 rszrama Exp $
+// $Id: uc_taxes.js,v 1.9.2.10 2009/01/16 22:12:40 rszrama Exp $
 
 /**
  * Calculate the number of bytes of a Unicode string.
  *
- * Gratefully stolen from http://dt.in.th/2008-09-16.string-length-in-bytes.html
+ * Gratefully stolen from http://dt.in.th/2008-09-16.string-length-in-bytes.html.
+ * Javascript String.length returns the number of characters, but PHP strlen()
+ * returns the number of bytes. When building serialize()d strings in JS,
+ * use this function to get the correct string length.
  */
 String.prototype.bytes = function() {
-    return Drupal.encodeURIComponent(this).replace(/%../g, 'x').length;
+  // Drupal.encodeURIComponent() gets around some weirdness in
+  // encodeURIComponent(), but encodes some characters twice. The first
+  // replace takes care of those while the second lets String.length count
+  // the multi-byte characters.
+  return Drupal.encodeURIComponent(this).replace(/%252[36F]/g, 'x').replace(/%../g, 'x').length;
 };
 
 var pane = '';

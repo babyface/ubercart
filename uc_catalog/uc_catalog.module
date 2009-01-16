@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.14.2.15 2008/11/03 21:26:35 rszrama Exp $
+// $Id: uc_catalog.module,v 1.14.2.16 2009/01/16 22:12:37 rszrama Exp $
 
 /**
  * @file
@@ -986,7 +986,7 @@ function theme_uc_catalog_product_grid($products) {
 
     $titlelink = l($product->title, "node/$nid", array(), null, null, false, true);
     if (module_exists('imagecache') && isset($product->field_image_cache) && file_exists($product->field_image_cache[0]['filepath'])) {
-      $imagelink = l(theme('imagecache', 'product_list', $product->field_image_cache[0]['filepath']), "node/$nid", array(), null, null, false, true);
+      $imagelink = l(theme('imagecache', 'product_list', $product->field_image_cache[0]['filepath'], $product->title, $product->title), "node/$nid", array(), null, null, false, true);
     }
     else {
       $imagelink = '';
@@ -1376,12 +1376,14 @@ function theme_uc_catalog_item($here, $active_link = '', $lis, $expand, $inpath,
  * Create paths to the catalog from taxonomy term.
  */
 function uc_catalog_path($term) {
+  $separator = variable_get('pathauto_separator', '-');
+  $path = preg_replace(array('/\W[_ ]?/', '/[_ ]/'), array('', $separator), strtolower($term->name));
+
   if (function_exists('iconv')) {
-    return 'catalog' .'/'. $term->tid .'/'. iconv('UTF-8', 'ASCII//TRANSLIT', preg_replace(array('/ /', '/\W[_ ]?/'), array('_', ''), strtolower($term->name)));
+    $path = iconv('UTF-8', 'ASCII//TRANSLIT', $path);
   }
-  else {
-    return 'catalog' .'/'. $term->tid .'/'. preg_replace(array('/ /', '/\W[_ ]?/'), array('_', ''), strtolower($term->name));
-  }
+
+  return 'catalog/'. $term->tid .'/'. $path;
 }
 
 /**

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.4.2.13 2008/09/17 21:38:39 rszrama Exp $
+// $Id: uc_quote.module,v 1.4.2.14 2009/01/16 22:12:36 rszrama Exp $
 
 /**
  * @file
@@ -647,8 +647,26 @@ function uc_quote_admin_settings() {
     '#title' => t('Prevent the customer from completing an order if a shipping quote is not selected.'),
     '#default_value' => variable_get('uc_quote_require_quote', true),
   );
+
+  $form['uc_quote_pane_description'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Shipping quote pane description'),
+    '#summary callback ' => 'summarize_form',
+    '#tree' => TRUE,
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['uc_quote_pane_description']['text'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Message text'),
+    '#default_value' => variable_get('uc_quote_pane_description', t('Shipping quotes are generated automatically when you enter your address and may be updated manually with the button below.')),
+  );
+  $form['uc_quote_pane_description']['format'] = filter_form(variable_get('uc_quote_desc_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_quote_pane_description', 'format'));
+  $form['uc_quote_pane_description']['format']['#summary callback'] = 'summarize_null';
+
   $form['uc_quote_err_msg'] = array('#type' => 'fieldset',
     '#title' => t('Shipping quote error message'),
+    '#tree' => TRUE,
     '#collapsible' => true,
     '#collapsed' => true,
   );
@@ -656,7 +674,7 @@ function uc_quote_admin_settings() {
     '#title' => t('Message text'),
     '#default_value' => variable_get('uc_quote_err_msg', t("There were problems getting a shipping quote. Please verify the delivery and product information and try again.\nIf this does not resolve the issue, please call in to complete your order.")),
   );
-  $form['uc_quote_err_msg']['format'] = filter_form(variable_get('uc_quote_msg_format', FILTER_DEFAULT_FORMAT));
+  $form['uc_quote_err_msg']['format'] = filter_form(variable_get('uc_quote_msg_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_quote_err_msg', 'format'));
 
   $form['default_address'] = array('#type' => 'fieldset',
     '#title' => t('Default pickup address'),
@@ -710,8 +728,10 @@ function uc_quote_admin_settings_submit($form_id, $form_values) {
   variable_set('uc_quote_log_errors', $form_values['uc_quote_log_errors']);
   variable_set('uc_quote_display_debug', $form_values['uc_quote_display_debug']);
   variable_set('uc_quote_require_quote', $form_values['uc_quote_require_quote']);
-  variable_set('uc_quote_err_msg', $form_values['text']);
-  variable_set('uc_quote_msg_format', $form_values['format']);
+  variable_set('uc_quote_pane_description', $form_state['values']['uc_quote_pane_description']['text']);
+  variable_set('uc_quote_desc_format', $form_state['values']['uc_quote_pane_description']['format']);
+  variable_set('uc_quote_err_msg', $form_state['values']['uc_quote_err_msg']['text']);
+  variable_set('uc_quote_msg_format', $form_state['values']['uc_quote_err_msg']['format']);
 
   drupal_set_message(t('The configuration options have been saved.'));
 }
@@ -971,6 +991,9 @@ function uc_cart_pane_quotes($items) {
       $method_choices[$method['id']] = $method['title'];
     }
   }
+  $form['delivery_country'] = uc_country_select(uc_get_field_name('country'), uc_store_default_country(), NULL, 'name', TRUE);
+  $country_id = isset($_POST['delivery_country']) ? intval($_POST['delivery_country']) : uc_store_default_country();
+  $form['delivery_zone'] = uc_zone_select(uc_get_field_name('zone'), null, null, $country_id, 'name', true);
   $form['delivery_postal_code'] = uc_textfield(uc_get_field_name('postal_code'), '', TRUE, NULL, 10, 10);
   $form['quote_method'] = array('#type' => 'hidden',
     '#value' => key($method_choices),
@@ -1028,7 +1051,10 @@ function uc_cart_pane_quotes($items) {
 function theme_uc_cart_pane_quotes($form) {
   $output = '<div class="solid-border">';
   $output .= '<strong>'. t('Estimated shipping cost:') .'</strong>';
-  $output .= drupal_render($form['delivery_postal_code']) . drupal_render($form['get_quote']);
+  $output .= drupal_render($form['delivery_country']);
+  $output .= drupal_render($form['delivery_zone']);
+  $output .= drupal_render($form['delivery_postal_code']);
+  $output .= drupal_render($form['get_quote']);
   $output .= drupal_render($form);
   $output .= '</div>';
 
@@ -1048,7 +1074,7 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2) {
   global $user;
   switch ($op) {
     case 'view':
-      $description = t('Shipping quotes are generated automatically when you enter your address and may be updated manually with the button below.');
+      $description = check_markup(variable_get('uc_quote_pane_description', t('Shipping quotes are generated automatically when you enter your address and may be updated manually with the button below.')), variable_get('uc_quote_desc_format', FILTER_FORMAT_DEFAULT));
 
       // Let Javascript know where we are.
       $contents['page'] = array('#type' => 'hidden',
@@ -1412,6 +1438,13 @@ function uc_quote_request_quotes() {
 }
 
 function _uc_quote_assemble_quotes($order) {
+  global $user;
+
+  $account = user_load(array('uid' => $order->uid));
+  if (!$account) {
+    $account = $user;
+  }
+
   $products = $order->products;
   $shipping_types = array();
   foreach ($products as $product) {
@@ -1440,7 +1473,7 @@ function _uc_quote_assemble_quotes($order) {
   //drupal_set_message('<pre>'. print_r($products, true) .'</pre>');
   $quote_data = array();
   foreach ($methods as $method) {
-    workflow_ng_invoke_event('get_quote_from_'. $method['id'], $order, $method, $user);
+    workflow_ng_invoke_event('get_quote_from_'. $method['id'], $order, $method, $account);
     $data = ob_get_contents();
     if ($data = unserialize($data)) {
       $quote_data[$method['id']] = $data;

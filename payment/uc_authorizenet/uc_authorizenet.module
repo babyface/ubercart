@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_authorizenet.module,v 1.3.2.9 2008/11/03 21:26:33 rszrama Exp $
+// $Id: uc_authorizenet.module,v 1.3.2.10 2009/01/16 22:12:34 rszrama Exp $
 
 /**
  * @file
@@ -85,7 +85,7 @@ function uc_authorizenet_payment_gateway() {
     'description' => t('Process credit card payments using the AIM service of Authorize.net.'),
     'settings' => 'uc_authorizenet_settings_form',
     'credit' => 'uc_authorizenet_charge',
-    'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE),
+    'credit_txn_types' => array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_PRIOR_AUTH_CAPTURE, UC_CREDIT_AUTH_CAPTURE, UC_CREDIT_REFERENCE_SET, UC_CREDIT_REFERENCE_TXN),
   );
 
   return $gateways;
@@ -172,6 +172,29 @@ function uc_authorizenet_settings_form() {
     '#default_value' => variable_get('uc_authnet_report_arb_post', FALSE),
   );
 
+  $form['cim_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('CIM settings'),
+    '#description' => t('These settings pertain to the Authorize.Net Customer Information Management service.')
+  );
+  $form['cim_settings']['uc_authnet_cim_profile'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Always create a CIM profile for securely storing CC info for later use.'),
+    '#default_value' => variable_get('uc_authnet_cim_profile', FALSE),
+  );
+  $form['cim_settings']['uc_authnet_cim_server'] = array(
+    '#type' => 'radios',
+    '#title' => t('Which server to use for CIM.'),
+    '#description' => t('Once you are ready to go live, change this to "Live".'),
+    '#options' => array(
+      'production' => t('Production'),
+      'developer' => t('Developer test'),
+      'disabled' => t('Disabled'),
+    ),
+    '#default_value' => variable_get('uc_authnet_cim_server', 'disabled'),
+  );
+
+
   return $form;
 }
 
@@ -202,8 +225,6 @@ function uc_authorizenet_payment_gateway_settings_submit($form_id, $form_values)
 }
 
 function uc_authorizenet_charge($order_id, $amount, $data) {
-  global $user;
-
   // Check for cURL support.
   if (!_uc_authorizenet_curl_check()) {
     return array('success' => FALSE);
@@ -211,6 +232,203 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
 
   // Load the order.
   $order = uc_order_load($order_id);
+
+  // Perform the appropriate action based on the transaction type.
+  switch ($data['txn_type']) {
+    // Reference transactions are handled through Authorize.Net's CIM.
+    case UC_CREDIT_REFERENCE_TXN:
+      return _uc_authorizenet_cim_profile_charge($order, $amount, $data);
+
+    // Set a reference only.
+    case UC_CREDIT_REFERENCE_SET:
+      // Return the error message if this failed.
+      if ($message = _uc_authorizenet_cim_profile_create($order)) {
+        return array('success' => FALSE, 'message' => $message);
+      }
+      else {
+        return array('success' => TRUE, 'message' => t('New customer profile created successfully at Authorize.Net.'));
+      }
+
+    // Accommodate all other transaction types.
+    default:
+      return _uc_authorizenet_charge($order, $amount, $data);
+  }
+}
+
+/**
+ * Create a CIM profile using an order's data.
+ */
+function _uc_authorizenet_cim_profile_create($order) {
+  $server = variable_get('uc_authnet_cim_server', 'disabled');
+
+  // Help build the request.
+  $request = _uc_authorizenet_cim_profile_create_request($order);
+
+  // Request a profile from auth.net.
+  $xml = _uc_authorizenet_xml_api_wrapper('createCustomerProfileRequest', _uc_authorizenet_array_to_xml($request));
+
+  // Parse the response.
+  $response = _uc_authorizenet_cim_parse_response(uc_authorizenet_xml_api($server, $xml));
+  if ($response['resultCode'] == 'Error') {
+    uc_order_comment_save($order->order_id, 0, t('Authorize.Net: Creating CIM profile failed.<br />@error - @text', array('@error' => $response['code'], '@text' => $response['text'])), 'admin');
+    return $response['text'];
+  }
+  else {
+    uc_order_comment_save($order->order_id, 0, t('Authorize.Net: CIM profile created - @id', array('@id' => $response['customerProfileId'])));
+  }
+
+  // Save the new credit reference to the db.
+  $order->data = uc_credit_log_reference($order->order_id, $response['customerProfileId'], $order->payment_details['cc_number']);
+
+  return '';
+}
+
+/**
+ * Helper to create the CIM profile creation request.
+ */
+function _uc_authorizenet_cim_profile_create_request($order) {
+  return array(
+    'refId' => substr($order->order_id .'-'. time(), 0, 20),
+    'profile' => array(
+      'merchantCustomerId' => substr($order->uid, 0, 20),
+      'description' => substr(t('Order @order taking place at @date', array('@order' => $order->order_id, '@date' => format_date(time()))), 0, 255),
+      'email' => substr($order->primary_email, 0, 255),
+      'paymentProfiles' => array(
+        'billTo' => _uc_authorize_cim_xml_billto($order),
+        'payment' => array(
+          'creditCard' => array(
+            'cardNumber' => $order->payment_details['cc_number'],
+            'expirationDate' => $order->payment_details['cc_exp_year'] .'-'. str_pad($order->payment_details['cc_exp_month'], 2, '0', STR_PAD_LEFT),
+          ),
+        ),
+      ),
+      'shipToList' => _uc_authorize_cim_xml_shipto($order),
+    ),
+  );
+}
+
+/**
+ * Use a reference to charge to a CIM profile.
+ */
+function _uc_authorizenet_cim_profile_charge($order, $amount, $data) {
+  global $user;
+  $server = variable_get('uc_authnet_cim_server', 'disabled');
+
+  // Help build the request.
+  $request = _uc_authorizenet_cim_profile_charge_request($order, $amount, $data);
+
+  // Check error state.
+  if (array_key_exists('errorCode', $request)) {
+    $comment[] = $request['text'];
+    $result = array(
+      'success' => FALSE,
+    );
+  }
+
+  // Request went off smooth.
+  else {
+
+    // Request a profile from auth.net.
+    $xml = _uc_authorizenet_xml_api_wrapper('createCustomerProfileTransactionRequest', _uc_authorizenet_array_to_xml($request));
+
+    // Parse the response.
+    $response = _uc_authorizenet_cim_parse_response(uc_authorizenet_xml_api($server, $xml));
+
+    // Error state.
+    if ($response['resultCode'] == 'Error') {
+      $result = array(
+        'success' => FALSE,
+      );
+      $comment[] = '('. $response['resultCode'] .': '. $response['text'] .')';
+    }
+
+    // Transaction succeeded.
+    else {
+      $result = array(
+        'success' => TRUE,
+      );
+
+      // Build info message.
+      $types = uc_credit_transaction_types();
+      $comment[] = t('<b>@type:</b> @amount', array('@type' => $types[$data['txn_type']], '@amount' => uc_currency_format($amount)));
+
+      // Save a comment to the order.
+      uc_order_comment_save($order->order_id, $user->uid, implode('<br />', $comment), 'admin');
+    }
+  }
+
+  // Build the response to the payment gateway API.
+  return $result + array(
+    'comment' => implode(', ', $comment),
+    'message' => implode('<br />', $comment),
+    'uid' => $user->uid,
+  );
+}
+
+/**
+ * Helper for building the request for a CIM profile charge.
+ */
+function _uc_authorizenet_cim_profile_charge_request($order, $amount, $data) {
+  $profile = _uc_authorizenet_cim_profile_get($order, $data['ref_id']);
+  if ($profile['resultCode'] == 'Error') {
+    return $profile;
+  }
+  else {
+    return array(
+      'refId' => substr($order->order_id .'-'. time(), 0, 20),
+      'transaction' => array(
+        'profileTransAuthCapture' => array(
+          'amount' => $amount,
+          'customerProfileId' => $profile['customerProfileId'],
+          'customerPaymentProfileId' => $profile['customerPaymentProfileId'],
+          'order' => array(
+            'invoiceNumber' => $order->order_id,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/**
+ * Get a CIM profile stored at Authorize.Net.
+ */
+function _uc_authorizenet_cim_profile_get($order, $profile_id) {
+  $server = variable_get('uc_authnet_cim_server', 'disabled');
+  $request = array(
+    'customerProfileId' => $profile_id,
+  );
+
+  // Request a profile from auth.net.
+  $xml = _uc_authorizenet_xml_api_wrapper('getCustomerProfileRequest', _uc_authorizenet_array_to_xml($request));
+
+  // Parse the response.
+  $response = _uc_authorizenet_cim_parse_response(uc_authorizenet_xml_api($server, $xml));
+
+  return $response;
+}
+
+/**
+ * Get a CIM payment profile stored at auth.net.
+ */
+function _uc_authorizenet_cim_payment_profile_get($order, $profile_id, $payment_profile_id) {
+  $server = variable_get('uc_authnet_cim_server', 'disabled');
+  $request = array(
+    'customerProfileId' => $profile_id,
+  );
+
+  // Request a profile from auth.net.
+  $xml = _uc_authorizenet_xml_api_wrapper('getCustomerPaymentProfileRequest', _uc_authorizenet_array_to_xml($request));
+  // Parse the response.
+  $response = _uc_authorizenet_cim_parse_response(uc_authorizenet_xml_api($server, $xml));
+  return $response['resultCode'] == 'Error' ? FALSE : $response;
+}
+
+/**
+ * Handles authorizations and captures through AIM at Authorize.Net
+ */
+function _uc_authorizenet_charge($order, $amount, $data) {
+  global $user;
 
   // Build a description of the order for logging in Auth.Net.
   $description = array();
@@ -243,7 +461,7 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
     // 'x_duplicate_window' => '120',
 
     // Order Information
-    'x_invoice_num' => $order_id,
+    'x_invoice_num' => $order->order_id,
     'x_description' => substr(implode(', ', $description), 0, 255),
 
     // Customer Information
@@ -361,10 +579,17 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
     // If this was an authorization only transaction...
     if ($data['txn_type'] == UC_CREDIT_AUTH_ONLY) {
       // Log the authorization to the order.
-      uc_credit_log_authorization($order_id, $response[6], $amount);
+      uc_credit_log_authorization($order->order_id, $response[6], $amount);
     }
     elseif ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE) {
-      uc_credit_log_prior_auth_capture($order_id, $data['auth_id']);
+      uc_credit_log_prior_auth_capture($order->order_id, $data['auth_id']);
+    }
+
+    // Create a transaction reference if specified in the payment gateway
+    // settings and this is an appropriate transaction type.
+    if (variable_get('uc_authnet_cim_profile', FALSE) && in_array($data['txn_type'], array(UC_CREDIT_AUTH_ONLY, UC_CREDIT_AUTH_CAPTURE))) {
+      // Ignore the returned message for now; that will appear in the comments.
+      _uc_authorizenet_cim_profile_create($order);
     }
   }
 
@@ -383,7 +608,7 @@ function uc_authorizenet_charge($order_id, $amount, $data) {
   }
 
   // Save the comment to the order.
-  uc_order_comment_save($order_id, $user->uid, $comment, 'admin');
+  uc_order_comment_save($order->order_id, $user->uid, $comment, 'admin');
 
   return $result;
 }
@@ -1108,6 +1333,59 @@ function _uc_authorizenet_curl_check() {
   }
 
   return TRUE;
+}
+
+/**
+ * Map an order's billing information to an array for later XML conversion.
+ */
+function _uc_authorize_cim_xml_billto($order) {
+  $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
+  return array(
+    'firstName' => substr($order->billing_first_name, 0, 50),
+    'lastName' => substr($order->billing_last_name, 0, 50),
+    'company' => substr($order->billing_company, 0, 50),
+    'address' => substr($order->billing_street1, 0, 60),
+    'city' => substr($order->billing_city, 0, 40),
+    'state' => substr(uc_get_zone_code($order->billing_zone), 0, 2),
+    'zip' => substr($order->billing_postal_code, 0, 20),
+    'country' => !$billing_country ? '' : $billing_country[0]['country_iso_code_2'],
+  );
+}
+
+/**
+ * Map an order's shipping information to an array for later XML conversion.
+ */
+function _uc_authorize_cim_xml_shipto($order) {
+  $delivery_country = uc_get_country_data(array('country_id' => $order->delivery_country));
+  return array(
+    'firstName' => substr($order->delivery_first_name, 0, 50),
+    'lastName' => substr($order->delivery_last_name, 0, 50),
+    'company' => substr($order->delivery_company, 0, 50),
+    'address' => substr($order->delivery_street1, 0, 60),
+    'city' => substr($order->delivery_city, 0, 40),
+    'state' => substr(uc_get_zone_code($order->delivery_zone), 0, 2),
+    'zip' => substr($order->delivery_postal_code, 0, 20),
+    'country' => !$delivery_country ? '' : $delivery_country[0]['country_iso_code_2'],
+  );
+}
+
+/**
+ * Parse an Authorize.Net XML CIM API response.
+ */
+function _uc_authorizenet_cim_parse_response($content) {
+  // Find the elements in the XML and build the return array.
+  $data = array(
+    'refId' => _uc_authorizenet_substr_between($content, 'refId'),
+    'resultCode' => _uc_authorizenet_substr_between($content, 'resultCode'),
+    'code' => _uc_authorizenet_substr_between($content, 'code'),
+    'text' => _uc_authorizenet_substr_between($content, 'text'),
+    'customerProfileId' => _uc_authorizenet_substr_between($content, 'customerProfileId'),
+    'directResponse' => _uc_authorizenet_substr_between($content, 'directResponse'),
+    'customerPaymentProfileId' => _uc_authorizenet_substr_between($content, 'customerPaymentProfileId'),
+    'customerAddressId' => _uc_authorizenet_substr_between($content, 'customerAddressId'),
+  );
+
+  return $data;
 }
 
 // Parse an Authorize.Net XML API response; from sample PHP for ARB.

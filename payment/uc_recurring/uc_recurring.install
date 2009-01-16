@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.install,v 1.4.4.3 2008/09/17 21:38:39 rszrama Exp $
+// $Id: uc_recurring.install,v 1.4.4.4 2009/01/16 22:12:35 rszrama Exp $
 
 function uc_recurring_install() {
   switch ($GLOBALS['db_type']) {
@@ -83,7 +83,7 @@ function uc_recurring_update_1() {
       $ret[] = update_sql("ALTER TABLE {uc_recurring_users} ADD fee_handler VARCHAR(255) NOT NULL AFTER uid");
       break;
     case 'pgsql':
-      db_add_column($ret, 'uc_recurring_users', 'fee_handler', 'varchar(255)', array('not null' => TRUE, 'default' => ''));
+      db_add_column($ret, 'uc_recurring_users', 'fee_handler', 'varchar(255)', array('not null' => TRUE, 'default' => "''"));
       break;
   }
 

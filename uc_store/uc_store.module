@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.13.2.15 2008/11/03 21:26:37 rszrama Exp $
+// $Id: uc_store.module,v 1.13.2.16 2009/01/16 22:12:38 rszrama Exp $
 
 /**
  * @file
@@ -363,7 +363,7 @@ function uc_store_token_values($type, $object = NULL) {
           $settings['logo'] = $settings['logo_path'];
         }
       }
-      $values['site-logo'] = '<img src="'. url($settings['logo'], NULL, NULL, TRUE) .'" />';
+      $values['site-logo'] = '<img src="'. url($base_url .'/'. $settings['logo'], NULL, NULL, TRUE) .'" />';
 
       $values['store-name'] = variable_get('uc_store_name', t('Our store'));
       $values['store-url'] = variable_get('uc_store_url', $base_url);
@@ -1095,7 +1095,7 @@ function uc_country_import_form_submit($form_id, $form_values) {
       drupal_set_message(t('Country file @file imported.', array('@file' => $file)));
     }
     else {
-      drupal_set_message(t('Country file had no install function.'));
+      drupal_set_message(t('Country file @file had no install function.', array('@file' => $file)), 'error');
     }
   }
 }
@@ -1460,7 +1460,7 @@ function uc_store_format_settings_form() {
   $form['currency']['uc_currency_code'] = array(
     '#type' => 'textfield',
     '#title' => t('Default currency'),
-    '#description' => t('While not used directly in formatting, the currency code is used by other modules as the primary currnecy for your site.  Enter here your three character <a href="!url">ISO 4217</a> currency code.', array('!url' => 'http://en.wikipedia.org/wiki/ISO_4217#Active_codes')),
+    '#description' => t('While not used directly in formatting, the currency code is used by other modules as the primary currency for your site.  Enter here your three character <a href="!url">ISO 4217</a> currency code.', array('!url' => 'http://en.wikipedia.org/wiki/ISO_4217#Active_codes')),
     '#default_value' => variable_get('uc_currency_code', 'USD'),
     '#maxlength' => 3,
     '#size' => 5,
@@ -2379,7 +2379,7 @@ function uc_get_addresses($uid, $type = 'billing') {
 
   $addresses = array();
   while ($address = db_fetch_array($result)) {
-    if (!empty($address['postal_code'])) {
+    if (!empty($address['street1']) || !empty($address['postal_code'])) {
       $addresses[] = $address;
     }
   }
@@ -2765,7 +2765,21 @@ class uc_encryption_class {
   }
 
   function _applyFudgeFactor (&$fudgefactor) {
-    $fudge = array_shift($fudgefactor);
+    static $alerted = FALSE;
+
+    if (!is_array($fudgefactor)) {
+      if (!$alerted) {
+        // Throw an error that makes sense so this stops getting reported.
+        $this->errors[] = t('No encryption key was found.');
+        drupal_set_message(t('Ubercart cannot find a necessary encryption key.  Refer to the store admin <a href="!url">dashboard</a> to isolate which one.', array('!url' => url('admin/store'))), 'error');
+
+        $alerted = TRUE;
+      }
+    }
+    else {
+      $fudge = array_shift($fudgefactor);
+    }
+
     $fudge = $fudge + $this->adj;
     $fudgefactor[] = $fudge;
 
@@ -2958,6 +2972,6 @@ function uc_referer_uri() {
 
 // Returns the current version of Ubercart.
 function uc_version() {
-  return '1.6';
+  return '1.7';
 }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.install,v 1.9.2.9 2008/07/29 22:22:42 rszrama Exp $
+// $Id: uc_attribute.install,v 1.9.2.10 2009/01/16 22:12:36 rszrama Exp $
 
 function uc_attribute_install() {
   switch ($GLOBALS['db_type']) {
@@ -168,10 +168,10 @@ function uc_attribute_update_1() {
       );");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_attributes', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => ''));
-      db_change_column($ret, 'uc_attributes_options', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_attributes', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => "''"));
+      db_change_column($ret, 'uc_attributes_options', 'name', 'name', 'varchar(255)', array('not null' => true, 'default' => "''"));
       $ret[] = update_sql("ALTER TABLE {uc_attributes_options} RENAME TO {uc_attribute_options}");
-      db_change_column($ret, 'uc_product_adjustments', 'model', 'model', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_product_adjustments', 'model', 'model', 'varchar(255)', array('not null' => true, 'default' => "''"));
       $ret[] = update_sql("CREATE TABLE IF NOT EXISTS {uc_class_attributes} (
         pcid integer NOT NULL default '0',
         aid integer NOT NULL '0',
@@ -223,8 +223,8 @@ function uc_attribute_update_3() {
       $ret[] = update_sql("ALTER TABLE {uc_class_attribute_options} CHANGE pcid pcid varchar(32) NOT NULL");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_class_attributes', 'pcid', 'pcid', 'varchar(32)', array('not null' => true, 'default' => ''));
-      db_change_column($ret, 'uc_class_attribute_options', 'pcid', 'pcid', 'varchar(32)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_class_attributes', 'pcid', 'pcid', 'varchar(32)', array('not null' => true, 'default' => "''"));
+      db_change_column($ret, 'uc_class_attribute_options', 'pcid', 'pcid', 'varchar(32)', array('not null' => true, 'default' => "''"));
     break;
   }
   return $ret;
@@ -239,7 +239,7 @@ function uc_attribute_update_4() {
       $ret[] = update_sql("ALTER TABLE {uc_product_adjustments} ADD PRIMARY KEY  (`nid`, `combination`)");
     break;
     case 'pgsql':
-      db_change_column($ret, 'uc_product_adjustments', 'combination', 'combination', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_change_column($ret, 'uc_product_adjustments', 'combination', 'combination', 'varchar(255)', array('not null' => true, 'default' => "''"));
       $ret[] = update_sql("ALTER TABLE {uc_product_adjustments} ADD PRIMARY KEY  (nid, combiination)");
   }
   return $ret;
@@ -331,7 +331,7 @@ function uc_attribute_update_10() {
       $ret[] = update_sql("ALTER TABLE {uc_attributes} ADD COLUMN description varchar(255) NOT NULL");
     break;
     case 'pgsql':
-      db_add_column($ret, 'uc_attributes', 'description', 'varchar(255)', array('not null' => true, 'default' => ''));
+      db_add_column($ret, 'uc_attributes', 'description', 'varchar(255)', array('not null' => true, 'default' => "''"));
     break;
   }
   return $ret;

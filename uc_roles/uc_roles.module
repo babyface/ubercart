@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.1.2.12 2008/09/17 21:38:42 rszrama Exp $
+// $Id: uc_roles.module,v 1.1.2.13 2009/01/16 22:12:38 rszrama Exp $
 
 /**
  * @file
@@ -319,33 +319,35 @@ function uc_roles_order($op, $order, $status) {
 
   switch ($op) {
     case 'update':
-      $order_user = user_load(array('uid' => $order->uid));
-      if ($order->uid > 0 && $order_user !== FALSE) {
-        // Check each product for a product role.
+      // Only process file downloads when the order is being updated to the
+      // correct status, the status is actually being changed, and a valid user
+      // has been assigned to the order.
+      if ($status == variable_get('uc_file_default_order_status', 'completed') &&
+          $order->status != $status &&
+          $order->uid > 0 &&
+          ($order_user = user_load(array('uid' => $order->uid))) !== FALSE) {
         foreach ($order->products as $product) {
           $roles = db_query("SELECT * FROM {uc_roles_products} WHERE nid = %d", $product->nid);
           while ($role = db_fetch_object($roles)) {
             // Grant (or renew) role upon successful completion of payment
             if ($role->model == $product->model || empty($role->model)) {
-              if ($status == variable_get('uc_roles_default_order_status', 'completed')) {
-                $existing_role = db_fetch_object(db_query("SELECT * FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d", $order_user->uid, $role->rid));
-                if (!is_null($existing_role->expiration)) {
-                  $op = 'renew';
-                  $comment = t('Customer user role %role renewed.', array('%role' => _get_role_name($role->rid)));
-                }
-                else {
-                  $op = 'grant';
-                  $comment = t('Customer granted user role %role.', array('%role' => _get_role_name($role->rid)));
-                }
-
-                $quantity = ($role->by_quantity) ? $product->qty : 1;
-                _role_action($op, $order_user, $role->rid, _get_expiration_date(($role->duration * $quantity), $role->granularity, $existing_role->expiration));
-
-                $new_expiration = db_fetch_object(db_query("SELECT * FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d", $order_user->uid, $role->rid));
-                uc_order_comment_save($order->order_id, $user->uid, $comment);
-                _role_email_user($op, $order_user, $new_expiration, $order);
-                $order_user = user_load(array('uid' => $order->uid));
+              $existing_role = db_fetch_object(db_query("SELECT * FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d", $order_user->uid, $role->rid));
+              if (!is_null($existing_role->expiration)) {
+                $op = 'renew';
+                $comment = t('Customer user role %role renewed.', array('%role' => _get_role_name($role->rid)));
               }
+              else {
+                $op = 'grant';
+                $comment = t('Customer granted user role %role.', array('%role' => _get_role_name($role->rid)));
+              }
+
+              $quantity = ($role->by_quantity) ? $product->qty : 1;
+              _role_action($op, $order_user, $role->rid, _get_expiration_date(($role->duration * $quantity), $role->granularity, $existing_role->expiration));
+
+              $new_expiration = db_fetch_object(db_query("SELECT * FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d", $order_user->uid, $role->rid));
+              uc_order_comment_save($order->order_id, $user->uid, $comment);
+              _role_email_user($op, $order_user, $new_expiration, $order);
+              $order_user = user_load(array('uid' => $order->uid));
             }
           }
         }
@@ -748,7 +750,7 @@ function uc_roles_feature_settings() {
       'month' => t('month(s)'),
       'year' => t('year(s)')
     ),
-    '#description' => t('The default amount of time a granted &Uuml;bercart role will last until it expires.'),
+    '#description' => t('The default amount of time a granted Ubercart role will last until it expires.'),
     '#prefix' => '<div class="expiration">',
     '#suffix' => '</div>',
     '#attributes' => array(  //Javascript to disable qty on never select
@@ -759,7 +761,7 @@ function uc_roles_feature_settings() {
     '#type' => 'select',
     '#title' => t('Default role'),
     '#default_value' => variable_get('uc_roles_default_role', NULL),
-    '#description' => t('The default role &Uuml;bercart grants on specified products.'),
+    '#description' => t('The default role Ubercart grants on specified products.'),
     '#options' => _get_role_choices(),
   );
   $form['uc_roles_default_role_choices'] = array(

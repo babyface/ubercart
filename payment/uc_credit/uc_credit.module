@@ -1,12 +1,12 @@
 <?php
-// $Id: uc_credit.module,v 1.4.2.16 2008/11/03 21:26:33 rszrama Exp $
+// $Id: uc_credit.module,v 1.4.2.17 2009/01/16 22:12:34 rszrama Exp $
 
 /**
  * @file
  * Defines the credit card payment method and hooks in payment gateways.
  */
 
- // Used to just authorize an amount on a credit card account.
+// Used to just authorize an amount on a credit card account.
 define('UC_CREDIT_AUTH_ONLY', 'authorize');
 
 // Used to capture funds from a prior authorization.
@@ -144,7 +144,7 @@ function uc_credit_form_alter($form_id, &$form) {
 
     case 'uc_payment_gateways_form':
       // Loop through each of the gateways on the form.
-      foreach ($form['gateways'] as $key => $value) {
+      foreach ((array) $form['gateways'] as $key => $value) {
         // Get the transaction types associated with this gateway.
         $gateway_types = uc_credit_gateway_txn_types($key);
 
@@ -271,7 +271,7 @@ function uc_credit_store_status() {
     $statuses[] = array(
       'status' => 'error',
       'title' => t('Credit card encryption'),
-      'desc' => t('You must <a href="http://www.ubercart.org/docs/user/2731/credit_card_settings#security">review your credit card security settings</a> and enable encryption before you can accept credit card payments.'),
+      'desc' => t('You must review your <a href="!url">credit card security settings</a> and enable encryption before you can accept credit card payments.', array('!url' => url('admin/store/settings/payment/edit/methods'))),
     );
   }
 
@@ -418,7 +418,7 @@ function uc_payment_method_credit($op, &$arg1, $silent = FALSE) {
       $cc_data = array(
         'cc_type' => check_plain($_POST['cc_type']),
         'cc_owner' => check_plain($_POST['cc_owner']),
-        'cc_number' => check_plain($_POST['cc_number']),
+        'cc_number' => check_plain(str_replace(' ', '',  $_POST['cc_number'])),
         'cc_start_month' => check_plain($_POST['cc_start_month']),
         'cc_start_year' => check_plain($_POST['cc_start_year']),
         'cc_exp_month' => check_plain($_POST['cc_exp_month']),
@@ -1297,9 +1297,6 @@ function uc_credit_terminal_form($order, $lock_amount = FALSE) {
   // Find any uncaptured authorizations.
   $options = array();
 
-  // Log a reference to the order for testing.
-  // $order->data = uc_credit_log_authorization($order->order_id, substr(md5(time()), 0, 12), 13.56);
-
   foreach ((array) $order->data['cc_txns']['authorizations'] as $auth_id => $data) {
     if (empty($data['captured'])) {
       $options[$auth_id] = t('@auth_id - @date - @amount authorized', array('@auth_id' => strtoupper($auth_id), '@date' => format_date($data['authorized'], 'small'), '@amount' => uc_currency_format($data['amount'])));
@@ -1404,18 +1401,17 @@ function uc_credit_terminal_form($order, $lock_amount = FALSE) {
 }
 
 function uc_credit_terminal_form_validate($form_id, $form_values) {
-    switch ($form_values['op']) {
-      case t('Charge amount'):
-      case t('Authorize amount only'):
-      case t('Capture amount to this authorization'):
-      case t('Charge amount to this reference'):
-        if (!is_numeric($form_values['amount']) || $form_values['amount'] <= 0) {
-          form_set_error('amount', t('You must enter a positive number for the amount.'));
-        }
-    }
+  switch ($form_values['op']) {
+    case t('Charge amount'):
+    case t('Authorize amount only'):
+    case t('Capture amount to this authorization'):
+    case t('Charge amount to this reference'):
+      if (!is_numeric($form_values['amount']) || $form_values['amount'] <= 0) {
+        form_set_error('amount', t('You must enter a positive number for the amount.'));
+      }
+  }
 
-  $order = uc_order_load($form_values['order_id']);
-  if ($order === FALSE) {
+  if (uc_order_load($form_values['order_id']) === FALSE) {
     form_set_error('', t('Invalid order ID.  Unable to process payment.'));
   }
 }
@@ -1824,11 +1820,12 @@ function uc_credit_default_gateway() {
 
   // If we only found one gateway for this payment method...
   if (count($gateways) == 1) {
-    // Get the right key for the payment gateway in the array.
-    $gateway_id = array_shift(array_keys($gateways));
+    // Get the payment gateway array and store its ID.
+    $gateway = array_shift($gateways);
+    $gateway_id = $gateway['id'];
 
     // Store the callback for this gateway.
-    $callback = $gateways[$gateway_id]['credit'];
+    $callback = $gateway['credit'];
   }
   else {
     // Otherwise attempt to find the appropriate gateway function in the array.
@@ -1960,8 +1957,14 @@ function uc_credit_gateway_txn_types($gateway) {
   $types = _payment_gateway_data($gateway, 'credit_txn_types');
 
   // Default to authorization plus capture if none are specified.
-  if (empty($types) && !is_null(_payment_gateway_data($gateway, 'credit'))) {
-    $types = array(UC_CREDIT_AUTH_CAPTURE);
+  if (empty($types)) {
+    if (!is_null(_payment_gateway_data($gateway, 'credit'))) {
+      $types = array(UC_CREDIT_AUTH_CAPTURE);
+    }
+    else {
+      // Or an empty array if the gateway doesn't even handle credit payments.
+      $types = array();
+    }
   }
 
   return $types;

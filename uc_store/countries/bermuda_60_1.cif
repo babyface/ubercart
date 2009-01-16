@@ -1,5 +1,5 @@
 <?php
-// $Id: bermuda_60_1.cif,v 1.1.2.1 2008/11/03 21:26:37 rszrama Exp $
+// $Id: bermuda_60_1.cif,v 1.1.2.2 2009/01/16 22:12:39 rszrama Exp $
 
 /**
  * First implement hook_install() using the name of the country as the base of
@@ -8,31 +8,30 @@
 function bermuda_install() {
   // Make the entry in the country table.
   // VALUES = Country ID, Country Name, 2-digit Code, 3-digit Code, File Version
-  db_query("INSERT INTO {uc_countries} VALUES ('060', 'Bermuda', 'BM', 'BMU', 1)");
+  db_query("INSERT INTO {uc_countries} VALUES (60, 'Bermuda', 'BM', 'BMU', 1)");
 
   // Make the entries in the zones table.  Use %d for the zone_id and the
   // function uc_get_zone_ids($num) as the second argument for db_query() where
   // $num is the number of zones in the INSERT query.
   // VALUES = %d for ID, Parent Country ID, Zone Abbreviation, Zone Name
   db_query("INSERT INTO {uc_zones} VALUES "
-          ."(%d, 060, 'DEV', 'Devonshire'),"
-          ."(%d, 060, 'HAM', 'Hamilton'),"
-          ."(%d, 060, 'HA', 'Hamilton Municipality'),"
-          ."(%d, 060, 'PAG', 'Paget'),"
-          ."(%d, 060, 'PEM', 'Pembroke'),"
-          ."(%d, 060, 'SG', 'Saint George Municipality'),"
-          ."(%d, 060, 'SGE', 'Saint Georges'),"
-          ."(%d, 060, 'SAN', 'Sandys'),"
-          ."(%d, 060, 'SMI', 'Smiths'),"
-          ."(%d, 060, 'SOU', 'Southampton'),"
-          ."(%d, 060, 'WAR', 'Warwick')",
-    uc_get_zone_ids(11));
+          ."(%d, 60, 'DEV', 'Devonshire'),"
+          ."(%d, 60, 'HAM', 'Hamilton'),"
+          ."(%d, 60, 'HA', 'Hamilton Municipality'),"
+          ."(%d, 60, 'PAG', 'Paget'),"
+          ."(%d, 60, 'PEM', 'Pembroke'),"
+          ."(%d, 60, 'SG', 'Saint George Municipality'),"
+          ."(%d, 60, 'SGE', 'Saint Georges'),"
+          ."(%d, 60, 'SAN', 'Sandys'),"
+          ."(%d, 60, 'SMI', 'Smiths'),"
+          ."(%d, 60, 'SOU', 'Southampton'),"
+          ."(%d, 60, 'WAR', 'Warwick')", uc_get_zone_ids(11));
 
   // Use uc_set_address_format() with the country ID as the first argument and
   // an address format string as the second.  Documentation on address formats
   // is available at:
   // http://www.ubercart.org/ubercart_users_guide/country_settings#address_format_docs
-  uc_set_address_format(060,
+  uc_set_address_format(60,
     "!company\r\n!first_name !last_name\r\n!street1\r\n!street2"
    ."\r\n!city - !postal_code\r\n!zone_code\r\n!country_name_if");
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.11.2.14 2008/11/03 21:26:37 rszrama Exp $
+// $Id: uc_taxes.module,v 1.11.2.15 2009/01/16 22:12:40 rszrama Exp $
 
 /**
  * @file
@@ -174,7 +174,7 @@ function uc_taxes_order($op, $arg1, $arg2) {
  * Display a list of tax rates.
  */
 function uc_taxes_admin_settings() {
-  $header = array(t('Name'), t('Rate'), t('Taxed product types'), t('Taxed line items'), t('Weight'), array('data' => t('Actions'), 'colspan' => 4));
+  $header = array(t('Name'), t('Rate'), t('Taxed product types'), t('Taxed line items'), t('Weight'), array('data' => t('Operations'), 'colspan' => 4));
   $rows = array();
   $result = db_query("SELECT * FROM {uc_taxes} ORDER BY weight");
   while ($rule = db_fetch_object($result)) {

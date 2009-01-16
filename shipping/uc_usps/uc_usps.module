@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.5.2.11 2008/07/29 22:22:41 rszrama Exp $
+// $Id: uc_usps.module,v 1.5.2.12 2009/01/16 22:12:36 rszrama Exp $
 
 /**
  * @file
@@ -627,7 +627,7 @@ function _uc_usps_package_products($products, &$addresses) {
         $package->machinable = (
           $package->length >= 6 && $package->length <= 34 &&
           $package->width >= 0.25 && $package->width <= 17 &&
-          $package->height >= 3.5 && $package->height >= 17 &&
+          $package->height >= 3.5 && $package->height <= 17 &&
           ($package->pounds == 0 ? $package->ounces >= 6 : true) &&
           $package->pounds <= 35 &&
           ($package->pounds == 35 ? $package->ounces == 0 : true)

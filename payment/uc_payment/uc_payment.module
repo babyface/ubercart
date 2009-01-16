@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.4.2.14 2008/11/03 21:26:34 rszrama Exp $
+// $Id: uc_payment.module,v 1.4.2.15 2009/01/16 22:12:35 rszrama Exp $
 
 /**
  * @file
@@ -481,6 +481,7 @@ function uc_payment_gateways_form() {
       '#value' => '<div><strong>'. t('Payment gateways') .'</strong><br />'
                 . t('Payment gateways are web services that allow you to process various types of payments remotely.  The settings forms below are for the payment gateways you have installed.  Click a name to expand its options and adjust the settings accordingly.') .'</div>',
     );
+
     foreach ($gateways as $gateway) {
       $form['gateways'][$gateway['id']] = array(
         '#type' => 'fieldset',
@@ -488,12 +489,14 @@ function uc_payment_gateways_form() {
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       );
+
       $supported_methods = array();
       foreach ($methods as $method) {
         if (isset($gateway[$method['id']]) && function_exists($gateway[$method['id']])) {
           $supported_methods[] = $method['name'];
         }
       }
+
       $form['gateways'][$gateway['id']]['supported_methods'] = array(
         '#value' => '<div>'. t('This gateway supports the following payment methods:')
                    .'<br />'. implode(',', $supported_methods) .'</div>',
@@ -505,6 +508,8 @@ function uc_payment_gateways_form() {
         '#default_value' => variable_get('uc_pg_'. $gateway['id'] .'_enabled', TRUE),
         '#weight' => -7,
       );
+
+      // Find any additional settings defined in the payment gateway callback.
       if (function_exists($gateway['settings'])) {
         $gateway_settings = $gateway['settings']();
         if (is_array($gateway_settings)) {
@@ -940,7 +945,7 @@ function uc_payment_process($method, $order_id, $amount, $data = NULL, $default 
   }
   else {
     // Otherwise display the failue message in the logs.
-    watchdog('uc_payment', t('Payment failed: !message', array('!message' => $result['message'])), WATCHDOG_WARNING);
+    watchdog('uc_payment', t('Payment failed: @message', array('@message' => $result['message'])), WATCHDOG_WARNING);
   }
 
   // If we have a message for display and aren't simply charging with the
@@ -974,10 +979,7 @@ function uc_payment_enter($order_id, $method, $amount, $uid, $data, $comment) {
 
   if (variable_get('uc_payment_logging', TRUE)) {
     global $user;
-    $log_message = t('!method payment for !amount entered by !user.',
-                     array('!method' => $method_name,
-                           '!amount' => uc_currency_format($amount),
-                           '!user' => uc_get_initials($user->uid)));
+    $log_message = t('@method payment for @amount entered by @user.', array('@method' => $method_name, '@amount' => uc_currency_format($amount), '@user' => uc_get_initials($user->uid)));
     uc_order_log_changes($order_id, array($log_message));
   }
 
