@@ -1,0 +1,478 @@
+# German translation of ubercart (6.x-2.0-beta1)
+# Copyright (c) 2009 by the German translation team
+# Generated from files:
+#  uc_recurring.module,v 1.7.2.9 2008/12/09 15:20:37 islandusurper
+#  uc_recurring.admin.inc,v 1.1.2.2 2008/11/07 21:13:25 islandusurper
+#  uc_recurring.pages.inc,v 1.1.2.2 2008/11/07 21:13:25 islandusurper
+#  uc_recurring.install,v 1.4.2.9 2008/12/09 15:20:37 islandusurper
+#  uc_recurring.info,v 1.2.2.5 2008/11/07 21:13:25 islandusurper
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ubercart (6.x-2.0-beta1)\n"
+"POT-Creation-Date: 2009-01-18 12:36+0100\n"
+"PO-Revision-Date: 2008-03-09 18:44+0100\n"
+"Language-Team: German\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: payment/uc_recurring/uc_recurring.module:275,27,46,55
+msgid "Recurring fees"
+msgstr "Wiederkehrende Gebühren"
+
+#: payment/uc_recurring/uc_recurring.module:28
+msgid "View the recurring fees on your orders."
+msgstr "Die wiederkehrenden Gebühren in ihren Bestellungen anzeigen."
+
+#: payment/uc_recurring/uc_recurring.module:145
+msgid ""
+"There are no payment methods configured for orders with recurring "
+"fees!"
+msgstr ""
+"Es sind keine Zahlungsarten konfiguriert die sich für wiederkehrende "
+"Gebühren eignen!"
+
+#: payment/uc_recurring/uc_recurring.module:146
+msgid "Please contact an administrator to solve the issue."
+msgstr ""
+"Bitte nehemen sie Kontakt mit einem Administrator auf um das Problem "
+"zu lösen."
+
+#: payment/uc_recurring/uc_recurring.module:253
+msgid "!successes recurring fees processed successfully; !fails failed."
+msgstr ""
+"!successes wiederkehrende gebühren erfolgreich verarbeitet; !fails "
+"fehlgeschlagen."
+
+#: payment/uc_recurring/uc_recurring.module:316
+msgid ""
+"Your order cannot be completed, because we could not process your "
+"recurring payment. Please review your payment details and contact us "
+"to complete your order if the problem persists."
+msgstr ""
+"Ihre Bestellung konnte nicht abgeschlossen werden, weil Ihre "
+"wiederkehrende Bezahlung nicht vollzogen werden konnte. Bitte "
+"überprüfen Sie ihre Einstellungen zur Bezahlung und nehmen Sie "
+"Kontakt mit uns auf, wenn das Problem weiterhin besteht."
+
+#: payment/uc_recurring/uc_recurring.module:318
+msgid ""
+"Your order has been submitted, but we may need to contact you to "
+"ensure your recurring fee is setup properly. Thank you for your "
+"understanding."
+msgstr ""
+"Ihre Bestellung wurde übermittelt, jedoch werden wir mit Ihnen "
+"Kontakt aufnehmen um sicher zu gehen, dass Ihre Bezahleinstellung "
+"korrekt ist. Vielen Dank für Ihr Verständnis."
+
+#: payment/uc_recurring/uc_recurring.module:338
+msgid "Recurring fee"
+msgstr "Wiederkehrende Gebühr"
+
+#: payment/uc_recurring/uc_recurring.module:352
+msgid ""
+"You can only use the credit card payment method with the uc_recurring "
+"handler."
+msgstr ""
+"Mit der uc_recurring Einstellung können Sie nur Kreditartenzahlung "
+"verwenden."
+
+#: payment/uc_recurring/uc_recurring.module:397
+msgid "Recurring fee <a href=\"!url\">!fee</a> added to order."
+msgstr ""
+"Reglemäßige Zahlweise zur <a href=\"!url\" Bestellung</a> "
+"hinzugefügt."
+
+#: payment/uc_recurring/uc_recurring.module:432
+msgid "Recurring payment expires"
+msgstr "Wiederkehrende Gebühr verfällt."
+
+#: payment/uc_recurring/uc_recurring.module:433,440,447
+msgid "Recurring Payments"
+msgstr "Wiederkehrende Zahlungen"
+
+#: payment/uc_recurring/uc_recurring.module:439
+msgid "Payment is charged successfully"
+msgstr "Zahlung wurde erfolgreich eingezogen."
+
+#: payment/uc_recurring/uc_recurring.module:446
+msgid "Payment charge fails"
+msgstr "Einziehen der Zahlung schlug fehl."
+
+#: payment/uc_recurring/uc_recurring.module:473
+msgid "Applicable Model/SKU"
+msgstr "Anwendbares Modell/SKU"
+
+#: payment/uc_recurring/uc_recurring.module:474
+msgid "Select the applicable product model/SKU for this fee."
+msgstr "Wählen Sie das verfügbare Modell/SKU für diese Zahlung."
+
+#: payment/uc_recurring/uc_recurring.module:482
+msgid ""
+"Charge this amount each billing period.<br />The product price is "
+"still charged at checkout."
+msgstr ""
+"Diese Gebühr bei jeder Rechnungsstellung erheben.<br />Die Gebühr "
+"wird auch bei  Bestellabschluss auf den Artikelpreis erhoben."
+
+#: payment/uc_recurring/uc_recurring.module:491
+msgid "Initial charge"
+msgstr "Grundgebühr"
+
+#: payment/uc_recurring/uc_recurring.module:493
+msgid ""
+"Specify the time to wait to start charging the recurring fee after "
+"checkout. Remember the product price will be charged at the time of "
+"checkout."
+msgstr ""
+"Bestimmen Sie den Zeitpunkt, wann die Ratenzahlung nach Bestellabgabe "
+"beginnen soll. Bitte beachten Sie, dass der Artikelpreis zum Zeitpunkt "
+"der Bestellung erhoben wird."
+
+#: payment/uc_recurring/uc_recurring.module:516
+msgid "Specify the length of the billing period for this fee."
+msgstr ""
+"Bitte bestimmen Sie die Länge des Rechnungszeitraumes für diese "
+"Gebühr."
+
+#: payment/uc_recurring/uc_recurring.module:537
+msgid "Number of billing periods"
+msgstr "Anzahl der Abrechnungs Zyklen"
+
+#: payment/uc_recurring/uc_recurring.module:538
+msgid "Specify how many times the recurring fee will be charged."
+msgstr ""
+"Legen Sie fest wie oft die wiederkehrende Gebühr eingezogen werden "
+"soll."
+
+#: payment/uc_recurring/uc_recurring.module:570
+msgid "this product"
+msgstr "Dieser Artikel"
+
+#: payment/uc_recurring/uc_recurring.module:574
+msgid "!num times"
+msgstr "!num mal"
+
+#: payment/uc_recurring/uc_recurring.module:599
+msgid "Recurring fee handler"
+msgstr "Handler für wiederkehrende Gebühren"
+
+#: payment/uc_recurring/uc_recurring.module:600
+msgid "Select a module to process recurring fees on your site."
+msgstr ""
+"Wählen sie das Modul mit dem die wiederkehrene Gebühren eingezogen "
+"werden."
+
+#: payment/uc_recurring/uc_recurring.module:609
+msgid "Valid payment methods for orders with recurring fees"
+msgstr "Mögliche Zahlungsweisen für Bestellungen mit Ratenzahlung"
+
+#: payment/uc_recurring/uc_recurring.module:610
+msgid ""
+"Only selected payment methods will be available for customers "
+"purchasing products with recurring fees.<br/>It is up to you to make "
+"sure your chosen handler is compatible with the payment methods you "
+"select.<br />For example, the uc_recurring handler is only compatible "
+"with the Credit Card payment method."
+msgstr ""
+"Nur die ausgewählten Zahlungsarten werden für Kunden, die mit "
+"wiederkehrende Gebühren bezahlen aktiviert.<br />Bevor eine "
+"Zahlungsart aktiviert wird, sollte geprüft werden ob das genutzte "
+"Abwicklungsmodul, die gewählten Zahlungsarten unterstützt.<br "
+"/>Beispielsweise ist \"uc_recurring\" nur mit der Zahlungsart "
+"Kreditkarte möglich."
+
+#: payment/uc_recurring/uc_recurring.module:616
+msgid "Attempt to process recurring fees during checkout."
+msgstr ""
+"Versuchen Wiederkehrende gebühren während des Bestellvorgangs zu "
+"verarbeiten."
+
+#: payment/uc_recurring/uc_recurring.module:622
+msgid "Action to take if a recurring fee fails to process during checkout"
+msgstr ""
+"Aktion die unternommen werden soll wenn das verarbeiten der "
+"wiederkehrenden gebühr wärend des Bestellvorgangs fehlschlägt."
+
+#: payment/uc_recurring/uc_recurring.module:623
+msgid ""
+"Regardless of your selection, an admin comment will report the "
+"failure.<br/><strong>Note:</strong> Even if you select the first "
+"option, checkout will complete if another payment has already been "
+"captured."
+msgstr ""
+"Egal was sie wählen, ein Administrativer Kommentar wird den Fehler "
+"melden.<br/><strong>Hinweis:</strong>Selbst wenn Sie die erste Option "
+"wählen, wird die Bestellung übermittelt sofern schon eine Andere "
+"Zahlung erfolgt ist."
+
+#: payment/uc_recurring/uc_recurring.module:625
+msgid "Return a failed message and do not complete checkout."
+msgstr ""
+"Eine Fehlermeldung zurückgeben und den Bestellvorgang nicht "
+"abschließen."
+
+#: payment/uc_recurring/uc_recurring.module:626
+msgid "Return a failed message but complete checkout."
+msgstr "Eine Fehlermeldung zurückgeben aber den Bestellvorgang abschließen."
+
+#: payment/uc_recurring/uc_recurring.module:627
+msgid "Show no message and complete checkout."
+msgstr "Keine nachricht anzeigen und den Bestellvorgang abschließen."
+
+#: payment/uc_recurring/uc_recurring.module:411
+msgid "charge"
+msgstr "berechnen"
+
+#: payment/uc_recurring/uc_recurring.admin.inc:62
+msgid "Back to the full list."
+msgstr "Zurück zur Übersicht."
+
+#: payment/uc_recurring/uc_recurring.admin.inc:74
+msgid "Fee ID"
+msgstr "Gebühren ID"
+
+#: payment/uc_recurring/uc_recurring.admin.inc:89
+msgid "Filter"
+msgstr "Filter"
+
+#: payment/uc_recurring/uc_recurring.admin.inc:106
+msgid "Are you sure you want to charge the customer !amount at this time?"
+msgstr ""
+"Sind Sie sicher dass sie dem Kunden diesesmal !amount berechnen "
+"möchten?"
+
+#: payment/uc_recurring/uc_recurring.admin.inc:143
+msgid "Charge this amount each billing period."
+msgstr "Diesen Betrag in jeder Zahlungs Periode einziehen."
+
+#: payment/uc_recurring/uc_recurring.admin.inc:152
+msgid "Remaining billing periods"
+msgstr "Verbleibende zahlungs Perioden"
+
+#: payment/uc_recurring/uc_recurring.admin.inc:153
+msgid "Specify how many more times to charge the fee."
+msgstr "Legen Sie fest wie oft die Gebühr noch eingezogen werden soll."
+
+#: payment/uc_recurring/uc_recurring.admin.inc:162
+msgid ""
+"Modify the length of the billing period for this fee. Changing this "
+"value will reset the timer for the next charge. You can also charge "
+"the fee manually to collect payment ahead of time and reset the "
+"interval."
+msgstr ""
+"Die länge der Zahlungszeiträume für diese Gebühr anpassen. Wenn "
+"Sie diesen wert ändern wird der Timer für die nächste Zahlung "
+"zurückgesetzt. Sie können die Belastung auch manuell vorzeitig "
+"durchführen und das Intervall dann zurücksetzten."
+
+#: payment/uc_recurring/uc_recurring.admin.inc:183
+msgid ""
+"Reset the next charge timer upon form submission using the specified "
+"interval."
+msgstr ""
+"Den Timer für die nächste Belastung bei Formularübermittlung auf "
+"das spezifizierte Interval zurücksetzten."
+
+#: payment/uc_recurring/uc_recurring.admin.inc:207
+msgid "The changes to the fee have been saved."
+msgstr "Die Änderungen an der geühr wurden gespeichert."
+
+#: payment/uc_recurring/uc_recurring.module:831
+msgid "The handler for processing recurring fees cannot be found."
+msgstr ""
+"Der Handler um die wiederkehrenden Gebühren zu verarbeiten kann nicht "
+"gefunden werden."
+
+#: payment/uc_recurring/uc_recurring.module:863
+msgid ""
+"Recurring payments failed to process due to invalid credit card "
+"gateway."
+msgstr ""
+"Weiderkehrende Gebühren schlugen wegen ungültigem Kreditkarten "
+"Gateway fehl."
+
+#: payment/uc_recurring/uc_recurring.module:877
+msgid "Recurring fee payment."
+msgstr "Zahlung von wiederkehrenden Gebühren."
+
+#: payment/uc_recurring/uc_recurring.module:891
+msgid "order !order_id"
+msgstr "Bestellung !order_id"
+
+#: payment/uc_recurring/uc_recurring.module:253,352,863,891,0
+msgid "uc_recurring"
+msgstr "uc_recurring"
+
+#: payment/uc_recurring/uc_recurring.module:118
+msgid "administer recurring fees"
+msgstr "Wiederkehrende Gebühren verwalten"
+
+#: payment/uc_recurring/uc_recurring.module:64
+msgid "Charge recurring fee @fee?"
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:73
+msgid "Edit recurring fee @fee"
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:82
+msgid "Delete recurring fee @fee?"
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:180
+msgid "Process the recurring fees associated with products on this order."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:181
+msgid ""
+"This action will not be available after any fees are successfully "
+"processed.<br /><b>Important:</b> You must verify that the credit card "
+"information is correct before processing the fees!"
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:201,305
+msgid "The recurring fee for product @model failed."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:206
+msgid ""
+"One or more recurring fees failed to process as indicated in the admin "
+"comments."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:549
+msgid ""
+"Only positive whole number values are accepted for the number of "
+"billing periods."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:570
+msgid "product @model"
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:582
+msgid ""
+"When @product is purchased, add a fee for !amount charged first after "
+"!initial and every !regular after that !intervals."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:617
+msgid ""
+"If not selected, you must have an alternate way of processing fees.<br "
+"/>With the default handler, this is only possible in credit card debug "
+"mode."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.admin.inc:124
+msgid "Recurring fee @fee charged successfully."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.admin.inc:127
+msgid "Attempt to charge recurring fee @fee failed."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.admin.inc:225
+msgid "Recurring fee @fee deleted."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:878
+msgid ""
+"!amount recurring fee collected for @model. (ID: <a "
+"href=\"!url\">!fee</a>)"
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:890
+msgid ""
+"Error: Recurring fee <a href=\"!url\">!fee</a> for product @model "
+"failed."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:891
+msgid ""
+"Failed to capture recurring fee of !amount for product @model on order "
+"!order_id."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:641
+msgid "Next charge"
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:641
+msgid "Remaining"
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.pages.inc:22
+msgid "Are you sure you want to cancel your recurring fee?"
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.pages.inc:28
+msgid "The recurring fee has been cancelled."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:47
+msgid "View a specific recurring fee."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.module:56
+msgid "View the recurring fees on a specific order."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.install:13
+msgid "Data for recurring fees attached to products."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.install:22
+msgid "The SKU the recurring fee applies to."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.install:29,90
+msgid "The amount of the recurring fee."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.install:37
+msgid "The amount of time between checkout and the first charge."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.install:44,98
+msgid "The amount of time between charges."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.install:51
+msgid "The number of times the fee should be charged."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.install:63
+msgid ""
+"Data for recurring fees attached to users/orders scheduled to be "
+"charged."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.install:83
+msgid "The timestamp when the next charge should be performed."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.install:105
+msgid "The remaining number of times the fee should be charged."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.install:113
+msgid "Counter for how many times the fee has been charged."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.install:132
+msgid "Timestamp for when the fee was first attached to the user."
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.info:0
+msgid "Recurring Fees"
+msgstr ""
+
+#: payment/uc_recurring/uc_recurring.info:0
+msgid ""
+"Assign recurring fees to products and manage them. Should be used with "
+"a payment service that implements a recurring fee handler."
+msgstr ""
+
