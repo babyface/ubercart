@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.7 2009/01/02 20:18:40 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.8 2009/01/19 20:31:26 islandusurper Exp $
 
 /**
  * @file
@@ -991,7 +991,7 @@ function uc_order_view($order, $view = 'view') {
   }
 
   if ($view == 'customer' && variable_get('uc_cust_view_order_invoices', TRUE)) {
-    drupal_add_js("function open_invoice() { window.open(Drupal.settings.basePath + 'user/". arg(1) ."/order/". arg(3) ."/invoice/print', '". t('Invoice') ."', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=600,height=480,left=50,top=50'); }", 'inline');
+    drupal_add_js("function open_invoice() { window.open(Drupal.settings.basePath + '". (variable_get('clean_url', 0) ? '' : '?q=') ."user/". arg(1) ."/order/". arg(3) ."/invoice/print', '". t('Invoice') ."', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=600,height=480,left=50,top=50'); }", 'inline');
     $contents = '<a href="#" onclick="open_invoice();">'
                . uc_store_get_icon('file:print') .' '
                . t('Click to open a window with a printable invoice.') .'</a>';
@@ -1023,7 +1023,7 @@ function uc_order_edit_form($form_state, $order) {
     '#disabled' => TRUE,
   );
 
-  if (uc_order_can_delete($order) || user_access('delete any order')) {
+  if (uc_order_can_delete($order)) {
     $form['delete'] = array(
       '#type' => 'submit',
       '#value' => t('Delete'),

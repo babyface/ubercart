@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.install,v 1.11.2.4 2008/11/07 21:13:26 islandusurper Exp $
+// $Id: uc_product_kit.install,v 1.11.2.5 2009/01/19 20:31:28 islandusurper Exp $
 
 /**
  * @file
@@ -159,6 +159,17 @@ function uc_product_kit_update_6000() {
   db_change_field($ret, 'uc_product_kits', 'product_id', 'product_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_product_kits', 'qty', 'qty', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'small', 'not null' => TRUE, 'default' => 0));
   db_add_primary_key($ret, 'uc_product_kits', array('vid', 'product_id'));
+
+  return $ret;
+}
+
+function uc_product_kit_update_6001() {
+  $ret = array();
+
+  variable_set('uc_image_product_kit', 'field_image_cache');
+
+  $t = get_t();
+  $ret[] = array('success' => TRUE, $t('field_image_cache set as the Ubercart image for product kits.'));
 
   return $ret;
 }

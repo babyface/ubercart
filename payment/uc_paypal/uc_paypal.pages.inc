@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.pages.inc,v 1.1.2.5 2009/01/02 20:18:41 islandusurper Exp $
+// $Id: uc_paypal.pages.inc,v 1.1.2.6 2009/01/19 20:31:22 islandusurper Exp $
 
 /**
  * @file

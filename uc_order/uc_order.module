@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.11 2009/01/02 20:18:40 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.12 2009/01/19 20:31:26 islandusurper Exp $
 
 /**
  * @file
@@ -118,11 +118,21 @@ function uc_order_menu() {
     'title' => 'Create order',
     'description' => 'Create an empty new order.',
     'page callback' => 'uc_order_create',
-    'access arguments' => array('edit orders'),
+    'access arguments' => array('create orders'),
     'type' => MENU_NORMAL_ITEM,
     'weight' => -5,
     'file' => 'uc_order.admin.inc',
   );
+  $items['admin/store/orders/create/%user'] = array(
+    'title' => 'Create order',
+    'description' => 'Create an order for a customer.',
+    'page callback' => 'uc_order_create',
+    'page arguments' => array(4),
+    'access arguments' => array('create orders'),
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_order.admin.inc',
+  );
+
   $items['admin/store/orders/search'] = array(
     'title' => 'Search orders',
     'description' => 'Search existing orders.',
@@ -175,16 +185,6 @@ function uc_order_menu() {
     'page arguments' => array(3, 'invoice'),
     'access callback' => 'uc_order_can_view_order',
     'access arguments' => array(1, 3),
-    'type' => MENU_CALLBACK,
-    'file' => 'uc_order.admin.inc',
-  );
-
-  $items['admin/store/orders/create/%user'] = array(
-    'title' => 'Create order',
-    'description' => 'Create an order for a customer.',
-    'page callback' => 'uc_order_create',
-    'page arguments' => array(4),
-    'access arguments' => array('edit orders'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_order.admin.inc',
   );
@@ -435,7 +435,7 @@ function uc_order_token_list($type = 'all') {
  * Implementation of hook_perm().
  */
 function uc_order_perm() {
-  return array('view own orders', 'view all orders', 'create orders', 'edit orders', 'delete orders', 'delete any order', 'administer order workflow');
+  return array('view own orders', 'view all orders', 'create orders', 'edit orders', 'delete orders', 'unconditionally delete orders', 'administer order workflow');
 }
 
 function uc_order_can_view_order($order_user, $order = NULL) {
@@ -1680,17 +1680,27 @@ function uc_order_actions($order, $icon_html = FALSE) {
     );
   }
 
-  if (user_access('delete orders')) {
+  if (user_access('delete orders') || user_access('unconditionally delete orders')) {
+    // Unconditional deletion perms are always TRUE.
     $can_delete = TRUE;
-    $return = module_invoke_all('order', 'can_delete', $order, NULL);
-    if (!empty($return)) {
-      foreach ($return as $response) {
-        if ($response === FALSE) {
-          $can_delete = FALSE;
+    if (!user_access('unconditionally delete orders')) {
+      // Only users with unconditional deletion perms can delete completed orders.
+      if ($state == 'completed') {
+        $can_delete = FALSE;
+      }
+      else {
+        // See if any modules have a say in this order's eligibility for deletion
+        $return = module_invoke_all('order', 'can_delete', $order, NULL);
+        foreach ((array)$return as $response) {
+          // Break out early if possible.
+          if ($response === FALSE) {
+            $can_delete = FALSE;
+            break;
+          }
         }
       }
     }
-    if (user_access('delete any order') || ($state != 'completed' && $can_delete)) {
+    if ($can_delete) {
       $alt = t('Delete order @order_id.', $order_id);
       $actions[] = array(
         'name' => t('Delete'),

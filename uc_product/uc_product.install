@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.install,v 1.12.2.5 2008/12/09 15:20:36 islandusurper Exp $
+// $Id: uc_product.install,v 1.12.2.6 2009/01/19 20:31:27 islandusurper Exp $
 
 /**
  * @file
@@ -519,6 +519,40 @@ function uc_product_update_6003() {
   db_change_field($ret, 'uc_products', 'list_price', 'list_price', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_products', 'sell_price', 'sell_price', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
+}
+
+// Handle the image widget upgrade.
+function uc_product_update_6004() {
+  $ret = array();
+
+  if (!variable_get('uc_product_image_widget', NULL)) {
+    if (module_exists('thickbox')) {
+      variable_set('uc_product_image_widget', 'thickbox');
+    }
+    elseif (module_exists('lightbox2')) {
+      variable_set('uc_product_image_widget', 'lightbox2');
+    }
+    $ret[] = array('success' => TRUE, variable_get('uc_product_image_widget', 'No widget') .' was set as the current image widget');
+  }
+
+  return $ret;
+}
+
+// Set the uc_image setting to field_image_cache for all existing products.
+function uc_product_update_6005() {
+  $ret = array();
+
+  if (db_table_exists('content_node_field_instance')) {
+    $result = db_query("SELECT type_name FROM {content_node_field_instance} WHERE field_name = 'field_image_cache'");
+    while ($class = db_fetch_object($result)) {
+      variable_set('uc_image_'. $class->type_name, 'field_image_cache');
+    }
+
+    $t = get_t();
+    $ret[] = array('success' => TRUE, $t('field_image_cache set as the Ubercart image for products and product classes.'));
+  }
 
   return $ret;
 }

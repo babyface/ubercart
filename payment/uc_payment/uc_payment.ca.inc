@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.ca.inc,v 1.1.2.5 2008/11/07 21:13:25 islandusurper Exp $
+// $Id: uc_payment.ca.inc,v 1.1.2.6 2009/01/19 20:31:21 islandusurper Exp $
 
 /**
  * @file
@@ -194,10 +194,6 @@ function uc_payment_condition_order_balance_form($form_state, $settings = array(
   return $form;
 }
 
-function uc_payment_condition_order_balance_submit($form, &$form_state) {
-  return array('balance_comparison' => $form_state['values']['balance_comparison']);
-}
-
 // Check the order payment method.
 function uc_order_condition_payment_method($order, $settings) {
   return $order->payment_method == $settings['payment_method'];
@@ -216,8 +212,4 @@ function uc_order_condition_payment_method_form($form_state, $settings = array()
   );
 
   return $form;
-}
-
-function uc_order_condition_payment_method_submit($form, &$form_state) {
-  return array('payment_method' => $form_state['values']['payment_method']);
 }

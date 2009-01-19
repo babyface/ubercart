@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.admin.inc,v 1.1.2.6 2009/01/02 20:18:42 islandusurper Exp $
+// $Id: uc_catalog.admin.inc,v 1.1.2.7 2009/01/19 20:31:25 islandusurper Exp $
 
 /**
  * @file

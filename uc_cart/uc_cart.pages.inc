@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.4 2008/11/07 21:13:22 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.5 2009/01/19 20:31:25 islandusurper Exp $
 
 /**
  * @file
@@ -11,36 +11,36 @@
 function uc_cart_view() {
   // Failsafe so that this function only works when called with no arguments.
   // This prevents the accidental wiping of the cart_order session variable.
-  if ((func_num_args() > 0)) {
+  if (func_num_args() > 0) {
     return drupal_not_found();
   }
 
+  // Clear the cart order session variable if it exists.
   if (!empty($_SESSION['cart_order'])) {
     unset($_SESSION['cart_order']);
   }
 
+  // Load the array of shopping cart items.
   $items = uc_cart_get_contents();
 
+  // Display the empty cart page if there are no items in the cart.
   if (empty($items)) {
     return theme('uc_empty_cart');
   }
 
-  $panes = uc_cart_cart_pane_list($items);
-  foreach ($panes as $pane) {
+  // Load through the cart panes...
+  foreach (uc_cart_cart_pane_list($items) as $pane) {
+    // If the pane is enabled...
     if ($pane['enabled']) {
+      // Add its output to the cart view.
       $output .= $pane['body'];
     }
   }
 
-  if (isset($_SESSION['last_url'])) {
-    drupal_set_breadcrumb(array(l(t('Back'), check_plain($_SESSION['last_url']))));
-    unset($_SESSION['last_url']);
-  }
-  else {
-    if (($text = variable_get('uc_cart_breadcrumb_text', t('Home'))) !== '') {
-      $link = l($text, variable_get('uc_cart_breadcrumb_url', '<front>'));
-      drupal_set_breadcrumb(array($link));
-    }
+  // Add a custom cart breadcrumb if specified.
+  if (($text = variable_get('uc_cart_breadcrumb_text', '')) !== '') {
+    $link = l($text, variable_get('uc_cart_breadcrumb_url', '<front>'));
+    drupal_set_breadcrumb(array($link));
   }
 
   return $output;

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.11 2009/01/02 20:18:40 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.12 2009/01/19 20:31:26 islandusurper Exp $
 
 /**
  * @file
@@ -303,10 +303,6 @@ function uc_order_condition_check_order_status_form($form_state, $settings = arr
   return $form;
 }
 
-function uc_order_condition_check_order_status_submit($form, &$form_state) {
-  return array('order_status' => $form_state['values']['order_status']);
-}
-
 // Check the current order balance.
 function uc_order_condition_total($order, $settings) {
   switch ($settings['order_total_comparison']) {
@@ -351,14 +347,6 @@ function uc_order_condition_total_form($form_state, $settings = array()) {
   return $form;
 }
 
-function uc_order_condition_total_submit($form, &$form_state) {
-  $array = array(
-    'order_total_comparison' => $form_state['values']['order_total_comparison'],
-    'order_total_value' => $form_state['values']['order_total_value'],
-  );
-  return $array;
-}
-
 // Check an order's delivery postal code.
 function uc_order_condition_delivery_postal_code($order, $settings) {
   // Trim the wildcard off the pattern.
@@ -379,10 +367,6 @@ function uc_order_condition_delivery_postal_code_form($form_state, $settings = a
   );
 
   return $form;
-}
-
-function uc_order_condition_delivery_postal_code_submit($form, &$form_state) {
-  return array('pattern' => $form_state['values']['pattern']);
 }
 
 // Check an order's delivery zone.
@@ -408,10 +392,6 @@ function uc_order_condition_delivery_zone_form($form_state, $settings = array())
   return $form;
 }
 
-function uc_order_condition_delivery_zone_submit($form, &$form_state) {
-  return array('zones' => $form_state['values']['zones']);
-}
-
 // Check an order's delivery country.
 function uc_order_condition_delivery_country($order, $settings) {
   return in_array($order->delivery_country, $settings['countries']);
@@ -424,10 +404,6 @@ function uc_order_condition_delivery_country_form($form_state, $settings = array
   // $form['countries']['#required'] = TRUE;
 
   return $form;
-}
-
-function uc_order_condition_delivery_country_submit($form, &$form_state) {
-  return array('countries' => $form_state['values']['countries']);
 }
 
 // Check an order's billing postal code.
@@ -450,10 +426,6 @@ function uc_order_condition_billing_postal_code_form($form_state, $settings = ar
   );
 
   return $form;
-}
-
-function uc_order_condition_billing_postal_code_submit($form, &$form_state) {
-  return array('pattern' => $form_state['values']['pattern']);
 }
 
 // Check an order's billing zone.
@@ -479,10 +451,6 @@ function uc_order_condition_billing_zone_form($form_state, $settings = array()) 
   return $form;
 }
 
-function uc_order_condition_billing_zone_submit($form, &$form_state) {
-  return array('zones' => $form_state['values']['zones']);
-}
-
 // Check an order's billing country.
 function uc_order_condition_billing_country($order, $settings) {
   return in_array($order->billing_country, $settings['countries']);
@@ -495,10 +463,6 @@ function uc_order_condition_billing_country_form($form_state, $settings = array(
   // $form['countries']['#required'] = TRUE;
 
   return $form;
-}
-
-function uc_order_condition_billing_country_submit($form, &$form_state) {
-  return array('countries' => $form_state['values']['countries']);
 }
 
 function uc_order_condition_has_products($order, $settings) {
@@ -552,14 +516,6 @@ function uc_order_condition_has_products_form($form_state, $settings = array('re
     '#multiple' => TRUE,
   );
   return $form;
-}
-
-function uc_order_condition_has_products_submit($form, &$form_state) {
-  return array(
-    'required' => $form_state['values']['required'],
-    'forbidden' => $form_state['values']['forbidden'],
-    'products' => $form_state['values']['products'],
-  );
 }
 
 function uc_order_condition_count_products($order, $settings) {
@@ -627,14 +583,6 @@ function uc_order_condition_count_products_form($form_state, $settings = array()
   );
 
   return $form;
-}
-
-function uc_order_condition_count_products_submit($form, &$form_state) {
-  return array(
-    'products' => $form_state['values']['products'],
-    'product_count_value' => $form_state['values']['product_count_value'],
-    'product_count_comparison' => $form_state['values']['product_count_comparison'],
-  );
 }
 
 function uc_order_condition_products_weight($order, $settings) {
@@ -715,15 +663,6 @@ function uc_order_condition_products_weight_form($form_state, $settings = array(
   return $form;
 }
 
-function uc_order_condition_products_weight_submit($form, &$form_state) {
-  return array(
-    'products' => $form_state['values']['products'],
-    'weight_units' => $form_state['values']['weight_units'],
-    'product_weight_value' => $form_state['values']['product_weight_value'],
-    'product_weight_comparison' => $form_state['values']['product_weight_comparison'],
-  );
-}
-
 function uc_order_condition_is_shippable($order, $settings) {
   return uc_order_is_shippable($order);
 }
@@ -756,10 +695,6 @@ function uc_order_action_update_status_form($form_state, $settings = array()) {
   return $form;
 }
 
-function uc_order_action_update_status_submit($form, &$form_state) {
-  return array('order_status' => $form_state['values']['order_status']);
-}
-
 // Add a comment to an order.
 function uc_order_action_add_comment($order, $settings) {
   uc_order_comment_save($order->order_id, 0,
@@ -787,10 +722,6 @@ function uc_order_action_add_comment_form($form_state, $settings = array()) {
   );
 
   return $form;
-}
-
-function uc_order_action_add_comment_submit($form, &$form_state) {
-  return array('comment_type' => $form_state['values']['comment_type'], 'comment' => $form_state['values']['comment']);
 }
 
 /**
@@ -876,16 +807,6 @@ function uc_order_action_email_form($form_state, $settings = array()) {
   }
 
   return $form;
-}
-
-function uc_order_action_email_submit($form, &$form_state) {
-  return array(
-    'from' => $form_state['values']['from'],
-    'addresses' => $form_state['values']['addresses'],
-    'subject' => $form_state['values']['subject'],
-    'message' => $form_state['values']['message'],
-    'format' => $form_state['values']['format'],
-  );
 }
 
 /**
@@ -987,14 +908,4 @@ function uc_order_action_email_invoice_form($form_state, $settings = array()) {
   );
 
   return $form;
-}
-
-function uc_order_action_email_invoice_submit($form, &$form_state) {
-  return array(
-    'from' => $form_state['values']['from'],
-    'addresses' => $form_state['values']['addresses'],
-    'subject' => $form_state['values']['subject'],
-    'template' => $form_state['values']['template'],
-    'view' => $form_statep['values']['view'],
-  );
 }

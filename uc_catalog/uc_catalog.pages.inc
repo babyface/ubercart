@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.pages.inc,v 1.1.2.6 2009/01/02 20:18:42 islandusurper Exp $
+// $Id: uc_catalog.pages.inc,v 1.1.2.7 2009/01/19 20:31:25 islandusurper Exp $
 
 /**
  * @file
@@ -113,7 +113,7 @@ function theme_uc_catalog_browse($tid = 0) {
           INNER JOIN {uc_products} AS p ON n.vid = p.vid
         WHERE tn.tid = %d
           AND n.status = 1
-          AND n.type IN (". db_placeholders($types) .")
+          AND n.type IN (". db_placeholders($types, 'varchar') .")
         GROUP BY n.nid";
       break;
   }

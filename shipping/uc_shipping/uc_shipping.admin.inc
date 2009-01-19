@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.admin.inc,v 1.1.2.3 2009/01/02 20:18:40 islandusurper Exp $
+// $Id: uc_shipping.admin.inc,v 1.1.2.4 2009/01/19 20:31:23 islandusurper Exp $
 
 /**
  * @file
@@ -45,7 +45,7 @@ function uc_shipping_order_packages($order) {
     $rows[][] = array('data' => t("This order's products have not been organized into packages."), 'colspan' => 10);
   }
   $output = theme('table', $header, $rows);
-  $result = db_query("SELECT op.order_product_id, CAST(SUM(op.qty) / COUNT(pp.qty) AS UNSIGNED) AS total, SUM(pp.qty) AS packaged FROM {uc_order_products} AS op LEFT JOIN {uc_packaged_products} AS pp ON op.order_product_id = pp.order_product_id WHERE op.order_id = %d AND op.data LIKE '%%%s%%' GROUP BY op.order_product_id HAVING SUM(pp.qty) IS NULL OR CAST(SUM(op.qty) / COUNT(pp.qty) AS UNSIGNED) > SUM(pp.qty)", $order->order_id, 's:9:"shippable";s:1:"1";');
+  $result = db_query("SELECT op.order_product_id, IF(COUNT(pp.qty) = 0, 0, SUM(op.qty) / COUNT(pp.qty)) AS total, SUM(pp.qty) AS packaged FROM {uc_order_products} AS op LEFT JOIN {uc_packaged_products} AS pp ON op.order_product_id = pp.order_product_id WHERE op.order_id = %d AND op.data LIKE '%%%s%%' GROUP BY op.order_product_id HAVING SUM(pp.qty) IS NULL OR CAST(SUM(op.qty) / COUNT(pp.qty) AS UNSIGNED) > SUM(pp.qty)", $order->order_id, 's:9:"shippable";s:1:"1";');
   if (db_fetch_object($result)) {
     $output .= l(t('Create packages.'), 'admin/store/orders/'. $order->order_id .'/packages/new');
   }

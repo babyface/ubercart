@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.ca.inc,v 1.1.2.8 2009/01/02 20:18:42 islandusurper Exp $
+// $Id: uc_cart.ca.inc,v 1.1.2.9 2009/01/19 20:31:25 islandusurper Exp $
 
 /**
  * @file
@@ -138,8 +138,3 @@ function uc_cart_condition_product_class_form($form_state, $settings = array()) 
 
   return $form;
 }
-
-function uc_cart_condition_product_class_submit($form, &$form_state) {
-  return array('class' => $form_state['values']['class']);
-}
-

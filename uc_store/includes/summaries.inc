@@ -1,5 +1,5 @@
 <?php
-// $Id: summaries.inc,v 1.1.2.7 2008/11/21 21:17:30 islandusurper Exp $
+// $Id: summaries.inc,v 1.1.2.8 2009/01/19 20:31:28 islandusurper Exp $
 
 /**
  * @file
@@ -195,7 +195,7 @@ function summarize_child_form_pages($path, $trim = FALSE, $only_parent = FALSE) 
 
       if (!$trim || $trim && count($summary_items) > 0) {
         $summaries[] = array(
-          'path' => $item['path'],
+          'path' => url($item['path']),
           'href' => $href,
           'title' => $item['title'],
           'items' => $summary_items,

@@ -1,4 +1,4 @@
-/* $Id: uc_cart.css,v 1.5.2.2 2009/01/02 20:18:42 islandusurper Exp $ */
+/* $Id: uc_cart.css,v 1.5.2.3 2009/01/19 20:31:25 islandusurper Exp $ */
 
 /* These classes should really be universal... pretty standard stuff. */
 
@@ -84,14 +84,6 @@
 #uc-cart-view-form ul {
   font-style: italic;
   font-size: 0.75em;
-}
-
-#uc-cart-view-form .sub-product {
-  padding-left: 2em;
-}
-
-.display-inline .form-item {
-  display: inline;
 }
 
 #line-items-div table {

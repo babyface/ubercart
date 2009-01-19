@@ -1,4 +1,4 @@
-/* $Id: uc_store.css,v 1.8.2.2 2008/10/15 14:47:39 islandusurper Exp $ */
+/* $Id: uc_store.css,v 1.8.2.3 2009/01/19 20:31:28 islandusurper Exp $ */
 
 .uc-store-admin-table {
   margin: 1em auto;
@@ -54,22 +54,12 @@
   clear: both;
 }
 
-.section-title {
-  font-weight: bold;
-}
-
 table.section-items {
   width: auto;
 }
 
 table.section-items td {
   padding: .25em;
-}
-
-.settings-icon {
-  position: relative;
-  top: 1px;
-  left: 1px;
 }
 
 #uc-country-import-form .form-item, #uc-country-import-form .form-item label {

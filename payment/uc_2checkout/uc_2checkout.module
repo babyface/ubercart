@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_2checkout.module,v 1.6.2.4 2008/11/07 21:13:29 islandusurper Exp $
+// $Id: uc_2checkout.module,v 1.6.2.5 2009/01/19 20:31:20 islandusurper Exp $
 
 /**
  * @file
@@ -32,6 +32,17 @@ function uc_2checkout_menu() {
 // Make sure anyone can complete their 2Checkout orders.
 function uc_2checkout_completion_access() {
   return TRUE;
+}
+
+/**
+ * Implementation of hook_ucga_display().
+ */
+function uc_2checkout_ucga_display() {
+  // Tell UC Google Analytics to display the e-commerce JS on the custom
+  // order completion page for this module.
+  if (arg(0) == 'cart' && arg(1) == '2checkout' && arg(2) == 'complete') {
+    return TRUE;
+  }
 }
 
 /**

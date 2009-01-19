@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.10 2009/01/02 20:18:41 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.11 2009/01/19 20:31:23 islandusurper Exp $
 
 /**
  * @file
@@ -381,15 +381,6 @@ function uc_quote_condition_product_shipping_type_form($form_state, $settings = 
   return $form;
 }
 
-/**
- * Submit handler for uc_quote_condition_product_shipping_type_form().
- */
-function uc_quote_condition_product_shipping_type_submit($form, &$form_state) {
-  return array(
-    'type' => $form_state['values']['type'],
-  );
-}
-
 function uc_quote_condition_order_shipping_method($order, $settings) {
   // Check the easy way first.
   if (is_array($order->quote)) {
@@ -397,8 +388,11 @@ function uc_quote_condition_order_shipping_method($order, $settings) {
   }
   // Otherwise, look harder.
   if (is_array($order->line_items)) {
+    $methods = module_invoke_all('shipping_method');
+    $accessorials = $methods[$settings['method']]['quote']['accessorials'];
+
     foreach ($order->line_items as $line_item) {
-      if ($line_item['type'] == 'shipping' && in_array($line_item['title'], $settings['accessorials'])) {
+      if ($line_item['type'] == 'shipping' && in_array($line_item['title'], $accessorials)) {
         return TRUE;
       }
     }
@@ -427,15 +421,6 @@ function uc_quote_condition_order_shipping_method_form($form_state, $settings = 
   );
 
   return $form;
-}
-
-function uc_quote_condition_order_shipping_method_submit($form, &$form_state) {
-  $methods = module_invoke_all('shipping_method');
-
-  return array(
-    'method' => $form_state['values']['method'],
-    'accessorials' => $methods[$form_state['values']['method']]['quote']['accessorials'],
-  );
 }
 
 /**

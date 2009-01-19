@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.views_default.inc,v 1.1.2.2 2008/11/07 21:13:28 islandusurper Exp $
+// $Id: uc_product.views_default.inc,v 1.1.2.3 2009/01/19 20:31:27 islandusurper Exp $
 
 /**
  * @file
@@ -20,27 +20,8 @@ function uc_product_views_default_views() {
   $view->api_version = 2;
   $view->disabled = FALSE; /* Edit this to TRUE to make a default view disabled initially */
   $handler = $view->new_display('default', 'Defaults', 'default');
-  $handler->override_option('fields', array(
-    'field_image_cache_fid' => array(
-      'label' => '',
-      'link_to_node' => 1,
-      'label_type' => 'widget',
-      'format' => 'product_list_linked',
-      'multiple' => array(
-        'group' => 0,
-        'multiple_number' => '1',
-        'multiple_from' => '0',
-        'multiple_reversed' => 0,
-      ),
-      'exclude' => 0,
-      'id' => 'field_image_cache_fid',
-      'table' => 'node_data_field_image_cache',
-      'field' => 'field_image_cache_fid',
-      'relationship' => 'none',
-      'override' => array(
-        'button' => 'Override',
-      ),
-    ),
+
+  $fields = array(
     'title' => array(
       'label' => 'Title',
       'link_to_node' => 1,
@@ -66,7 +47,31 @@ function uc_product_views_default_views() {
       'field' => 'buyitnowbutton',
       'relationship' => 'none',
     ),
-  ));
+  );
+
+  if ($field = variable_get('uc_image_product', '')) {
+    $fields[$field .'_fid'] = array(
+      'label' => '',
+      'link_to_node' => 1,
+      'label_type' => 'widget',
+      'format' => 'product_list_linked',
+      'multiple' => array(
+        'group' => 0,
+        'multiple_number' => '1',
+        'multiple_from' => '0',
+        'multiple_reversed' => 0,
+      ),
+      'exclude' => 0,
+      'id' => $field .'_fid',
+      'table' => 'node_data_'. $field,
+      'field' => $field .'_fid',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    );
+  }
+  $handler->override_option('fields', $fields);
   $handler->override_option('sorts', array(
     'ordering' => array(
       'order' => 'ASC',

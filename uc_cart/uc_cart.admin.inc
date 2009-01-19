@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.admin.inc,v 1.1.2.4 2008/11/21 21:17:27 islandusurper Exp $
+// $Id: uc_cart.admin.inc,v 1.1.2.5 2009/01/19 20:31:25 islandusurper Exp $
 
 /**
  * @file
@@ -120,51 +120,60 @@ function uc_cart_cart_settings_form() {
 
   $form['continue_shopping'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Continue shopping link'),
+    '#title' => t('Continue shopping element'),
+    '#description' => t('Ubercart will add a continue shopping to the cart page based on the settings below.'),
     '#summary' => t('Continue shopping !type is: <br />!link', array('!type' => variable_get('uc_continue_shopping_type', 'link') == 'link' ? t('link') : t('button'), '!link' => l(variable_get('uc_continue_shopping_text', t('Continue shopping')), variable_get('uc_cart_continue_shopping', '')))),
   );
   $form['continue_shopping']['uc_continue_shopping_type'] = array(
     '#type' => 'radios',
-    '#title' => t('Display the continue shopping link as'),
+    '#title' => t('Continue shopping element display'),
     '#options' => array(
-      'link' => t('A text link'),
-      'button' => t('A button link'),
+      'link' => t('Text link'),
+      'button' => t('Button'),
+      'none' => t('None'),
     ),
     '#default_value' => variable_get('uc_continue_shopping_type', 'link'),
   );
+  $form['continue_shopping']['uc_continue_shopping_use_last_url'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Make the continue shopping link send customers back to product pages after adding items to the cart.'),
+    '#description' => t('If this is disabled, the URL specified below will always be used.'),
+    '#default_value' => variable_get('uc_continue_shopping_use_last_url', TRUE),
+  );
   $form['continue_shopping']['uc_continue_shopping_url'] = array(
     '#type' => 'textfield',
-    '#title' => t('Continue shopping link URL'),
-    '#description' => t('Enter the Drupal page for the link to continue shopping from the cart view page.<br />Enter &lt;none&gt; for no link to appear.'),
+    '#title' => t('Default continue shopping link URL'),
+    '#description' => t('Enter the Drupal page for the link to continue shopping from the cart view page.'),
     '#default_value' => variable_get('uc_continue_shopping_url', ''),
     '#size' => 32,
     '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q='),
   );
   $form['continue_shopping']['uc_continue_shopping_text'] = array(
     '#type' => 'textfield',
-    '#title' => t('Continue shopping link text'),
-    '#description' => t('Enter the text for the continue shopping link.'),
-    '#default_value' => variable_get('uc_continue_shopping_text', t('Continue shopping')),
+    '#title' => t('Custom continue shopping link text'),
+    '#description' => t('Enter custom text for the continue shopping link.'),
+    '#default_value' => variable_get('uc_continue_shopping_text', ''),
   );
 
   $form['breadcrumb'] = array(
     '#type' => 'fieldset',
     '#title' => t('Cart breadcrumb'),
-    '#summary' => t('Default cart breadcrumb is: <br />!breadcrumb', array('!breadcrumb' => l(variable_get('uc_cart_breadcrumb_text', t('Home')), variable_get('uc_cart_breadcrumb_url', '')))),
-  );
-  $form['breadcrumb']['uc_cart_breadcrumb_url'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Default cart breadcrumb URL'),
-    '#description' => t('Enter the Drupal page linked to in the default breadcrumb on the cart view page.'),
-    '#default_value' => variable_get('uc_cart_breadcrumb_url', ''),
-    '#size' => 32,
-    '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q='),
+    '#description' => t('Drupal automatically adds a Home breadcrumb to the cart page.  You can use these settings to specify a custom breadcrumb to use on the cart page instead.  If a custom text is not supplied, the default Home breadcrumb will be displayed.'),
+    '#summary' => variable_get('uc_cart_breadcrumb_text', '') ? t('Custom cart breadcrumb is: <br />!breadcrumb', array('!breadcrumb' => l(variable_get('uc_cart_breadcrumb_text', ''), variable_get('uc_cart_breadcrumb_url', '')))) : t('Not using a custom cart breadcrumb.'),
   );
   $form['breadcrumb']['uc_cart_breadcrumb_text'] = array(
     '#type' => 'textfield',
-    '#title' => t('Default cart breadcrumb text'),
-    '#description' => t('Enter the text for the default breadcrumb on the cart page.'),
-    '#default_value' => variable_get('uc_cart_breadcrumb_text', t('Home')),
+    '#title' => t('Custom cart breadcrumb text'),
+    '#description' => t('Enter the text for the custom breadcrumb on the cart page.'),
+    '#default_value' => variable_get('uc_cart_breadcrumb_text', ''),
+  );
+  $form['breadcrumb']['uc_cart_breadcrumb_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Custom cart breadcrumb URL'),
+    '#description' => t('Enter the Drupal page linked to in the custom breadcrumb on the cart view page.'),
+    '#default_value' => variable_get('uc_cart_breadcrumb_url', ''),
+    '#size' => 32,
+    '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q='),
   );
 
   return system_settings_form($form);

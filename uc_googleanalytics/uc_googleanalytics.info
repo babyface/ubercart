@@ -1,6 +1,6 @@
-; $Id: uc_googleanalytics.info,v 1.4.4.3 2008/11/07 21:13:29 islandusurper Exp $
+; $Id: uc_googleanalytics.info,v 1.4.4.4 2009/01/19 20:31:26 islandusurper Exp $
 name = Google Analytics for Ubercart
-description = Adds e-commerce tracking for UberCart to the Google Analytics module.
+description = Adds e-commerce tracking for Ubercart to the Google Analytics module.
 dependencies[] = uc_cart
 dependencies[] = uc_order
 dependencies[] = uc_store

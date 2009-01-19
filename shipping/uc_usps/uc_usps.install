@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.install,v 1.5.2.5 2009/01/02 20:18:40 islandusurper Exp $
+// $Id: uc_usps.install,v 1.5.2.6 2009/01/19 20:31:24 islandusurper Exp $
 
 /**
  * @file
@@ -212,4 +212,6 @@ function uc_usps_update_6001() {
     variable_set('uc_usps_intl_env_services', $new_services);
     variable_set('uc_usps_intl_services', $services);
   }
+
+  return array();
 }

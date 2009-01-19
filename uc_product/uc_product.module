@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.12 2009/01/02 20:18:43 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.13 2009/01/19 20:31:27 islandusurper Exp $
 
 /**
  * @file
@@ -735,10 +735,9 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
     'add_to_cart' => 10,
   ));
 
-  //drupal_set_message('<pre>'. print_r($node->field_image_cache, TRUE) .'</pre>');
-  if (isset($node->field_image_cache) && file_exists($node->field_image_cache[0]['filepath'])) {
-    $node->content['image'] = array('#value' => theme('uc_product_image', $node->field_image_cache, $teaser, $page),
-      '#access' => $enabled['image'] && module_exists('imagecache'),
+  if (module_exists('imagecache') && ($field = variable_get('uc_image_'. $node->type, '')) && isset($node->$field) && file_exists($node->{$field}[0]['filepath'])) {
+    $node->content['image'] = array('#value' => theme('uc_product_image', $node->$field, $teaser, $page),
+      '#access' => $enabled['image'],
       '#weight' => $weight['image'],
     );
   }
@@ -861,6 +860,35 @@ function uc_product_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+function uc_product_node_type_form_alter(&$form, &$form_state) {
+  $type = $form['#node_type'];
+
+  if (module_exists('content') && uc_product_is_product($type->type)) {
+    $fields = content_types($type->type);
+    $fields = (array)$fields['fields'];
+
+    $options = array('' => t('None'));
+    foreach ($fields as $field_name => $field) {
+      $options[$field_name] = $field['widget']['label'];
+    }
+
+    $form['uc_product'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Ubercart product settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+
+    $form['uc_product']['uc_image'] = array(
+      '#type' => 'select',
+      '#title' => t('Product image field'),
+      '#default_value' => variable_get('uc_image_'. $type->type, NULL),
+      '#options' => $options,
+      '#description' => t('The selected field will be used on Ubercart pages to represent the products of this content type.'),
+    );
+  }
+}
+
 /******************************************************************************
  * CCK Hooks                                                                  *
  ******************************************************************************/
@@ -904,6 +932,15 @@ function uc_product_content_extra_fields_alter(&$extra, $type_name) {
   }
 }
 
+function uc_product_content_fieldapi($op, &$field) {
+  switch ($op) {
+    case 'delete instance':
+      if ($field->field_name == variable_get('uc_image_'. $field->type_name, NULL)) {
+        variable_set('uc_image_'. $field->type_name, NULL);
+      }
+      break;
+  }
+}
 
 /******************************************************************************
  * Token Hooks                                                                *
@@ -968,14 +1005,19 @@ function uc_product_product_types() {
  * @see uc_product_image_defaults()
  */
 function uc_product_store_status() {
-  if (!module_exists('filefield') || !module_exists('imagecache')) {
+  if (!module_exists('imagefield') || !module_exists('imagecache')) {
     $description = t('To automatically configure core image support, <a href="!url">enable</a> the <a href="http://drupal.org/project/cck">Content</a>, <a href="http://drupal.org/project/imagefield">CCK Image field</a>, and <a href="http://drupal.org/project/imagecache">Imagecache</a> modules.', array('!url' => url('admin/build/modules')));
   }
   else {
     module_load_include('inc', 'content', 'includes/content.crud');
     // Check for filefields on products.
-    $instances = content_field_instance_read(array('field_name' => 'field_image_cache', 'type_name' => 'product'));
-    $field_check = (bool) count($instances);
+    if ($field = variable_get('uc_image_product', '')) {
+      $instances = content_field_instance_read(array('field_name' => $field, 'type_name' => 'product'));
+      $field_check = (bool) count($instances);
+    }
+    else {
+      $field_check = FALSE;
+    }
 
     $presets = array('product', 'product_list', 'uc_thumbnail');
     if (module_exists('uc_catalog')) {
@@ -1162,24 +1204,25 @@ function uc_product_table($args = array()) {
   foreach ($args as $nid) {
     $data = array();
     $node = node_load($nid);
-    if ($node->type != 'image') {
-      if (module_exists('imagecache') && isset($node->field_image_cache) && file_exists($node->field_image_cache[0]['filepath'])) {
-        $data['image'] = array('#value' => l(theme('imagecache', 'product_list', $node->field_image_cache[0]['filepath'], $node->field_image_cache[0]['alt'], $node->field_image_cache[0]['title']), 'node/'. $node->nid, array('html' => TRUE)));
+    if (module_exists('imagecache')) {
+      if (($field = variable_get('uc_image_'. $node->type, '')) && isset($node->$field) && file_exists($node->{$field}[0]['filepath'])) {
+        $image = $node->{$field}[0];
+        $data['image'] = array('#value' => l(theme('imagecache', 'product_list', $image['filepath'], $image['alt'], $image['title']), 'node/'. $node->nid, array('html' => TRUE)));
       }
       else {
         $data['image'] = array('#value' => t('n/a'));
       }
-      $data['name'] = array(
-        '#value' => l($node->title, 'node/'. $node->nid),
-        '#cell_attributes' => array('width' => '100%'),
-      );
-      $data['list_price'] = array('#value' => uc_currency_format($node->list_price), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
-      $data['price'] = array('#value' => theme('uc_product_sell_price', $node->sell_price, TRUE), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
-      if (module_exists('uc_cart') && arg(0) != 'admin') {
-        $data['add_to_cart'] = array('#value' => drupal_get_form('uc_catalog_buy_it_now_form_'. $node->nid, $node));
-      }
-      $table[] = $data;
     }
+    $data['name'] = array(
+      '#value' => l($node->title, 'node/'. $node->nid),
+      '#cell_attributes' => array('width' => '100%'),
+    );
+    $data['list_price'] = array('#value' => uc_currency_format($node->list_price), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
+    $data['price'] = array('#value' => theme('uc_product_sell_price', $node->sell_price, TRUE), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
+    if (module_exists('uc_cart') && arg(0) != 'admin') {
+      $data['add_to_cart'] = array('#value' => drupal_get_form('uc_catalog_buy_it_now_form_'. $node->nid, $node));
+    }
+    $table[] = $data;
   }
 
   if (!count(element_children($table))) {
@@ -1570,7 +1613,7 @@ function uc_product_get_picture($node_id, $format = 'product') {
   $output = '';
   $product = node_load($node_id);
 
-  if (!module_exists('imagecache')) {
+  if (!module_exists('imagecache') || !($field = variable_get('uc_image_'. $product->type, ''))) {
     return '';
   }
 
@@ -1578,22 +1621,26 @@ function uc_product_get_picture($node_id, $format = 'product') {
   $image_widget = uc_product_get_image_widget();
   $image_widget_func = $image_widget['callback'];
 
-  $path = $product->field_image_cache[0]['filepath'];
-  if (file_exists($path)) {
-    $img = theme('imagecache', $format, $path, $product->field_image_cache[0]['alt'], $product->field_image_cache[0]['title']);
-    if ($format == 'product') {
-      if ($image_widget) {
-        $output .= '<a title="'. $product->field_image_cache[0]['title'] .'" href="'. check_url(file_create_url($path)) .'" '. $image_widget_func(NULL) .'>';
+  if (isset($product->$field)) {
+    $image = $product->{$field}[0];
+    $path = $image['filepath'];
+    if (file_exists($path)) {
+      $img = theme('imagecache', $format, $path, $image['alt'], $image['title']);
+      if ($format == 'product') {
+        if ($image_widget) {
+          $output .= '<a title="'. $image['title'] .'" href="'. check_url(file_create_url($path)) .'" '. $image_widget_func(NULL) .'>';
+        }
+        $output .= $img;
+        if ($image_widget) {
+          $output .= '</a>';
+        }
       }
-      $output .= $img;
-      if ($image_widget) {
-        $output .= '</a>';
+      else {
+        $output = l($img, 'node/'. $product->nid, array('html' => TRUE));
       }
-    }
-    else {
-      $output = l($img, 'node/'. $product->nid, array('html' => TRUE));
     }
   }
+
   return $output;
 }
 
@@ -1722,10 +1769,10 @@ function uc_product_feature_save($data) {
 
 function uc_product_add_default_image_field($type = NULL) {
   module_load_include('inc', 'content', 'includes/content.crud');
+
   $label = t('Image');
   $field = array(
     'label' => $label,
-    'field_name' => 'field_image_cache',
     'type' => 'image',
     'widget_type' => 'imagefield_widget',
     'file_extensions' => 'gif jpg jpeg png bmp',
@@ -1778,10 +1825,19 @@ function uc_product_add_default_image_field($type = NULL) {
   }
   foreach ($types as $type) {
     $field['type_name'] = $type;
-    $instances = content_field_instance_read(array('field_name' => 'field_image_cache', 'type_name' => $type));
+
+    $field_name = variable_get('uc_image_'. $type, '');
+    if (empty($field_name)) {
+      $field_name = 'field_image_cache';
+    }
+    $field['field_name'] = $field_name;
+
+    $instances = content_field_instance_read(array('field_name' => $field_name, 'type_name' => $type));
+
     if (sizeof($instances) < 1) {
       // Only add the field if it doesn't exist. Don't overwrite any changes.
       if (content_field_instance_create($field)) {
+        variable_set('uc_image_'. $type, $field_name);
         drupal_set_message(t('Created field %label.', array('%label' => $label)));
       }
       else {

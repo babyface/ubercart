@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.9 2009/01/02 20:18:43 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.10 2009/01/19 20:31:28 islandusurper Exp $
 
 /**
  * @file
@@ -446,9 +446,9 @@ function uc_product_kit_view($node, $teaser = 0, $page = 0) {
     'add_to_cart' => 10,
   ));
 
-  if (isset($node->field_image_cache) && file_exists($node->field_image_cache[0]['filepath'])) {
-    $node->content['image'] = array('#value' => theme('uc_product_image', $node->field_image_cache),
-      '#access' => $enabled['image'] && module_exists('imagecache'),
+  if (module_exists('imagecache') && ($field = variable_get('uc_image_product_kit', '')) && isset($node->$field) && file_exists($node->{$field}[0]['filepath'])) {
+    $node->content['image'] = array('#value' => theme('uc_product_image', $node->$field),
+      '#access' => $enabled['image'],
       '#weight' => $weight['image'],
     );
   }
@@ -642,10 +642,15 @@ function uc_product_kit_store_status() {
   if (module_exists('filefield')) {
     module_load_include('inc', 'content', 'includes/content.crud');
     // Check for filefields on products.
-    $instances = content_field_instance_read(array('field_name' => 'field_image_cache', 'type_name' => 'product_kit'));
+    if ($field = variable_get('uc_image_product_kit', '')) {
+      $instances = content_field_instance_read(array('field_name' => $field, 'type_name' => 'product_kit'));
+    }
+    else {
+      $instances = array();
+    }
 
     if (!count($instances)) {
-      return array(array('status' => 'warning', 'title' => t('Images'), 'desc' => t('Product kits do not have an image field. You may add the existing <em>field_image_cache</em> at the <a href="!url">Add field page</a>.', array('!url' => url('admin/content/types/product-kit/add_field')))));
+      return array(array('status' => 'warning', 'title' => t('Images'), 'desc' => t('Product kits do not have an image field. You may add a %field_name at the <a href="!add_url">Add field page</a> and make sure it is set as the Ubercart image in the <a href="!edit_url">content type settings</a> under the Workflow fieldset.', array('%field_name' => $field, '!add_url' => url('admin/content/types/product-kit/add_field'), '!edit_url' => url('admin/content/types/product-kit')))));
     }
   }
 

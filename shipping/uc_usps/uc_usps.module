@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.6.2.9 2009/01/02 20:18:40 islandusurper Exp $
+// $Id: uc_usps.module,v 1.6.2.10 2009/01/19 20:31:24 islandusurper Exp $
 
 /**
  * @file
@@ -392,8 +392,8 @@ function uc_usps_quote($products, $details, $method) {
     }
   }
 
-  $method_services = '_uc_'. $method['id'] .'_services';
-  $usps_services = array_filter(variable_get($method_services, array_keys(call_user_func($method_services))));
+  $method_services = 'uc_'. $method['id'] .'_services';
+  $usps_services = array_filter(variable_get($method_services, array_keys(call_user_func('_'. $method_services))));
   foreach ($services as $service => $quote) {
     if ($service != 'data' && !in_array($service, $usps_services)) {
       unset($services[$service]);

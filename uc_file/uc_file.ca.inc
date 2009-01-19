@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.ca.inc,v 1.1.2.2 2009/01/02 20:18:43 islandusurper Exp $
+// $Id: uc_file.ca.inc,v 1.1.2.3 2009/01/19 20:31:25 islandusurper Exp $
 
 /**
  * @file
@@ -62,9 +62,6 @@ function uc_file_ca_predicate() {
         '#title' => t('Update all file expirations for this order.'),
         '#argument_map' => array(
           'order' => 'order',
-        ),
-        '#settings' => array(
-          'order_status' => 'completed',
         ),
       ),
     ),

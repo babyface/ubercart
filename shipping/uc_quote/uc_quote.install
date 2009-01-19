@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.install,v 1.5.2.4 2008/12/09 15:20:38 islandusurper Exp $
+// $Id: uc_quote.install,v 1.5.2.5 2009/01/19 20:31:23 islandusurper Exp $
 
 /**
  * @file
@@ -31,80 +31,6 @@ function uc_quote_schema() {
       ),
     ),
     'primary key' => array('id_type', 'id'),
-  );
-
-  $schema['uc_quote_manufacturer_locations'] = array(
-    'fields' => array(
-      'tid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'first_name' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'last_name' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'company' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'street1' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'street2' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'city' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'zone' => array(
-        'type' => 'int',
-        'size' => 'medium',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'postal_code' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'country' => array(
-        'type' => 'int',
-        'size' => 'medium',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'phone' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-    ),
-    'primary key' => array('tid'),
   );
 
   $schema['uc_quote_product_locations'] = array(

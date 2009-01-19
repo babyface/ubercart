@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_reports.module,v 1.11.2.8 2009/01/02 20:18:39 islandusurper Exp $
+// $Id: uc_reports.module,v 1.11.2.9 2009/01/19 20:31:28 islandusurper Exp $
 
 /**
  * @file
@@ -21,29 +21,67 @@ define('UC_REPORTS_MAX_RECORDS', PHP_INT_MAX);
  * Implementation of hook_help().
  */
 function uc_reports_help($path, $arg) {
-  if (!strncmp($path, 'admin/store/reports/', 20)) {
-    $statuses = array();
-    foreach (variable_get('uc_reports_reported_statuses', array('completed')) as $status) {
-      $statuses[] = db_result(db_query("SELECT title FROM {uc_order_statuses} WHERE order_status_id = '%s'", $status));
-    }
-    $order_statuses = t('<b>Order statuses used:</b> @statuses', array('@statuses' => implode(', ', $statuses)));
+  $output =  '';
 
+  if (strncmp($path, 'admin/store/reports/', 20) === 0) {
+    $include_statuses = $include_offset = FALSE;
+
+    // Include order status info?
+    if (strpos($path, 'admin/store/reports/sales/year') === 0) {
+      $include_statuses = TRUE;
+    }
+    else {
+      switch ($path) {
+        case 'admin/store/reports/customers':
+        case 'admin/store/reports/products':
+        case 'admin/store/reports/sales':
+          $include_statuses = TRUE;
+          break;
+      }
+    }
+
+    // Include timezone offset info?
+    if (!strncmp($path, 'admin/store/reports/sales', 25)) {
+      $include_offset = TRUE;
+    }
+
+    // Generate message for the path we're at.
+    $output .= '<p>';
     switch ($path) {
       case 'admin/store/reports/customers':
-        return '<p>'. t("The following are total orders, products, sales, and average order totals for each store customer. Clicking on the header links will toggle a descending or ascending order for that column. Clicking on a customer's name will take you to a detailed list of orders that customer has made. Clicking on a customers username will take you to their account page.") .'</p><p>'. $order_statuses .'</p>';
+        $output .= t("The following are total orders, products, sales, and average order totals for each store customer. Clicking on the header links will toggle a descending or ascending order for that column. Clicking on a customer's name will take you to a detailed list of orders that customer has made. Clicking on a customers username will take you to their account page.");
+  break;
       case 'admin/store/reports/products':
-        return '<p>'. t('The table lists each product listed in the store, its amount sold, how many times it has been viewed, revenue it has produced, and gross profit it has generated. If you do not see the number of views you must enable the Statistics module on the <a href="!url">module administration page</a>.', array('!url' => url('admin/build/modules'))) .'</p><p>'. $order_statuses .'</p>';
+        $output .= t('The table lists each product listed in the store, its amount sold, how many times it has been viewed, revenue it has produced, and gross profit it has generated. If you do not see the number of views you must enable the Statistics module on the <a href="!url">module administration page</a>.', array('!url' => url('admin/build/modules')));
+  break;
       case 'admin/store/reports/sales':
-        return '<p>'. t('These are the sales for the last two days, average sales for the month, and the projected sales for the rest of the month. Further down the list you will see other sales statistics.') .'</p><p>'. $order_statuses .'</p>';
+        $output .= t('These are the sales for the last two days, average sales for the month, and the projected sales for the rest of the month. Further down the list you will see other sales statistics.');
+  break;
       case 'admin/store/reports/sales/custom':
-        return t('Expand the fieldset below to customize the date range of this report, the statuses of orders displayed, and product display options.');
+        $output .= t('Expand the fieldset below to customize the date range of this report, the statuses of orders displayed, and product display options.');
+  break;
     }
-
     if (strpos($path, 'admin/store/reports/sales/year') === 0) {
       $year = (is_null($_GET['year'])) ? format_date(time(), 'custom', "Y") : $_GET['year'];
-      return '<p>'. t('This is the monthly break down of sales for the year @year. Clicking on each link will take you to a list of orders during that month.', array('@year' => $year)) .'</p><p>'. $order_statuses .'</p>';
+      $output .= t('This is the monthly break down of sales for the year @year. Clicking on each link will take you to a list of orders during that month.', array('@year' => $year));
+    }
+    $output .= '</p>';
+
+    // Include the statuses/offset as needed.
+    if ($include_offset) {
+      $output .= "<p>". t('All sales reports are <b>GMT !offset</b> (Default site timezone)', array('!offset' => variable_get('date_default_timezone', 0) / 36)) ."</p>";
+    }
+    if ($include_statuses) {
+      $statuses = array();
+      foreach (variable_get('uc_reports_reported_statuses', array('completed')) as $status) {
+        $statuses[] = db_result(db_query("SELECT title FROM {uc_order_statuses} WHERE order_status_id = '%s'", $status));
+      }
+      $order_statuses = t('<b>Order statuses used:</b> @statuses', array('@statuses' => implode(', ', $statuses)));
+
+      $output .= "<p>$order_statuses</p>";
     }
   }
+  return $output;
 }
 
 /**
@@ -226,59 +264,36 @@ function _uc_reports_get_csv($report_id, $user_id) {
  *   - "average" => The average revenue produced for each order
  */
 function _uc_reports_get_sales($time, $period = 'day') {
-  $output = array();
-  $output['income'] = 0;
+  $timezone = _uc_reports_timezone_offset();
+
+  // Get the current date markers.
+  $date = array(
+    'day' => format_date($time, 'custom', 'j', 0),
+    'month' => format_date($time, 'custom', 'n', 0),
+    'year' => format_date($time, 'custom', 'Y', 0),
+  );
+
+  // Add one to the granularity chosen, and use it to calc the new time.
+  $date[$period] += 1;
+  $new_time = gmmktime(0, 0, 0, $date['month'], $date['day'], $date['year']);
+
+  // Set up the default SQL for getting orders with the proper status
+  // within this period.
   $order_statuses = _uc_reports_order_statuses();
+  $sql_frag = " FROM {uc_orders} as o WHERE o.order_status IN $order_statuses AND created >= $time and created < $new_time";
 
-  switch ($GLOBALS['db_type']) {
-    case 'mysqli':
-    case 'mysql':
-      switch ($period) {
-        default:
-        case 'day':
-          $output['date'] = format_date($time, 'custom', 'n') .'-'. format_date($time, 'custom', 'j');
-          $sql_frag = " FROM {uc_orders} as o WHERE o.order_status IN $order_statuses AND FROM_UNIXTIME(created) LIKE \"". format_date($time, 'custom', 'Y') .'-'. format_date($time, 'custom', 'm') .'-'. format_date($time, 'custom', 'd') ."%%\"";
-          $orders = db_query("SELECT o.order_total". $sql_frag);
-          break;
-        case 'month':
-          $output['date'] = format_date($time, 'custom', 'n');
-          $sql_frag = " FROM {uc_orders} as o WHERE o.order_status IN $order_statuses AND FROM_UNIXTIME(created) LIKE \"". format_date($time, 'custom', 'Y') .'-'. format_date($time, 'custom', 'm') ."%%\"";
-          $orders = db_query("SELECT o.order_total". $sql_frag);
-          break;
-        case 'year':
-          $output['date'] = format_date($time, 'custom', 'Y');
-          $sql_frag = " FROM {uc_orders} as o WHERE o.order_status IN $order_statuses AND FROM_UNIXTIME(created) LIKE \"". format_date($time, 'custom', 'Y') ."-%%\"";
-          $orders = db_query("SELECT o.order_total". $sql_frag);
-          break;
-    }
-    case 'pgsql':
-      switch ($period) {
-        default:
-        case 'day':
-          $output['date'] = format_date($time, 'custom', 'n') .'-'. format_date($time, 'custom', 'j');
-          $sql_frag = " FROM {uc_orders} as o WHERE o.order_status IN $order_statuses AND FROM_UNIXTIME(created) LIKE '". format_date($time, 'custom', 'Y') .'-'. format_date($time, 'custom', 'm') .'-'. format_date($time, 'custom', 'd') ."%%'";
-          $orders = db_query("SELECT o.order_total". $sql_frag);
-          break;
-        case 'month':
-          $output['date'] = format_date($time, 'custom', 'n');
-          $sql_frag = " FROM {uc_orders} as o WHERE o.order_status IN $order_statuses AND FROM_UNIXTIME(created) LIKE '". format_date($time, 'custom', 'Y') .'-'. format_date($time, 'custom', 'm') ."%%'";
-          $orders = db_query("SELECT o.order_total". $sql_frag);
-          break;
-        case 'year':
-          $output['date'] = format_date($time, 'custom', 'Y');
-          $sql_frag = " FROM {uc_orders} as o WHERE o.order_status IN $order_statuses AND FROM_UNIXTIME(created) LIKE '". format_date($time, 'custom', 'Y') ."-%%'";
-          $orders = db_query("SELECT o.order_total". $sql_frag);
-          break;
-      }
-      break;
-  }
-
+  // Get the total value of the orders.
+  $output = array('income' => 0);
+  $orders = db_query("SELECT o.order_total ". $sql_frag);
   while ($order = db_fetch_object($orders)) {
     $output['income'] += $order->order_total;
   }
 
-  $count = db_result(db_query("SELECT count(o.order_total)". $sql_frag));
+  // Get the total amount of orders.
+  $count = db_result(db_query("SELECT COUNT(o.order_total) ". $sql_frag));
   $output['total'] = $count;
+
+  // Average for this period.
   $output['average'] = ($count != 0) ? round($output['income'] / $count, 2) : 0;
 
   return $output;
@@ -340,12 +355,19 @@ function _uc_reports_end_interval($time, $interval = 'month') {
 
   $temp = strtotime('+1 '. $interval, $time) - 1;
 
-  //if (format_date($time, 'custom', 'H') != format_date($temp, 'custom', 'H')) {
-  if (format_date($time, 'custom', 'H') == format_date($temp, 'custom', 'H')) {
-    //$temp = (format_date($time, 'custom', 'm') == 3) ? $temp + 3600 : $temp - 3600;
-    if (format_date($temp, 'custom', 'H') == '00') {
-      $temp -= 3600;
-    }
+  switch ($interval) {
+    case 'day':
+      $temp = gmmktime(0, 0, -1, gmdate('n', $time), gmdate('j', $time) + 1, gmdate('Y', $time));
+      break;
+    case 'week':
+      $temp = gmmktime(0, 0, -1, gmdate('n', $time), gmdate('j', $time) + 7, gmdate('Y', $time));
+      break;
+    case 'month':
+      $temp = gmmktime(23, 59, 59, gmdate('n', $time) + 1, 0, gmdate('Y', $time));
+      break;
+    case 'year':
+      $temp = gmmktime(23, 59, 59, gmdate('n', $time), 0, gmdate('Y', $time) + 1);
+      break;
   }
 
   return $temp;

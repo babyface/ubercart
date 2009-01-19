@@ -1,4 +1,4 @@
-/* $Id: uc_reports.css,v 1.6.2.3 2008/08/06 13:41:26 islandusurper Exp $ */
+/* $Id: uc_reports.css,v 1.6.2.4 2009/01/19 20:31:28 islandusurper Exp $ */
 
 .sales-year  {
   display:inline;
@@ -22,22 +22,6 @@
 
 .uc-sales-table td {
   vertical-align:top;
-}
-
-.report-date-table {
-  width:auto;
-}
-
-.report-submit {
-  float:right;
-}
-
-.report-date-table td {
-  vertical-align:bottom;
-}
-
-.report-date-table td div {
-  margin:0px;
 }
 
 form.uc-reports-customize-report-form fieldset.collapsible .fieldset-wrapper {

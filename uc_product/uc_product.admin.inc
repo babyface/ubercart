@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.admin.inc,v 1.1.2.7 2009/01/02 20:18:43 islandusurper Exp $
+// $Id: uc_product.admin.inc,v 1.1.2.8 2009/01/19 20:31:27 islandusurper Exp $
 
 /**
  * @file
@@ -626,7 +626,7 @@ function uc_product_class_form_submit($form, &$form_state) {
   }
 
   node_types_rebuild();
-  if ($is_new && module_exists('filefield')) {
+  if ($is_new && module_exists('imagefield')) {
     uc_product_add_default_image_field($pcid);
   }
   menu_rebuild();

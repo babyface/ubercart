@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.9.2.6 2008/12/09 15:20:36 islandusurper Exp $
+// $Id: uc_order.install,v 1.9.2.7 2009/01/19 20:31:26 islandusurper Exp $
 
 /**
  * @file
@@ -875,6 +875,19 @@ function uc_order_update_6004() {
   db_change_field($ret, 'uc_order_line_items', 'amount', 'amount', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0.0));
   db_change_field($ret, 'uc_order_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_order_products', 'price', 'price', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
+}
+
+function uc_order_update_6005() {
+  $ret = array();
+
+  $result = db_query("SELECT * FROM {permission}");
+  while($perm = db_fetch_object($result)) {
+    $perm->perm = str_replace("delete any order", "unconditionally delete orders", $perm->perm);
+    drupal_write_record('permission', $perm, 'pid');
+  }
+  $ret[] = array('success' => TRUE, 'query' => "Replaced all instances of 'delete any order' with 'unconditionally delete orders' in the permissions table.");
 
   return $ret;
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.12 2009/01/02 20:18:41 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.13 2009/01/19 20:31:25 islandusurper Exp $
 
 /**
  * @file
@@ -672,28 +672,77 @@ function uc_cart_view_form($form_state, $items = NULL) {
 
   $form['items'] = uc_cart_view_table($form['items']);
 
-  if (($page = variable_get('uc_continue_shopping_url', '')) != '<none>' &&
-      variable_get('uc_continue_shopping_type', 'link') == 'button') {
-    $form['continue_shopping'] = array(
-      '#type' => 'submit',
-      '#submit' => array('uc_cart_view_form_continue_submit'),
-      '#value' => variable_get('uc_continue_shopping_text', t('Continue shopping')),
-    );
+  // If the continue shopping element is enabled...
+  if (($cs_type = variable_get('uc_continue_shopping_type', 'link')) !== 'none') {
+    // Setup the text used for the element.
+    $cs_text = variable_get('uc_continue_shopping_text', '') ? variable_get('uc_continue_shopping_text', '') : t('Continue shopping');
+
+    // Add the element to the form based on the element type.
+    if (variable_get('uc_continue_shopping_type', 'link') == 'link') {
+      $form['continue_shopping'] = array(
+        '#value' => l($cs_text, uc_cart_continue_shopping_url()),
+      );
+    }
+    elseif (variable_get('uc_continue_shopping_type', 'link') == 'button') {
+      $form['continue_shopping'] = array(
+        '#type' => 'submit',
+        '#value' => $cs_text,
+        '#submit' => array('uc_cart_view_form_submit'),
+      );
+      $form['continue_shopping_text'] = array(
+        '#type' => 'hidden',
+        '#value' => $cs_text,
+      );
+    }
   }
 
+  // Add the control buttons for updating and proceeding to checkout.
   $form['update'] = array(
     '#type' => 'submit',
-    '#submit' => array('uc_cart_view_form_update_submit'),
     '#value' => t('Update cart'),
+    '#submit' => array('uc_cart_view_form_submit'),
   );
   if (variable_get('uc_checkout_enabled', TRUE)) {
     $form['checkout'] = array(
       '#type' => 'submit',
       '#value' => t('Checkout'),
+      '#submit' => array('uc_cart_view_form_submit'),
     );
   }
 
   return $form;
+}
+
+function uc_cart_view_form_submit($form, &$form_state) {
+  // Remove the cart order variable if the customer came here during checkout.
+  if (isset($_SESSION['cart_order'])) {
+    unset($_SESSION['cart_order']);
+  }
+
+  // TODO: Review use of cache_clear_all().  Empties temporary cached pages.
+  cache_clear_all();
+
+  // Update the items in the shopping cart based on the form values.
+  uc_cart_update_item_object((object)$form_state['values']);
+
+  // Specify the appropriate redirect based on the button used to submit.
+  switch ($form_state['values']['op']) {
+    // Continue shopping button.
+    case $form_state['values']['continue_shopping_text']:
+      $form_state['redirect'] = uc_cart_continue_shopping_url();
+      break;
+
+    // Update cart button.
+    case t('Update cart'):
+      // No redirect.  Just display a message and preserve the last URL.
+      drupal_set_message(t('Your cart has been updated.'));
+      break;
+
+    // Checkout button.
+    case t('Checkout'):
+      $form_state['redirect'] = variable_get('uc_checkout_enabled', TRUE) ? 'cart/checkout' : 'cart';
+      break;
+  }
 }
 
 function theme_uc_cart_view_form($form) {
@@ -709,17 +758,20 @@ function theme_uc_cart_view_form($form) {
     $form['items'][$i]['#printed'] = TRUE;
   }
 
-  if (($page = variable_get('uc_continue_shopping_url', '')) != '<none>') {
-    if (variable_get('uc_continue_shopping_type', 'link') == 'link') {
+  // Add the continue shopping element and cart submit buttons.
+  if (($type = variable_get('uc_continue_shopping_type', 'link')) != 'none') {
+    // Render the continue shopping element into a variable.
+    $cs_element = drupal_render($form['continue_shopping']);
+
+    // Add the element with the appropriate markup based on the display type.
+    if ($type == 'link') {
       $output .= '<div id="cart-form-buttons"><div id="continue-shopping-link">'
-               . l(variable_get('uc_continue_shopping_text', t('Continue shopping')), $page) .'</div>'
-               . drupal_render($form) .'</div>';
+               . $cs_element .'</div>'. drupal_render($form) .'</div>';
     }
-    else {
-      $button = drupal_render($form['continue_shopping']);
+    elseif ($type == 'button') {
       $output .= '<div id="cart-form-buttons"><div id="update-checkout-buttons">'
                . drupal_render($form) .'</div><div id="continue-shopping-button">'
-               . $button .'</div></div>';
+               . $cs_element .'</div></div>';
     }
   }
   else {
@@ -784,44 +836,40 @@ function uc_cart_view_table($table) {
   return $table;
 }
 
-function uc_cart_view_form_continue_submit($form, &$form_state) {
-  // Instead of using $_SESSION, can we use $form_state?
-  if (isset($_SESSION['cart_order'])) {
-    unset($_SESSION['cart_order']);
-  }
-
-  $form_state['redirect'] = variable_get('uc_continue_shopping_url', '');
-}
-
-function uc_cart_view_form_update_submit($form, &$form_state) {
-  // Instead of using $_SESSION, can we use $form_state?
-  if (isset($_SESSION['cart_order'])) {
-    unset($_SESSION['cart_order']);
-  }
-
-  cache_clear_all();
-  uc_cart_update_item_object((object)$form_state['values']);
-  drupal_set_message(t('Your cart has been updated.'));
-  $form_state['redirect'] = 'cart';
-}
-
-function uc_cart_view_form_submit($form, &$form_state) {
-  // Instead of using $_SESSION, can we use $form_state?
-  if (isset($_SESSION['cart_order'])) {
-    unset($_SESSION['cart_order']);
-  }
-
-  cache_clear_all();
-  if (!variable_get('uc_checkout_enabled', TRUE)) {
-    $form_state['redirect'] = 'cart';
-  }
-  uc_cart_update_item_object((object)$form_state['values']);
-  $form_state['redirect'] = 'cart/checkout';
-}
 
 /*******************************************************************************
  * Module and Helper Functions
  ******************************************************************************/
+
+
+/**
+ * Returns the URL redirect for the continue shopping element on the cart page.
+ *
+ * @param $unset
+ *   TRUE or FALSE indicating whether or not to unset the last URL variable.
+ * @return
+ *   The URL or Drupal path that will be used for the continue shopping element.
+ */
+function uc_cart_continue_shopping_url($unset = TRUE) {
+  $url = '';
+
+  // Use the last URL if enabled and available.
+  if (variable_get('uc_continue_shopping_use_last_url', TRUE)) {
+    $url = $_SESSION['uc_cart_last_url'];
+  }
+
+  // If the URL is still empty, fall back to the default.
+  if (empty($url)) {
+    $url = variable_get('uc_continue_shopping_url', '');
+  }
+
+  // Unset the last URL if specified.
+  if ($unset) {
+    unset($_SESSION['uc_cart_last_url']);
+  }
+
+  return $url;
+}
 
 /**
  * Completes a sale, including adjusting order status and creating user account.
@@ -1044,7 +1092,7 @@ function uc_cart_add_item($nid, $qty = 1, $data = NULL, $cid = NULL, $msg = TRUE
             }
             $redirect = variable_get('uc_add_item_redirect', 'cart');
             if ($redirect != '<none>') {
-              $_SESSION['last_url'] = uc_referer_uri();
+              $_SESSION['uc_cart_last_url'] = uc_referer_uri();
               return $redirect;
             }
             else {
@@ -1087,7 +1135,7 @@ function uc_cart_add_item($nid, $qty = 1, $data = NULL, $cid = NULL, $msg = TRUE
 
     $redirect = variable_get('uc_add_item_redirect', 'cart');
     if ($redirect != '<none>') {
-      $_SESSION['last_url'] = uc_referer_uri();
+      $_SESSION['uc_cart_last_url'] = uc_referer_uri();
       return $redirect;
     }
     else {

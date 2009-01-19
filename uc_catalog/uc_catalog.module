@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.12 2009/01/02 20:18:42 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.13 2009/01/19 20:31:25 islandusurper Exp $
 
 /**
  * @file
@@ -507,12 +507,15 @@ function _uc_catalog_pathauto_alias($category, $op) {
   _pathauto_include();
   $count = 0;
 
-  $placeholders = pathauto_get_placeholders('taxonomy', $category);
+  if ($category->vid == variable_get('uc_catalog_vid', 0)){
+    $placeholders = pathauto_get_placeholders('taxonomy', $category);
 
-  $src = uc_catalog_path($category);
-  if ($alias = pathauto_create_alias('uc_catalog', $op, $placeholders, $src, $category->vid)) {
-    $count++;
+    $src = uc_catalog_path($category);
+    if ($alias = pathauto_create_alias('uc_catalog', $op, $placeholders, $src, $category->vid)) {
+      $count++;
+    }
   }
+
   return $count;
 }
 
@@ -699,8 +702,8 @@ function theme_uc_catalog_product_grid($products) {
     }
 
     $titlelink = l($product->title, "node/$nid", array('html' => TRUE));
-    if (module_exists('imagecache') && isset($product->field_image_cache) && file_exists($product->field_image_cache[0]['filepath'])) {
-      $imagelink = l(theme('imagecache', 'product_list', $product->field_image_cache[0]['filepath'], $product->title, $product->title), "node/$nid", array('html' => TRUE));
+    if (module_exists('imagecache') && ($field = variable_get('uc_image_'. $product->type, '')) && isset($product->$field) && file_exists($product->{$field}[0]['filepath'])) {
+      $imagelink = l(theme('imagecache', 'product_list', $product->{$field}[0]['filepath'], $product->title, $product->title), "node/$nid", array('html' => TRUE));
     }
     else {
       $imagelink = '';
