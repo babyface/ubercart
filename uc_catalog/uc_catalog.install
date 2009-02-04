@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.install,v 1.9.2.7 2009/01/19 20:31:25 islandusurper Exp $
+// $Id: uc_catalog.install,v 1.9.2.8 2009/02/04 13:44:30 islandusurper Exp $
 
 /**
  * @file
@@ -191,6 +191,22 @@ function uc_catalog_update_7() {
         _imagecache_get_presets(TRUE);
       }
     }
+  }
+
+  return $ret;
+}
+
+function uc_catalog_update_8() {
+  $ret = array();
+
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("UPDATE {url_alias} SET src = SUBSTRING_INDEX(src, '/', 2) WHERE src LIKE 'catalog/%%';");
+      break;
+    case 'pgsql':
+      $ret[] = update_sql("UPDATE {url_alias} SET src = substring(src from '^catalog/\d*') WHERE src LIKE 'catalog/%%';");
+      break;
   }
 
   return $ret;

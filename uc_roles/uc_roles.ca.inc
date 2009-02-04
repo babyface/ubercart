@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.ca.inc,v 1.1.2.4 2009/01/19 20:31:28 islandusurper Exp $
+// $Id: uc_roles.ca.inc,v 1.1.2.5 2009/02/04 13:44:32 islandusurper Exp $
 
 /**
  * @file
@@ -232,39 +232,53 @@ function uc_roles_ca_action() {
  */
 function uc_roles_ca_trigger() {
 
-  $args = array(
-    'order' => array(
-      '#entity' => 'uc_order',
-      '#title' => t('Order'),
-    ),
-    'expiration' => array(
-      '#entity' => 'uc_roles_expiration',
-      '#title' => t('Role expiration'),
-    ),
+  $order = array(
+    '#entity' => 'uc_order',
+    '#title' => t('Order'),
+  );
+  $account = array(
+    '#entity' => 'user',
+    '#title' => t('User'),
+  );
+  $expiration = array(
+    '#entity' => 'uc_roles_expiration',
+    '#title' => t('Role expiration'),
   );
 
   $triggers['uc_roles_notify_grant'] = array(
     '#title' => t('E-mail for granted roles'),
     '#category' => t('Notification'),
-    '#arguments' => $args,
+    '#arguments' => array(
+      'order' => $order,
+      'expiration' => $expiration,
+    ),
   );
 
   $triggers['uc_roles_notify_revoke'] = array(
     '#title' => t('E-mail for revoked roles'),
     '#category' => t('Notification'),
-    '#arguments' => $args,
+    '#arguments' => array(
+      'user' => $account,
+      'expiration' => $expiration,
+    ),
   );
 
   $triggers['uc_roles_notify_renew'] = array(
     '#title' => t('E-mail for renewed roles'),
     '#category' => t('Notification'),
-    '#arguments' => $args,
+    '#arguments' => array(
+      'order' => $order,
+      'expiration' => $expiration,
+    ),
   );
 
   $triggers['uc_roles_notify_reminder'] = array(
     '#title' => t('E-mail for role expiration reminders'),
     '#category' => t('Notification'),
-    '#arguments' => $args,
+    '#arguments' => array(
+      'user' => $account,
+      'expiration' => $expiration,
+    ),
   );
 
   return $triggers;

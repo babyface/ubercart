@@ -1,5 +1,5 @@
 <?php
-// $Id: customer.itpl.php,v 1.5.2.2 2009/01/02 20:18:41 islandusurper Exp $
+// $Id: customer.itpl.php,v 1.5.2.3 2009/02/04 13:44:33 islandusurper Exp $
 
 /**
  * This file is the default customer invoice template for Ubercart.
@@ -213,6 +213,7 @@
                           </tr>
                           <?php }
                               }?>
+                        </table>
 
                       </td>
                     </tr>
@@ -251,7 +252,4 @@
       </table>
     </td>
   </tr>
-</table>
-</td>
-</tr>
 </table>

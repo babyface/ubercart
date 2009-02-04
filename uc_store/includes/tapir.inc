@@ -1,5 +1,5 @@
 <?php
-// $Id: tapir.inc,v 1.1.2.3 2009/01/19 20:31:28 islandusurper Exp $
+// $Id: tapir.inc,v 1.1.2.4 2009/02/04 13:44:35 islandusurper Exp $
 
 /**
  * @file
@@ -51,7 +51,7 @@ function tapir_gather_rows($element) {
       $element['#rows'][$row][$col_id] = $element[$row][$col_id];
       unset($element[$row][$col_id]);
     }
-    $element['#rows'][$row]['#attributes'] = $element[$row]['#attributes'];
+    $element['#rows'][$row]['#attributes'] = isset($element[$row]['#attributes']) ? $element[$row]['#attributes'] : array();
   }
 
   return $element;
@@ -76,7 +76,7 @@ function theme_tapir_table($element) {
   // Loop through the columns and create the header array.
   foreach ($element['#columns'] as $col_id => $col_data) {
     // Add the cell if available.
-    if ($col_data['access'] !== FALSE) {
+    if (!isset($col_data['access']) || $col_data['access'] !== FALSE) {
       $header[] = $col_data['cell'];
     }
   }
@@ -100,9 +100,9 @@ function theme_tapir_table($element) {
     // Loop through each column in the header.
     foreach ($element['#columns'] as $col_id => $col_data) {
       // If this row defines cell data for the current column...
-      if ($col_data['access'] !== FALSE && isset($data[$col_id])) {
+      if ((!isset($col_data['access']) || $col_data['access'] !== FALSE) && isset($data[$col_id])) {
         $cell = array();
-        if (is_array($data[$col_id]['#cell_attributes'])) {
+        if (isset($data[$col_id]['#cell_attributes']) && is_array($data[$col_id]['#cell_attributes'])) {
           foreach ($data[$col_id]['#cell_attributes'] as $property => $value) {
             if ($property == 'colspan' && $value == 'full') {
               // Extend full-width cells to the number of columns actually
@@ -129,7 +129,7 @@ function theme_tapir_table($element) {
   }
 
   // Return the rendered table.
-  return theme('table', $header, $rows, (array)$element['#attributes'], $element['#title']) . $element['#children'];
+  return theme('table', $header, $rows, (array)$element['#attributes'], $element['#title']) . (isset($element['#children']) ? $element['#children'] : '');
 }
 
 /**

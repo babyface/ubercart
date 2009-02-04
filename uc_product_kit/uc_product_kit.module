@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.10 2009/01/19 20:31:28 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.11 2009/02/04 13:44:34 islandusurper Exp $
 
 /**
  * @file
@@ -51,6 +51,15 @@ function uc_product_kit_enable() {
       node_type_save($node_type);
     }
     variable_set('uc_product_kit_enable_nodes', FALSE);
+  }
+
+  // Hack the product kit node type into the catalog if this module is enabled
+  // some time after uc_catalog.
+  if (module_exists('uc_catalog') && $vid = variable_get('uc_catalog_vid', 0)) {
+    $vocab = taxonomy_vocabulary_load($vid);
+    if (!isset($vocab->nodes['product_kit'])) {
+      db_query("INSERT INTO {vocabulary_node_types} (vid, type) VALUES (%d, '%s')", $vid, 'product_kit');
+    }
   }
 }
 
@@ -280,12 +289,11 @@ function uc_product_kit_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
 function uc_product_kit_forms($form_id, $args) {
   $forms = array();
   if (substr($form_id, 0, 31) == 'uc_product_kit_add_to_cart_form' || substr($form_id, 0, 27) == 'uc_product_add_to_cart_form' || substr($form_id, 0, 26) == 'uc_catalog_buy_it_now_form') {
-    $products = db_query("SELECT DISTINCT nid FROM {uc_product_kits} WHERE nid = %d", $args[0]->nid);
-
-    while ($prodrow = db_fetch_object($products)) {
-      $forms['uc_product_kit_add_to_cart_form_'. $prodrow->nid] = array('callback' => 'uc_product_kit_add_to_cart_form');
-      $forms['uc_product_add_to_cart_form_'. $prodrow->nid] = array('callback' => 'uc_product_kit_add_to_cart_form');
-      $forms['uc_catalog_buy_it_now_form_'. $prodrow->nid] = array('callback' => 'uc_product_kit_buy_it_now_form');
+    $product = $args[0];
+    if ($product->type == 'product_kit') {
+      $forms['uc_product_kit_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_kit_add_to_cart_form');
+      $forms['uc_product_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_kit_add_to_cart_form');
+      $forms['uc_catalog_buy_it_now_form_'. $product->nid] = array('callback' => 'uc_product_kit_buy_it_now_form');
     }
   }
   return $forms;
@@ -501,12 +509,13 @@ function uc_product_kit_view($node, $teaser = 0, $page = 0) {
         $node->content['products'][$product->nid]['#weight'] = $product->ordering;
       }
     }
-
-    $node->content['add_to_cart'] = array('#value' => theme('uc_product_kit_add_to_cart', $node),
-      '#weight' => 10,
-    );
+    if (module_exists('uc_cart')) {
+      $node->content['add_to_cart'] = array('#value' => theme('uc_product_kit_add_to_cart', $node),
+        '#weight' => 10,
+      );
+    }
   }
-  elseif (variable_get('uc_product_add_to_cart_teaser', TRUE)) {
+  elseif (module_exists('uc_cart') && variable_get('uc_product_add_to_cart_teaser', TRUE)) {
     $node->content['add_to_cart'] = array('#value' => theme('uc_product_kit_add_to_cart', $node),
       '#weight' => 10,
     );
@@ -586,6 +595,8 @@ function uc_product_kit_add_to_cart_form_submit($form, &$form_state) {
 
 function uc_product_kit_buy_it_now_form($form_state, $node) {
   $form = array();
+  $form['#validate'][] = 'uc_product_kit_buy_it_now_form_validate';
+  $form['#submit'][] = 'uc_product_kit_buy_it_now_form_submit';
   $form['nid'] = array(
     '#type' => 'hidden',
     '#value' => $node->nid,
@@ -607,6 +618,21 @@ function uc_product_kit_buy_it_now_form($form_state, $node) {
     ),
   );
   return $form;
+}
+
+function uc_product_kit_buy_it_now_form_validate($form, &$form_state) {
+  if (module_exists('uc_attribute')) {
+    $node = node_load($form_state['values']['nid']);
+    if (is_array($node->products)) {
+      foreach ($node->products as $nid => $product) {
+        $attributes = uc_product_get_attributes($nid);
+        if (!empty($attributes)) {
+          drupal_set_message(t('This product has options that need to be selected before purchase. Please select them in the form below.'), 'error');
+          drupal_goto('node/'. $form_state['values']['nid']);
+        }
+      }
+    }
+  }
 }
 
 function uc_product_kit_buy_it_now_form_submit($form, &$form_state) {

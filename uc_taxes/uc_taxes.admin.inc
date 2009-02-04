@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.admin.inc,v 1.1.2.4 2009/01/02 20:18:39 islandusurper Exp $
+// $Id: uc_taxes.admin.inc,v 1.1.2.5 2009/02/04 13:44:31 islandusurper Exp $
 
 /**
  * @file
@@ -87,6 +87,12 @@ function uc_taxes_form($form_state, $tax_id = 0) {
   $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
 
   return $form;
+}
+
+function uc_taxes_form_validate($form, &$form_state) {
+  if (!empty($form_state['values']['rate']) && (!is_numeric($form_state['values']['rate']) || $form_state['values']['rate'] < 0)) {
+    form_set_error('rate', t('Rate must be a positive number. No commas and only one decimal point.'));
+  }
 }
 
 /**

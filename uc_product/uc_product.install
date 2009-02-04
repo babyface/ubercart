@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.install,v 1.12.2.6 2009/01/19 20:31:27 islandusurper Exp $
+// $Id: uc_product.install,v 1.12.2.7 2009/02/04 13:44:32 islandusurper Exp $
 
 /**
  * @file
@@ -118,7 +118,6 @@ function uc_product_schema() {
       'weight' => array(
         'description' => t('Physical weight.'),
         'type' => 'float',
-        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -132,21 +131,18 @@ function uc_product_schema() {
       'length' => array(
         'description' => t('Physical length of the product or its packaging.'),
         'type' => 'float',
-        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0.0,
       ),
       'width' => array(
         'description' => t('Physical width of the product or its packaging.'),
         'type' => 'float',
-        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0.0,
       ),
       'height' => array(
         'description' => t('Physical height of the product or its packaging.'),
         'type' => 'float',
-        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0.0,
       ),
@@ -553,6 +549,25 @@ function uc_product_update_6005() {
     $t = get_t();
     $ret[] = array('success' => TRUE, $t('field_image_cache set as the Ubercart image for products and product classes.'));
   }
+
+  return $ret;
+}
+
+// Change to signed floats...
+function uc_product_update_6006() {
+  $ret = array();
+
+  $schema = array(
+    'float_spec' => array(
+      'type' => 'float',
+      'not null' => TRUE,
+      'default' => 0.0,
+    ),
+  );
+  db_change_field($ret, 'uc_products', 'weight', 'weight', $schema['float_spec'] + array('description' => t("The product's physical weight")));
+  db_change_field($ret, 'uc_products', 'length', 'length', $schema['float_spec'] + array('description' => t('Physical length of the product or its packaging.')));
+  db_change_field($ret, 'uc_products', 'width', 'width', $schema['float_spec'] + array('description' => t('Physical width of the product or its packaging.')));
+  db_change_field($ret, 'uc_products', 'height', 'height', $schema['float_spec'] + array('description' => t('Physical height of the product or its packaging.')));
 
   return $ret;
 }

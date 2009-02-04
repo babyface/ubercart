@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_reports.admin.inc,v 1.1.2.3 2009/01/19 20:31:28 islandusurper Exp $
+// $Id: uc_reports.admin.inc,v 1.1.2.4 2009/02/04 13:44:33 islandusurper Exp $
 
 /**
  * @file
@@ -352,7 +352,7 @@ function uc_reports_sales_summary() {
   $unknown = 0;
 
   // Loop through the order statuses with their total number of orders.
-  $result = db_query("SELECT s.order_status_id, s.title, s.weight, COUNT(o.order_status) as order_count FROM {uc_orders} as o LEFT JOIN {uc_order_statuses} as s ON s.order_status_id = o.order_status GROUP BY order_status, s.title, s.weight ORDER BY s.weight DESC");
+  $result = db_query("SELECT s.order_status_id, order_status, s.title, s.weight, COUNT(o.order_status) as order_count FROM {uc_orders} as o LEFT JOIN {uc_order_statuses} as s ON s.order_status_id = o.order_status GROUP BY s.order_status_id, order_status, s.title, s.weight ORDER BY s.weight DESC");
   while ($status = db_fetch_array($result)) {
     if (!empty($status['title'])) {
       // Add the total number of orders with this status to the table.
@@ -561,7 +561,7 @@ function uc_reports_sales_custom() {
     }
 
     // Build the order data for the subreport.
-    $result = db_query("SELECT COUNT(*) as count, title FROM {uc_orders} LEFT JOIN {uc_order_statuses} ON order_status_id = order_status WHERE %d <= created AND created <= %d AND order_status IN $order_statuses GROUP BY order_status ORDER BY weight ASC", $subreport['start'], $subreport['end']);
+    $result = db_query("SELECT COUNT(*) as count, title FROM {uc_orders} LEFT JOIN {uc_order_statuses} ON order_status_id = order_status WHERE %d <= created AND created <= %d AND order_status IN $order_statuses GROUP BY order_status, uc_order_statuses.title, uc_order_statuses.weight ORDER BY weight ASC", $subreport['start'], $subreport['end']);
     $statuses = array();
 
     // Put the order counts into an array by status.

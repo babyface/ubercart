@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.13 2009/01/19 20:31:27 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.14 2009/02/04 13:44:32 islandusurper Exp $
 
 /**
  * @file
@@ -162,9 +162,10 @@ function uc_product_menu() {
  */
 function uc_product_help($path, $arg) {
   // Do things here later. Figure out what you need to say for each section.
+  $output = '';
   switch ($path) {
     case 'admin/settings/module#description':
-      $output = t('Create products for sale in an online store.');
+      $output .= t('Create products for sale in an online store.');
       break;
     default:
       $output = '';
@@ -404,13 +405,10 @@ function uc_product_node_info($reset = FALSE) {
 function uc_product_forms($form_id, $args) {
   $forms = array();
   if (substr($form_id, 0, 27) == 'uc_product_add_to_cart_form' || substr($form_id, 0, 26) == 'uc_catalog_buy_it_now_form') {
-    $products = db_query("SELECT DISTINCT nid, type FROM {node} WHERE nid = %d", $args[0]->nid);
-
-    while ($product = db_fetch_object($products)) {
-      if (in_array($product->type, array_keys(uc_product_node_info()))) {
-        $forms['uc_product_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_add_to_cart_form');
-        $forms['uc_catalog_buy_it_now_form_'. $product->nid] = array('callback' => 'uc_catalog_buy_it_now_form');
-      }
+    $product = $args[0];
+    if (in_array($product->type, array_keys(uc_product_node_info()))) {
+      $forms['uc_product_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_add_to_cart_form');
+      $forms['uc_catalog_buy_it_now_form_'. $product->nid] = array('callback' => 'uc_catalog_buy_it_now_form');
     }
   }
   return $forms;
@@ -474,7 +472,7 @@ function uc_product_form(&$node) {
   $form['base']['model'] = array('#type' => 'textfield',
     '#title' => t('SKU'),
     '#required' => TRUE,
-    '#default_value' => $node->model,
+    '#default_value' => isset($node->model) ? $node->model : '',
     '#description' => t('Product SKU/model.'),
     '#weight' => 0,
     '#size' => 32,
@@ -489,7 +487,7 @@ function uc_product_form(&$node) {
     '#type' => 'textfield',
     '#title' => t('List price'),
     '#required' => FALSE,
-    '#default_value' => $node->list_price,
+    '#default_value' => isset($node->list_price) ? $node->list_price : 0,
     '#description' => t('The listed MSRP.'),
     '#weight' => 0,
     '#size' => 20,
@@ -501,7 +499,7 @@ function uc_product_form(&$node) {
     '#type' => 'textfield',
     '#title' => t('Cost'),
     '#required' => FALSE,
-    '#default_value' => $node->cost,
+    '#default_value' => isset($node->cost) ? $node->cost : 0,
     '#description' => t("Your store's cost."),
     '#weight' => 1,
     '#size' => 20,
@@ -513,7 +511,7 @@ function uc_product_form(&$node) {
     '#type' => 'textfield',
     '#title' => t('Sell price'),
     '#required' => TRUE,
-    '#default_value' => $node->sell_price,
+    '#default_value' => isset($node->sell_price) ? $node->sell_price : 0,
     '#description' => t('Customer purchase price.'),
     '#weight' => 2,
     '#size' => 20,
@@ -535,7 +533,7 @@ function uc_product_form(&$node) {
   );
   $form['base']['weight']['weight'] = array('#type' => 'textfield',
     '#title' => t('Weight'),
-    '#default_value' => $node->weight,
+    '#default_value' => isset($node->weight) ? $node->weight : 0,
     '#size' => 10,
     '#maxlength' => 15,
   );
@@ -547,7 +545,7 @@ function uc_product_form(&$node) {
   );
   $form['base']['weight']['weight_units'] = array('#type' => 'select',
     '#title' => t('Unit of measurement'),
-    '#default_value' => $node->weight_units ? $node->weight_units : variable_get('uc_weight_unit', 'lb'),
+    '#default_value' => isset($node->weight_units) ? $node->weight_units : variable_get('uc_weight_unit', 'lb'),
     '#options' => $units,
   );
   $form['base']['dimensions'] = array('#type' => 'fieldset',
@@ -564,32 +562,32 @@ function uc_product_form(&$node) {
       'cm' => t('Centimeters'),
       'mm' => t('Millimeters'),
     ),
-    '#default_value' => $node->length_units ? $node->length_units : variable_get('uc_length_unit', 'in'),
+    '#default_value' => isset($node->length_units) ? $node->length_units : variable_get('uc_length_unit', 'in'),
   );
   $form['base']['dimensions']['length'] = array('#type' => 'textfield',
     '#title' => t('Length'),
-    '#default_value' => $node->length,
+    '#default_value' => isset($node->length) ? $node->length : '',
     '#size' => 10,
   );
   $form['base']['dimensions']['width'] = array('#type' => 'textfield',
     '#title' => t('Width'),
-    '#default_value' => $node->width,
+    '#default_value' => isset($node->width) ? $node->width : '',
     '#size' => 10,
   );
   $form['base']['dimensions']['height'] = array('#type' => 'textfield',
     '#title' => t('Height'),
-    '#default_value' => $node->height,
+    '#default_value' => isset($node->height) ? $node->height : '',
     '#size' => 10,
   );
   $form['base']['pkg_qty'] = array('#type' => 'textfield',
     '#title' => t('Package quantity'),
-    '#default_value' => $node->pkg_qty ? $node->pkg_qty : 1,
+    '#default_value' => isset($node->pkg_qty) ? $node->pkg_qty : 1,
     '#description' => t('For a package containing only this product, how many are in it?'),
     '#weight' => 25,
   );
   $form['base']['default_qty'] = array('#type' => 'textfield',
     '#title' => t('Default quantity to add to cart'),
-    '#default_value' => !is_null($node->default_qty) ? $node->default_qty : 1,
+    '#default_value' => isset($node->default_qty) ? $node->default_qty : 1,
     '#description' => t('Leave blank or zero to disable the quantity field next to the add to cart button, if it is enabled <a href="!settings_url">in general</a>. If it is disabled, this field is ignored.', array('!settings_url' => url('admin/store/settings/products/edit'))),
     '#weight' => 27,
     '#size' => 5,
@@ -651,8 +649,10 @@ function uc_product_validate($node) {
   if (!is_numeric($node->sell_price) && !preg_match($pattern, $node->sell_price)) {
     form_set_error('sell_price', $price_error);
   }
-  if (!empty($node->weight) && !is_numeric($node->weight)) {
-    form_set_error('weight', t('Weight must be in a valid number format. No commas and only one decimal point.'));
+  foreach (array('weight', 'length', 'width', 'height') as $property) {
+    if (!empty($node->$property) && (!is_numeric($node->$property) || $node->$property < 0)) {
+      form_set_error($property, t('@property must be a positive number. No commas and only one decimal point.', array('@property' => ucfirst($property))));
+    }
   }
   if ($node->default_qty) {
     if (!is_numeric($node->default_qty)) {
@@ -706,12 +706,7 @@ function uc_product_delete(&$node) {
   db_query("DELETE from {uc_products} WHERE nid = %d", $node->nid);
 }
 
-/**
- * Implementation of hook_view().
- */
-function uc_product_view($node, $teaser = 0, $page = 0) {
-  $node = node_prepare($node, $teaser);
-
+function uc_product_field_enabled() {
   $enabled = variable_get('uc_product_field_enabled', array(
     'image' => 1,
     'display_price' => 1,
@@ -723,6 +718,16 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
     'dimensions' => 0,
     'add_to_cart' => 1,
   ));
+  return $enabled;
+}
+
+/**
+ * Implementation of hook_view().
+ */
+function uc_product_view($node, $teaser = 0, $page = 0) {
+  $node = node_prepare($node, $teaser);
+
+  $enabled = uc_product_field_enabled();
   $weight = variable_get('uc_product_field_weight', array(
     'image' => -2,
     'display_price' => -1,
@@ -995,6 +1000,9 @@ function uc_product_token_list($type = 'all') {
  * Ubercart Hooks                                                             *
  ******************************************************************************/
 
+/**
+ * Implementation of hook_product_types().
+ */
 function uc_product_product_types() {
   return array_keys(uc_product_node_info());
 }
@@ -1116,7 +1124,6 @@ function uc_product_update_cart_item($nid, $data = array(), $qty, $cid = NULL) {
   }
   else {
     db_query("UPDATE {uc_cart_products} SET qty = %d, changed = %d WHERE nid = %d AND cart_id = '%s' AND data = '%s'", $qty, time(), $nid, $cid, serialize($data));
-    cache_clear_all();
   }
 
   // Rebuild the items hash
@@ -1155,9 +1162,10 @@ function uc_product_product_class($pcid, $op) {
  ******************************************************************************/
 
 function uc_product_table_header() {
+  $enabled = uc_product_field_enabled();
   $columns = array();
 
-  if (module_exists('imagecache')) {
+  if (module_exists('imagecache') && $enabled['image']) {
     $columns['image'] = array(
       'weight' => -5,
       'cell' => array('data' => t('Image')),
@@ -1167,16 +1175,22 @@ function uc_product_table_header() {
     'weight' => 0,
     'cell' => array('data' => t('Name'), 'field' => 'n.title'),
   );
-  $columns['list_price'] = array(
-    'weight' => 3,
-    'access' => arg(0) == 'admin',
-    'cell' => array('data' => t('List price'), 'field' => 'p.list_price'),
-  );
-  $columns['price'] = array(
-    'weight' => 5,
-    'cell' => array('data' => t('Price'), 'field' => 'p.sell_price'),
-  );
-  if (module_exists('uc_cart') && (arg(0) != 'admin' || $_GET['q'] == 'admin/store/settings/tables/uc_product_table')) {
+
+  if ($enabled['list_price']) {
+    $columns['list_price'] = array(
+      'weight' => 3,
+      'cell' => array('data' => t('List price'), 'field' => 'p.list_price'),
+    );
+  }
+
+  if ($enabled['sell_price']) {
+    $columns['price'] = array(
+      'weight' => 5,
+      'cell' => array('data' => t('Price'), 'field' => 'p.sell_price'),
+    );
+  }
+
+  if (module_exists('uc_cart') && (arg(0) != 'admin' || $_GET['q'] == 'admin/store/settings/tables/uc_product_table') && $enabled['add_to_cart']) {
     $columns['add_to_cart'] = array(
       'weight' => 10,
       'cell' => array('data' => t('Add to cart'), 'nowrap' => 'nowrap'),
@@ -1192,6 +1206,7 @@ function uc_product_table_header() {
  * Display image, name, price, and add to cart form.
  */
 function uc_product_table($args = array()) {
+  $enabled = uc_product_field_enabled();
   $table = array(
     '#type' => 'tapir_table',
     '#attributes' => array(
@@ -1204,22 +1219,29 @@ function uc_product_table($args = array()) {
   foreach ($args as $nid) {
     $data = array();
     $node = node_load($nid);
-    if (module_exists('imagecache')) {
-      if (($field = variable_get('uc_image_'. $node->type, '')) && isset($node->$field) && file_exists($node->{$field}[0]['filepath'])) {
-        $image = $node->{$field}[0];
-        $data['image'] = array('#value' => l(theme('imagecache', 'product_list', $image['filepath'], $image['alt'], $image['title']), 'node/'. $node->nid, array('html' => TRUE)));
-      }
-      else {
-        $data['image'] = array('#value' => t('n/a'));
+    if ($enabled['image']) {
+      if (module_exists('imagecache')) {
+        if (($field = variable_get('uc_image_'. $node->type, '')) && isset($node->$field) && file_exists($node->{$field}[0]['filepath'])) {
+          $image = $node->{$field}[0];
+          $data['image'] = array('#value' => l(theme('imagecache', 'product_list', $image['filepath'], $image['alt'], $image['title']), 'node/'. $node->nid, array('html' => TRUE)));
+        }
+        else {
+          $data['image'] = array('#value' => t('n/a'));
+        }
       }
     }
     $data['name'] = array(
       '#value' => l($node->title, 'node/'. $node->nid),
       '#cell_attributes' => array('width' => '100%'),
     );
-    $data['list_price'] = array('#value' => uc_currency_format($node->list_price), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
-    $data['price'] = array('#value' => theme('uc_product_sell_price', $node->sell_price, TRUE), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
-    if (module_exists('uc_cart') && arg(0) != 'admin') {
+    if ($enabled['list_price']) {
+      $data['list_price'] = array('#value' => uc_currency_format($node->list_price), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
+    }
+    if ($enabled['sell_price']) {
+      $data['price'] = array('#value' => theme('uc_product_sell_price', $node->sell_price, TRUE), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
+    }
+
+    if (module_exists('uc_cart') && arg(0) != 'admin' && $enabled['add_to_cart']) {
       $data['add_to_cart'] = array('#value' => drupal_get_form('uc_catalog_buy_it_now_form_'. $node->nid, $node));
     }
     $table[] = $data;
@@ -1261,21 +1283,12 @@ function uc_catalog_buy_it_now_form($form_state, $node) {
 }
 
 function uc_catalog_buy_it_now_form_validate($form, &$form_state) {
-  $node = node_load($form_state['values']['nid']);
   if (module_exists('uc_attribute')) {
+    $node = node_load($form_state['values']['nid']);
     $attributes = uc_product_get_attributes($node->nid);
     if (!empty($attributes)) {
       drupal_set_message(t('This product has options that need to be selected before purchase. Please select them in the form below.'), 'error');
       drupal_goto('node/'. $form_state['values']['nid']);
-    }
-    if (is_array($node->products)) {
-      foreach ($node->products as $nid => $product) {
-        $attributes = uc_product_get_attributes($nid);
-        if (!empty($attributes)) {
-          drupal_set_message(t('This product has options that need to be selected before purchase. Please select them in the form below.'), 'error');
-          drupal_goto('node/'. $form_state['values']['nid']);
-        }
-      }
     }
   }
 }
@@ -1451,8 +1464,10 @@ function theme_uc_product_image($images, $teaser = 0, $page = 0) {
   // Get the current product image widget.
   $image_widget = uc_product_get_image_widget();
   $image_widget_func = $image_widget['callback'];
+  $image_defaults = array('filepath' => '','alt' => '','title' => '');
 
-  $first = array_shift($images);
+  $first = array_merge($image_defaults, array_shift($images));
+
   $output = '<div class="product-image">';
   if ($image_widget) {
     $output .= '<a href="'. check_url(file_create_url($first['filepath'])) .'" title="'. $first['title'] .'"'. $image_widget_func($rel_count) .'>';
@@ -1466,6 +1481,7 @@ function theme_uc_product_image($images, $teaser = 0, $page = 0) {
   }
   $output .= '<br />';
   foreach ($images as $thumbnail) {
+    $thumbnail = array_merge($image_defaults, $thumbnail);
     if ($image_widget) {
       $output .= '<a href="'. check_url(file_create_url($thumbnail['filepath'])) .'" title="'. $thumbnail['title'] .'"'. $image_widget_func($rel_count) .'>';
     }

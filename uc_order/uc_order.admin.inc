@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.8 2009/01/19 20:31:26 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.9 2009/02/04 13:44:31 islandusurper Exp $
 
 /**
  * @file
@@ -1430,8 +1430,17 @@ function uc_order_add_product($order, $product) {
 }
 
 function uc_order_add_product_form($form_state, $order_id, $nid) {
-  $form['nid'] = array('#type' => 'hidden', '#value' => $nid);
-  $form['add-qty'] = array('#type' => 'textfield', '#title' => 'Qty', '#default_value' => '1', '#size' => 2, '#maxlength' => 5);
+  $form['nid'] = array(
+    '#type' => 'hidden',
+    '#value' => $nid,
+  );
+  $form['add-qty'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Qty'),
+    '#default_value' => '1',
+    '#size' => 2,
+    '#maxlength' => 5,
+  );
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Add to order'),

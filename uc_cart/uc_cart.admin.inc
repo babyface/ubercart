@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.admin.inc,v 1.1.2.5 2009/01/19 20:31:25 islandusurper Exp $
+// $Id: uc_cart.admin.inc,v 1.1.2.6 2009/02/04 13:44:31 islandusurper Exp $
 
 /**
  * @file
@@ -426,7 +426,7 @@ function uc_cart_checkout_messages_form() {
     '#default_value' => variable_get('uc_checkout_instructions', ''),
     '#rows' => 3,
   );
-  $form['uc_checkout_instructions_format'] = filter_form(variable_get('uc_checkout_instructions_format', 3), NULL, array('uc_checkout_instructions_format'));
+  $form['uc_checkout_instructions_format'] = filter_form(variable_get('uc_checkout_instructions_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_checkout_instructions_format'));
 
   $form['uc_checkout_review_instructions'] = array(
     '#type' => 'textarea',
@@ -438,7 +438,7 @@ function uc_cart_checkout_messages_form() {
     '#default_value' => variable_get('uc_checkout_review_instructions', uc_get_message('review_instructions')),
     '#rows' => 3,
   );
-  $form['uc_checkout_review_instructions_format'] = filter_form(variable_get('uc_checkout_review_instructions_format', 3), NULL, array('uc_checkout_review_instructions_format'));
+  $form['uc_checkout_review_instructions_format'] = filter_form(variable_get('uc_checkout_review_instructions_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_checkout_review_instructions_format'));
 
   $form['uc_msg_order_submit'] = array(
     '#type' => 'textarea',
@@ -450,7 +450,7 @@ function uc_cart_checkout_messages_form() {
     '#default_value' => variable_get('uc_msg_order_submit', uc_get_message('completion_message')),
     '#rows' => 3,
   );
-  $form['uc_msg_order_submit_format'] = filter_form(variable_get('uc_msg_order_submit_format', 3), NULL, array('uc_msg_order_submit_format'));
+  $form['uc_msg_order_submit_format'] = filter_form(variable_get('uc_msg_order_submit_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_msg_order_submit_format'));
 
   $form['checkout_messages'] = array(
     '#type' => 'fieldset',
@@ -469,7 +469,7 @@ function uc_cart_checkout_messages_form() {
     '#default_value' => variable_get('uc_msg_order_logged_in', uc_get_message('completion_logged_in')),
     '#rows' => 3,
   );
-  $form['checkout_messages']['uc_msg_order_logged_in_format'] = filter_form(variable_get('uc_msg_order_logged_in_format', 3), NULL, array('uc_msg_order_logged_in_format'));
+  $form['checkout_messages']['uc_msg_order_logged_in_format'] = filter_form(variable_get('uc_msg_order_logged_in_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_msg_order_logged_in_format'));
 
   $form['checkout_messages']['uc_msg_order_existing_user'] = array(
     '#type' => 'textarea',
@@ -482,7 +482,7 @@ function uc_cart_checkout_messages_form() {
     '#default_value' => variable_get('uc_msg_order_existing_user', uc_get_message('completion_existing_user')),
     '#rows' => 3,
   );
-  $form['checkout_messages']['uc_msg_order_existing_user_format'] = filter_form(variable_get('uc_msg_order_existing_user_format', 3), NULL, array('uc_msg_order_existing_user_format'));
+  $form['checkout_messages']['uc_msg_order_existing_user_format'] = filter_form(variable_get('uc_msg_order_existing_user_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_msg_order_existing_user_format'));
 
   $form['checkout_messages']['uc_msg_order_new_user'] = array(
     '#type' => 'textarea',
@@ -494,7 +494,7 @@ function uc_cart_checkout_messages_form() {
     '#default_value' => variable_get('uc_msg_order_new_user', uc_get_message('completion_new_user')),
     '#rows' => 3,
   );
-  $form['checkout_messages']['uc_msg_order_new_user_format'] = filter_form(variable_get('uc_msg_order_new_user_format', 3), NULL, array('uc_msg_order_new_user_format'));
+  $form['checkout_messages']['uc_msg_order_new_user_format'] = filter_form(variable_get('uc_msg_order_new_user_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_msg_order_new_user_format'));
 
   $form['uc_msg_continue_shopping'] = array(
     '#type' => 'textarea',
@@ -506,7 +506,7 @@ function uc_cart_checkout_messages_form() {
     '#default_value' => variable_get('uc_msg_continue_shopping', uc_get_message('continue_shopping')),
     '#rows' => 3,
   );
-  $form['uc_msg_continue_shopping_format'] = filter_form(variable_get('uc_msg_continue_shopping_format', 3), NULL, array('uc_msg_continue_shopping_format'));
+  $form['uc_msg_continue_shopping_format'] = filter_form(variable_get('uc_msg_continue_shopping_format', FILTER_FORMAT_DEFAULT), NULL, array('uc_msg_continue_shopping_format'));
 
   return system_settings_form($form);
 }

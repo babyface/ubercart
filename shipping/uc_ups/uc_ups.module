@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.5.2.7 2009/01/19 20:31:24 islandusurper Exp $
+// $Id: uc_ups.module,v 1.5.2.8 2009/02/04 13:44:31 islandusurper Exp $
 
 /**
  * @file
@@ -373,12 +373,14 @@ function uc_ups_shipping_quote($packages, $origin, $destination, $ups_service) {
         if ($size > 130 && $size <= 165) {
           $package_schema .= "<LargePackageIndicator/>";
         }
-        $package_schema .= "<PackageServiceOptions>";
-          $package_schema .= "<InsuredValue>";
-            $package_schema .= "<CurrencyCode>". variable_get('uc_currency_code', 'USD') ."</CurrencyCode>";
-            $package_schema .= "<MonetaryValue>". $package->price ."</MonetaryValue>";
-          $package_schema .= "</InsuredValue>";
-        $package_schema .= "</PackageServiceOptions>";
+        if (variable_get('uc_ups_insurance', TRUE)) {
+          $package_schema .= "<PackageServiceOptions>";
+            $package_schema .= "<InsuredValue>";
+              $package_schema .= "<CurrencyCode>". variable_get('uc_currency_code', 'USD') ."</CurrencyCode>";
+              $package_schema .= "<MonetaryValue>". $package->price ."</MonetaryValue>";
+            $package_schema .= "</InsuredValue>";
+          $package_schema .= "</PackageServiceOptions>";
+        }
       $package_schema .= "</Package>";
     }
   }

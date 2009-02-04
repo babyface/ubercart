@@ -1,4 +1,4 @@
-// $Id: uc_taxes.js,v 1.10.2.4 2009/01/02 20:18:39 islandusurper Exp $
+// $Id: uc_taxes.js,v 1.10.2.5 2009/02/04 13:44:31 islandusurper Exp $
 
 /**
  * Calculate the number of bytes of a Unicode string.
@@ -38,74 +38,26 @@ $(document).ready(function() {
 
 function getTax() {
   var products = $("[@name=cart_contents]").val();
-  var p_email = $("input[@name*=primary_email]").val();
-  if (!p_email) {
-    p_email = '';
-  }
-  var s_f_name = $("input[@name*=delivery_first_name]").val();
-  if (!s_f_name) {
-    s_f_name = '';
-  }
-  var s_l_name = $("input[@name*=delivery_last_name]").val();
-  if (!s_l_name) {
-    s_l_name = '';
-  }
-  var s_street1 = $("input[@name*=delivery_street1]").val();
-  if (!s_street1) {
-    s_street1 = '';
-  }
-  var s_street2 = $("input[@name*=delivery_street2]").val();
-  if (!s_street2) {
-    s_street2 = '';
-  }
-  var s_city = $("input[@name*=delivery_city]").val();
-  if (!s_city) {
-    s_city = '';
-  }
-  var s_zone = $("select[@name*=delivery_zone]").val();
-  if (!s_zone) {
-    s_zone = "0";
-  }
-  var s_code = $("input[@name*=delivery_postal_code]").val();
-  if (!s_code) {
-    s_code = '';
-  }
-  var s_country = $("select[@name*=delivery_country]").val();
-  if (!s_country) {
-    s_country = "0";
-  }
-  var b_f_name = $("input[@name*=billing_first_name]").val();
-  if (!b_f_name) {
-    b_f_name = '';
-  }
-  var b_l_name = $("input[@name*=billing_last_name]").val();
-  if (!b_l_name) {
-    b_l_name = '';
-  }
-  var b_street1 = $("input[@name*=billing_street1]").val();
-  if (!b_street1) {
-    b_street1 = '';
-  }
-  var b_street2 = $("input[@name*=billing_street2]").val();
-  if (!b_street2) {
-    b_street2 = '';
-  }
-  var b_city = $("input[@name*=billing_city]").val();
-  if (!b_city) {
-    b_city = '';
-  }
-  var b_zone = $("select[@name*=billing_zone]").val();
-  if (!b_zone) {
-    b_zone = "0";
-  }
-  var b_code = $("input[@name*=billing_postal_code]").val();
-  if (!b_code) {
-    b_code = '';
-  }
-  var b_country = $("select[@name*=billing_country]").val();
-  if (!b_country) {
-    b_country = "0";
-  }
+
+  var p_email = $("input[@name*=primary_email]").val() || '';
+  var s_f_name = $("input[@name*=delivery_first_name]").val() || '';
+  var s_l_name = $("input[@name*=delivery_last_name]").val() || '';
+  var s_street1 = $("input[@name*=delivery_street1]").val() || '';
+  var s_street2 = $("input[@name*=delivery_street2]").val() || '';
+  var s_city = $("input[@name*=delivery_city]").val() || '';
+  var s_zone = $("select[@name*=delivery_zone]").val() || '0';
+  var s_code = $("input[@name*=delivery_postal_code]").val() || '';
+  var s_country = $("select[@name*=delivery_country]").val() || '0';
+
+  var b_f_name = $("input[@name*=billing_first_name]").val() || '';
+  var b_l_name = $("input[@name*=billing_last_name]").val() || '';
+  var b_street1 = $("input[@name*=billing_street1]").val() || '';
+  var b_street2 = $("input[@name*=billing_street2]").val() || '';
+  var b_city = $("input[@name*=billing_city]").val() || '';
+  var b_zone = $("select[@name*=billing_zone]").val() || '0';
+  var b_code = $("input[@name*=billing_postal_code]").val() || '';
+  var b_country = $("select[@name*=billing_country]").val() || '0';
+
   var order_size = 21;
   var line_item = '';
   var key;
@@ -117,32 +69,32 @@ function getTax() {
     }
   }
   line_item = 's:10:"line_items";a:' + i + ':{' + line_item + '}';
-  var order = 'O:8:"stdClass":' + order_size + ':{s:8:"products";' + Drupal.encodeURIComponent(products)
+  var order = 'O:8:"stdClass":' + order_size + ':{s:8:"products";' + products
     + 's:8:"order_id";i:0;'
     + 's:3:"uid";i:0;'
-    + 's:13:"primary_email";s:' + p_email.bytes() + ':"' + Drupal.encodeURIComponent(p_email)
-    + '";s:19:"delivery_first_name";s:' + s_f_name.bytes() + ':"' + Drupal.encodeURIComponent(s_f_name)
-    + '";s:18:"delivery_last_name";s:' + s_l_name.bytes() + ':"' + Drupal.encodeURIComponent(s_l_name)
-    + '";s:16:"delivery_street1";s:' + s_street1.bytes() + ':"' + Drupal.encodeURIComponent(s_street1)
-    + '";s:16:"delivery_street2";s:' + s_street2.bytes() + ':"' + Drupal.encodeURIComponent(s_street2)
-    + '";s:13:"delivery_city";s:' + s_city.bytes() + ':"' + Drupal.encodeURIComponent(s_city)
+    + 's:13:"primary_email";s:' + p_email.bytes() + ':"' + p_email
+    + '";s:19:"delivery_first_name";s:' + s_f_name.bytes() + ':"' + s_f_name
+    + '";s:18:"delivery_last_name";s:' + s_l_name.bytes() + ':"' + s_l_name
+    + '";s:16:"delivery_street1";s:' + s_street1.bytes() + ':"' + s_street1
+    + '";s:16:"delivery_street2";s:' + s_street2.bytes() + ':"' + s_street2
+    + '";s:13:"delivery_city";s:' + s_city.bytes() + ':"' + s_city
     + '";s:13:"delivery_zone";i:' + s_zone
-    + ';s:20:"delivery_postal_code";s:' + s_code.bytes() +':"' + Drupal.encodeURIComponent(s_code)
+    + ';s:20:"delivery_postal_code";s:' + s_code.bytes() +':"' + s_code
     + '";s:16:"delivery_country";i:' + s_country + ';'
-    + 's:18:"billing_first_name";s:' + b_f_name.bytes() + ':"' + Drupal.encodeURIComponent(b_f_name)
-    + '";s:17:"billing_last_name";s:' + b_l_name.bytes() + ':"' + Drupal.encodeURIComponent(b_l_name)
-    + '";s:15:"billing_street1";s:' + b_street1.bytes() + ':"' + Drupal.encodeURIComponent(b_street1)
-    + '";s:15:"billing_street2";s:' + b_street2.bytes() + ':"' + Drupal.encodeURIComponent(b_street2)
-    + '";s:12:"billing_city";s:' + b_city.bytes() + ':"' + Drupal.encodeURIComponent(b_city)
+    + 's:18:"billing_first_name";s:' + b_f_name.bytes() + ':"' + b_f_name
+    + '";s:17:"billing_last_name";s:' + b_l_name.bytes() + ':"' + b_l_name
+    + '";s:15:"billing_street1";s:' + b_street1.bytes() + ':"' + b_street1
+    + '";s:15:"billing_street2";s:' + b_street2.bytes() + ':"' + b_street2
+    + '";s:12:"billing_city";s:' + b_city.bytes() + ':"' + b_city
     + '";s:12:"billing_zone";i:' + b_zone
-    + ';s:19:"billing_postal_code";s:' + b_code.bytes() +':"' + Drupal.encodeURIComponent(b_code)
+    + ';s:19:"billing_postal_code";s:' + b_code.bytes() +':"' + b_code
     + '";s:15:"billing_country";i:' + b_country + ';'
     + line_item + '}';
   if (!!products) {
     $.ajax({
       type: "POST",
       url: Drupal.settings.basePath + "?q=taxes/calculate",
-      data: 'order=' + order,
+      data: 'order=' + Drupal.encodeURIComponent(order),
       dataType: "json",
       success: function(taxes) {
         var key;

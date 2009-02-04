@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.2.2.11 2009/01/19 20:31:25 islandusurper Exp $
+// $Id: uc_file.module,v 1.2.2.12 2009/02/04 13:44:34 islandusurper Exp $
 
 /**
  * @file
@@ -26,6 +26,15 @@ global $cache;
 /* **************************************************************************** *
  *  Hook Functions (Drupal)                                                     *
  * **************************************************************************** */
+
+/**
+ * Implementation of hook_help().
+ */
+function uc_file_help($path, $arg) {
+  if ($path == 'node/%/edit/features' && $arg[4] == 'file') {
+    return t('Add file downloads through this page and then use the <a href="!url">conditional actions interface</a> to limit which orders they are applied to. Most important is the order status on which file download access will be triggered.', array('!url' => url(CA_UI_PATH)));
+  }
+}
 
 /**
  * Implementation of hook_form_alter().
@@ -786,10 +795,6 @@ function uc_file_feature_form($form_state, $node, $feature) {
     '#collapsed' => FALSE,
     '#collapsible' => FALSE,
     '#title' => t('File limitations'),
-  );
-
-  $form['uc_file_limits']['override_explanation'] = array(
-    '#value' => t('Use these options to override any global download limits set at the !url.', array('!url' => l(t('Ubercart product settings page'), 'admin/store/settings/products/edit/features'))),
   );
 
   $form['uc_file_limits']['download_override'] = array(

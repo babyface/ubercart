@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.admin.inc,v 1.1.2.7 2009/01/19 20:31:23 islandusurper Exp $
+// $Id: uc_flatrate.admin.inc,v 1.1.2.8 2009/02/04 13:44:32 islandusurper Exp $
 
 /**
  * @file
@@ -140,7 +140,6 @@ function uc_flatrate_admin_method_confirm_delete_submit($form, &$form_state) {
   db_query("DELETE FROM {uc_flatrate_methods} WHERE mid = %d", $form_state['values']['mid']);
   db_query("DELETE FROM {uc_flatrate_products} WHERE mid = %d", $form_state['values']['mid']);
   ca_delete_predicate('uc_flatrate_get_quote_'. $form_state['values']['mid']);
-  // cache_clear_all(); ?
 
   $enabled = variable_get('uc_quote_enabled', array());
   unset($enabled['flatrate_'. $form_state['values']['mid']]);

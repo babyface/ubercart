@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.5 2009/01/19 20:31:24 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.6 2009/02/04 13:44:34 islandusurper Exp $
 
 /**
  * @file
@@ -164,10 +164,10 @@ function uc_attribute_admin_settings() {
 
 function uc_attribute_delete_confirm_submit($form, &$form_state) {
   if ($form_state['values']['confirm']) {
-    db_query("DELETE FROM co USING {uc_class_attribute_options} AS co, {uc_attribute_options} AS ao WHERE co.oid = ao.oid AND ao.aid = %d", $form_state['values']['aid']);
+    db_query("DELETE FROM {uc_class_attribute_options} WHERE EXISTS (SELECT * FROM {uc_attribute_options} AS ao WHERE {uc_class_attribute_options}.oid = ao.oid AND ao.aid = %d)", $form_state['values']['aid']);
     db_query("DELETE FROM {uc_class_attributes} WHERE aid = %d", $form_state['values']['aid']);
-    db_query("DELETE FROM po USING {uc_product_options} AS po, {uc_attribute_options} AS ao WHERE po.oid = ao.oid AND ao.aid = %d", $form_state['values']['aid']);
-    db_query("DELETE FROM pd USING {uc_product_adjustments} AS pd, {uc_product_attributes} AS pa WHERE pd.nid = pa.nid AND pa.aid = %d", $form_state['values']['aid']);
+    db_query("DELETE FROM {uc_product_options} WHERE EXISTS (SELECT * FROM {uc_attribute_options} AS ao WHERE {uc_product_options}.oid = ao.oid AND ao.aid = %d)", $form_state['values']['aid']);
+    db_query("DELETE FROM {uc_product_adjustments} WHERE EXISTS (SELECT * FROM {uc_product_attributes} AS pa WHERE {uc_product_adjustments}.nid = pa.nid AND pa.aid = %d)", $form_state['values']['aid']);
     db_query("DELETE FROM {uc_product_attributes} WHERE aid = %d", $form_state['values']['aid']);
     db_query("DELETE FROM {uc_attribute_options} WHERE aid = %d", $form_state['values']['aid']);
     db_query("DELETE FROM {uc_attributes} WHERE aid = %d", $form_state['values']['aid']);
@@ -605,7 +605,7 @@ function uc_object_attributes_form_submit($form, &$form_state) {
     if (count($remove_aids) > 0) {
       $values = array($form_state['values']['id'], implode(', ', $remove_aids));
 
-      db_query("DELETE po FROM $opt_table AS po LEFT JOIN {uc_attribute_options} AS ao ON po.oid = ao.oid WHERE po.$id = $sql_type AND ao.aid IN (%s)", $values);
+      db_query("DELETE FROM $opt_table WHERE EXISTS (SELECT * FROM {uc_attribute_options} AS ao WHERE $opt_table.oid = ao.oid AND ao.aid IN (%s)) AND $opt_table.$id = $sql_type", $values);
       db_query("DELETE FROM $attr_table WHERE $id = $sql_type AND aid IN (%s)", $values);
       if ($form_state['values']['type'] == 'product') {
         db_query("DELETE FROM {uc_product_adjustments} WHERE nid = %d", $form_state['values']['id']);

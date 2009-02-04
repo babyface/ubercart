@@ -1,12 +1,12 @@
 <?php
-// $Id: malaysia_458_1.cif,v 1.1.4.3 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: malaysia_458_1.cif,v 1.1.4.4 2009/02/04 13:44:33 islandusurper Exp $
 
 function malaysia_install() {
   // VALUES = Country ID, Country Name, 2-digit Code, 3-digit Code, File Version
   db_query("INSERT INTO {uc_countries} VALUES (458, 'Malaysia', 'MY', 'MYS', 1)");
 
   // Make the entries in the zones table.
-  db_query("INSERT INTO {uc_zones} (zone_id, zone_country_id, zone_code, zone_name) VALUES "
+  db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
           ."(458, 'JHR', 'Johor'),"
           ."(458, 'KDH', 'Kedah'),"
           ."(458, 'KTN', 'Kelantan'),"

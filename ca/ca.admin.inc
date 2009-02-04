@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.9 2009/01/02 20:18:41 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.10 2009/02/04 13:44:31 islandusurper Exp $
 
 /**
  * @file
@@ -7,7 +7,7 @@
  */
 
 // Displays the administration page that lets you add and modify predicates.
-function ca_admin() {
+function ca_admin($groupby = 'trigger') {
   drupal_add_css(drupal_get_path('module', 'ca') .'/ca.css');
 
   // Load all the module defined predicates into a temporary array.
@@ -42,49 +42,82 @@ function ca_admin() {
   // Load up the trigger data so we can display them by title.
   $triggers = module_invoke_all('ca_trigger');
 
-  // Build the header for the predicate tables.
-  $header = array(
-    array('data' => t('Title'), 'class' => 'ca-predicate-table-title'),
-    t('Class'),
-    t('Status'),
-    t('Weight'),
-    t('Operations'),
-  );
+  // Build the header for the predicate tables based on the grouping type.
+  if ($groupby == 'trigger') {
+    $header = array(
+      array('data' => t('Title'), 'class' => 'col-title'),
+      t('Class'),
+      t('Status'),
+      t('Weight'),
+      t('Operations'),
+    );
+
+    $table_class = 'ca-predicate-trigger';
+    $table_label = '<strong>'. t('Trigger') .':</strong> ';
+  }
+  elseif ($groupby == 'class') {
+    $header = array(
+      array('data' => t('Title'), 'class' => 'col-title'),
+      t('Trigger'),
+      t('Status'),
+      t('Weight'),
+      t('Operations'),
+    );
+
+    $table_class = 'ca-predicate-class';
+    $table_label = '<strong>'. t('Class') .':</strong> ';
+  }
 
   $rows = array();
 
   foreach ($predicates as $key => $value) {
     // Build the basic operation links for each predicate.
     $ops = array(
-      l(t('edit'), 'admin/settings/ca/'. $key .'/edit'),
+      l(t('edit'), CA_UI_PATH .'/'. $key .'/edit'),
     );
 
     // Add the reset link if a module defined predicate has been modified.
     if (!is_numeric($key) && isset($value['#modified'])) {
-      $ops[] = l(t('reset'), 'admin/settings/ca/'. $key .'/reset');
+      $ops[] = l(t('reset'), CA_UI_PATH .'/'. $key .'/reset');
     }
 
     // Add a delete link if displaying a custom predicate.
     if (is_numeric($key)) {
-      $ops[] = l(t('delete'), 'admin/settings/ca/'. $key .'/delete');
+      $ops[] = l(t('delete'), CA_UI_PATH .'/'. $key .'/delete');
     }
 
-    // Add the predicate's row to the table.
-    $tables[$triggers[$value['#trigger']]['#title']]['rows'][] = array(
-      check_plain($value['#title']),
-      strpos($value['#class'], 'custom') === 0 ? check_plain(substr($value['#class'], 7)) : $value['#class'],
-      $value['#status'] == 0 ? t('Disabled') : t('Enabled'),
-      array('data' => $value['#weight'], 'class' => 'ca-predicate-table-weight'),
-      array('data' => implode(' ', $ops), 'class' => 'ca-predicate-table-ops'),
-    );
+    // Add the predicate's row to the table based on the grouping type.
+    if ($groupby == 'trigger') {
+      $tables[$triggers[$value['#trigger']]['#title']]['rows'][] = array(
+        check_plain($value['#title']),
+        strpos($value['#class'], 'custom') === 0 ? check_plain(substr($value['#class'], 7)) : $value['#class'],
+        $value['#status'] == 0 ? t('Disabled') : t('Enabled'),
+        array('data' => $value['#weight'], 'class' => 'ca-predicate-table-weight'),
+        array('data' => implode(' ', $ops), 'class' => 'ca-predicate-table-ops'),
+      );
+    }
+    elseif ($groupby == 'class') {
+      $class = strpos($value['#class'], 'custom') === 0 ? check_plain(substr($value['#class'], 7)) : $value['#class'];
+
+      $tables[$class]['rows'][] = array(
+        check_plain($value['#title']),
+        check_plain($triggers[$value['#trigger']]['#title']),
+        $value['#status'] == 0 ? t('Disabled') : t('Enabled'),
+        array('data' => $value['#weight'], 'class' => 'ca-predicate-table-weight'),
+        array('data' => implode(' ', $ops), 'class' => 'ca-predicate-table-ops'),
+      );
+    }
   }
+
+  // Put the tables in alphabetical order.
+  ksort($tables);
 
   // Add the tables for each trigger to the output.
   foreach ($tables as $key => $value) {
-    $output .= theme('table', $header, $value['rows'], array(), '<strong>'. t('Trigger') .':</strong> '. check_plain($key));
+    $output .= theme('table', $header, $value['rows'], array('class' => $table_class), $table_label . check_plain($key));
   }
 
-  $output .= l(t('Add a predicate'), 'admin/settings/ca/add');
+  $output .= l(t('Add a predicate'), CA_UI_PATH .'/add');
 
   return $output;
 }
@@ -243,7 +276,7 @@ function ca_predicate_meta_form($form_state, $pid) {
     // Fail out if we didn't find a predicate for that ID.
     if (empty($predicate)) {
       drupal_set_message(t('That predicate does not exist.'), 'error');
-      drupal_goto('admin/settings/ca');
+      drupal_goto(CA_UI_PATH);
     }
 
     drupal_set_title($predicate['#title']);
@@ -328,14 +361,14 @@ function ca_predicate_meta_form($form_state, $pid) {
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save predicate'),
-    '#suffix' => l(t('Cancel'), 'admin/settings/ca'),
+    '#suffix' => l(t('Cancel'), CA_UI_PATH),
   );
 
   return $form;
 }
 
 function ca_predicate_meta_form_submit($form, &$form_state) {
-  $form_state['redirect'] = 'admin/settings/ca';
+  $form_state['redirect'] = CA_UI_PATH;
   $save = FALSE;
 
   // Load the original predicate.
@@ -363,7 +396,7 @@ function ca_predicate_meta_form_submit($form, &$form_state) {
     $predicate['#actions'] = array();
 
     // For new predicates, redirect to the conditions tab.
-    $form_state['redirect'] = 'admin/settings/ca/'. $predicate['#pid'] .'/edit/conditions';
+    $form_state['redirect'] = CA_UI_PATH .'/'. $predicate['#pid'] .'/edit/conditions';
   }
 
   // Check to see if any changes were made and save if necessary.
@@ -381,7 +414,7 @@ function ca_predicate_delete_form($form_state, $pid) {
   // Fail if we received an invalid predicate ID.
   if (empty($predicate)) {
     drupal_set_message(t('That predicate does not exist.'), 'error');
-    drupal_goto('admin/settings/ca');
+    drupal_goto(CA_UI_PATH);
   }
 
   $form['predicate_pid'] = array(
@@ -398,7 +431,7 @@ function ca_predicate_delete_form($form_state, $pid) {
                . check_plain($predicate['#description']) .'</p><p>'
                 . t('This action cannot be undone.') .'</p>';
 
-  return confirm_form($form, t('Are you sure you want to !op this predicate?', array('!op' => is_numeric($pid) ? t('delete') : t('reset'))), 'admin/settings/ca', $description);
+  return confirm_form($form, t('Are you sure you want to !op this predicate?', array('!op' => is_numeric($pid) ? t('delete') : t('reset'))), CA_UI_PATH, $description);
 }
 
 function ca_predicate_delete_form_submit($form, &$form_state) {
@@ -406,7 +439,7 @@ function ca_predicate_delete_form_submit($form, &$form_state) {
 
   drupal_set_message(t('Predicate %title !op.', array('%title' => $form_state['values']['predicate_title'], '!op' => is_numeric($form_state['values']['predicate_pid']) ? t('deleted') : t('reset'))));
 
-  $form_state['redirect'] = 'admin/settings/ca';
+  $form_state['redirect'] = CA_UI_PATH;
 }
 
 /**

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_googleanalytics.module,v 1.6.2.6 2009/01/19 20:31:26 islandusurper Exp $
+// $Id: uc_googleanalytics.module,v 1.6.2.7 2009/02/04 13:44:33 islandusurper Exp $
 
 /**
  * @file
@@ -154,16 +154,19 @@ function uc_googleanalytics_ecommerce_js($order) {
 
   // Loop through the products on the order.
   foreach ($order->products as $product) {
+    $product->category = '';
+
     // Try to find a category (term) for the product. Since products most often
     // only have one category, the first one returned (based on tid) is chosen.
-    $terms = taxonomy_node_get_terms(node_load($product->nid));
-
-    if (count($terms)) {
-      $term = array_shift($terms);
-      $product->category = $term->name;
+    if (module_exists('taxonomy')) {
+      $terms = taxonomy_node_get_terms(node_load($product->nid));
+      if (count($terms)) {
+        $term = array_shift($terms);
+        $product->category = $term->name;
+      }
     }
-    else {
-      $product->category = '';
+    if (empty($product->category)) {
+      $product->category = t('No category');
     }
 
     // Build the item arguments.

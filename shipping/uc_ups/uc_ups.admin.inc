@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.admin.inc,v 1.1.2.3 2009/01/02 20:18:40 islandusurper Exp $
+// $Id: uc_ups.admin.inc,v 1.1.2.4 2009/02/04 13:44:31 islandusurper Exp $
 
 /**
  * @file
@@ -124,6 +124,12 @@ function uc_ups_admin_settings() {
       'cm' => t('Metric'),
     ),
     '#description' => t('Choose the standard system of measurement for your country.'),
+  );
+  $form['uc_ups_insurance'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Package insurance'),
+    '#default_value' => variable_get('uc_ups_insurance', TRUE),
+    '#description' => t('When enabled, products are insured for their full value.'),
   );
 
   $form['#validate'][] = 'uc_ups_admin_settings_validate';

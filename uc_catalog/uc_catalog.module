@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.13 2009/01/19 20:31:25 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.14 2009/02/04 13:44:30 islandusurper Exp $
 
 /**
  * @file
@@ -162,13 +162,8 @@ function uc_catalog_enable() {
     }
   }
 
-  if ($vid = variable_get('uc_catalog_vid', 0)) {
-    $vocab = taxonomy_vocabulary_load($vid);
-    if (empty($vocab->nodes)) {
-      foreach (uc_product_types() as $type) {
-        db_query("INSERT INTO {vocabulary_node_types} (vid, type) VALUES (%d, '%s')", $vid, $type);
-      }
-    }
+  foreach (uc_product_types() as $type) {
+    uc_catalog_add_node_type($type);
   }
 }
 
@@ -482,7 +477,7 @@ function uc_catalog_pathauto($op) {
  */
 function uc_catalog_pathauto_bulkupdate() {
   $catalog_vid = variable_get('uc_catalog_vid', 0);
-  $query = "SELECT tid, vid, name, src, dst FROM {term_data} LEFT JOIN {url_alias} ON src LIKE CONCAT('catalog/', tid, '/%%') WHERE src IS NULL AND vid = %d";
+  $query = "SELECT tid, vid, name, src, dst FROM {term_data} LEFT JOIN {url_alias} ON src LIKE CONCAT('catalog/', CAST(tid AS CHAR)) WHERE src IS NULL AND vid = %d";
   $result = db_query_range($query, $catalog_vid, 0, variable_get('pathauto_max_bulk_update', 50));
 
   $count = 0;
@@ -944,14 +939,7 @@ function theme_uc_catalog_item($here, $link, $lis, $expand, $inpath, $count_chil
  * Create paths to the catalog from taxonomy term.
  */
 function uc_catalog_path($term) {
-  $separator = variable_get('pathauto_separator', '-');
-  $path = preg_replace(array('/\W[_ ]?/', '/[_ ]/'), array('', $separator), strtolower($term->name));
-
-  if (function_exists('iconv')) {
-    $path = iconv('UTF-8', 'ASCII//TRANSLIT', $path);
-  }
-
-  return 'catalog/'. $term->tid .'/'. $path;
+  return 'catalog/'. $term->tid;
 }
 
 /**
@@ -971,4 +959,17 @@ function uc_catalog_image_load($term) {
   $file = db_fetch_object(db_query("SELECT * FROM {uc_catalog_images} WHERE tid = %d", $tid));
 
   return $file;
+}
+
+/**
+  * Add a node type to the catalog taxonomy term.
+  */
+function uc_catalog_add_node_type($type) {
+  if (!($vid = variable_get('uc_catalog_vid', 0))) {
+    return;
+  }
+
+  if (!db_result(db_query("SELECT vid FROM {vocabulary_node_types} WHERE vid = %d and type = '%s'", $vid, $type))){
+    db_query("INSERT INTO {vocabulary_node_types} (vid, type) VALUES (%d, '%s')", $vid, $type);
+  }
 }

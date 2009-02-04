@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.11 2009/01/19 20:31:24 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.12 2009/02/04 13:44:34 islandusurper Exp $
 
 /**
  * @file
@@ -224,9 +224,6 @@ function uc_attribute_theme() {
       'arguments' => array('form' => NULL),
       'file' => 'uc_attribute.admin.inc',
     ),
-    'uc_attribute' => array(
-      'arguments' => array('type' => NULL, 'data' => NULL, 'nid' => NULL),
-    ),
     'uc_attribute_options_form' => array(
       'arguments' => array('form' => NULL),
       'file' => 'uc_attribute.admin.inc',
@@ -242,7 +239,7 @@ function uc_attribute_theme() {
 function uc_attribute_form_alter(&$form, &$form_state, $form_id) {
   if (strpos($form_id, 'add_to_cart_form') || strpos($form_id, 'add_product_form')) {
     // If the node has a product list, add attributes to them
-    if (count(element_children($form['products']))) {
+    if (isset($form['products']) && count(element_children($form['products']))) {
       foreach (element_children($form['products']) as $key) {
         $form['products'][$key]['attributes'] = _uc_attribute_alter_form(node_load($key));
         if (is_array($form['products'][$key]['attributes'])) {
@@ -253,7 +250,12 @@ function uc_attribute_form_alter(&$form, &$form_state, $form_id) {
     }
     // If not, add attributes to the node.
     else {
-      $form['attributes'] = _uc_attribute_alter_form($form['#parameters'][2]);
+      if (strpos($form_id, 'add_product_form')) {
+        $form['attributes'] = _uc_attribute_alter_form(node_load($form['#parameters'][3]));
+      }
+      else {
+        $form['attributes'] = _uc_attribute_alter_form($form['#parameters'][2]);
+      }
       if (is_array($form['attributes'])) {
         $form['attributes']['#tree'] = TRUE;
         $form['attributes']['#weight'] = -1;
@@ -485,48 +487,6 @@ function uc_class_get_attributes($pcid) {
   }
 
   return $attributes;
-}
-
-/**
- * Display formatted of data associated with attributes
- *
- * @param $type
- *   options | attributes
- *   Determines how to handle the $data array.
- * @param $data
- *   An array of attribute ids or option ids. If option ids, they are indexed by attribute ids.
- * @return
- *   HTML format of $data.
- *
- * @ingroup themeable
- */
-function theme_uc_attribute($type, $data, $nid) {
-  if ($type == 'options' && is_array($data)) {
-    if (count($data)) {
-      $output = '<ul class="options">';
-      foreach ($data as $aid => $oid) {
-        $attribute = uc_attribute_load($aid);
-        $option = $attribute->options[$oid];
-        $output .= '<li>'. $option->name .'</li>';
-      }
-      $output .= '</ul>';
-    }
-  }
-  elseif ($type == 'attributes') {
-    if (is_array($data) && count($data)) {
-      $output = '<div id="option-key">';
-      foreach ($data as $aid) {
-        $output .= theme('uc_attribute_options', $aid, $nid);
-      }
-      $output .= '</div>';
-    }
-    elseif (is_numeric($data)) {
-      $output = '<div id="option-key">';
-      $output .= theme('uc_attribute_options', $data);
-      $output .= '</div>';
-    }
-  }
-  return $output;
 }
 
 /**

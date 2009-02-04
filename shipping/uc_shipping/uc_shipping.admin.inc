@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.admin.inc,v 1.1.2.4 2009/01/19 20:31:23 islandusurper Exp $
+// $Id: uc_shipping.admin.inc,v 1.1.2.5 2009/02/04 13:44:31 islandusurper Exp $
 
 /**
  * @file
@@ -45,7 +45,7 @@ function uc_shipping_order_packages($order) {
     $rows[][] = array('data' => t("This order's products have not been organized into packages."), 'colspan' => 10);
   }
   $output = theme('table', $header, $rows);
-  $result = db_query("SELECT op.order_product_id, IF(COUNT(pp.qty) = 0, 0, SUM(op.qty) / COUNT(pp.qty)) AS total, SUM(pp.qty) AS packaged FROM {uc_order_products} AS op LEFT JOIN {uc_packaged_products} AS pp ON op.order_product_id = pp.order_product_id WHERE op.order_id = %d AND op.data LIKE '%%%s%%' GROUP BY op.order_product_id HAVING SUM(pp.qty) IS NULL OR CAST(SUM(op.qty) / COUNT(pp.qty) AS UNSIGNED) > SUM(pp.qty)", $order->order_id, 's:9:"shippable";s:1:"1";');
+  $result = db_query("SELECT op.order_product_id, CASE WHEN COUNT(pp.qty) = 0 THEN 0 ELSE SUM(op.qty) / COUNT(pp.qty) END AS total, SUM(pp.qty) AS packaged FROM {uc_order_products} AS op LEFT JOIN {uc_packaged_products} AS pp ON op.order_product_id = pp.order_product_id WHERE op.order_id = %d AND op.data LIKE '%%%s%%' GROUP BY op.order_product_id HAVING SUM(pp.qty) IS NULL OR CASE WHEN COUNT(pp.qty) = 0 THEN 0 ELSE SUM(op.qty) / COUNT(pp.qty) END > SUM(pp.qty)", $order->order_id, 's:9:"shippable";s:1:"1";');
   if (db_fetch_object($result)) {
     $output .= l(t('Create packages.'), 'admin/store/orders/'. $order->order_id .'/packages/new');
   }
@@ -408,7 +408,7 @@ function uc_shipping_order_shipments($order) {
     $output .= l(t('Make a new shipment'), 'admin/store/orders/'. $order->order_id .'/shipments/new');
   }
   else {
-    $result = db_query("SELECT op.order_product_id, CAST(SUM(op.qty) / COUNT(pp.qty) AS UNSIGNED) AS total, SUM(pp.qty) AS packaged FROM {uc_order_products} AS op LEFT JOIN {uc_packaged_products} AS pp ON op.order_product_id = pp.order_product_id WHERE op.order_id = %d AND op.data LIKE '%%%s%%' GROUP BY op.order_product_id HAVING SUM(pp.qty) IS NULL OR CAST(SUM(op.qty) / COUNT(pp.qty) AS UNSIGNED) > SUM(pp.qty)", $order->order_id, 's:9:"shippable";s:1:"1";');
+    $result = db_query("SELECT op.order_product_id, CASE WHEN COUNT(pp.qty) = 0 THEN 0 ELSE SUM(op.qty) / COUNT(pp.qty) END AS total, SUM(pp.qty) AS packaged FROM {uc_order_products} AS op LEFT JOIN {uc_packaged_products} AS pp ON op.order_product_id = pp.order_product_id WHERE op.order_id = %d AND op.data LIKE '%%%s%%' GROUP BY op.order_product_id HAVING SUM(pp.qty) IS NULL OR CASE WHEN COUNT(pp.qty) = 0 THEN 0 ELSE SUM(op.qty) / COUNT(pp.qty) END > SUM(pp.qty)", $order->order_id, 's:9:"shippable";s:1:"1";');
     if (db_fetch_object($result)) {
       $output .= l(t('Put products into packages to make shipments.'), 'admin/store/orders/'. $order->order_id .'/packages/new');
     }
@@ -759,6 +759,16 @@ function uc_shipping_shipment_edit($form_state, $order, $shipment) {
   );
 
   return $form;
+}
+
+function uc_shipping_shipment_edit_validate($form, &$form_state) {
+  foreach ($form_state['values']['packages'] as $key => $package) {
+    foreach (array('length', 'width', 'height') as $property) {
+      if (!empty($package['dimensions'][$property]) && (!is_numeric($package['dimensions'][$property]) || $package['dimensions'][$property] < 0)) {
+        form_set_error('packages]['. $key .'][dimensions]['. $property, t('@property must be a positive number. No commas and only one decimal point.', array('@property' => ucfirst($property))));
+      }
+    }
+  }
 }
 
 /**

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.install,v 1.5.2.5 2009/01/19 20:31:23 islandusurper Exp $
+// $Id: uc_quote.install,v 1.5.2.6 2009/02/04 13:44:33 islandusurper Exp $
 
 /**
  * @file
@@ -304,6 +304,14 @@ function uc_quote_update_7() {
   return $ret;
 }
 
+function uc_quote_update_8() {
+  $ret = array();
+
+  $ret[] = update_sql("DELETE FROM {uc_quote_shipping_types} WHERE id = 0");
+
+  return $ret;
+}
+
 function uc_quote_update_6000() {
   $ret = array();
 
@@ -326,6 +334,23 @@ function uc_quote_update_6001() {
   $ret = array();
 
   db_change_field($ret, 'uc_order_quotes', 'rate', 'rate', array('type' => 'numeric', 'precision' => 15, 'scale' => 3, 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
+}
+
+function uc_quote_update_6002() {
+  $ret = array();
+
+  db_drop_table($ret, 'uc_quote_manufacturer_locations');
+
+  return $ret;
+}
+
+function uc_quote_update_6003() {
+  // This is the same update as #8, but it was added after 6002 was published.
+  $ret = array();
+
+  $ret[] = update_sql("DELETE FROM {uc_quote_shipping_types} WHERE id = 0");
 
   return $ret;
 }

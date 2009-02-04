@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.admin.inc,v 1.1.2.8 2009/01/19 20:31:27 islandusurper Exp $
+// $Id: uc_product.admin.inc,v 1.1.2.9 2009/02/04 13:44:32 islandusurper Exp $
 
 /**
  * @file
@@ -10,6 +10,8 @@
  * List all products.
  */
 function uc_product_administration() {
+  $output = '';
+
   $header = array();
   $tbl_columns = uc_product_table_header();
   foreach ($tbl_columns as $column) {
@@ -564,11 +566,15 @@ function uc_product_image_defaults() {
  * @see uc_product_class_form_submit()
  */
 function uc_product_class_form($form_state, $class = NULL) {
-  if ($class) {
-    drupal_set_title(check_plain($class->name));
+  if (!is_null($class)) {
+    $classname = $class->name;
+    $classdesc = $class->description;
+    drupal_set_title(check_plain($classname));
     $form['pcid'] = array('#type' => 'hidden', '#value' => $class->pcid);
   }
   else {
+    $classname = '';
+    $classdesc = '';
     $form['pcid'] = array('#type' => 'textfield',
       '#title' => t('Class ID'),
       '#required' => TRUE,
@@ -579,14 +585,14 @@ function uc_product_class_form($form_state, $class = NULL) {
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Class name'),
-    '#default_value' => $class->name,
+    '#default_value' => $classname,
     '#required' => TRUE,
   );
   $form['description'] = array(
     '#type' => 'textarea',
     '#title' => t('Description'),
     '#description' => t('This text describes the content type created for this product class to administrators.'),
-    '#default_value' => $class->description,
+    '#default_value' => $classdesc,
   );
   $form['submit'] = array(
     '#type' => 'submit',

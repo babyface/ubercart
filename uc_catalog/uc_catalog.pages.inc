@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.pages.inc,v 1.1.2.7 2009/01/19 20:31:25 islandusurper Exp $
+// $Id: uc_catalog.pages.inc,v 1.1.2.8 2009/02/04 13:44:30 islandusurper Exp $
 
 /**
  * @file
@@ -30,12 +30,12 @@ function theme_uc_catalog_browse($tid = 0) {
   $links = array();
   $child_list = array();
   foreach ($catalog->children as $child) {
-    if ($child->nodes) {
+    if (!empty($child->nodes)) {
       $links[] = array('title' => $child->name . (variable_get('uc_catalog_breadcrumb_nodecount', FALSE) ? ' ('. $child->nodes .')' : ''), 'href' => uc_catalog_path($child),
         'attributes' => array('rel' => 'tag'),
       );
     }
-    if ($child->image) {
+    if (!empty($child->image)) {
       $image = '<div>';
       if (module_exists('imagecache')) {
         $image .= l(theme('imagecache', 'uc_category', $child->image['filepath']), uc_catalog_path($child), array('html' => TRUE));
@@ -76,7 +76,7 @@ function theme_uc_catalog_browse($tid = 0) {
       $child_list[] = $cell_link;
     }
   }
-  if ($catalog->image) {
+  if (!empty($catalog->image)) {
     $output .= theme('imagecache', 'uc_thumbnail', $catalog->image['filepath'], $catalog->name, $catalog->name, array('class' => 'category'));
   }
 

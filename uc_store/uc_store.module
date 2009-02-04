@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.12 2009/01/19 20:31:28 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.13 2009/02/04 13:44:31 islandusurper Exp $
 
 /**
  * @file
@@ -802,9 +802,13 @@ function uc_currency_format($value, $sign = TRUE, $thou = TRUE, $dec = NULL) {
     }
   }
 
+  $format = '';
   if ($value < 0) {
     $value = abs($value);
     $format = '-';
+  }
+  else {
+    $format = '';
   }
 
   if ($sign && !variable_get('uc_sign_after_amount', FALSE)) {

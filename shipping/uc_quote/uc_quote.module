@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.11 2009/01/19 20:31:23 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.12 2009/02/04 13:44:33 islandusurper Exp $
 
 /**
  * @file
@@ -90,34 +90,6 @@ function uc_quote_theme() {
 }
 
 /**
- * Implementation of hook_taxonomy().
- *
- * Save and delete manufacturer shipping locations.
- */
-function uc_quote_taxonomy($op, $type, $object = NULL) {
-  switch ($type) {
-    case 'term':
-      switch ($op) {
-        case 'insert':
-        case 'update':
-          db_query("DELETE FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $object['tid']);
-          if ($object['street1']) {
-            db_query("INSERT INTO {uc_quote_manufacturer_locations} (tid, first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, '%s')",
-              $object['tid'], $object['first_name'], $object['last_name'], $object['company'], $object['street1'], $object['street2'], $object['city'], $object['zone'], $object['postal_code'], $object['country'], $object['phone']
-            );
-          }
-          uc_quote_set_shipping_type('manufacturer', $object['tid'], $object['shipping_type']);
-        break;
-        case 'delete':
-          db_query("DELETE FROM {uc_quote_shipping_types} WHERE id_type = 'manufacturer' AND id = %d", $object['tid']);
-          db_query("DELETE FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $object['tid']);
-        break;
-      }
-    break;
-  }
-}
-
-/**
  * Implementation of hook_nodeapi().
  *
  * Load, save, and delete the shipping type and default shipping address of products.
@@ -125,13 +97,11 @@ function uc_quote_taxonomy($op, $type, $object = NULL) {
 function uc_quote_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
   if (uc_product_is_product($node->type)) {
     switch ($op) {
-      case 'presave':
+      case 'insert':
+      case 'update':
         if (isset($node->shipping_type)) {
           uc_quote_set_shipping_type('product', $node->nid, $node->shipping_type);
         }
-      break;
-      case 'insert':
-      case 'update':
         db_query("DELETE FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid);
         if ($node->street1) {
           db_query("INSERT INTO {uc_quote_product_locations} (nid, first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, '%s')",
@@ -140,28 +110,13 @@ function uc_quote_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
         }
       break;
       case 'load':
-        // Can't just use uc_product_get_shipping_type() because $node->manufacturer doesn't necessarily exist yet.
-        if (module_exists('uc_manufacturer')) {
-          $manufacturer = uc_product_get_manufacturer($node->nid);
-        }
-        $shipping_type = db_result(db_query("SELECT shipping_type FROM {uc_quote_shipping_types} WHERE id_type = 'product' AND id = %d", $node->nid));
-        if (!$shipping_type) {
-          if (isset($manufacturer)) {
-            $shipping_type = db_result(db_query("SELECT shipping_type FROM {uc_quote_shipping_types} WHERE id_type = 'manufacturer' AND id = %d", $manufacturer->tid));
-          }
-          if (!$shipping_type) {
-            $shipping_type = variable_get('uc_store_shipping_type', 'small_package');
-          }
-        }
+        $shipping_type = uc_product_get_shipping_type($node);
+
         $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone FROM {uc_quote_product_locations} WHERE nid = %d", $node->nid));
         if ($address === FALSE) {
-          if (module_exists('uc_manufacturer')) {
-            $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $manufacturer->tid));
-          }
-          if ($address === FALSE) {
-            $address = variable_get('uc_quote_store_default_address', new stdClass());
-          }
+          $address = variable_get('uc_quote_store_default_address', new stdClass());
         }
+
         return array('shipping_type' => $shipping_type, 'shipping_address' => $address);
       break;
       case 'delete':
@@ -183,13 +138,6 @@ function uc_quote_form_alter(&$form, &$form_state, $form_id) {
     $node = $form['#node'];
   }
 
-  $is_term_form = (
-    $form_id == 'taxonomy_form_term'
-    && $form['vid']['#value'] == variable_get('uc_manufacturer_vid', 0)
-    && $form_state['confirm_delete'] == FALSE
-    && $form_state['confirm_parents'] == FALSE
-  ) || $form_id == 'uc_manufacturer_form';
-
   $is_product_form = (
     isset($node) &&
     $form_id == $node->type .'_node_form' &&
@@ -197,26 +145,17 @@ function uc_quote_form_alter(&$form, &$form_state, $form_id) {
     uc_product_is_product($node->type)
   );
 
-  if ($is_term_form || $is_product_form) {
-    if (strpos($form_id, 'node_form')) {
-      $type = 'product';
-      $id = $form['nid']['#value'];
-      if (module_exists('content')) {
-        $weight = content_extra_field_weight($node->type, 'shipping');
-      }
-      else {
-        $weight = 0;
-      }
-      $address = $node->shipping_address;
+  if ($is_product_form) {
+    $type = 'product';
+    $id = $form['nid']['#value'];
+    if (module_exists('content')) {
+      $weight = content_extra_field_weight($node->type, 'shipping');
     }
     else {
-      $type = 'manufacturer';
-      $id = $form['tid']['#value'];
       $weight = 0;
-      if (module_exists('uc_manufacturer')) {
-        $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $id));
-      }
     }
+    $address = $node->shipping_address;
+
     if (empty($address)) {
       $address = variable_get('uc_quote_store_default_address', new stdClass());
     }
@@ -232,7 +171,7 @@ function uc_quote_form_alter(&$form, &$form_state, $form_id) {
     );
     $form['shipping']['default_address'] = array('#type' => 'fieldset',
       '#title' => t('Default product pickup address'),
-      '#description' => t("When delivering products to customers, the original location of the product must be known in order to accurately quote the shipping cost and set up a delivery. This form provides the default location for products, either individually or an entire manufacturer's line. If a product's individual pickup address is blank, &Uuml;bercart looks for the manufacturer's. If that is also blank, it uses the store's default pickup address, which can be set <a href=\"!here\">here</a>.",
+      '#description' => t("When delivering products to customers, the original location of the product must be known in order to accurately quote the shipping cost and set up a delivery. This form provides the default location for products, either individually or the entire site's line. If a product's individual pickup address is blank, it uses the store's default pickup address, which can be set <a href=\"!here\">here</a>.",
          array('!here' => url('admin/store/settings/quotes'))),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
@@ -349,7 +288,7 @@ function uc_quote_ca_condition() {
 function uc_quote_condition_product_shipping_type($order, $settings) {
   $result = FALSE;
   foreach ($order->products as $product) {
-    if ($product->nid && uc_quote_get_shipping_type('product', $product->nid) == $settings['type']) {
+    if ($product->nid && uc_product_get_shipping_type($product) == $settings['type']) {
       $result = TRUE;
       break;
     }
@@ -646,12 +585,6 @@ function uc_quote_get_shipping_type($id_type, $id) {
  */
 function uc_product_get_shipping_type($product) {
   $shipping_type = variable_get('uc_store_shipping_type', 'small_package');
-  if (module_exists('uc_manufacturer') && $product->manufacturer) {
-    $m = taxonomy_get_term_by_name($product->manufacturer);
-    if ($type = uc_quote_get_shipping_type('manufacturer', $m->tid)) {
-      $shipping_type = $type;
-    }
-  }
   if ($type = uc_quote_get_shipping_type('product', $product->nid)) {
     $shipping_type = $type;
   }
@@ -672,13 +605,7 @@ function uc_product_get_shipping_type($product) {
 function uc_quote_get_default_shipping_address($nid) {
   $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone FROM {uc_quote_product_locations} WHERE nid = %d", $nid));
   if (empty($address)) {
-    if (module_exists('uc_manufacturer')) {
-      $manufacturer = uc_product_get_manufacturer($nid);
-      $address = db_fetch_object(db_query("SELECT first_name, last_name, company, street1, street2, city, zone, postal_code, country, phone FROM {uc_quote_manufacturer_locations} WHERE tid = %d", $manufacturer->tid));
-    }
-    if (empty($address)) {
-      $address = variable_get('uc_quote_store_default_address', new stdClass());
-    }
+    $address = variable_get('uc_quote_store_default_address', new stdClass());
   }
   return $address;
 }

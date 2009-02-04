@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.5.2.9 2009/01/19 20:31:20 islandusurper Exp $
+// $Id: uc_credit.module,v 1.5.2.10 2009/02/04 13:44:34 islandusurper Exp $
 
 /**
  * @file
@@ -227,7 +227,7 @@ function uc_credit_exit() {
   $args = explode('/', $_GET['q']);
 
   // Make sure sensitive checkout session data doesn't persist on other pages.
-  if ($args[1] != 'checkout' && isset($_SESSION['sescrd'])) {
+  if (isset($args[1]) && $args[1] != 'checkout' && isset($_SESSION['sescrd'])) {
     unset($_SESSION['sescrd']);
   }
 }
@@ -328,6 +328,7 @@ function uc_credit_order($op, &$arg1, $arg2) {
             // Otherwise, save only some limited, PCI compliant data.
             $cc_data = array(
               'cc_number' => substr($arg1->payment_details['cc_number'], -4),
+              'cc_type' => $arg1->payment_details['cc_type'],
             );
           }
 
@@ -517,7 +518,7 @@ function uc_payment_method_credit($op, &$arg1, $silent = FALSE) {
 
     case 'cart-review':
       if (variable_get('uc_credit_type_enabled', FALSE)) {
-        $review[] = array('title' => t('Card Type'), 'data' => $arg1->payment_details['cc_type']);
+        $review[] = array('title' => t('Card Type'), 'data' => check_plain($arg1->payment_details['cc_type']));
       }
       if (variable_get('uc_credit_owner_enabled', FALSE)) {
         $review[] = array('title' => t('Card Owner'), 'data' => check_plain($arg1->payment_details['cc_owner']));

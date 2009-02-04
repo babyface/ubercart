@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.5 2009/01/19 20:31:25 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.6 2009/02/04 13:44:31 islandusurper Exp $
 
 /**
  * @file
@@ -394,7 +394,6 @@ function uc_cart_checkout_review_form() {
 }
 
 function uc_cart_checkout_review_form_back($form, &$form_state) {
-  cache_clear_all();
   unset($_SESSION['do_review']);
   $form_state['redirect'] = 'cart/checkout';
 }

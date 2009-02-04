@@ -1,4 +1,4 @@
-/* $Id: uc_cart.css,v 1.5.2.3 2009/01/19 20:31:25 islandusurper Exp $ */
+/* $Id: uc_cart.css,v 1.5.2.4 2009/02/04 13:44:31 islandusurper Exp $ */
 
 /* These classes should really be universal... pretty standard stuff. */
 
@@ -79,11 +79,6 @@
 #uc-cart-view-form img {
   padding-right: .8em;
   float: left;
-}
-
-#uc-cart-view-form ul {
-  font-style: italic;
-  font-size: 0.75em;
 }
 
 #line-items-div table {
@@ -193,9 +188,6 @@ td.subtotal {
   font-weight: bold;
 }
 
-.product-description {
-  font-size: .7em;
-}
 
 /**
  * CSS rules for the default checkout panes.

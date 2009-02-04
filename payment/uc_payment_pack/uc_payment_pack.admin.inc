@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_pack.admin.inc,v 1.1.2.3 2008/11/07 21:13:27 islandusurper Exp $
+// $Id: uc_payment_pack.admin.inc,v 1.1.2.4 2009/02/04 13:44:33 islandusurper Exp $
 
 /**
  * @file
@@ -77,7 +77,7 @@ function uc_payment_pack_receive_check_form_validate($form, &$form_state) {
 function uc_payment_pack_receive_check_form_submit($form, &$form_state) {
   global $user;
 
-  uc_payment_enter($form_state['values']['order_id'], _payment_method_data('check', 'name'), $form_state['values']['amount'], $user->uid, '', $form_state['values']['comment']);
+  uc_payment_enter($form_state['values']['order_id'], _payment_method_data('check', 'id'), $form_state['values']['amount'], $user->uid, '', $form_state['values']['comment']);
 
   db_query("INSERT INTO {uc_payment_check} (order_id, clear_date) VALUES (%d, %d)",
     $form_state['values']['order_id'], mktime(12, 0, 0, $form_state['values']['clear_month'],

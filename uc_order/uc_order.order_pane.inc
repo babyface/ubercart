@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.7 2009/01/19 20:31:27 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.8 2009/02/04 13:44:31 islandusurper Exp $
 
 /**
  * @file
@@ -294,14 +294,10 @@ function uc_order_pane_products($op, $arg1) {
         'select' => 'add_product_form();',
       );
 
-      if (module_exists('ubrowser') && module_exists('uc_catalog') && variable_get('uc_ubrowser_product_select', TRUE)) {
-        $output = ubrowser_button(t('Add product'), $settings, NULL, 'add-product-button') .' ';
-      }
-      else {
-        $output = '<input type="button" value="'. t('Add product')
-                 .'" onclick="load_product_select('. $arg1['order_id']['#value']
-                 .', false);" id="add-product-button" />';
-      }
+      $output = '<input type="button" value="'. t('Add product')
+               .'" onclick="load_product_select('. $arg1['order_id']['#value']
+               .', false);" id="add-product-button" />';
+
       $output .= '<input type="button" value="'. t('Add blank line')
                 .'" onclick="add_blank_line_button('. $arg1['order_id']['#value']
                 .');" />';

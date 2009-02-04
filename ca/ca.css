@@ -1,7 +1,15 @@
-/* $Id: ca.css,v 1.1.2.3 2008/11/07 21:13:20 islandusurper Exp $ */
+/* $Id: ca.css,v 1.1.2.4 2009/02/04 13:44:31 islandusurper Exp $ */
 
-.ca-predicate-table-title {
-  width: 100%;
+table.ca-predicate-trigger .col-title {
+  width: 70%;
+}
+
+table.ca-predicate-class .col-title {
+  width: 40%;
+}
+
+.ca-predicate-trigger tr, .ca-predicate-class tr {
+  vertical-align: top;
 }
 
 .ca-predicate-table-weight {
