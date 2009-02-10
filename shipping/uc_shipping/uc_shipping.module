@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.6.2.7 2009/01/02 20:18:40 islandusurper Exp $
+// $Id: uc_shipping.module,v 1.6.2.8 2009/02/10 21:58:16 islandusurper Exp $
 
 /**
  * @file
@@ -553,7 +553,7 @@ function uc_shipping_select_address($addresses, $onchange = '', $title = NULL, $
     'country' => 0,
     'zone' => 0,
   );
-  $options = array(drupal_to_js($blank) => t('<Reset fields>'));
+  $options = array(drupal_to_js($blank) => t('- Reset fields -'));
   foreach ($addresses as $address) {
     $options[drupal_to_js($address)] = $address->company .' '. $address->street1 .' '. $address->city;
   }

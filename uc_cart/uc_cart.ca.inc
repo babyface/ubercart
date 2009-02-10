@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.ca.inc,v 1.1.2.9 2009/01/19 20:31:25 islandusurper Exp $
+// $Id: uc_cart.ca.inc,v 1.1.2.10 2009/02/10 21:58:16 islandusurper Exp $
 
 /**
  * @file
@@ -60,7 +60,7 @@ function uc_cart_ca_predicate() {
   $predicates['uc_checkout_email_notification'] = array(
     '#title' => t('E-mail checkout notifications'),
     '#description' => t('Send an e-mail about the new order.'),
-    '#class' => 'order',
+    '#class' => 'notification',
     '#status' => 1,
     '#trigger' => 'uc_checkout_complete',
     '#actions' => array(

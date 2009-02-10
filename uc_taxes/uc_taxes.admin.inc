@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.admin.inc,v 1.1.2.5 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_taxes.admin.inc,v 1.1.2.6 2009/02/10 21:58:14 islandusurper Exp $
 
 /**
  * @file
@@ -10,13 +10,13 @@
  * Display a list of tax rates.
  */
 function uc_taxes_admin_settings() {
-  $header = array(t('Name'), t('Rate'), t('Taxed product types'), t('Taxed line items'), t('Weight'), array('data' => t('Operations'), 'colspan' => 4));
+  $header = array(t('Name'), t('Rate'), t('Taxed product types'), t('Tax only shippable?'), t('Taxed line items'), t('List position'), array('data' => t('Actions'), 'colspan' => 4));
   $rows = array();
   $result = db_query("SELECT * FROM {uc_taxes} ORDER BY weight");
   while ($rule = db_fetch_object($result)) {
     $rule->taxed_product_types = (array)unserialize($rule->taxed_product_types);
     $rule->taxed_line_items = (array)unserialize($rule->taxed_line_items);
-    $rows[] = array($rule->name, $rule->rate * 100 .'%', implode(', ', $rule->taxed_product_types), implode(', ', $rule->taxed_line_items), $rule->weight, l(t('edit'), 'admin/store/settings/taxes/edit/'. $rule->id), l(t('conditions'), CA_UI_PATH .'/uc_taxes_'. $rule->id .'/edit/conditions'), l(t('copy'), 'admin/store/settings/taxes/copy/'. $rule->id), l(t('delete'), 'admin/store/settings/taxes/delete/'. $rule->id));
+    $rows[] = array($rule->name, $rule->rate * 100 .'%', implode(', ', $rule->taxed_product_types), $rule->shippable ? t('Yes') : '', implode(', ', $rule->taxed_line_items), $rule->weight, l(t('edit'), 'admin/store/settings/taxes/edit/'. $rule->id), l(t('conditions'), CA_UI_PATH .'/uc_taxes_'. $rule->id .'/edit/conditions'), l(t('copy'), 'admin/store/settings/taxes/copy/'. $rule->id), l(t('delete'), 'admin/store/settings/taxes/delete/'. $rule->id));
   }
   $output = theme('table', $header, $rows);
   $output .= l(t('Make a new tax rule.'), 'admin/store/settings/taxes/edit');
@@ -54,6 +54,13 @@ function uc_taxes_form($form_state, $tax_id = 0) {
     '#required' => TRUE,
   );
 
+  $shippable_options = array('0' => t('Tax all products regardless of shipping status'), 1 => t('Tax only shippable products'));
+  $form['shippable'] = array('#type' => 'radios',
+    '#title' => t('Tax products based on shipping status?'),
+    '#options' => $shippable_options,
+    '#default_value' => $form_state['values']['shippable'],
+  );
+
   $form['taxed_product_types'] = array('#type' => 'checkboxes',
     '#title' => t('Taxed product types'),
     '#multiple' => TRUE,
@@ -79,9 +86,9 @@ function uc_taxes_form($form_state, $tax_id = 0) {
   );
 
   $form['weight'] = array('#type' => 'weight',
-    '#title' => t('Weight'),
+    '#title' => t('List position'),
     '#default_value' => isset($form_state['values']['weight']) ? $form_state['values']['weight'] : 0,
-    '#description' => t('Lighter taxes are applied to an order first. This value is unimportant if there are no taxes on tax line items.'),
+    '#description' => t('Taxes are applied to an order according to their list position. This value is unimportant if there are no taxes on tax line items.'),
   );
 
   $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
@@ -107,13 +114,13 @@ function uc_taxes_form_submit($form, &$form_state) {
       $rate = floatval($form_state['values']['rate']);
     }
     if (($form_state['values']['id']) != '') {
-      db_query("UPDATE {uc_taxes} SET name = '%s', rate = %f, taxed_product_types = '%s', taxed_line_items = '%s', weight = %d WHERE id = %d",
-        $form_state['values']['name'], $rate, serialize(array_filter($form_state['values']['taxed_product_types'])), serialize(array_filter($form_state['values']['taxed_line_items'])), $form_state['values']['weight'], $form_state['values']['id']
+      db_query("UPDATE {uc_taxes} SET name = '%s', rate = %f, taxed_product_types = '%s', taxed_line_items = '%s', weight = %d, shippable = %d WHERE id = %d",
+        $form_state['values']['name'], $rate, serialize(array_filter($form_state['values']['taxed_product_types'])), serialize(array_filter($form_state['values']['taxed_line_items'])), $form_state['values']['weight'], $form_state['values']['shippable'], $form_state['values']['id']
       );
     }
     else {
-      db_query("INSERT INTO {uc_taxes} (name, rate, taxed_product_types, taxed_line_items, weight) VALUES ('%s', %f, '%s', '%s', %d)",
-        $form_state['values']['name'], $rate, serialize(array_filter($form_state['values']['taxed_product_types'])), serialize(array_filter($form_state['values']['taxed_line_items'])), $form_state['values']['weight']
+      db_query("INSERT INTO {uc_taxes} (name, rate, taxed_product_types, taxed_line_items, weight, shippable) VALUES (%d, '%s', %f, '%s', '%s', %d, %d)",
+        $form_state['values']['name'], $rate, serialize(array_filter($form_state['values']['taxed_product_types'])), serialize(array_filter($form_state['values']['taxed_line_items'])), $form_state['values']['weight'], $form_state['values']['shippable']
       );
     }
 
@@ -128,8 +135,8 @@ function uc_taxes_form_submit($form, &$form_state) {
 function uc_taxes_copy($tax_id) {
   $rule = db_fetch_array(db_query("SELECT * FROM {uc_taxes} WHERE id = %d", $tax_id));
 
-  db_query("INSERT INTO {uc_taxes} (name, rate, taxed_product_types, taxed_line_items, weight) VALUES ('%s', %f, '%s', '%s', %d)",
-    t('Copy of @rule', array('@rule' => $rule['name'])), $rule['rate'], $rule['taxed_product_types'], $rule['taxed_line_items'], $rule['weight']
+  db_query("INSERT INTO {uc_taxes} (name, rate, taxed_product_types, taxed_line_items, weight, shippable) VALUES (%d, '%s', %f, '%s', '%s', %d, %d)",
+    t('Copy of @rule', array('%rule' => $rule['name'])), $rule['rate'], $rule['taxed_product_types'], $rule['taxed_line_items'], $rule['weight'], $rule['shippable']
   );
 
   drupal_goto('admin/store/settings/taxes');

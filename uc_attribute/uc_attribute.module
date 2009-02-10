@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.12 2009/02/04 13:44:34 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.13 2009/02/10 21:58:12 islandusurper Exp $
 
 /**
  * @file
@@ -533,19 +533,20 @@ function _uc_cart_product_get_options($item) {
  * Helper function for uc_attribute_form_alter()
  */
 function _uc_attribute_alter_form($product) {
+  // If the product doesn't have attributes, return the form as it is.
+  if (!isset($product->attributes) || !is_array($product->attributes)) {
+    return NULL;
+  }
+
   $nid = $product->nid;
   $qty = $product->default_qty;
   if (!$qty) {
     $qty = 1;
   }
+
   // Load all product attributes for the given nid.
   $priced_attributes = uc_attribute_priced_attributes($nid);
   $attributes = $product->attributes;
-
-  // If the product doesn't have attributes, return the form as it is.
-  if (!is_array($attributes)) {
-    return NULL;
-  }
 
   $form_attributes = array();
 

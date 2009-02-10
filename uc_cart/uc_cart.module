@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.14 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.15 2009/02/10 21:58:16 islandusurper Exp $
 
 /**
  * @file
@@ -466,20 +466,28 @@ function uc_cart_block($op = 'list', $delta = 0, $edit = array()) {
           }
 
           // Build the item count text and cart links.
-          $item_text = format_plural($item_count, '@count Item', '@count Items');
+          $item_text = format_plural($item_count, '<span class=".num-items">@count</span> Item', '<span class=".num-items">@count</span> Items');
 
-          $view_link = l(t('View cart'), 'cart', array('attributes' => array('rel' => 'nofollow')));
+          $summary_links = array(
+            'cart-block-view-cart' => array(
+              'title' => 'View cart',
+              'href' => 'cart',
+              'attributes' => array('rel' => 'nofollow'),
+            ),
+          );
 
+          // Only add the checkout link if checkout is enabled.
           if (variable_get('uc_checkout_enabled', TRUE)) {
-            $checkout_link = l(t('Checkout'), 'cart/checkout', array('attributes' => array('rel' => 'nofollow')));
-          }
-          else {
-            $checkout_link = FALSE;
+            $summary_links['cart-block-checkout'] = array(
+              'title' => 'Checkout',
+              'href' => 'cart/checkout',
+              'attributes' => array('rel' => 'nofollow'),
+            );
           }
 
           $block = array(
             'subject' => theme('uc_cart_block_title', $title, $title_class, $cart_image, $arrow_up_image),
-            'content' => theme('uc_cart_block_content', $help_text, $items, $item_count, $item_text, $total, $view_link, $checkout_link),
+            'content' => theme('uc_cart_block_content', $help_text, $items, $item_count, $item_text, $total, $summary_links),
           );
         }
 
@@ -617,13 +625,11 @@ function theme_uc_cart_block_content_cachable() {
  *   A textual representation of the number of items in the shopping cart.
  * @param $total
  *   The unformatted total of all the products in the shopping cart.
- * @param $view_link
- *   The HTML for a link to the cart view page or FALSE if the cart is empty.
- * @param $checkout_link
- *   The HTML for a link to the checkout page or FALSE if inaccessible.
+ * @param $summary_links
+ *   An array of links used in the cart summary.
  * @ingroup themeable
  */
-function theme_uc_cart_block_content($help_text, $items, $item_count, $item_text, $total, $view_link, $checkout_link) {
+function theme_uc_cart_block_content($help_text, $items, $item_count, $item_text, $total, $summary_links) {
   $output = '';
 
   // Add the help text if enabled.
@@ -640,7 +646,7 @@ function theme_uc_cart_block_content($help_text, $items, $item_count, $item_text
   $output .= '</div>';
 
   // Add the summary section beneath the items table.
-  $output .= theme('uc_cart_block_summary', $item_count, $item_text, $total, $view_link, $checkout_link);
+  $output .= theme('uc_cart_block_summary', $item_count, $item_text, $total, $summary_links);
 
   return $output;
 }
@@ -657,18 +663,22 @@ function theme_uc_cart_block_items($items) {
   // If there are items in the shopping cart...
   if ($items) {
     $output = '<table class="cart-block-items"><tbody>';
+    $row_class = 'odd';
 
     // Loop through each item.
     foreach ($items as $item) {
       // Add the basic row with quantity, title, and price.
-      $output .= '<tr><td class="cart-block-item-qty">'. $item['qty'] .'</td>'
+      $output .= '<tr class="'. $row_class .'"><td class="cart-block-item-qty">'. $item['qty'] .'</td>'
                 .'<td class="cart-block-item-title">'. $item['title'] .'</td>'
                 .'<td class="cart-block-item-price">'. uc_currency_format($item['price']) .'</td></tr>';
 
       // Add a row of description if necessary.
       if ($item['desc']) {
-        $output .= '<tr><td colspan="3" class="cart-block-item-desc">'. $item['desc'] .'</td></tr>';
+        $output .= '<tr class="'. $row_class .'"><td colspan="3" class="cart-block-item-desc">'. $item['desc'] .'</td></tr>';
       }
+
+      // Alternate the class for the rows.
+      $row_class = ($row_class == 'odd') ? 'even' : 'odd';
     }
 
     $output .= '</tbody></table>';
@@ -690,30 +700,22 @@ function theme_uc_cart_block_items($items) {
  *   A textual representation of the number of items in the shopping cart.
  * @param $total
  *   The unformatted total of all the products in the shopping cart.
- * @param $view_link
- *   The HTML for a link to the cart view page or FALSE if the cart is empty.
- * @param $checkout_link
- *   The HTML for a link to the checkout page or FALSE if inaccessible.
+ * @param $summary_links
+ *   An array of links used in the summary.
  * @ingroup themeable
  */
-function theme_uc_cart_block_summary($item_count, $item_text, $total, $view_link, $checkout_link) {
+function theme_uc_cart_block_summary($item_count, $item_text, $total, $summary_links) {
   // Build the basic table with the number of items in the cart and total.
   $output = '<table class="cart-block-summary"><tbody><tr>'
            .'<td class="cart-block-summary-items">'. $item_text .'</td>'
-           .'<td class="cart-block-summary-total"><span class="cart-block-summary-total-label">'
-           . t('Total:') .'</span> '. uc_currency_format($total) .'</td></tr>';
+           .'<td class="cart-block-summary-total"><label>'. t('Total:')
+           .'</label> '. uc_currency_format($total) .'</td></tr>';
 
   // If there are products in the cart...
   if ($item_count > 0) {
     // Add a view cart link.
-    $output .= '<tr><td colspan="2" class="cart-block-summary-links">('. $view_link .')';
-
-    // And conditionally a checkout link if it is accessible.
-    if ($checkout_link) {
-      $output .= ' ('. $checkout_link .')';
-    }
-
-    $output .= '</td></tr>';
+    $output .= '<tr class="cart-block-summary-links"><td colspan="2">'
+             . theme('links', $summary_links) .'</td></tr>';
   }
 
   $output .= '</tbody></table>';
@@ -1260,6 +1262,9 @@ function uc_cart_get_contents($cid = NULL, $action = NULL) {
 
       $items[$cid][] = $item;
     }
+
+    // Allow other modules a chance to alter the fully loaded cart object.
+    drupal_alter('uc_cart', $items[$cid]);
   }
 
   return $items[$cid];

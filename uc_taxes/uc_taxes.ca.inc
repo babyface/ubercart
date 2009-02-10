@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.ca.inc,v 1.1.2.6 2008/11/21 21:17:25 islandusurper Exp $
+// $Id: uc_taxes.ca.inc,v 1.1.2.7 2009/02/10 21:58:14 islandusurper Exp $
 
 /**
  * @file
@@ -80,7 +80,9 @@ function uc_taxes_action_apply_tax($order, $tax) {
   if (is_array($order->products)) {
     foreach ($order->products as $item) {
       $node = node_load($item->nid);
-      if (in_array($node->type, $tax->taxed_product_types)) {
+      // Tax products if they are of a taxed type and if it is shippable if
+      // the tax only applies to shippable products.
+      if (in_array($node->type, $tax->taxed_product_types) && ($tax->shippable == 0 || $node->shippable == 1)) {
         $amount += $item->price * $item->qty * $tax->rate;
       }
     }

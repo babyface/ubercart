@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.8 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.9 2009/02/10 21:58:14 islandusurper Exp $
 
 /**
  * @file
@@ -649,12 +649,6 @@ function uc_order_view_update_form_submit($form, &$form_state) {
       if (is_null($form_state['values']['order_comment']) || strlen($form_state['values']['order_comment']) == 0) {
         uc_order_comment_save($form_state['values']['order_id'], $user->uid, '-', 'order', $form_state['values']['status'], $form_state['values']['notify']);
       }
-      $order = uc_order_load($form_state['values']['order_id']);
-
-      // Let conditional actions send email if requested.
-      if ($form_state['values']['notify']) {
-        ca_pull_trigger('uc_order_status_email_update', $order);
-      }
     }
   }
 
@@ -664,6 +658,12 @@ function uc_order_view_update_form_submit($form, &$form_state) {
 
   if (!is_null($form_state['values']['admin_comment']) && strlen(trim($form_state['values']['admin_comment'])) > 0) {
     uc_order_comment_save($form_state['values']['order_id'], $user->uid, $form_state['values']['admin_comment']);
+  }
+
+  // Let conditional actions send email if requested.
+  if ($form_state['values']['notify']) {
+    $order = uc_order_load($form_state['values']['order_id']);
+    ca_pull_trigger('uc_order_status_email_update', $order);
   }
 
   drupal_set_message(t('Order updated.'));

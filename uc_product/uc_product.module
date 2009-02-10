@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.14 2009/02/04 13:44:32 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.15 2009/02/10 21:58:15 islandusurper Exp $
 
 /**
  * @file
@@ -276,7 +276,7 @@ function uc_product_enable() {
   }
 
   if (module_exists('imagecache')) {
-    $presets = array('product', 'product_list', 'uc_thumbnail');
+    $presets = array('product', 'product_full', 'product_list', 'uc_thumbnail');
     foreach ($presets as $preset_name) {
       $preset = imagecache_preset_by_name($preset_name);
       if (empty($preset)) {
@@ -341,9 +341,6 @@ function uc_product_theme() {
     'uc_product_price' => array(
       'arguments' => array('price' => 0, 'class' => ''),
     ),
-    'uc_product_sell_price' => array(
-      'arguments' => array('price' => 0, 'teaser' => FALSE),
-    ),
     'uc_product_weight' => array(
       'arguments' => array('weight' => 0, 'unit' => NULL),
     ),
@@ -352,9 +349,6 @@ function uc_product_theme() {
     ),
     'uc_product_image' => array(
       'arguments' => array('images'),
-    ),
-    'uc_product_display_price' => array(
-      'arguments' => array('price' => 0),
     ),
     'uc_product_feature_add_form' => array(
       'arguments' => array('form' => NULL),
@@ -404,12 +398,10 @@ function uc_product_node_info($reset = FALSE) {
  */
 function uc_product_forms($form_id, $args) {
   $forms = array();
-  if (substr($form_id, 0, 27) == 'uc_product_add_to_cart_form' || substr($form_id, 0, 26) == 'uc_catalog_buy_it_now_form') {
-    $product = $args[0];
-    if (in_array($product->type, array_keys(uc_product_node_info()))) {
-      $forms['uc_product_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_add_to_cart_form');
-      $forms['uc_catalog_buy_it_now_form_'. $product->nid] = array('callback' => 'uc_catalog_buy_it_now_form');
-    }
+  $product = $args[0];
+  if (in_array($product->type, array_keys(uc_product_node_info()))) {
+    $forms['uc_product_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_add_to_cart_form');
+    $forms['uc_catalog_buy_it_now_form_'. $product->nid] = array('callback' => 'uc_catalog_buy_it_now_form');
   }
   return $forms;
 }
@@ -746,7 +738,7 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
       '#weight' => $weight['image'],
     );
   }
-  $node->content['display_price'] = array('#value' => theme('uc_product_display_price', $node->sell_price, $teaser, $page),
+  $node->content['display_price'] = array('#value' => theme('uc_product_price', $node->sell_price, 'display-price', TRUE),
     '#access' => $enabled['display_price'],
     '#weight' => $weight['display_price'],
   );
@@ -756,11 +748,11 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
       '#weight' => $weight['model'],
     );
     $node->content['body']['#weight'] = 1;
-    $node->content['list_price'] = array('#value' => theme('uc_product_price', $node->list_price, 'list_price', $teaser, $page),
+    $node->content['list_price'] = array('#value' => theme('uc_product_price', $node->list_price, 'list-price'),
       '#access' => $enabled['list_price'],
       '#weight' => $weight['list_price'],
     );
-    $node->content['cost'] = array('#value' => theme('uc_product_price', $node->cost, 'cost', $teaser, $page),
+    $node->content['cost'] = array('#value' => theme('uc_product_price', $node->cost, 'cost'),
       '#access' => $enabled['cost'] && user_access('administer products'),
       '#weight' => $weight['cost'],
     );
@@ -769,7 +761,7 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
     $node->content['#attributes'] = array('style' => 'display: inline');
   }
 
-  $node->content['sell_price'] = array('#value' => theme('uc_product_sell_price', $node->sell_price, $teaser, $page),
+  $node->content['sell_price'] = array('#value' => theme('uc_product_price', $node->sell_price, 'sell-price', $teaser),
     '#access' => $enabled['sell_price'],
     '#weight' => $weight['sell_price'],
   );
@@ -1223,7 +1215,7 @@ function uc_product_table($args = array()) {
       if (module_exists('imagecache')) {
         if (($field = variable_get('uc_image_'. $node->type, '')) && isset($node->$field) && file_exists($node->{$field}[0]['filepath'])) {
           $image = $node->{$field}[0];
-          $data['image'] = array('#value' => l(theme('imagecache', 'product_list', $image['filepath'], $image['alt'], $image['title']), 'node/'. $node->nid, array('html' => TRUE)));
+          $data['image'] = array('#value' => l(theme('imagecache', 'product_list', $image['filepath'], $image['data']['alt'], $image['data']['title']), 'node/'. $node->nid, array('html' => TRUE)));
         }
         else {
           $data['image'] = array('#value' => t('n/a'));
@@ -1238,7 +1230,7 @@ function uc_product_table($args = array()) {
       $data['list_price'] = array('#value' => uc_currency_format($node->list_price), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
     }
     if ($enabled['sell_price']) {
-      $data['price'] = array('#value' => theme('uc_product_sell_price', $node->sell_price, TRUE), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
+      $data['price'] = array('#value' => theme('uc_product_price', $node->sell_price, 'sell-price', TRUE), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
     }
 
     if (module_exists('uc_cart') && arg(0) != 'admin' && $enabled['add_to_cart']) {
@@ -1387,45 +1379,29 @@ function uc_product_add_to_cart_form_submit($form, &$form_state) {
  *   Determines the label and the CSS class of the <div>.
  * @ingroup themeable
  */
-function theme_uc_product_price($price, $class, $teaser = 0, $page = 0) {
+function theme_uc_product_price($price, $class, $no_label = 0) {
   $output = '<div class="'. $class .'">';
-  switch ($class) {
-    case 'list_price':
-      $output .= t('List Price: !price', array('!price' => uc_currency_format($price)));
-    break;
-    case 'cost':
-      $output .= t('Cost: !price', array('!price' => uc_currency_format($price)));
-    break;
-    case 'sell_price':
-    default:
-      $output .= t('Price: !price', array('!price' => uc_currency_format($price)));
-    break;
-  }
-  $output .= '</div>';
-  return $output;
-}
-
-/**
- * Format the selling price based on the view mode.
- *
- * @param $price
- *   The price amount.
- * @param $teaser
- *   Passed from uc_product_view().
- * @ingroup themeable
- */
-function theme_uc_product_sell_price($price, $teaser = 0, $page = 0) {
-  if ($teaser) {
-    $output = '<div class="sell-price">';
+  if ($no_label) {
     $output .= uc_currency_format($price);
-    $output .= '</div>';
   }
   else {
-    $output = '<div class="sell-price">';
-    $output .= t('Price: !price', array('!price' => uc_currency_format($price)));
-    $output .= '</div>';
+    switch ($class) {
+      case 'list-price':
+        $output .= t('List Price: !price', array('!price' => uc_currency_format($price)));
+      break;
+      case 'cost':
+        $output .= t('Cost: !price', array('!price' => uc_currency_format($price)));
+      break;
+      case 'sell-price':
+        $output .= t('Price: !price', array('!price' => uc_currency_format($price)));
+      break;
+      default:
+        $output .= uc_currency_format($price);
+      break;
+    }
   }
 
+  $output .= '</div>';
   return $output;
 }
 
@@ -1464,15 +1440,14 @@ function theme_uc_product_image($images, $teaser = 0, $page = 0) {
   // Get the current product image widget.
   $image_widget = uc_product_get_image_widget();
   $image_widget_func = $image_widget['callback'];
-  $image_defaults = array('filepath' => '','alt' => '','title' => '');
 
-  $first = array_merge($image_defaults, array_shift($images));
+  $first = array_shift($images);
 
   $output = '<div class="product-image">';
   if ($image_widget) {
-    $output .= '<a href="'. check_url(file_create_url($first['filepath'])) .'" title="'. $first['title'] .'"'. $image_widget_func($rel_count) .'>';
+    $output .= '<a href="'. imagecache_create_url('product_full', $first['filepath']) .'" title="'. $first['data']['title'] .'"'. $image_widget_func($rel_count) .'>';
   }
-  $output .= theme('imagecache', 'product', $first['filepath'], $first['alt'], $first['title']);
+  $output .= theme('imagecache', 'product', $first['filepath'], $first['data']['alt'], $first['data']['title']);
   /* if (count($images)) {
     $output .= '<br />'. t('Click for more images.');
   } */
@@ -1481,27 +1456,16 @@ function theme_uc_product_image($images, $teaser = 0, $page = 0) {
   }
   $output .= '<br />';
   foreach ($images as $thumbnail) {
-    $thumbnail = array_merge($image_defaults, $thumbnail);
     if ($image_widget) {
-      $output .= '<a href="'. check_url(file_create_url($thumbnail['filepath'])) .'" title="'. $thumbnail['title'] .'"'. $image_widget_func($rel_count) .'>';
+      $output .= '<a href="'. imagecache_create_url('product_full', $thumbnail['filepath']) .'" title="'. $thumbnail['data']['title'] .'"'. $image_widget_func($rel_count) .'>';
     }
-    $output .= theme('imagecache', 'uc_thumbnail', $thumbnail['filepath'], $thumbnail['alt'], $thumbnail['title']);
+    $output .= theme('imagecache', 'uc_thumbnail', $thumbnail['filepath'], $thumbnail['data']['alt'], $thumbnail['data']['title']);
     if ($image_widget) {
       $output .= '</a>';
     }
   }
   $output .= '</div>';
   $rel_count++;
-  return $output;
-}
-
-/**
- * @ingroup themeable
- */
-function theme_uc_product_display_price($price, $teaser = 0, $page = 0) {
-  $output = '<div class="display-price">';
-  $output .= uc_currency_format($price);
-  $output .= '</div>';
   return $output;
 }
 
@@ -1644,7 +1608,7 @@ function uc_product_get_picture($node_id, $format = 'product') {
       $img = theme('imagecache', $format, $path, $image['alt'], $image['title']);
       if ($format == 'product') {
         if ($image_widget) {
-          $output .= '<a title="'. $image['title'] .'" href="'. check_url(file_create_url($path)) .'" '. $image_widget_func(NULL) .'>';
+          $output .= '<a title="'. $image['title'] .'" href="'. imagecache_create_url('product_full', $path) .'" '. $image_widget_func(NULL) .'>';
         }
         $output .= $img;
         if ($image_widget) {

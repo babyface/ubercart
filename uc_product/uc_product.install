@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.install,v 1.12.2.7 2009/02/04 13:44:32 islandusurper Exp $
+// $Id: uc_product.install,v 1.12.2.8 2009/02/10 21:58:15 islandusurper Exp $
 
 /**
  * @file
@@ -568,6 +568,30 @@ function uc_product_update_6006() {
   db_change_field($ret, 'uc_products', 'length', 'length', $schema['float_spec'] + array('description' => t('Physical length of the product or its packaging.')));
   db_change_field($ret, 'uc_products', 'width', 'width', $schema['float_spec'] + array('description' => t('Physical width of the product or its packaging.')));
   db_change_field($ret, 'uc_products', 'height', 'height', $schema['float_spec'] + array('description' => t('Physical height of the product or its packaging.')));
+
+  return $ret;
+}
+
+// Update old product images to the imagefield widget type.
+function uc_product_update_6007() {
+  $ret = array();
+
+  if (db_table_exists('content_node_field_instance')) {
+    $ret[] = update_sql("UPDATE {content_node_field_instance} SET widget_type = 'imagefield_widget' WHERE field_name = 'field_image_cache'");
+  }
+
+  return $ret;
+}
+
+function uc_product_update_6008() {
+  $ret = array();
+
+  if (db_table_exists('imagecache_preset')) {
+    $result = db_result(db_query("SELECT COUNT(presetid) FROM {imagecache_preset} WHERE presetname = 'product_full'"));
+    if (!$result) {
+      $ret[] = update_sql("INSERT INTO {imagecache_preset} (presetname) VALUES ('product_full')");
+    }
+  }
 
   return $ret;
 }

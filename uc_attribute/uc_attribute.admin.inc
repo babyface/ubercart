@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.6 2009/02/04 13:44:34 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.7 2009/02/10 21:58:12 islandusurper Exp $
 
 /**
  * @file
@@ -12,7 +12,7 @@ function uc_attribute_admin() {
   $header = array(
     array('data' => t('Name'), 'field' => 'a.name', 'sort' => 'asc'),
     t('Required'),
-    array('data' => t('Order'), 'field' => 'a.ordering'),
+    array('data' => t('List position'), 'field' => 'a.ordering'),
     t('Number of options'),
     t('Display type'),
     t('Operations'),
@@ -93,7 +93,7 @@ function uc_attribute_form($form_state, $attribute = NULL) {
   );
   $form['ordering'] = array(
     '#type' => 'weight',
-    '#title' => t('Order'),
+    '#title' => t('List position'),
     '#description' => t('Multiple attributes on an add to cart form are sorted by this value and then by their name.<br />May be overridden at the product level.'),
     '#default_value' => isset($attribute->ordering) ? $attribute->ordering : 0,
   );
@@ -243,7 +243,7 @@ function uc_attribute_options_form_submit($form, &$form_state) {
  */
 function theme_uc_attribute_options_form($form) {
 
-  $header = array(t('Name'), t('Default cost'), t('Default price'), t('Default weight'), array('data' => t('Order'), 'sort' => 'asc'), t('Operations'));
+  $header = array(t('Name'), t('Default cost'), t('Default price'), t('Default weight'), array('data' => t('List position'), 'sort' => 'asc'), t('Operations'));
 
   if (count(element_children($form['options'])) > 0) {
     foreach (element_children($form['options']) as $oid) {
@@ -314,7 +314,7 @@ function uc_attribute_option_form($form_state, $attribute, $option = NULL) {
   );
   $form['ordering'] = array(
     '#type' => 'weight',
-    '#title' => t('Order'),
+    '#title' => t('List position'),
     '#description' => t('Options will be listed sorted by this value and then by their name.<br />May be overridden at the product level.'),
     '#default_value' => isset($option->ordering) ? $option->ordering : 0,
     '#weight' => 4,
@@ -543,7 +543,7 @@ function uc_object_attributes_form($form_state, $object, $type, $view = 'overvie
  */
 function theme_uc_object_attributes_form($form) {
   if ($form['view']['#value'] == 'overview') {
-    $header = array(t('Remove'), t('Name'), t('Default'), t('Required'), t('Order'), t('Display'));
+    $header = array(t('Remove'), t('Name'), t('Default'), t('Required'), t('List position'), t('Display'));
 
     if (count(element_children($form['attributes'])) > 0) {
       foreach (element_children($form['attributes']) as $aid) {
@@ -766,7 +766,7 @@ function uc_object_options_form($form_state, $object, $type) {
  * @ingroup themeable
  */
 function theme_uc_object_options_form($form) {
-  $header = array(t('Options'), t('Default'), t('Cost'), t('Price'), t('Weight'), t('Order'));
+  $header = array(t('Options'), t('Default'), t('Cost'), t('Price'), t('Weight'), t('List position'));
   $table_id_num = $tables = 0;
 
   foreach (element_children($form['attributes']) as $key) {
@@ -901,7 +901,7 @@ function uc_product_adjustments_form($form_state, $node) {
   $query_from = " FROM";
   $query_where = " WHERE";
   $query_order = " ORDER BY";
-  $result = db_query("SELECT pa.nid, pa.aid, pa.ordering, a.name, a.ordering, ao.aid, COUNT(po.oid) FROM {uc_product_attributes} AS pa LEFT JOIN {uc_attributes} AS a ON pa.aid = a.aid LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid LEFT JOIN {uc_product_options} AS po ON ao.oid = po.oid AND po.nid = %d WHERE pa.nid = %d GROUP BY ao.aid, pa.aid, a.name, pa.ordering, a.ordering HAVING count(po.oid) > 0 ORDER BY pa.ordering, a.ordering", $nid, $nid);
+  $result = db_query("SELECT pa.nid, pa.aid, pa.ordering, a.name, a.ordering, ao.aid, COUNT(po.oid) FROM {uc_product_attributes} AS pa LEFT JOIN {uc_attributes} AS a ON pa.aid = a.aid LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid LEFT JOIN {uc_product_options} AS po ON ao.oid = po.oid AND po.nid = %d WHERE pa.nid = %d GROUP BY ao.aid, pa.aid, a.name, pa.ordering, a.ordering, pa.nid HAVING count(po.oid) > 0 ORDER BY pa.ordering, a.ordering", $nid, $nid);
   $i = 1;
   $attribute_names = '';
   $full_attributes = array();

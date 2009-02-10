@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.ca.inc,v 1.1.2.3 2009/01/19 20:31:25 islandusurper Exp $
+// $Id: uc_file.ca.inc,v 1.1.2.4 2009/02/10 21:58:14 islandusurper Exp $
 
 /**
  * @file
@@ -319,5 +319,7 @@ function uc_file_action_order_renew($order) {
   }
 
   // Notify the user of their download(s).
-  ca_pull_trigger('uc_file_notify_grant', $order, $user_downloads);
+  if ($user_downloads) {
+    ca_pull_trigger('uc_file_notify_grant', $order, $user_downloads);
+  }
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.admin.inc,v 1.1.2.8 2009/02/04 13:44:32 islandusurper Exp $
+// $Id: uc_flatrate.admin.inc,v 1.1.2.9 2009/02/10 21:58:13 islandusurper Exp $
 
 /**
  * @file
@@ -24,7 +24,7 @@ function uc_flatrate_admin_methods() {
     $row[] = uc_currency_format($method->base_rate);
     $row[] = uc_currency_format($method->product_rate);
     $row[] = l(t('edit'), 'admin/store/settings/quotes/methods/flatrate/'. $method->mid);
-    $row[] = l(t('conditions'), 'admin/settings/ca/uc_flatrate_get_quote_'. $method->mid .'/edit/conditions');
+    $row[] = l(t('conditions'), CA_UI_PATH .'/uc_flatrate_get_quote_'. $method->mid .'/edit/conditions');
     $rows[] = $row;
   }
   if (count($rows)) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.1 2009/01/19 20:37:30 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.2 2009/02/10 21:58:16 islandusurper Exp $
 
 /**
  * @file
@@ -840,7 +840,7 @@ function uc_google_checkout_accept_risk($risk) {
     $assessment .= '<br />';
     $assessment .= format_plural($risk_info->{'buyer-account-age'}, 'Google Checkout member for @count month.', 'Google Checkout member for @count months.');
     $assessment .= '<br />';
-    $assessment .= t('Eligible for protection: <strong>@bool</strong', array('@bool' => drupal_strtoupper($risk_info->{'eligible-for-protection'})));
+    $assessment .= t('Eligible for protection: <strong>@bool</strong>', array('@bool' => drupal_strtoupper($risk_info->{'eligible-for-protection'})));
     uc_order_comment_save($order_id, 0, $assessment, 'admin', 'chargeable');
     uc_google_checkout_notification_acknowledgement($risk['serial-number']);
   }

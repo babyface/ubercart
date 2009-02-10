@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.12 2009/01/19 20:31:26 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.13 2009/02/10 21:58:14 islandusurper Exp $
 
 /**
  * @file
@@ -68,7 +68,7 @@ function uc_order_ca_predicate() {
   $predicates['uc_order_update_email_customer'] = array(
     '#title' => t('E-mail an order update notification'),
     '#description' => t('Notify the customer when the order status is changed.'),
-    '#class' => 'order',
+    '#class' => 'notification',
     '#status' => 1,
     '#trigger' => 'uc_order_status_email_update',
     '#conditions' => array(

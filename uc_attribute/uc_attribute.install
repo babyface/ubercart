@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.install,v 1.10.2.4 2008/12/09 15:20:35 islandusurper Exp $
+// $Id: uc_attribute.install,v 1.10.2.5 2009/02/10 21:58:12 islandusurper Exp $
 
 /**
  * @file
@@ -25,7 +25,7 @@ function uc_attribute_schema() {
         'default' => '',
       ),
       'ordering' => array(
-        'description' => t('Determines the sort order of attributes.'),
+        'description' => t('Determines the list position of attributes.'),
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,
@@ -104,7 +104,7 @@ function uc_attribute_schema() {
         'default' => 0,
       ),
       'ordering' => array(
-        'description' => t('Affects the sort order of the options.'),
+        'description' => t('Affects the list position of the options.'),
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,
@@ -132,7 +132,7 @@ function uc_attribute_schema() {
         'default' => 0,
       ),
       'ordering' => array(
-        'description' => t('Determines the sort order of attributes.'),
+        'description' => t('Determines the list position of attributes.'),
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,
@@ -205,7 +205,7 @@ function uc_attribute_schema() {
         'default' => 0,
       ),
       'ordering' => array(
-        'description' => t('Affects the sort order of the options.'),
+        'description' => t('Affects the list position of the options.'),
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,
@@ -233,7 +233,7 @@ function uc_attribute_schema() {
         'default' => 0,
       ),
       'ordering' => array(
-        'description' => t('Determines the sort order of attributes.'),
+        'description' => t('Determines the list position of attributes.'),
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,
@@ -306,7 +306,7 @@ function uc_attribute_schema() {
         'default' => 0,
       ),
       'ordering' => array(
-        'description' => t('Affects the sort order of the options.'),
+        'description' => t('Affects the list position of the options.'),
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,

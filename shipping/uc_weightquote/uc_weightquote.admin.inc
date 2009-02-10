@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.admin.inc,v 1.1.2.3 2009/01/02 20:18:42 islandusurper Exp $
+// $Id: uc_weightquote.admin.inc,v 1.1.2.4 2009/02/10 21:58:15 islandusurper Exp $
 
 /**
  * @file
@@ -11,7 +11,7 @@
  */
 function uc_weightquote_admin_settings() {
   $form['uc_weightquote_conditions'] = array(
-    '#value' => '<p>'. l(t('Set the conditions that will return a weight-based quote.'), 'admin/settings/ca/uc_weightquote_get_quote/edit/conditions') .'</p>',
+    '#value' => '<p>'. l(t('Set the conditions that will return a weight-based quote.'), CA_UI_PATH .'/uc_weightquote_get_quote/edit/conditions') .'</p>',
   );
 
   $form['uc_weightquote_base_rate'] = array('#type' => 'textfield',

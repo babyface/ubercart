@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.admin.inc,v 1.1.2.6 2009/01/19 20:31:21 islandusurper Exp $
+// $Id: uc_payment.admin.inc,v 1.1.2.7 2009/02/10 21:58:17 islandusurper Exp $
 
 /**
  * @file
@@ -62,7 +62,7 @@ function uc_payment_methods_form() {
 
   $form['methods_info'] = array(
     '#value' => '<div><strong>'. t('Payment methods') .'</strong><br />'
-              . t('The settings forms below are for the payment methods defined by enabled modules. Click a name to expand its options and adjust the settings accordingly. Methods are listed in order of appearance on the checkout screen, determined by the weight setting (current value shown in parentheses).') .'</div><br />',
+              . t('The settings forms below are for the payment methods defined by enabled modules. Click a name to expand its options and adjust the settings accordingly. Methods are listed in order of appearance on the checkout screen, determined by the list position setting (current value shown in parentheses).') .'</div><br />',
   );
 
   $form['pmtable'] = array(
@@ -139,7 +139,7 @@ function uc_payment_methods_form() {
 }
 
 function theme_uc_payment_method_table($form) {
-  $header = array(t('Enabled'), t('Payment method'), t('Weight'), t('Default gateway'));
+  $header = array(t('Enabled'), t('Payment method'), t('List position'), t('Default gateway'));
 
   foreach (element_children($form) as $method) {
     $rows[] = array(
@@ -222,7 +222,7 @@ function _uc_payment_gateways_summarize($form, $gateways) {
     $items[] = t('@title is @enabled.', array('@title' => $gateway['title'], '@enabled' => $gateway['enabled'] ? t('enabled') : t('disabled')));
   }
 
-  if (count($items)) {
+  if (empty($items)) {
     $items[] = t('No payment gateway modules are installed.');
   }
 

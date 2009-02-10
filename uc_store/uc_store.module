@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.13 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.14 2009/02/10 21:58:17 islandusurper Exp $
 
 /**
  * @file
@@ -474,11 +474,9 @@ function uc_store_footer() {
         break;
       }
     case 'node':
-      if (intval($parts[1]) > 0) {
-        if ($node = node_load($parts[1])) {
-          if (function_exists('uc_product_node_info') && !uc_product_is_product($node->type)) {
-            break;
-          }
+      if (count($parts) > 1 && intval($parts[1]) > 0 && $node = node_load($parts[1])) {
+        if (function_exists('uc_product_node_info') && !uc_product_is_product($node->type)) {
+          break;
         }
       }
     case 'catalog':
@@ -1468,7 +1466,7 @@ function theme_uc_pane_sort_table($form) {
     $attributes = array();
   }
 
-  $header = array(t('Enabled'), t('Title'), t('Weight'));
+  $header = array(t('Enabled'), t('Title'), t('List position'));
 
   foreach (element_children($form) as $pane_id) {
     $rows[] = array(

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.9 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.10 2009/02/10 21:58:14 islandusurper Exp $
 
 /**
  * @file
@@ -362,7 +362,7 @@ function uc_order_status_create_form() {
 
   $form['status_weight'] = array(
     '#type' => 'weight',
-    '#title' => t('Weight'),
+    '#title' => t('List position'),
     '#delta' => 20,
     '#default_value' => 0,
   );

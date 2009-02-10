@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.admin.inc,v 1.1.2.4 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_ups.admin.inc,v 1.1.2.5 2009/02/10 21:58:16 islandusurper Exp $
 
 /**
  * @file
@@ -19,7 +19,7 @@ function uc_ups_admin_settings() {
   $form = array();
 
   $form['uc_ups_conditions'] = array(
-    '#value' => '<p>'. l(t('Set the conditions that will return a UPS quote.'), 'admin/settings/ca/uc_ups_get_quote/edit/conditions') .'</p>',
+    '#value' => '<p>'. l(t('Set the conditions that will return a UPS quote.'), CA_UI_PATH .'/uc_ups_get_quote/edit/conditions') .'</p>',
   );
 
   $form['uc_ups_access_license'] = array('#type' => 'textfield',
@@ -114,7 +114,7 @@ function uc_ups_admin_settings() {
       0 => t('Each in its own package'),
       1 => t('All in one'),
     ),
-    '#description' => t('Indicate whether each product is quoted as shipping separately or all in one package.'),
+    '#description' => t('Indicate whether each product is quoted as shipping separately or all in one package. Orders with one kind of product will still use the package quantity to determine the number of packages needed, however.'),
   );
   $form['uc_ups_unit_system'] = array('#type' => 'select',
     '#title' => t('System of measurement'),

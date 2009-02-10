@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.12 2009/02/04 13:44:33 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.13 2009/02/10 21:58:13 islandusurper Exp $
 
 /**
  * @file
@@ -195,10 +195,10 @@ function uc_quote_form_alter(&$form, &$form_state, $form_id) {
 
     $types = uc_quote_shipping_type_options();
     if (is_array($types)) {
-      $types = array_merge(array('' => t('<Store default>')), $types);
+      $types = array_merge(array('' => t('- Store default -')), $types);
     }
     else {
-      $types = array('' => t('<Store default>'));
+      $types = array('' => t('- Store default -'));
     }
     $form['shipping']['shipping_type'] = array('#type' => 'select',
       '#title' => t('Default product shipping type'),

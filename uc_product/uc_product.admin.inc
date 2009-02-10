@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.admin.inc,v 1.1.2.9 2009/02/04 13:44:32 islandusurper Exp $
+// $Id: uc_product.admin.inc,v 1.1.2.10 2009/02/10 21:58:15 islandusurper Exp $
 
 /**
  * @file
@@ -266,7 +266,7 @@ function _uc_product_fields_summarize($form, $options, $enabled, $weight) {
  * @see uc_product_field_settings_form()
  */
 function theme_uc_product_field_settings_form($form) {
-  $header = array(t('Enable'), t('Product field'), t('Weight'));
+  $header = array(t('Enable'), t('Product field'), t('List position'));
   $rows = array();
   foreach (element_children($form['fields']) as $field) {
     $row = array();
@@ -503,7 +503,7 @@ function uc_product_feature_add_form_submit($form, &$form_state) {
 function uc_product_image_defaults() {
   uc_product_add_default_image_field();
 
-  $presets = array('product', 'product_list', 'uc_thumbnail');
+  $presets = array('product', 'product_full', 'product_list', 'uc_thumbnail');
   if (module_exists('uc_catalog')) {
     $presets[] = 'uc_category';
   }
@@ -570,12 +570,16 @@ function uc_product_class_form($form_state, $class = NULL) {
     $classname = $class->name;
     $classdesc = $class->description;
     drupal_set_title(check_plain($classname));
-    $form['pcid'] = array('#type' => 'hidden', '#value' => $class->pcid);
+    $form['pcid'] = array(
+      '#type' => 'hidden',
+      '#value' => $class->pcid
+    );
   }
   else {
     $classname = '';
     $classdesc = '';
-    $form['pcid'] = array('#type' => 'textfield',
+    $form['pcid'] = array(
+      '#type' => 'textfield',
       '#title' => t('Class ID'),
       '#required' => TRUE,
       '#max_length' => 32,
@@ -602,33 +606,47 @@ function uc_product_class_form($form_state, $class = NULL) {
   return $form;
 }
 
+function uc_product_class_form_validate($form, &$form_state) {
+  if ($form['pcid']['#type'] == 'textfield') {
+    $type = node_get_types('type', $form_state['values']['pcid']);
+    if ($type) {
+      if ($type->module == 'uc_product') {
+        form_set_error('pcid', t('This product class already exists.'));
+      }
+      elseif ($type->custom == 0) {
+        form_set_error('pcid', t('This is a node type provided by another module. Only custom node types may become product classes.'));
+      }
+    }
+  }
+}
+
 /**
  * Submit handler for uc_product_class_form.
  */
 function uc_product_class_form_submit($form, &$form_state) {
-  if (uc_product_class_load($form_state['values']['pcid'])) {
-    $is_new = FALSE;
-    $pcid = $form_state['values']['pcid'];
-    db_query("UPDATE {uc_product_classes} SET name = '%s', description = '%s' WHERE pcid = '%s'", $form_state['values']['name'], $form_state['values']['description'], $pcid);
-    uc_product_node_info(TRUE);
-    module_invoke_all('product_class', $pcid, 'update');
-  }
-  else {
-    $is_new = TRUE;
+  $is_new = $form['pcid']['#type'] == 'textfield';
+
+  $pcid = $form_state['values']['pcid'];
+
+  if ($is_new) {
     // Convert whitespace to underscores, and remove other non-alphanumeric characters.
-    $pcid = preg_replace(array('/\s+/', '/\W/'), array('_', ''), strtolower($form_state['values']['pcid']));
-    // Search for class ids of the form $pcid_# where # is any character.
-    $similar = db_result(db_query("SELECT COUNT(pcid) FROM {uc_product_classes} WHERE pcid LIKE '%s\\__' OR pcid LIKE '%s' UNION SELECT type FROM {node_type} WHERE type = '%s' AND custom = 0", $pcid, $pcid, $pcid));
-    if ($similar) {
-      $pcid = $pcid .'_'. $similar;
-    }
+    $pcid = preg_replace(array('/\s+/', '/\W/'), array('_', ''), strtolower($pcid));
+
     db_query("INSERT INTO {uc_product_classes} (pcid, name, description) VALUES ('%s', '%s', '%s')", $pcid, $form_state['values']['name'], $form_state['values']['description']);
     uc_product_node_info(TRUE);
     variable_set('node_options_'. $pcid, variable_get('node_options_product', array('status', 'promote')));
+
     if (module_exists('comment')) {
       variable_set('comment_'. $pcid, variable_get('comment_product', COMMENT_NODE_READ_WRITE));
     }
+
     module_invoke_all('product_class', $pcid, 'insert');
+  }
+  else {
+    db_query("UPDATE {uc_product_classes} SET name = '%s', description = '%s' WHERE pcid = '%s'", $form_state['values']['name'], $form_state['values']['description'], $pcid);
+    uc_product_node_info(TRUE);
+
+    module_invoke_all('product_class', $pcid, 'update');
   }
 
   node_types_rebuild();

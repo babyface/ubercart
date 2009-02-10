@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.admin.inc,v 1.1.2.7 2009/01/19 20:31:23 islandusurper Exp $
+// $Id: uc_quote.admin.inc,v 1.1.2.8 2009/02/10 21:58:13 islandusurper Exp $
 
 /**
  * @file
@@ -206,8 +206,8 @@ function uc_quote_method_settings() {
   $shipping_types = uc_quote_shipping_type_options();
   if (is_array($shipping_types)) {
     $form['uc_quote_type_weight'] = array('#type' => 'fieldset',
-      '#title' => t('Type ordering'),
-      '#description' => t('Determines which shipping methods are quoted at checkout when products of different shipping types are ordered. Lighter weights are chosen first.'),
+      '#title' => t('List position'),
+      '#description' => t('Determines which shipping methods are quoted at checkout when products of different shipping types are ordered. Smaller positions are chosen first.'),
       '#collapsible' => TRUE,
       '#summary callback' => 'summarize_null',
       '#tree' => TRUE,
@@ -250,7 +250,7 @@ function theme_uc_quote_method_settings($form) {
   $methods = uc_quote_shipping_method_options();
   $output = '';
 
-  $header = array(t('Enable'), t('Shipping method'), t('Weight'));
+  $header = array(t('Enable'), t('Shipping method'), t('List position'));
   $rows = array();
   foreach (element_children($form['methods']) as $method) {
     $row = array();

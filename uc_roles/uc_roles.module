@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.2.2.12 2009/02/04 13:44:32 islandusurper Exp $
+// $Id: uc_roles.module,v 1.2.2.13 2009/02/10 21:58:17 islandusurper Exp $
 
 /**
  * @file
@@ -798,6 +798,21 @@ function uc_roles_feature_form_validate($form, &$form_state) {
 }
 
 /**
+ * Little helper for cleaning up input to drupal_write_record().
+ */
+function uc_roles_product_write_record($product_role) {
+  foreach (array('duration', 'granularity', 'end_time') as $property) {
+    $product_role[$property] = $product_role[$property] === NULL ? 0 : $product_role[$property];
+  }
+
+  $key = NULL;
+  if ($product_role['rpid']) {
+    $key = 'rpid';
+  }
+  drupal_write_record('uc_roles_products', $product_role, $key);
+}
+
+/**
  * Form submit handler for the roles feature form.
  */
 function uc_roles_feature_form_submit($form, &$form_state) {
@@ -809,40 +824,46 @@ function uc_roles_feature_form_submit($form, &$form_state) {
     'model'       => $form_state['values']['uc_roles_model'],
     'rid'         => $form_state['values']['uc_roles_role'],
     'duration'    => $form_state['values']['uc_roles_expire_relative_granularity'] != 'never' ? $form_state['values']['uc_roles_expire_relative_duration'] : NULL,
-    'granularity' => $form_state['values']['uc_roles_expire_relative_granularity'] != 'never' ? $form_state['values']['uc_roles_expire_relative_granularity'] : NULL,
+    'granularity' => $form_state['values']['uc_roles_expire_relative_granularity'],
     'by_quantity' => $form_state['values']['uc_roles_by_quantity'],
     'shippable'   => $form_state['values']['uc_roles_shippable'],
 
     // We should be setting NULL, but drupal_write_record() ...
     'end_override' => $form_state['values']['end_override'],
-    'end_time'     => $form_state['values']['expiration'  ] === 'abs' ? $form_state['values']['uc_roles_expire_absolute'] : 0,
+    'end_time'     => $form_state['values']['expiration'  ] === 'abs' ? $form_state['values']['uc_roles_expire_absolute'] : NULL,
   );
 
   $description = empty($product_role['model']) ? t('<strong>SKU:</strong> Any<br/>') : t('<strong>SKU:</strong> !sku<br/>', array('!sku' => $product_role['model']));
   $description .=  t('<strong>Role:</strong> !role_name<br/>', array('!role_name' => _uc_roles_get_name($product_role['rid'])));
-  if ($product_role['end_time']) {
-    $description .= t('<strong>Expiration:</strong> !date<br />', array('!date' => format_date($product_role['end_time'])));
+
+  if ($product_role['end_override']) {
+    if ($product_role['end_time']) {
+      $description .= t('<strong>Expiration:</strong> !date<br />', array('!date' => format_date($product_role['end_time'])));
+    }
+    else {
+      switch ($product_role['granularity']) {
+        case 'never':
+          $description .= t('<strong>Expiration:</strong> never<br/>');
+          break;
+        case 'day':
+          $description .= t('<strong>Expiration:</strong> !qty day(s)<br/>', array('!qty' => $product_role['duration']));
+          break;
+        case 'week':
+          $description .= t('<strong>Expiration:</strong> !qty week(s)<br/>', array('!qty' => $product_role['duration']));
+          break;
+        case 'month':
+          $description .= t('<strong>Expiration:</strong> !qty month(s)<br/>', array('!qty' => $product_role['duration']));
+          break;
+        case 'year':
+          $description .= t('<strong>Expiration:</strong> !qty year(s)<br/>', array('!qty' => $product_role['duration']));
+          break;
+        default:
+          break;
+      }
+    }
   }
   else {
-    switch ($product_role['granularity']) {
-      case NULL:
-        $description .= t('<strong>Expiration:</strong> never<br/>');
-        break;
-      case 'day':
-        $description .= t('<strong>Expiration:</strong> !qty day(s)<br/>', array('!qty' => $product_role['duration']));
-        break;
-      case 'week':
-        $description .= t('<strong>Expiration:</strong> !qty week(s)<br/>', array('!qty' => $product_role['duration']));
-        break;
-      case 'month':
-        $description .= t('<strong>Expiration:</strong> !qty month(s)<br/>', array('!qty' => $product_role['duration']));
-        break;
-      case 'year':
-        $description .= t('<strong>Expiration:</strong> !qty year(s)<br/>', array('!qty' => $product_role['duration']));
-        break;
-      default:
-        break;
-    }
+    $description .= t('<strong>Expiration:</strong> !link (not overridden)<br/>', array('!link' => l(t('Global expiration'), 'admin/store/settings/products/edit/features')));
   }
   $description .= $product_role['shippable'] ? t('<strong>Shippable:</strong> Yes<br/>') : t('<strong>Shippable:</strong> No<br/>');
   $description .= $product_role['by_quantity'] ? t('<strong>Multiply by quantity:</strong> Yes') : t('<strong>Multiply by quantity:</strong> No');
@@ -861,11 +882,7 @@ function uc_roles_feature_form_submit($form, &$form_state) {
     $product_role['pfid'] = db_last_insert_id('uc_product_features', 'pfid');
   }
 
-  $key = NULL;
-  if ($product_role['rpid']) {
-    $key = 'rpid';
-  }
-  drupal_write_record('uc_roles_products', $product_role, $key);
+  uc_roles_product_write_record($product_role);
 }
 
 /**
@@ -1293,7 +1310,7 @@ function _uc_roles_product_get_expiration($role_product, $quantity, $time) {
 function _uc_roles_get_expiration($duration, $granularity, $start_time = NULL) {
 
   // Never expires?
-  if (!$granularity) {
+  if ($granularity == 'never') {
     return NULL;
   }
 

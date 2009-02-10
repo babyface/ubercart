@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.install,v 1.10.2.4 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_taxes.install,v 1.10.2.5 2009/02/10 21:58:14 islandusurper Exp $
 
 /**
  * @file
@@ -26,6 +26,13 @@ function uc_taxes_schema() {
         'type' => 'float',
         'not null' => TRUE,
         'default' => 0.0,
+      ),
+      'shippable' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
       ),
       'taxed_product_types' => array(
         'description' => t('Serialized array of node types to be taxed.'),
@@ -208,6 +215,22 @@ function uc_taxes_update_6() {
   return $ret;
 }
 
+function uc_taxes_update_7() {
+  $ret = array();
+
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {uc_taxes} ADD COLUMN shippable tinyint UNSIGNED NOT NULL default 0");
+      break;
+    case 'pgsql':
+      db_add_column($ret, 'uc_taxes', 'shippable', 'smallint_unsigned', array('not null' => TRUE, 'default' => 0));
+      break;
+  }
+
+  return $ret;
+}
+
 function uc_taxes_update_6000() {
   $ret = array();
 
@@ -230,6 +253,16 @@ function uc_taxes_update_6001() {
     ),
   );
   db_change_field($ret, 'uc_taxes', 'rate', 'rate', $schema['rate']);
+
+  return $ret;
+}
+
+function uc_taxes_update_6002() {
+  $ret = array();
+
+  if (!db_column_exists('uc_taxes', 'shippable')) {
+    db_add_field($ret, 'uc_taxes', 'shippable', array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  }
 
   return $ret;
 }

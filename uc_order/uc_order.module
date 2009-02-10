@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.13 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.14 2009/02/10 21:58:14 islandusurper Exp $
 
 /**
  * @file
@@ -708,7 +708,7 @@ function theme_uc_order_state_table($form) {
 
 // Theme the order state table in the order workflow settings.
 function theme_uc_order_status_table($form) {
-  $header = array(t('ID'), t('Title'), t('Weight'), t('State'), t('Remove'));
+  $header = array(t('ID'), t('Title'), t('List position'), t('State'), t('Remove'));
 
   foreach (element_children($form) as $state_id) {
     if ($state_id == 'create') {

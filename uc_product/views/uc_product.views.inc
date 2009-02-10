@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.views.inc,v 1.1.2.2 2008/11/07 21:13:28 islandusurper Exp $
+// $Id: uc_product.views.inc,v 1.1.2.3 2009/02/10 21:58:14 islandusurper Exp $
 
 /**
  * @file
@@ -102,7 +102,7 @@ function uc_product_views_data() {
   );
 
   $data['uc_products']['ordering'] = array(
-    'title' => t('Ordering'),
+    'title' => t('List position'),
     'help' => t('The default sort criteria in the catalog.'),
     'sort' => array(
       'handler' => 'views_handler_sort',

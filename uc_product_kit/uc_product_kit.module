@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.11 2009/02/04 13:44:34 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.12 2009/02/10 21:58:15 islandusurper Exp $
 
 /**
  * @file
@@ -288,13 +288,11 @@ function uc_product_kit_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
  */
 function uc_product_kit_forms($form_id, $args) {
   $forms = array();
-  if (substr($form_id, 0, 31) == 'uc_product_kit_add_to_cart_form' || substr($form_id, 0, 27) == 'uc_product_add_to_cart_form' || substr($form_id, 0, 26) == 'uc_catalog_buy_it_now_form') {
-    $product = $args[0];
-    if ($product->type == 'product_kit') {
-      $forms['uc_product_kit_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_kit_add_to_cart_form');
-      $forms['uc_product_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_kit_add_to_cart_form');
-      $forms['uc_catalog_buy_it_now_form_'. $product->nid] = array('callback' => 'uc_product_kit_buy_it_now_form');
-    }
+  $product = $args[0];
+  if ($product->type == 'product_kit') {
+    $forms['uc_product_kit_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_kit_add_to_cart_form');
+    $forms['uc_product_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_kit_add_to_cart_form');
+    $forms['uc_catalog_buy_it_now_form_'. $product->nid] = array('callback' => 'uc_product_kit_buy_it_now_form');
   }
   return $forms;
 }
@@ -395,7 +393,7 @@ function uc_product_kit_form(&$node) {
         '#size' => 5,
       );
       $form['base']['items'][$i]['ordering'] = array('#type' => 'weight',
-        '#title' => t('Ordering'),
+        '#title' => t('List position'),
         '#default_value' => isset($product->ordering) ? $product->ordering : 0,
       );
       $item = node_load($i);
@@ -416,7 +414,7 @@ function uc_product_kit_form(&$node) {
     '#maxlength' => 6,
   );
   $form['base']['ordering'] = array('#type' => 'weight',
-    '#title' => t('List order'),
+    '#title' => t('List position'),
     '#delta' => 25,
     '#default_value' => $node->ordering,
     '#weight' => 30,
@@ -460,7 +458,7 @@ function uc_product_kit_view($node, $teaser = 0, $page = 0) {
       '#weight' => $weight['image'],
     );
   }
-  $node->content['display_price'] = array('#value' => theme('uc_product_display_price', $node->sell_price),
+  $node->content['display_price'] = array('#value' => theme('uc_product_price', $node->sell_price, 'display-price', TRUE),
     '#access' => $enabled['display_price'],
     '#weight' => $weight['display_price'],
   );
@@ -470,7 +468,7 @@ function uc_product_kit_view($node, $teaser = 0, $page = 0) {
       '#weight' => $weight['model'],
     );
     $node->content['body']['#weight'] = 1;
-    $node->content['list_price'] = array('#value' => theme('uc_product_price', $node->list_price, 'list_price'),
+    $node->content['list_price'] = array('#value' => theme('uc_product_price', $node->list_price, 'list-price'),
       '#access' => $enabled['list_price'],
       '#weight' => $weight['list_price'],
     );
@@ -483,7 +481,7 @@ function uc_product_kit_view($node, $teaser = 0, $page = 0) {
     $node->content['#attributes'] = array('style' => 'display: inline');
   }
 
-  $node->content['sell_price'] = array('#value' => theme('uc_product_sell_price', $node->sell_price, $teaser),
+  $node->content['sell_price'] = array('#value' => theme('uc_product_price', $node->sell_price, 'sell-price', $teaser),
     '#access' => $enabled['sell_price'],
     '#weight' => $weight['sell_price'],
   );
