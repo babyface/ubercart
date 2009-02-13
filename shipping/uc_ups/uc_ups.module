@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.5.2.8 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_ups.module,v 1.5.2.9 2009/02/13 22:01:14 islandusurper Exp $
 
 /**
  * @file
@@ -70,27 +70,27 @@ function uc_ups_theme() {
  * @see uc_ups_product_alte_validate()
  */
 function uc_ups_form_alter(&$form, &$form_state, $form_id) {
-  if (isset($form['#node'])) {
+  if (uc_product_is_product_form($form)) {
     $node = $form['#node'];
-    if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && uc_product_is_product($node->type)) {
-      $enabled = variable_get('uc_quote_enabled', array());
-      $weight = variable_get('uc_quote_method_weight', array('ups' => 0));
-      $ups = array('#type' => 'fieldset',
-        '#title' => t('UPS product description'),
-        '#collapsible' => TRUE,
-        '#collapsed' => ($enabled['ups'] == FALSE || uc_product_get_shipping_type($node) != 'small_package'),
-        '#weight' => $weight['ups'],
-        '#tree' => TRUE,
-      );
-      $ups['pkg_type'] = array('#type' => 'select',
-        '#title' => t('Package type'),
-        '#options' => _uc_ups_pkg_types(),
-        '#default_value' => $node->ups['pkg_type'] ? $node->ups['pkg_type'] : '02',
-      );
-      $form['shipping']['ups'] = $ups;
-      if ($enabled['ups']) {
-        $form['#validate'][] = 'uc_ups_product_alter_validate';
-      }
+    $enabled = variable_get('uc_quote_enabled', array());
+    $weight = variable_get('uc_quote_method_weight', array('ups' => 0));
+    $ups = array(
+      '#type' => 'fieldset',
+      '#title' => t('UPS product description'),
+      '#collapsible' => TRUE,
+      '#collapsed' => ($enabled['ups'] == FALSE || uc_product_get_shipping_type($node) != 'small_package'),
+      '#weight' => $weight['ups'],
+      '#tree' => TRUE,
+    );
+    $ups['pkg_type'] = array(
+      '#type' => 'select',
+      '#title' => t('Package type'),
+      '#options' => _uc_ups_pkg_types(),
+      '#default_value' => $node->ups['pkg_type'] ? $node->ups['pkg_type'] : '02',
+    );
+    $form['shipping']['ups'] = $ups;
+    if ($enabled['ups']) {
+      $form['#validate'][] = 'uc_ups_product_alter_validate';
     }
   }
 }

@@ -1,4 +1,4 @@
-// $Id: uc_taxes.js,v 1.10.2.5 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_taxes.js,v 1.10.2.6 2009/02/13 22:01:13 islandusurper Exp $
 
 /**
  * Calculate the number of bytes of a Unicode string.
@@ -34,6 +34,7 @@ $(document).ready(function() {
     + "select[@name*=billing_zone], "
     + "input[@name*=billing_city], "
     + "input[@name*=billing_postal_code]").change(getTax);
+  $('#edit-panes-payment-current-total').click(getTax);
 });
 
 function getTax() {
@@ -98,24 +99,57 @@ function getTax() {
       dataType: "json",
       success: function(taxes) {
         var key;
-        for (key in li_titles) {
-          if (key.substr(0, 4) == 'tax_') {
-            delete li_titles[key];
-            delete li_values[key];
-            delete li_weight[key];
-          }
-        }
+        var render;
+        var i;
         var j;
         for (j in taxes) {
-          if (taxes[j].id == 'subtotal') {
-            summed = 0;
+          key = 'tax_' + taxes[j].id;
+          // Check that this tax is a new line item, or updates its amount.
+          if (!li_values[key] || li_values[key] != taxes[j].amount) {
+            // The "Subtotal before taxes" line item is not added into the
+            // Total line item.
+            if (taxes[j].id == 'subtotal') {
+              summed = 0;
+            }
+            else {
+              summed = 1;
+            }
+
+            set_line_item(key, taxes[j].name, taxes[j].amount, Drupal.settings.ucTaxWeight + taxes[j].weight / 10, summed, false);
+
+            // Set flag to render all line items at once.
+            render = true;
           }
-          else {
-            summed = 1;
-          }
-          set_line_item("tax_" + taxes[j].id, taxes[j].name, taxes[j].amount, Drupal.settings.ucTaxWeight + taxes[j].weight / 10, summed, false);
         }
-        render_line_items();
+        var found;
+        // Search the existing tax line items and match them to a returned tax.
+        for (key in li_titles) {
+          // The tax id is the second part of the line item id if the first
+          // part is "tax".
+          i = key.split('_', 2);
+          if (i[0] == 'tax') {
+            found = false;
+            for (j in taxes) {
+              if (taxes[j].id == i[1]) {
+                found = true;
+                break;
+              }
+            }
+            // No tax was matched this time, so remove the line item.
+            if (!found) {
+              delete li_titles[key];
+              delete li_values[key];
+              delete li_weight[key];
+              delete li_summed[key];
+              // Even if no taxes were added earlier, the display must be
+              // updated.
+              render = true;
+            }
+          }
+        }
+        if (render) {
+          render_line_items();
+        }
       }
     });
   }

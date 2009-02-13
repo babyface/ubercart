@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.13 2009/02/10 21:58:12 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.14 2009/02/13 22:01:14 islandusurper Exp $
 
 /**
  * @file
@@ -201,6 +201,10 @@ function uc_attribute_menu() {
 }
 
 function uc_attribute_product_attribute_access($node) {
+  if ($node->type == 'product_kit') {
+    return FALSE;
+  }
+
   return uc_product_is_product($node) && node_access('update', $node);
 }
 

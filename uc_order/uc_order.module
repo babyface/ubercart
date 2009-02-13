@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.14 2009/02/10 21:58:14 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.15 2009/02/13 22:01:12 islandusurper Exp $
 
 /**
  * @file
@@ -497,14 +497,6 @@ function uc_order_mail($key, &$message, $params) {
       $message['subject'] = t('Your Order Invoice');
       $message['from'] = uc_store_email_from();
       $message['body'][] = uc_order_load_invoice($params['order'], 'admin-mail', variable_get('uc_cust_order_invoice_template', 'customer'));
-      break;
-
-    // Setup a registration e-mail for a new user created during checkout.
-    case 'user-register-welcome':
-      $variables = array('!username' => $params['account']->name, '!site' => variable_get('site_name', 'Drupal'), '!password' => $params['account']->pass, '!uri' => $base_url, '!uri_brief' => substr($base_url, strlen('http://')), '!mailto' => $params['account']->mail, '!date' => format_date(time()), '!login_uri' => url('user', array('absolute' => TRUE)), '!edit_uri' => url('user/'. $params['account']->uid .'/edit', array('absolute' => TRUE)), '!login_url' => user_pass_reset_url($params['account']));
-      $message['from'] = uc_store_email_from();
-      $message['subject'] = _user_mail_text('welcome_subject', $variables);
-      $message['body'][] = _user_mail_text('welcome_body', $variables);
       break;
 
     // Setup a custom e-mail defined by an action on a predicate.
@@ -1086,8 +1078,8 @@ function uc_order_load($order_id) {
   }
 
   // Load line items... has to be last after everything has been loaded.
-  $order->line_items = uc_order_load_line_items($order->order_id, TRUE);
-  usort($order->line_items, 'uc_weight_sort');
+  $order->line_items = uc_order_load_line_items($order, TRUE);
+
   // Merge it with the defaultish line items.
   $order->line_items = array_merge($order->line_items, uc_order_load_line_items($order, FALSE));
   usort($order->line_items, 'uc_weight_sort');
@@ -1165,17 +1157,30 @@ function uc_order_comment_save($order_id, $uid, $message, $type = 'admin', $stat
 
 /**
  * Return an array containing an order's line items ordered by weight.
- * if ($stored) { $order should be an order ID. }
+ *
+ * @param $order
+ *   An order object whose line items are to be loaded.
+ * @param $stored
+ *   Boolean flag. If TRUE, only line items stored in the database are loaded.
+ *   If FALSE, only line items not stored in the database are loaded.
+ *   This distinction is made because the non-stored line items may depend on
+ *   the amounts of all of the stored line items.
+ * @return
+ *   An array of line items, which are arrays containing the following keys:
+ *   - line_item_id
+ *   - type
+ *   - title
+ *   - amount
+ *   - weight
  */
 function uc_order_load_line_items($order, $stored) {
   $items = array();
 
   if ($stored) {
-    if (is_object($order)) {
-      $order = $order->order_id;
-    }
-    $result = db_query("SELECT * FROM {uc_order_line_items} WHERE order_id = %d", $order);
+    $result = db_query("SELECT * FROM {uc_order_line_items} WHERE order_id = %d", $order->order_id);
     while ($row = db_fetch_object($result)) {
+      drupal_alter('line_item', $row, $order);
+
       $items[] = array(
         'line_item_id' => $row->line_item_id,
         'type' => $row->type,

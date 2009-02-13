@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.13 2009/02/10 21:58:13 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.14 2009/02/13 22:01:12 islandusurper Exp $
 
 /**
  * @file
@@ -134,45 +134,55 @@ function uc_quote_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
  * blank, products default to their manufacturers', which default to the store's.
  */
 function uc_quote_form_alter(&$form, &$form_state, $form_id) {
-  if (isset($form['#node'])) {
-    $node = $form['#node'];
-  }
+  // Alter the product node form.
+  if (uc_product_is_product_form($form)) {
+    // Get the shipping address.
+    $address = $form['#node']->shipping_address;
 
-  $is_product_form = (
-    isset($node) &&
-    $form_id == $node->type .'_node_form' &&
-    isset($form['base']['dimensions']) &&
-    uc_product_is_product($node->type)
-  );
-
-  if ($is_product_form) {
-    $type = 'product';
-    $id = $form['nid']['#value'];
-    if (module_exists('content')) {
-      $weight = content_extra_field_weight($node->type, 'shipping');
-    }
-    else {
-      $weight = 0;
-    }
-    $address = $node->shipping_address;
-
+    // Use the store default if the product does not have an address set.
     if (empty($address)) {
       $address = variable_get('uc_quote_store_default_address', new stdClass());
     }
+
+    // Store the country to use for the zone select based on $_POST.
+    // TODO: Fix this for D6!  Neither the $_POST or $form_state are available
+    // when the node form is being processed. : (
+    if (isset($_POST['country'])) {
+      $country = $_POST['country'];
+    }
+    else {
+      $country = $address->country;
+    }
+
+    // Initialize the shipping fieldset array.
     if (!isset($form['shipping'])) {
       $form['shipping'] = array();
     }
+
     $form['shipping'] += array(
       '#type' => 'fieldset',
       '#title' => t('Shipping settings'),
       '#collapsible' => TRUE,
-      '#weight' => $weight,
+      '#weight' => module_exists('content') ? content_extra_field_weight($form['#node']->type, 'shipping') : 0,
       '#attributes' => array('class' => 'product-shipping'),
     );
-    $form['shipping']['default_address'] = array('#type' => 'fieldset',
+
+    // Build the options for the default shipping type.
+    $options = array('' => t('- Store default -')) + uc_quote_shipping_type_options();
+
+    $form['shipping']['shipping_type'] = array(
+      '#type' => 'select',
+      '#title' => t('Default product shipping type'),
+      '#default_value' => uc_quote_get_shipping_type('product', $form['#node']->nid),
+      '#options' => $options,
+      '#weight' => -7,
+    );
+
+    // Add the default pickup address fieldset.
+    $form['shipping']['default_address'] = array(
+      '#type' => 'fieldset',
       '#title' => t('Default product pickup address'),
-      '#description' => t("When delivering products to customers, the original location of the product must be known in order to accurately quote the shipping cost and set up a delivery. This form provides the default location for products, either individually or the entire site's line. If a product's individual pickup address is blank, it uses the store's default pickup address, which can be set <a href=\"!here\">here</a>.",
-         array('!here' => url('admin/store/settings/quotes'))),
+      '#description' => t('When delivering products to customers, the original location of the product must be known in order to accurately quote the shipping cost and setup a delivery. If this pickup address is left blank, this product will default to the <a href="!url">store pickup address</a>.', array('!url' => url('admin/store/settings/quotes'))),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       '#weight' => -6,
@@ -183,31 +193,12 @@ function uc_quote_form_alter(&$form, &$form_state, $form_id) {
     $form['shipping']['default_address']['street1'] = uc_textfield(uc_get_field_name('street1'), $address->street1, FALSE, NULL, 64);
     $form['shipping']['default_address']['street2'] = uc_textfield(uc_get_field_name('street2'), $address->street2, FALSE, NULL, 64);
     $form['shipping']['default_address']['city'] = uc_textfield(uc_get_field_name('city'), $address->city, FALSE);
-    if (isset($_POST['country'])) {
-      $country = $_POST['country'];
-    }
-    else {
-      $country = $address->country;
-    }
     $form['shipping']['default_address']['zone'] = uc_zone_select(uc_get_field_name('zone'), $address->zone, NULL, $country);
     $form['shipping']['default_address']['postal_code'] = uc_textfield(uc_get_field_name('postal_code'), $address->postal_code, FALSE, NULL, 10, 10);
     $form['shipping']['default_address']['country'] = uc_country_select(uc_get_field_name('country'), $address->country);
-
-    $types = uc_quote_shipping_type_options();
-    if (is_array($types)) {
-      $types = array_merge(array('' => t('- Store default -')), $types);
-    }
-    else {
-      $types = array('' => t('- Store default -'));
-    }
-    $form['shipping']['shipping_type'] = array('#type' => 'select',
-      '#title' => t('Default product shipping type'),
-      '#default_value' => uc_quote_get_shipping_type($type, $id),
-      '#options' => $types,
-      '#weight' => -7,
-    );
   }
-  elseif ($form_id == 'uc_cart_checkout_form' && isset($form['panes']['quotes'])) {
+  // Add quote selection form handlers to the checkout form.
+  if ($form_id == 'uc_cart_checkout_form' && isset($form['panes']['quotes'])) {
     $form['#validate'][] = 'uc_quote_save_choice';
     $form['#pre_render'][] = 'uc_quote_cache_quotes';
   }
@@ -424,11 +415,14 @@ function uc_quote_action_get_quote($order, $method) {
  * Implementation of Ubercart's hook_cart_pane.
  */
 function uc_quote_cart_pane($items) {
+  if (!variable_get('uc_cap_quotes_enabled', FALSE) || (variable_get('uc_cart_delivery_not_shippable', TRUE) && !uc_cart_is_shippable())) {
+    return array();
+  }
   $panes[] = array('id' => 'quotes',
     'title' => t('Shipping quotes'),
     'enabled' => FALSE,
     'weight' => 5,
-    'body' => is_null($items) ? '' : drupal_get_form('uc_cart_pane_quotes', $items),
+    'body' => drupal_get_form('uc_cart_pane_quotes', $items),
   );
 
   return $panes;
@@ -617,9 +611,6 @@ function uc_quote_get_default_shipping_address($nid) {
  * @see theme_uc_cart_pane_quotes()
  */
 function uc_cart_pane_quotes($items) {
-  if (!variable_get('uc_cap_quotes_enabled', FALSE)) {
-    return NULL;
-  }
   global $user;
   // Get all quote types neccessary to fulfill order.
   $shipping_types = array();
@@ -1112,15 +1103,19 @@ function uc_quote_type_options() {
  * Returns an array of shipping types to be selected in a form.
  */
 function uc_quote_shipping_type_options() {
+  $types = array();
+
   $ship_types = uc_quote_get_shipping_types();
   uasort($ship_types, '_uc_quote_type_sort');
-  $types = array();
+
   foreach ($ship_types as $ship_type) {
     $types[$ship_type['id']] = $ship_type['title'];
   }
-  if (!count($types)) {
+
+  if (empty($types)) {
     $types['small_package'] = t('Small package');
   }
+
   return $types;
 }
 

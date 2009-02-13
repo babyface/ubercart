@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.10 2009/02/10 21:58:14 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.11 2009/02/13 22:01:12 islandusurper Exp $
 
 /**
  * @file
@@ -798,22 +798,31 @@ function uc_order_select_customer($email = NULL) {
                . $user->mail .'\');" value="'. t('Apply') .'" /><br /><br /><hr><br/>';
     }
     else {
-      $data = array(
-        'name' => $email,
+      $name = uc_store_email_to_username($email);
+
+      $fields = array(
+        'name' => $name,
         'mail' => $email,
         'pass' => user_password(6),
         'status' => variable_get('uc_new_customer_status_active', TRUE) ? 1 : 0,
       );
-      $user = user_save(NULL, $data);
+
+      $account = user_save('', $fields);
+
       if ($_POST['sendmail'] == 'true') {
-        $params = array('account' => $user);
-        drupal_mail('uc_order', 'user-register-welcome', $user->mail, user_preferred_language($user), $params);
-        $output .= t('Account details sent to e-mail provided.<br /><br /><strong>Username:</strong> !username<br /><strong>Password:</strong> !password', array('!username' => $user->name, '!password' => $data['pass'])) .'<br /><br />';
+        // Manually set the password so it appears in the e-mail.
+        $account->password = $fields['pass'];
+
+        // Send the e-mail through the user module.
+        drupal_mail('user', 'register_no_approval_required', $email, NULL, array('account' => $account), uc_store_email_from());
+
+        $output .= t('Account details sent to e-mail provided.<br /><br /><strong>Username:</strong> @username<br /><strong>Password:</strong> @password', array('@username' => $fields['name'], '@password' => $fields['pass'])) .'<br /><br />';
       }
+
       $output .= '<strong>'. t('Use this account now?') .'</strong><br />'
-               . t('User !uid - !mail', array('!uid' => $user->uid, '!mail' => $user->mail)) .' <input type="button" '
-                .'onclick="select_existing_customer('. $user->uid .', \''
-               . $user->mail .'\');" value="'. t('Apply') .'" /><br /><br /><hr><br/>';
+               . t('User @uid - @mail', array('@uid' => $account->uid, '@mail' => $account->mail)) .' <input type="button" '
+                .'onclick="select_existing_customer('. $account->uid .', \''
+               . $account->mail .'\');" value="'. t('Apply') .'" /><br /><br /><hr><br/>';
     }
   }
 

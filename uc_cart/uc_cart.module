@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.15 2009/02/10 21:58:16 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.16 2009/02/13 22:01:13 islandusurper Exp $
 
 /**
  * @file
@@ -1113,16 +1113,7 @@ function uc_cart_complete_sale($order, $login = FALSE) {
     else {
       // Get a valid new username.
       if (empty($order->data['new_user']['name'])) {
-        // Default to the first part of the e-mail address.
-        $name = substr($order->primary_email, 0, strpos($order->primary_email, '@'));
-
-        // Trim that value for spaces and length.
-        $name = trim(substr($name, 0, USERNAME_MAX_LENGTH));
-
-        // Make sure we don't hand out a duplicate username.
-        while (db_result(db_query("SELECT COUNT(uid) FROM {users} WHERE LOWER(name) = LOWER('%s')", $name)) > 0) {
-          $name .= rand(0, 9);
-        }
+        $name = uc_store_email_to_username($order->primary_email);
       }
       else {
         $name = $order->data['new_user']['name'];
@@ -1144,7 +1135,7 @@ function uc_cart_complete_sale($order, $login = FALSE) {
         // Manually set the password so it appears in the e-mail.
         $account->password = $fields['pass'];
 
-        // Send the e-mail through the
+        // Send the e-mail through the user module.
         drupal_mail('user', 'register_no_approval_required', $order->primary_email, NULL, array('account' => $account), uc_store_email_from());
       }
 
@@ -1174,8 +1165,8 @@ function uc_cart_complete_sale($order, $login = FALSE) {
   }
 
   $output = '<p>'. check_markup(variable_get('uc_msg_order_submit', uc_get_message('completion_message')),
-                         variable_get('uc_msg_order_submit_format', 3), FALSE) .'</p>';
-  $show_message = check_markup(variable_get('uc_msg_order_'. $message_type, uc_get_message('completion_'. $message_type)), variable_get('uc_msg_order_'. $message_type .'_format', 3), FALSE);
+                         variable_get('uc_msg_order_submit_format', FILTER_FORMAT_DEFAULT), FALSE) .'</p>';
+  $show_message = check_markup(variable_get('uc_msg_order_'. $message_type, uc_get_message('completion_'. $message_type)), variable_get('uc_msg_order_'. $message_type .'_format', FILTER_FORMAT_DEFAULT), FALSE);
 
   if ($show_message != '') {
     $variables['!new_username'] = check_plain($_SESSION['new_user']['name']);
@@ -1183,7 +1174,7 @@ function uc_cart_complete_sale($order, $login = FALSE) {
     $output .= '<p>'. strtr($show_message, $variables) .'</p>';
   }
   $output .= '<p>'. check_markup(variable_get('uc_msg_continue_shopping', uc_get_message('continue_shopping')),
-                      variable_get('uc_msg_continue_shopping_format', 3),
+                      variable_get('uc_msg_continue_shopping_format', FILTER_FORMAT_DEFAULT),
                       FALSE) .'</p>';
 
   $output = token_replace_multiple($output, array('global' => NULL, 'order' => $order));

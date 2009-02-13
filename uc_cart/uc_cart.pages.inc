@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.6 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.7 2009/02/13 22:01:13 islandusurper Exp $
 
 /**
  * @file
@@ -201,7 +201,7 @@ function uc_cart_checkout_form() {
 function theme_uc_cart_checkout_form($form) {
   drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart.css');
 
-  $output = '<div>'. check_markup(variable_get('uc_checkout_instructions', ''), variable_get('uc_checkout_instructions_format', 3), FALSE) .'</div>';
+  $output = '<div>'. check_markup(variable_get('uc_checkout_instructions', ''), variable_get('uc_checkout_instructions_format', FILTER_FORMAT_DEFAULT), FALSE) .'</div>';
 
   if (arg(1) == 'checkout2') {
     foreach (element_children($form['panes']) as $pane_id) {
@@ -260,7 +260,7 @@ function uc_cart_checkout_form_validate($form, &$form_state) {
     }
   }
 
-  $order->line_items = uc_order_load_line_items($order->order_id, TRUE);
+  $order->line_items = uc_order_load_line_items($order, TRUE);
 
   uc_order_save($order);
 }
@@ -339,7 +339,7 @@ function uc_cart_checkout_review() {
 function theme_uc_cart_checkout_review($panes, $form) {
   drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart.css');
 
-  $output = '<p>'. check_markup(variable_get('uc_checkout_review_instructions', uc_get_message('review_instructions')), variable_get('uc_checkout_review_instructions_format', 3), FALSE)
+  $output = '<p>'. check_markup(variable_get('uc_checkout_review_instructions', uc_get_message('review_instructions')), variable_get('uc_checkout_review_instructions_format', FILTER_FORMAT_DEFAULT), FALSE)
            .'</p><table class="order-review-table">';
 
   foreach ($panes as $title => $data) {

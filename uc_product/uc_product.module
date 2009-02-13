@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.15 2009/02/10 21:58:15 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.16 2009/02/13 22:01:12 islandusurper Exp $
 
 /**
  * @file
@@ -152,6 +152,14 @@ function uc_product_menu() {
     'page arguments' => array('uc_product_class_delete_confirm', 4),
     'type' => MENU_CALLBACK,
     'file' => 'uc_product.admin.inc',
+  );
+
+  // Define an autocomplete path for products using the title or SKU.
+  $items['autocomplete/uc_product_title_sku'] = array(
+    'page callback' => 'uc_product_title_sku_autocomplete',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_product.pages.inc',
   );
 
   return $items;
@@ -1534,6 +1542,18 @@ function uc_product_is_product($node) {
   // Return TRUE or FALSE depending on whether or not the node type is in the
   // product types array.
   return in_array($type, uc_product_types());
+}
+
+/**
+ * Determine whether or not a given form array is a product node form.
+ *
+ * @param $form
+ *   The form array to examine.
+ * @return
+ *   TRUE or FALSE indicating whether or not the form is a product node form.
+ */
+function uc_product_is_product_form($form) {
+  return $form['#id'] == 'node-form' && uc_product_is_product($form['#node']);
 }
 
 /**

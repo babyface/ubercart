@@ -1,5 +1,5 @@
 // -*- js-var: set_line_item, getTax; -*-
-// $Id: uc_quote.js,v 1.5.2.4 2008/12/09 15:20:38 islandusurper Exp $
+// $Id: uc_quote.js,v 1.5.2.5 2009/02/13 22:01:12 islandusurper Exp $
 
 var page;
 var details;
@@ -42,13 +42,7 @@ function setTaxCallbacks() {
     var i = $(this).val();
     if (window.set_line_item) {
       var label = $(this).parent().text();
-      set_line_item("shipping", label.substr(0, label.indexOf(":")), Math.round($(this).parent().prev().val() * 100) / 100, 1, 1, false);
-      if (window.getTax) {
-        getTax();
-      }
-      else if (window.render_line_items) {
-        render_line_items();
-      }
+      set_line_item("shipping", label.substr(0, label.indexOf(":")), Math.round($(this).parent().prev().val() * 100) / 100, 1, 1);
     }
   }).end();
 }
@@ -145,12 +139,6 @@ function displayQuote(data) {
             if (label != "" && window.set_line_item) {
               set_line_item("shipping", label, Math.round(data[i].rate * 100) / 100, 1);
             }
-            if (window.getTax) {
-              getTax();
-            }
-            else if (window.render_line_items) {
-              render_line_items();
-            }
           }
         }
       }
@@ -172,13 +160,7 @@ function displayQuote(data) {
         quoteDiv.find("input:radio[@value=" + i +"]").click(function() {
           var i = $(this).val();
           if (window.set_line_item) {
-            set_line_item("shipping", data[i].option_label, Math.round(data[i].rate * 100) / 100, 1, 1, false);
-          }
-          if (window.getTax) {
-            getTax();
-          }
-          else if (window.render_line_items) {
-            render_line_items();
+            set_line_item("shipping", data[i].option_label, Math.round(data[i].rate * 100) / 100, 1, 1);
           }
         }).end();
       }

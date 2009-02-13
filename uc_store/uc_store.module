@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.14 2009/02/10 21:58:17 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.15 2009/02/13 22:01:12 islandusurper Exp $
 
 /**
  * @file
@@ -1535,6 +1535,37 @@ function uc_store_email_from() {
 }
 
 /**
+ * Derive a valid username from an e-mail address.
+ *
+ * @param $email
+ *   An e-mail address.
+ * @return
+ *   A username derived from the e-mail address, using the part of the address
+ *     up to the @ with integers appended to the end if needed to avoid a
+ *     duplicate username.
+ */
+function uc_store_email_to_username($email) {
+  // Default to the first part of the e-mail address.
+  $name = substr($email, 0, strpos($email, '@'));
+
+  // Trim that value for spaces and length.
+  $name = trim(substr($name, 0, USERNAME_MAX_LENGTH - 4));
+
+  // Make sure we don't hand out a duplicate username.
+  while (db_result(db_query("SELECT COUNT(uid) FROM {users} WHERE LOWER(name) = LOWER('%s')", $name)) > 0) {
+    // If the username got too long, trim it back down.
+    if (strlen($name) == USERNAME_MAX_LENGTH) {
+      $name = substr($name, 0, USERNAME_MAX_LENGTH - 4);
+    }
+
+    // Append a random integer to the name.
+    $name .= rand(0, 9);
+  }
+
+  return $name;
+}
+
+/**
  * Trimmed down version of GPL class by Tony Marston.  Details available at
  * http://www.tonymarston.co.uk/php-mysql/encryption.html
  *
@@ -1769,23 +1800,10 @@ function uc_store_default_country() {
 }
 
 // Wrapper for drupal_add_js() to cache .js files based on their timestamp.
+// Deprecated! Use drupal_add_js() instead.
 function uc_add_js($data = NULL, $type = 'module', $scope = 'header', $defer = FALSE, $cache = TRUE) {
-  // If we're adding a module or theme .js file...
-  if (($type == 'module' || $type == 'theme') && $cache) {
-    // And the file actually exists...
-    if (file_exists($data)) {
-      // Add the file timestamp to the query so the browser-cached
-      // javascript is updated when the file is updated.
-      drupal_add_js($data .'?'. substr(filemtime($data), -5), $type, $scope, $defer, $cache);
-    }
-    else {
-      // Log a file not found to the watchdog.
-      watchdog('uc_store', 'Could not find JS file %path.', array('%path' => $data), WATCHDOG_ERROR);
-    }
-  }
-  else {
-    drupal_add_js($data, $type, $scope, $defer, $cache);
-  }
+  watchdog('uc_store', 'uc_add_js() has been deprecated. Use drupal_add_js() in your code.', array(), WATCHDOG_ERROR);
+  drupal_add_js($data, $type, $scope, $defer, $cache);
 }
 
 // Builds the version info reported to Ubercart.org.

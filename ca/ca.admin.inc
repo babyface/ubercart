@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.11 2009/02/10 21:58:14 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.12 2009/02/13 22:01:13 islandusurper Exp $
 
 /**
  * @file
@@ -48,7 +48,7 @@ function ca_admin($groupby = 'trigger') {
       array('data' => t('Title'), 'class' => 'col-title'),
       t('Class'),
       t('Status'),
-      t('List position'),
+      t('Weight'),
       t('Operations'),
     );
 
@@ -60,7 +60,7 @@ function ca_admin($groupby = 'trigger') {
       array('data' => t('Title'), 'class' => 'col-title'),
       t('Trigger'),
       t('Status'),
-      t('List position'),
+      t('Weight'),
       t('Operations'),
     );
 
@@ -114,6 +114,11 @@ function ca_admin($groupby = 'trigger') {
 
   // Add the tables for each trigger to the output.
   foreach ($tables as $key => $value) {
+    // Accommodate empty class names.
+    if (empty($key)) {
+      $key = t('- None -');
+    }
+
     $output .= theme('table', $header, $value['rows'], array('class' => $table_class), $table_label . check_plain($key));
   }
 
@@ -353,8 +358,8 @@ function ca_predicate_meta_form($form_state, $pid) {
 
   $form['predicate_weight'] = array(
     '#type' => 'weight',
-    '#title' => t('List position'),
-    '#description' => t('Predicates will be sorted by list position and processed sequentially.'),
+    '#title' => t('Weight'),
+    '#description' => t('Predicates will be sorted by weight and processed sequentially.'),
     '#default_value' => ($pid && isset($predicate['#weight'])) ? $predicate['#weight'] : 0,
   );
 
@@ -1025,11 +1030,6 @@ function ca_conditions_form_remove_condition_submit($form, &$form_state) {
 
     drupal_set_message(t('Condition removed.'));
   }
-/*
-  capm($form_state['clicked_button']['#array_parents']);
-  drupal_set_message('Group: '. $group_key);
-  drupal_set_message('Condition: '. $cond_key);
-*/
 }
 
 // Save changes submit handler for the conditions form.

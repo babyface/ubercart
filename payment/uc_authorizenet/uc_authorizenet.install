@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_authorizenet.install,v 1.1.2.5 2009/01/19 20:31:20 islandusurper Exp $
+// $Id: uc_authorizenet.install,v 1.1.2.6 2009/02/13 22:01:13 islandusurper Exp $
 
 /**
  * @file
@@ -82,3 +82,10 @@ function uc_authorizenet_update_2() {
 
   return array();
 }
+
+function uc_authorizenet_update_3() {
+  // Update the name of the CIM transaction mode variable.
+  variable_set('uc_authnet_cim_mode', variable_get('uc_authnet_cim_server', 'disabled'));
+  variable_del('uc_authet_cim_server');
+}
+

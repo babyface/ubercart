@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.6 2009/01/02 20:18:40 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.7 2009/02/13 22:01:12 islandusurper Exp $
 
 /**
  * @file
@@ -1084,6 +1084,6 @@ function uc_country_update($country_id, $version) {
     drupal_set_message(t('Attempted to update an invalid country.'));
   }
 
-  drupal_goto('admin/store/settings/countries');
+  drupal_goto('admin/store/settings/countries/edit/import');
 }
 

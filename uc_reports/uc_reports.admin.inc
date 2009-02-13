@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_reports.admin.inc,v 1.1.2.4 2009/02/04 13:44:33 islandusurper Exp $
+// $Id: uc_reports.admin.inc,v 1.1.2.5 2009/02/13 22:01:14 islandusurper Exp $
 
 /**
  * @file
@@ -175,9 +175,9 @@ function uc_reports_products() {
 
   $sql_count = "SELECT COUNT(nid) FROM {node} WHERE type IN (". implode(", ", $product_types) .")";
   $products = pager_query($sql . tablesort_sql($header), $page_size, 0, $sql_count);
-
+  $row_cell = $page * variable_get('uc_reports_table_size', 30) + 1;
   while ($product = db_fetch_array($products)) {
-    $row_cell = ($page * variable_get('uc_reports_table_size', 30)) + count($rows) + 1;
+    $row_type = ($row_cell % 2) ? 'odd' : 'even';
     $product_cell = l($product['title'], 'node/'. ($product['nid']));
     $product_csv = $product['title'];
     $sold_cell = (empty($product['sold'])) ? 0 : $product['sold'];
@@ -187,6 +187,36 @@ function uc_reports_products() {
     $gross_cell = uc_currency_format((empty($product['gross'])) ? 0 : $product['gross']);
     $gross_csv = $gross_cell;
 
+    // Add the primary product row
+    if ($statistics && $count_views) {
+      $views = (empty($product['totalcount'])) ? 0 : $product['totalcount'];
+      $rows[] = array(
+        'data' => array(
+          array('data' => $row_cell),
+          array('data' => $product_cell),
+          array('data' => $views),
+          array('data' => "<strong>$sold_cell</strong>"),
+          array('data' => "<strong>$revenue_cell</strong>", 'nowrap' => 'nowrap'),
+          array('data' => "<strong>$gross_cell</strong>", 'nowrap' => 'nowrap'),
+        ),
+        'primary' => TRUE,
+      );
+      $csv_rows[] = array($row_cell, $product_csv, $views, $sold_csv, $revenue_csv, $gross_csv);
+    }
+    else {
+      $rows[] = array(
+        'data' => array(
+          array('data' => $row_cell),
+          array('data' => $product_cell),
+          array('data' => "<strong>$sold_cell</strong>"),
+          array('data' => "<strong>$revenue_cell</strong>", 'nowrap' => 'nowrap'),
+          array('data' => "<strong>$gross_cell</strong>", 'nowrap' => 'nowrap'),
+        ),
+        'primary' => TRUE,
+      );
+      $csv_rows[] = array($row_cell, $product_csv, $sold_csv, $revenue_csv, $gross_csv);
+    }
+
     if (module_exists('uc_attribute')) {
       $product_models = db_query("SELECT model FROM {uc_product_adjustments} WHERE nid = %d", $product['nid']);
       $models = array(db_result(db_query("SELECT model FROM {uc_products} WHERE nid = %d", $product['nid'])));
@@ -194,45 +224,44 @@ function uc_reports_products() {
       while ($product_model = db_fetch_object($product_models)) {
         $models[] = $product_model->model;
       }
+      // Add the product breakdown rows
       foreach ($models as $model) {
         $sold = db_result(db_query("SELECT SUM(qty) FROM {uc_order_products} AS p LEFT JOIN {uc_orders} AS o ON p.order_id = o.order_id WHERE o.order_status IN $order_statuses AND p.model = '%s' AND p.nid = %d", $model, $product['nid']));
         $revenue = db_result(db_query("SELECT SUM(p.price * p.qty) FROM {uc_order_products} AS p LEFT JOIN {uc_orders} AS o ON p.order_id = o.order_id WHERE o.order_status IN $order_statuses AND p.model = '%s' AND p.nid = %d", $model, $product['nid']));
         $gross = db_result(db_query("SELECT (SUM(p.price * p.qty) - SUM(p.cost * p.qty)) FROM {uc_order_products} AS p LEFT JOIN {uc_orders} AS o ON p.order_id = o.order_id WHERE o.order_status IN $order_statuses AND p.model = '%s' AND p.nid = %d", $model, $product['nid']));
-        $breakdown_product .= "<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$model";
-        $product_csv .= "\n     $model";
-        $breakdown_sold .= "<br/>". ((!empty($sold)) ? $sold : 0);
-        $sold_csv .= "\n     ". ((!empty($sold)) ? $sold : 0);
-        $breakdown_revenue .= "<br/>". (uc_currency_format((!empty($revenue)) ? $revenue : 0));
-        $revenue_csv .= "\n     ". (uc_currency_format((!empty($revenue)) ? $revenue : 0));
-        $breakdown_gross .= "<br/>". (uc_currency_format((!empty($gross)) ? $gross : 0));
-        $gross_csv .= "\n     ". (uc_currency_format((!empty($gross)) ? $gross : 0));
+        $breakdown_product = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$model";
+        $product_csv = "     $model";
+        $breakdown_sold = ((!empty($sold)) ? $sold : 0);
+        $sold_csv = ((!empty($sold)) ? $sold : 0);
+        $breakdown_revenue = (uc_currency_format((!empty($revenue)) ? $revenue : 0));
+        $revenue_csv = (uc_currency_format((!empty($revenue)) ? $revenue : 0));
+        $breakdown_gross = (uc_currency_format((!empty($gross)) ? $gross : 0));
+        $gross_csv = (uc_currency_format((!empty($gross)) ? $gross : 0));
+        if ($statistics && $count_views) {
+          $rows[] = array(
+            array('data' => ''),
+            array('data' => $breakdown_product),
+            array('data' => ''),
+            array('data' => $breakdown_sold),
+            array('data' => $breakdown_revenue, 'nowrap' => 'nowrap'),
+            array('data' => $breakdown_gross, 'nowrap' => 'nowrap'),
+          );
+          $csv_rows[] = array('', $product_csv, '', $sold_csv, $revenue_csv, $gross_csv);
+        }
+        else {
+          $rows[] = array(
+            'data' => array(
+              array('data' => ''),
+              array('data' => $breakdown_product),
+              array('data' => $breakdown_sold),
+              array('data' => $breakdown_revenue, 'nowrap' => 'nowrap'),
+              array('data' => $breakdown_gross, 'nowrap' => 'nowrap'),
+            ),
+          );
+          $csv_rows[] = array('', $product_csv, $sold_csv, $revenue_csv, $gross_csv);
+        }
       }
-      $product_cell = $product_cell . $breakdown_product;
-      $sold_cell = '<strong>'. $sold_cell .'</strong>'. $breakdown_sold;
-      $revenue_cell = '<strong>'. $revenue_cell .'</strong>'. $breakdown_revenue;
-      $gross_cell = '<strong>'. $gross_cell .'</strong>'. $breakdown_gross;
-    }
-    if ($statistics && $count_views) {
-      $views = (empty($product['totalcount'])) ? 0 : $product['totalcount'];
-      $rows[] = array(
-        array('data' => $row_cell),
-        array('data' => $product_cell),
-        array('data' => $views),
-        array('data' => $sold_cell),
-        array('data' => $revenue_cell, 'nowrap' => 'nowrap'),
-        array('data' => $gross_cell, 'nowrap' => 'nowrap'),
-      );
-      $csv_rows[] = array($row_cell, $product_csv, $views, $sold_csv, $revenue_csv, $gross_csv);
-    }
-    else {
-      $rows[] = array(
-        array('data' => $row_cell),
-        array('data' => $product_cell),
-        array('data' => $sold_cell),
-        array('data' => $revenue_cell, 'nowrap' => 'nowrap'),
-        array('data' => $gross_cell, 'nowrap' => 'nowrap'),
-      );
-      $csv_rows[] = array($row_cell, $product_csv, $sold_csv, $revenue_csv, $gross_csv);
+      $row_cell++;
     }
   }
   if (empty($rows)) {
@@ -240,11 +269,100 @@ function uc_reports_products() {
   }
   $csv_data = uc_reports_store_csv('uc_products', $csv_rows);
 
-  $output = theme('table', $header, $rows, array('width' => '100%', 'class' => 'uc-sales-table'));
-  $output .= theme_pager(NULL, $page_size);
+  $output = theme('uc_reports_product_table', $header, $rows, array('width' => '100%', 'class' => 'uc-sales-table'));
+  $output .= theme('pager', NULL, $page_size);
   $output .= '<div class="uc-reports-links">'. l(t('Export to CSV file.'), 'admin/store/reports/getcsv/'. $csv_data['report'] .'/'. $csv_data['user']) .'&nbsp;&nbsp;&nbsp;'. (!is_null($_GET['nopage']) ? l(t('Show paged records'), 'admin/store/reports/products') : l(t('Show all records'), 'admin/store/reports/products', array('query' => 'nopage=1'))) .'</div>';
   $output .= '<small>*'. t('Make sure %setting_name is set to %state in the <a href="!url">access log settings page</a> to enable views column.', array('%setting_name' => 'count content views', '%state' => 'enabled', '!url' => url('admin/reports/settings', array('query' => 'destination=admin/store/reports/products')))) .'</small>';
 
+  return $output;
+}
+
+/**
+ * Return a themed table for product reports.
+ *
+ * Straight duplication of theme_table, but our row handling is different.
+ */
+function theme_uc_reports_product_table($header, $rows, $attributes = array(), $caption = NULL) {
+
+  // Add sticky headers, if applicable.
+  if (count($header)) {
+    drupal_add_js('misc/tableheader.js');
+    // Add 'sticky-enabled' class to the table to identify it for JS.
+    // This is needed to target tables constructed by this function.
+    $attributes['class'] = empty($attributes['class']) ? 'sticky-enabled' : ($attributes['class'] .' sticky-enabled');
+  }
+
+  $output = '<table'. drupal_attributes($attributes) .">\n";
+
+  if (isset($caption)) {
+    $output .= '<caption>'. $caption ."</caption>\n";
+  }
+
+  // Format the table header:
+  if (count($header)) {
+    $ts = tablesort_init($header);
+    // HTML requires that the thead tag has tr tags in it follwed by tbody
+    // tags. Using ternary operator to check and see if we have any rows.
+    $output .= (count($rows) ? ' <thead><tr>' : ' <tr>');
+    foreach ($header as $cell) {
+      $cell = tablesort_header($cell, $header, $ts);
+      $output .= _theme_table_cell($cell, TRUE);
+    }
+    // Using ternary operator to close the tags based on whether or not there are rows
+    $output .= (count($rows) ? " </tr></thead>\n" : "</tr>\n");
+  }
+  else {
+    $ts = array();
+  }
+
+  // Format the table rows:
+  if (count($rows)) {
+    $output .= "<tbody>\n";
+    $flip = array('even' => 'odd', 'odd' => 'even');
+    $class = 'even';
+    foreach ($rows as $number => $row) {
+      $attributes = array();
+
+      // Check if we're dealing with a simple or complex row
+      if (isset($row['data'])) {
+        foreach ($row as $key => $value) {
+          if ($key == 'data') {
+            $cells = $value;
+          }
+          elseif ($key == 'primary') {
+            $class = $flip[$class];
+          }
+          else {
+            $attributes[$key] = $value;
+          }
+        }
+      }
+      else {
+        $cells = $row;
+      }
+      if (count($cells)) {
+        // Add odd/even class
+        if (isset($attributes['class'])) {
+          $attributes['class'] .= ' '. $class;
+        }
+        else {
+          $attributes['class'] = $class;
+        }
+
+        // Build row
+        $output .= ' <tr'. drupal_attributes($attributes) .'>';
+        $i = 0;
+        foreach ($cells as $cell) {
+          $cell = tablesort_cell($cell, $header, $ts, $i++);
+          $output .= _theme_table_cell($cell);
+        }
+        $output .= " </tr>\n";
+      }
+    }
+    $output .= "</tbody>\n";
+  }
+
+  $output .= "</table>\n";
   return $output;
 }
 

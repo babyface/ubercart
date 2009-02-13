@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.module,v 1.5.2.6 2009/01/19 20:31:24 islandusurper Exp $
+// $Id: uc_weightquote.module,v 1.5.2.7 2009/02/13 22:01:15 islandusurper Exp $
 
 /**
  * @file
@@ -36,29 +36,26 @@ function uc_weightquote_menu() {
  * @see uc_product_form()
  */
 function uc_weightquote_form_alter(&$form, &$form_state, $form_id) {
-  if (isset($form['#node'])) {
-    $node = $form['#node'];
+  if (uc_product_is_product_form($form)) {
+    $enabled = variable_get('uc_quote_enabled', array());
+    $weight = variable_get('uc_quote_method_weight', array('weightquote' => 0));
+    $form['shipping']['weightquote'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Shipping rate by weight'),
+      '#collapsible' => TRUE,
+      '#collapsed' => ($enabled['weightquote'] == FALSE),
+      '#weight' => $weight['weightquote'],
+    );
 
-    if (is_object($node) && $form_id == $node->type .'_node_form' && isset($form['base']['dimensions']) && uc_product_is_product($node->type)) {
-      $enabled = variable_get('uc_quote_enabled', array());
-      $weight = variable_get('uc_quote_method_weight', array('weightquote' => 0));
-      $form['shipping']['weightquote'] = array('#type' => 'fieldset',
-        '#title' => t('Shipping rate by weight'),
-        '#collapsible' => TRUE,
-        '#collapsed' => ($enabled['weightquote'] == FALSE),
-        '#weight' => $weight['weightquote'],
-      );
-
-      $form['shipping']['weightquote']['weightquote'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Shipping cost per !unit', array('!unit' => variable_get('uc_weight_unit', 'lb'))),
-        '#description' => t('The amount per weight unit to add to the shipping cost for an item.<br />Example: to add $5 per pound, put 5 in here.'),
-        '#default_value' => $form['#node']->weightquote,
-        '#size' => 16,
-        '#field_prefix' => variable_get('uc_sign_after_amount', FALSE) ? '' : variable_get('uc_currency_sign', '$'),
-        '#field_suffix' => (variable_get('uc_sign_after_amount', FALSE) ? variable_get('uc_currency_sign', '$') : '') . t('/!unit', array('!unit' => variable_get('uc_weight_unit', 'lb'))),
-      );
-    }
+    $form['shipping']['weightquote']['weightquote'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Shipping cost per !unit', array('!unit' => variable_get('uc_weight_unit', 'lb'))),
+      '#description' => t('The amount per weight unit to add to the shipping cost for an item.<br />Example: to add $5 per pound, put 5 in here.'),
+      '#default_value' => $form['#node']->weightquote,
+      '#size' => 16,
+      '#field_prefix' => variable_get('uc_sign_after_amount', FALSE) ? '' : variable_get('uc_currency_sign', '$'),
+      '#field_suffix' => (variable_get('uc_sign_after_amount', FALSE) ? variable_get('uc_currency_sign', '$') : '') . t('/!unit', array('!unit' => variable_get('uc_weight_unit', 'lb'))),
+    );
   }
 }
 

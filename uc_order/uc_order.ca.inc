@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.13 2009/02/10 21:58:14 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.14 2009/02/13 22:01:12 islandusurper Exp $
 
 /**
  * @file
@@ -21,6 +21,10 @@ function uc_order_ca_entity() {
     '#type' => 'object',
     '#load' => 'uc_order_load',
     '#save' => 'uc_order_save',
+  );
+  $entities['uc_line_item'] = array(
+    '#title' => t('Order line item'),
+    '#type' => 'object',
   );
 
   return $entities;

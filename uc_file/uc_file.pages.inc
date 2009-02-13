@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.pages.inc,v 1.1.2.6 2009/02/10 21:58:14 islandusurper Exp $
+// $Id: uc_file.pages.inc,v 1.1.2.7 2009/02/13 22:01:15 islandusurper Exp $
 
 /**
  * @file
@@ -275,9 +275,6 @@ function _uc_file_download_transfer($file_user, $ip) {
   $seek_start = intval((empty($seek_start) || $seek_end < abs(intval($seek_start))) ? 0 : max(abs(intval($seek_start)), 0));
 
   ob_end_clean();
-
-  // Start building the array of headers
-  $http_headers = array();
 
   //Only send partial content header if downloading a piece of the file (IE workaround)
   if ($seek_start > 0 || $seek_end < ($size - 1)) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.ca.inc,v 1.1.2.3 2009/02/10 21:58:14 islandusurper Exp $
+// $Id: ca.ca.inc,v 1.1.2.4 2009/02/13 22:01:13 islandusurper Exp $
 
 /**
  * @file: This file includes some generic conditions and actions.
@@ -25,6 +25,12 @@ function ca_ca_entity() {
     '#load' => 'user_load',
     '#save' => 'user_save',
   );
+  $entities['node'] = array(
+    '#title' => t('Node'),
+    '#type' => 'object',
+    '#load' => 'node_load',
+    '#save' => 'node_save',
+  );
 
   return $entities;
 }
@@ -41,6 +47,16 @@ function ca_ca_condition() {
     '#category' => t('Drupal'),
     '#callback' => 'ca_condition_date',
     '#arguments' => array(),
+  );
+
+  $conditions['node_field_comparison'] = array(
+    '#title' => t('Compare a node field value'),
+    '#description' => t('Returns TRUE if the node field selected below compares to the value entered as specified by the operator.'),
+    '#category' => t('Node'),
+    '#callback' => 'ca_condition_node_field_comparison',
+    '#arguments' => array(
+      'node' => array('#entity' => 'node'),
+    ),
   );
 
   return $conditions;
@@ -107,6 +123,149 @@ function ca_condition_date_form($form_state, $settings = array()) {
   return $form;
 }
 
+// Compare a node field to a specified value using an operator list.
+function ca_condition_node_field_comparison($node, $settings) {
+  // Convert the node to an array.
+  $node_array = (array) $node;
+
+  // Store the value of the field we're comparing.
+  $field_value = $node_array[$settings['field']];
+
+  // Return the result based on the operator.
+  switch ($settings['operator']) {
+    case 'equal':
+      if ($field_value == $settings['value']) {
+        return TRUE;
+      }
+      break;
+
+    case 'not':
+      if ($field_value != $settings['value']) {
+        return TRUE;
+      }
+      break;
+
+    case 'greater':
+      if ($field_value > $settings['value']) {
+        return TRUE;
+      }
+      break;
+
+    case 'less':
+      if ($field_value < $settings['value']) {
+        return TRUE;
+      }
+      break;
+
+    case 'greater_equal':
+      if ($field_value >= $settings['value']) {
+        return TRUE;
+      }
+      break;
+
+    case 'less_equal':
+      if ($field_value <= $settings['value']) {
+        return TRUE;
+      }
+      break;
+
+    case 'begins':
+      if (strpos($field_value, $settings['value']) === 0) {
+        return TRUE;
+      }
+      break;
+
+    case 'ends':
+      if (substr($field_value, -1 * strlen($settings['value'])) === $settings['value']) {
+        return TRUE;
+      }
+      break;
+
+    case 'contains':
+      if (strpos($field_value, $settings['value']) !== FALSE) {
+        return TRUE;
+      }
+      break;
+
+    case 'yes':
+      if ($field_value) {
+        return TRUE;
+      }
+      break;
+
+    case 'no':
+      if (!$field_value) {
+        return TRUE;
+      }
+      break;
+  }
+
+  return FALSE;
+}
+
+function ca_condition_node_field_comparison_form($form_state, $settings = array()) {
+  $form = array();
+
+  // Define the fields this works for.
+  $options = array(
+    t('Core node fields') => array(
+      'nid' => t('Node ID'),
+      'vid' => t('Node revision ID'),
+      'type' => t('Node type'),
+      'title' => t('Title'),
+      'uid' => t("Author's user ID"),
+      'status' => t('Node is published?'),
+      'promote' => t('Node is promoted?'),
+      'sticky' => t('Node is sticky?'),
+    ),
+  );
+
+  $form['field'] = array(
+    '#type' => 'select',
+    '#title' => t('Node field'),
+    '#options' => $options,
+    '#default_values' => $setting['field'],
+  );
+
+  // Define the operators for the fields.
+  $options = array(
+    t('Simple comparison') => array(
+      'equal' => t('is equal to'),
+      'not' => t('is not equal to'),
+      'greater' => t('is greater than'),
+      'less' => t('is less than'),
+      'greater_equal' => t('is greater than or equal to'),
+      'less_equal' => t('is less than or equal to'),
+    ),
+    t('Text matching') => array(
+      'begins' => t('begins with'),
+      'contains' => t('contains'),
+      'ends' => t('ends with'),
+    ),
+    t('Yes/No') => array(
+      'yes' => t('yes'),
+      'no' => t('no'),
+    ),
+  );
+
+  $form['operator'] = array(
+    '#type' => 'select',
+    '#title' => t('Operator'),
+    '#description' => t('Please note that not every operator makes sense for every field.'),
+    '#options' => $options,
+    '#default_value' => $settings['operator'],
+  );
+
+  $form['value'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Comparison value'),
+    '#description' => t('You do not need to specify a value if your operator is in the Yes/No category.'),
+    '#default_value' => $settings['value'],
+  );
+
+  return $form;
+}
+
 // Display a message to the user.
 function ca_action_drupal_set_message($settings) {
   // Get the specified input format or use the default.
@@ -118,8 +277,8 @@ function ca_action_drupal_set_message($settings) {
   }*/
 
   // Filter the text using the format.
-  // $message = check_markup($settings['message_text'], $format, FALSE);
-  $message = check_plain($settings['message_text']);
+  $message = check_markup($settings['message_text'], FILTER_FORMAT_DEFAULT, FALSE);
+  // $message = check_plain($settings['message_text']);
 
   // Return if there's nothing to display.
   if (empty($message)) {
@@ -138,3 +297,32 @@ function ca_action_drupal_set_message($settings) {
   drupal_set_message($message, $type);
 }
 
+function ca_action_drupal_set_message_form($form_state, $settings = array()) {
+  $form = array();
+
+  $form['message_text'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Message text'),
+    '#default_value' => $settings['message_text'],
+  );
+
+  $tips = _filter_tips(variable_get('filter_default_format', 1), FALSE);
+  $form['format']['guidelines'] = array(
+    '#title' => t('Formatting guidelines'),
+    '#value' => theme('filter_tips', $tips, FALSE, theme('filter_tips_more_info')),
+  );
+
+  //$form['message_format'] = filter_form($settings['message_format']);
+
+  $form['message_type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Message type'),
+    '#options' => array(
+      'status' => t('Status'),
+      'error' => t('Error'),
+    ),
+    '#default_value' => isset($settings['message_type']) ? $settings['message_type'] : 'status',
+  );
+
+  return $form;
+}
