@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_reports.admin.inc,v 1.1.2.5 2009/02/13 22:01:14 islandusurper Exp $
+// $Id: uc_reports.admin.inc,v 1.1.2.6 2009/02/24 15:35:50 islandusurper Exp $
 
 /**
  * @file
@@ -111,9 +111,17 @@ function uc_reports_customers() {
 function uc_reports_products() {
   $statistics = db_result(db_query("SELECT status FROM {system} WHERE name = 'statistics'"));
   $count_views = variable_get('statistics_count_content_views', FALSE);
+  if ($statistics && $count_views) {
+    $views_column = TRUE;
+  }
+  else {
+    $views_column = FALSE;
+  }
+
   $page = (!is_null($_GET['page'])) ? intval($_GET['page']) : 0;
   $page_size = (!is_null($_GET['nopage'])) ? UC_REPORTS_MAX_RECORDS : variable_get('uc_reports_table_size', 30);
   $order_statuses = _uc_reports_order_statuses();
+  $row_cell = $page * variable_get('uc_reports_table_size', 30) + 1;
   $csv_rows = array();
 
   // Hard code the ignore of the product kit for this report.
@@ -121,63 +129,52 @@ function uc_reports_products() {
 
   // Build an array of valid product types to include on the report.
   $product_types = array();
-
   foreach (uc_product_types() as $type) {
     // Pass over any ignored types.
     if (!in_array($type, $ignored_types)) {
       $product_types[] = "'". $type ."'";
     }
   }
+  $product_types = '('. implode(', ', $product_types) .')';
 
-  if ($statistics && $count_views) {
-    $header = array(
-      array('data' => t('#')),
-      array('data' => t('Product'), 'field' => 'n.title'),
-      array('data' => t('Views'), 'field' => 'c.totalcount'),
-      array('data' => t('Sold'), 'field' => 'sold'),
-      array('data' => t('Revenue'), 'field' => 'revenue', 'sort' => 'desc'),
-      array('data' => t('Gross'), 'field' => 'gross'),
-    );
-    $csv_rows[] = array(t('#'), t('Product'), t('Views'), t('Sold'), t('Revenue'), t('Gross'));
+  $header = array(
+    array('data' => t('#')),
+    array('data' => t('Product'), 'field' => 'n.title'),
+    array('data' => t('Sold'), 'field' => 'sold'),
+    array('data' => t('Revenue'), 'field' => 'revenue', 'sort' => 'desc'),
+    array('data' => t('Gross'), 'field' => 'gross'),
+  );
+  $csv_rows[] = array(t('#'), t('Product'), t('Sold'), t('Revenue'), t('Gross'));
 
-    $sql = '';
-    switch ($GLOBALS['db_type']) {
-      case 'mysqli':
-      case 'mysql':
-        $sql = "SELECT n.nid, n.title, c.totalcount, (SELECT SUM(qty) FROM {uc_order_products} AS p LEFT JOIN {uc_orders} AS o ON p.order_id = o.order_id WHERE o.order_status IN $order_statuses AND p.nid = n.nid) AS sold, (SELECT (SUM(p2.price * p2.qty)) FROM {uc_order_products} AS p2 LEFT JOIN {uc_orders} AS o2 ON p2.order_id = o2.order_id WHERE o2.order_status IN $order_statuses AND p2.nid = n.nid) AS revenue, (SELECT (SUM(p3.price * p3.qty) - SUM(p3.cost * p3.qty)) FROM {uc_order_products} AS p3 LEFT JOIN {uc_orders} AS o3 ON p3.order_id = o3.order_id WHERE o3.order_status IN $order_statuses AND p3.nid = n.nid) AS gross FROM {node} AS n LEFT JOIN {node_counter} AS c ON n.nid = c.nid WHERE type IN (". implode(", ", $product_types) .") GROUP BY n.nid DESC";
-        break;
-      case 'pgsql':
-        $sql = "SELECT n.nid, n.title, c.totalcount, (SELECT SUM(qty) FROM {uc_order_products} AS p LEFT JOIN {uc_orders} AS o ON p.order_id = o.order_id WHERE o.order_status IN $order_statuses AND p.nid = n.nid) AS sold, (SELECT (SUM(p2.price * p2.qty)) FROM {uc_order_products} AS p2 LEFT JOIN {uc_orders} AS o2 ON p2.order_id = o2.order_id WHERE o2.order_status IN $order_statuses AND p2.nid = n.nid) AS revenue, (SELECT (SUM(p3.price * p3.qty) - SUM(p3.cost * p3.qty)) FROM {uc_order_products} AS p3 LEFT JOIN {uc_orders} AS o3 ON p3.order_id = o3.order_id WHERE o3.order_status IN $order_statuses AND p3.nid = n.nid) AS gross FROM {node} AS n LEFT JOIN {node_counter} AS c ON n.nid = c.nid WHERE type IN (". implode(", ", $product_types) .") GROUP BY n.nid";
-        break;
-    }
-  }
-  else {
-    $header = array(
-      array('data' => t('#')),
-      array('data' => t('Product'), 'field' => 'n.title'),
-      array('data' => t('Sold'), 'field' => 'sold'),
-      array('data' => t('Revenue'), 'field' => 'revenue', 'sort' => 'desc'),
-      array('data' => t('Gross'), 'field' => 'gross'),
-    );
-    $csv_rows[] = array(t('#'), t('Product'), t('Sold'), t('Revenue'), t('Gross'));
-
-
-    switch ($GLOBALS['db_type']) {
-      case 'mysqli':
-      case 'mysql':
-        $sql = "SELECT n.nid, n.title, (SELECT SUM(qty) FROM {uc_order_products} AS p LEFT JOIN {uc_orders} AS o ON p.order_id = o.order_id WHERE o.order_status IN $order_statuses AND p.nid = n.nid) AS sold, (SELECT (SUM(p2.price * p2.qty)) FROM {uc_order_products} AS p2 LEFT JOIN {uc_orders} AS o2 ON p2.order_id = o2.order_id WHERE o2.order_status IN $order_statuses AND p2.nid = n.nid) AS revenue, (SELECT (SUM(p3.price * p3.qty) - SUM(p3.cost * p3.qty)) FROM {uc_order_products} AS p3 LEFT JOIN {uc_orders} AS o3 ON p3.order_id = o3.order_id WHERE o3.order_status IN $order_statuses AND p3.nid = n.nid) AS gross FROM {node} AS n WHERE type IN (". implode(', ', $product_types) .') GROUP BY n.nid DESC';
-        break;
-      case 'pgsql':
-        $sql = "SELECT n.nid, n.title, (SELECT SUM(qty) FROM {uc_order_products} AS p LEFT JOIN {uc_orders} AS o ON p.order_id = o.order_id WHERE o.order_status IN $order_statuses AND p.nid = n.nid) AS sold, (SELECT (SUM(p2.price * p2.qty)) FROM {uc_order_products} AS p2 LEFT JOIN {uc_orders} AS o2 ON p2.order_id = o2.order_id WHERE o2.order_status IN $order_statuses AND p2.nid = n.nid) AS revenue, (SELECT (SUM(p3.price * p3.qty) - SUM(p3.cost * p3.qty)) FROM {uc_order_products} AS p3 LEFT JOIN {uc_orders} AS o3 ON p3.order_id = o3.order_id WHERE o3.order_status IN $order_statuses AND p3.nid = n.nid) AS gross FROM {node} AS n WHERE type IN (". implode(', ', $product_types) .') GROUP BY n.nid, n.title';
-        break;
-    }
+  if ($views_column) {
+    $header[] = array('data' => t('Views'), 'field' => 'c.totalcount');
+    $csv_rows[0][] = t('Views');
   }
 
-  $sql_count = "SELECT COUNT(nid) FROM {node} WHERE type IN (". implode(", ", $product_types) .")";
-  $products = pager_query($sql . tablesort_sql($header), $page_size, 0, $sql_count);
-  $row_cell = $page * variable_get('uc_reports_table_size', 30) + 1;
+  $var_tables = "{uc_order_products} AS uop LEFT JOIN {uc_orders} AS uo ON uop.order_id = uo.order_id WHERE uo.order_status IN $order_statuses AND uop.nid = n.nid";
+  $sql_vars = array(
+    "n.nid",
+    "n.title",
+    "(SELECT SUM(uop.qty) FROM $var_tables) AS sold",
+    "(SELECT (SUM(uop.price * uop.qty) - SUM(uop.cost * uop.qty)) FROM $var_tables) AS gross",
+    "(SELECT (SUM(uop.price * uop.qty)) FROM $var_tables) AS revenue",
+  );
+  if ($views_column) {
+    $sql_vars[] = "nc.totalcount";
+  }
+  $sql_vars = implode(", ", $sql_vars);
+
+  $sql_tables = "{node} as n";
+  if ($views_column) {
+    $sql_tables .= " LEFT JOIN {node_counter} AS nc ON n.nid = nc.nid";
+  }
+
+  $sql_conditions = "n.type IN $product_types";
+
+  $sql_count = "SELECT COUNT(n.nid) FROM $sql_tables WHERE $sql_conditions";
+
+  $products = pager_query("SELECT $sql_vars FROM $sql_tables WHERE $sql_conditions GROUP BY n.nid, n.title" . tablesort_sql($header), $page_size, 0, $sql_count);
   while ($product = db_fetch_array($products)) {
-    $row_type = ($row_cell % 2) ? 'odd' : 'even';
     $product_cell = l($product['title'], 'node/'. ($product['nid']));
     $product_csv = $product['title'];
     $sold_cell = (empty($product['sold'])) ? 0 : $product['sold'];
@@ -187,43 +184,30 @@ function uc_reports_products() {
     $gross_cell = uc_currency_format((empty($product['gross'])) ? 0 : $product['gross']);
     $gross_csv = $gross_cell;
 
-    // Add the primary product row
-    if ($statistics && $count_views) {
-      $views = (empty($product['totalcount'])) ? 0 : $product['totalcount'];
-      $rows[] = array(
-        'data' => array(
-          array('data' => $row_cell),
-          array('data' => $product_cell),
-          array('data' => $views),
-          array('data' => "<strong>$sold_cell</strong>"),
-          array('data' => "<strong>$revenue_cell</strong>", 'nowrap' => 'nowrap'),
-          array('data' => "<strong>$gross_cell</strong>", 'nowrap' => 'nowrap'),
-        ),
-        'primary' => TRUE,
-      );
-      $csv_rows[] = array($row_cell, $product_csv, $views, $sold_csv, $revenue_csv, $gross_csv);
-    }
-    else {
-      $rows[] = array(
-        'data' => array(
-          array('data' => $row_cell),
-          array('data' => $product_cell),
-          array('data' => "<strong>$sold_cell</strong>"),
-          array('data' => "<strong>$revenue_cell</strong>", 'nowrap' => 'nowrap'),
-          array('data' => "<strong>$gross_cell</strong>", 'nowrap' => 'nowrap'),
-        ),
-        'primary' => TRUE,
-      );
-      $csv_rows[] = array($row_cell, $product_csv, $sold_csv, $revenue_csv, $gross_csv);
+    $row = array(
+      'data' => array(
+        $row_cell,
+        $product_cell,
+        "<strong>$sold_cell</strong>",
+        array('data' => "<strong>$revenue_cell</strong>", 'nowrap' => 'nowrap'),
+        array('data' => "<strong>$gross_cell</strong>", 'nowrap' => 'nowrap'),
+      ),
+      'primary' => TRUE,
+    );
+    $csv_row = array($row_cell, $product_csv, $sold_csv, $revenue_csv, $gross_csv);
+
+    if ($views_column) {
+      $views = isset($product['totalcount']) ? $product['totalcount'] : 0;
+      $row['data'][] = $views;
+      $csv_row[] = $views;
     }
 
+    $rows[] = $row;
+    $csv_rows[] = $csv_row;
+
     if (module_exists('uc_attribute')) {
-      $product_models = db_query("SELECT model FROM {uc_product_adjustments} WHERE nid = %d", $product['nid']);
-      $models = array(db_result(db_query("SELECT model FROM {uc_products} WHERE nid = %d", $product['nid'])));
-      unset($breakdown_product, $breakdown_sold, $breakdown_revenue, $breakdown_gross);
-      while ($product_model = db_fetch_object($product_models)) {
-        $models[] = $product_model->model;
-      }
+      // Get the SKUs from this product.
+      $models = _uc_reports_product_get_skus($product['nid']);
       // Add the product breakdown rows
       foreach ($models as $model) {
         $sold = db_result(db_query("SELECT SUM(qty) FROM {uc_order_products} AS p LEFT JOIN {uc_orders} AS o ON p.order_id = o.order_id WHERE o.order_status IN $order_statuses AND p.model = '%s' AND p.nid = %d", $model, $product['nid']));
@@ -237,29 +221,26 @@ function uc_reports_products() {
         $revenue_csv = (uc_currency_format((!empty($revenue)) ? $revenue : 0));
         $breakdown_gross = (uc_currency_format((!empty($gross)) ? $gross : 0));
         $gross_csv = (uc_currency_format((!empty($gross)) ? $gross : 0));
-        if ($statistics && $count_views) {
-          $rows[] = array(
-            array('data' => ''),
-            array('data' => $breakdown_product),
-            array('data' => ''),
-            array('data' => $breakdown_sold),
+
+        $row = array(
+          'data' => array(
+            '',
+            $breakdown_product,
+            $breakdown_sold,
             array('data' => $breakdown_revenue, 'nowrap' => 'nowrap'),
             array('data' => $breakdown_gross, 'nowrap' => 'nowrap'),
-          );
-          $csv_rows[] = array('', $product_csv, '', $sold_csv, $revenue_csv, $gross_csv);
+          ),
+        );
+        $csv_row = array('', $product_csv, $sold_csv, $revenue_csv, $gross_csv);
+
+        if ($views_column) {
+          $row['data'][] = '';
+          $csv_row[] = '';
         }
-        else {
-          $rows[] = array(
-            'data' => array(
-              array('data' => ''),
-              array('data' => $breakdown_product),
-              array('data' => $breakdown_sold),
-              array('data' => $breakdown_revenue, 'nowrap' => 'nowrap'),
-              array('data' => $breakdown_gross, 'nowrap' => 'nowrap'),
-            ),
-          );
-          $csv_rows[] = array('', $product_csv, $sold_csv, $revenue_csv, $gross_csv);
-        }
+
+        $rows[] = $row;
+        $csv_rows[] = $csv_row;
+
       }
       $row_cell++;
     }
@@ -275,6 +256,34 @@ function uc_reports_products() {
   $output .= '<small>*'. t('Make sure %setting_name is set to %state in the <a href="!url">access log settings page</a> to enable views column.', array('%setting_name' => 'count content views', '%state' => 'enabled', '!url' => url('admin/reports/settings', array('query' => 'destination=admin/store/reports/products')))) .'</small>';
 
   return $output;
+}
+
+/**
+ * Get the SKUs on a product, first from the product itself, then from the
+ * adjustments table, finally pulling any SKUs out of previous orders.
+ *
+ * @param $nid
+ *   The product's node ID.
+ * @return
+ *   A unique sorted array of all skus.
+ */
+function _uc_reports_product_get_skus($nid) {
+  // Product SKU.
+  $models = array(db_result(db_query("SELECT model FROM {uc_products} WHERE nid = %d", $nid)));
+  // Adjustment SKUs.
+  $product_models = db_query("SELECT model FROM {uc_product_adjustments} WHERE nid = %d", $nid);
+  while ($product_model = db_fetch_object($product_models)) {
+    $models[] = $product_model->model;
+  }
+  // SKUs from orders.
+  $order_product_models = db_query("SELECT DISTINCT model FROM {uc_order_products} WHERE nid = %d", $nid);
+  while ($order_product_model = db_fetch_object($order_product_models)) {
+    $models[] = $order_product_model->model;
+  }
+  // Unique, sorted.
+  $models = array_unique($models);
+  asort($models);
+  return $models;
 }
 
 /**

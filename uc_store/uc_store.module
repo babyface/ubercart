@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.15 2009/02/13 22:01:12 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.16 2009/02/24 15:35:51 islandusurper Exp $
 
 /**
  * @file
@@ -468,17 +468,24 @@ function uc_store_footer() {
   $path = drupal_get_normal_path($_GET['q']);
   $parts = explode('/', $path);
 
+  // Break out of the switch if the page isn't governed by Ubercart.
   switch ($parts[0]) {
     case 'admin':
-      if ($parts[1] != 'store') {
+      // No footer on /admin or /admin/*.
+      // But add a footer on /admin/store and /admin/store/*
+      if (!isset($parts[1]) || $parts[1] != 'store') {
         break;
       }
     case 'node':
-      if (count($parts) > 1 && intval($parts[1]) > 0 && $node = node_load($parts[1])) {
-        if (function_exists('uc_product_node_info') && !uc_product_is_product($node->type)) {
+      // No footer on /node or /node/[type]/add.
+      // Only add a footer on /node/[nid] if that node is a product.
+      if (!function_exists('uc_product_node_info') || count($parts) < 1 || intval($parts[1]) == 0) {
+        $node = node_load($parts[1]);
+        if ($node == FALSE || !uc_product_is_product($node->type)) {
           break;
         }
       }
+    // Add a footer to the following pages.
     case 'catalog':
     case 'cart':
     case 'manufacturer':
@@ -1402,6 +1409,26 @@ function _country_import_list() {
   }
 
   return $countries;
+}
+
+/**
+ * Import an Ubercart country file by filename.
+ */
+function uc_country_import($file) {
+  $pieces = explode('_', substr($file, 0, strlen($file) - 4));
+  $country_id = $pieces[count($pieces) - 2];
+  $version = $pieces[count($pieces) - 1];
+  $country = substr($file, 0, strlen($file) - strlen($country_id) - strlen($version) - 6);
+
+  require_once(drupal_get_path('module', 'uc_store') .'/countries/'. $file);
+  $func = $country .'_install';
+  if (function_exists($func)) {
+    $func();
+    drupal_set_message(t('Country file @file imported.', array('@file' => $file)));
+  }
+  else {
+    drupal_set_message(t('Country file @file had no install function.', array('@file' => $file)), 'error');
+  }
 }
 
 /**

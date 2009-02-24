@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.ca.inc,v 1.1.2.7 2009/02/10 21:58:14 islandusurper Exp $
+// $Id: uc_taxes.ca.inc,v 1.1.2.8 2009/02/24 15:35:48 islandusurper Exp $
 
 /**
  * @file
@@ -49,9 +49,9 @@ function uc_taxes_ca_trigger() {
 function uc_taxes_ca_action() {
   $actions = array();
 
-  $taxes = uc_taxes_get_rates();
-  foreach ($taxes as $tax) {
-    $actions['uc_taxes_action_apply_tax_'. $tax->id] = array(
+  // Loop through all the defined tax rates.
+  foreach (uc_taxes_rate_load() as $rate) {
+    $actions['uc_taxes_action_apply_tax_'. $rate->id] = array(
       '#title' => t('Charge a tax'),
       '#category' => t('Taxes'),
       '#callback' => 'uc_taxes_action_apply_tax',
@@ -118,17 +118,17 @@ function uc_taxes_action_apply_tax($order, $tax) {
 function uc_taxes_ca_predicate() {
   $predicates = array();
 
-  $taxes = uc_taxes_get_rates();
-  foreach ($taxes as $tax) {
-    $predicates['uc_taxes_'. $tax->id] = array(
-      '#title' => $tax->name,
-      '#class' => 'uc_taxes',
+  // Loop through all the defined tax rates.
+  foreach (uc_taxes_rate_load() as $rate) {
+    $predicates['uc_taxes_'. $rate->id] = array(
+      '#title' => $rate->name,
+      '#class' => 'taxes',
       '#trigger' => 'calculate_taxes',
       '#status' => 1,
       '#actions' => array(
         array(
-          '#name' => 'uc_taxes_action_apply_tax_'. $tax->id,
-          '#title' => t('Apply @tax', array('@tax' => $tax->name)),
+          '#name' => 'uc_taxes_action_apply_tax_'. $rate->id,
+          '#title' => t('Apply !name', array('!name' => $rate->name)),
           '#argument_map' => array(
             'order' => 'uc_order',
             'tax' => 'tax',

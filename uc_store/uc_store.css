@@ -1,4 +1,4 @@
-/* $Id: uc_store.css,v 1.8.2.3 2009/01/19 20:31:28 islandusurper Exp $ */
+/* $Id: uc_store.css,v 1.8.2.4 2009/02/24 15:35:51 islandusurper Exp $ */
 
 .uc-store-admin-table {
   margin: 1em auto;
@@ -114,3 +114,8 @@ table.section-items td {
   display: none;
 }
 
+.ubercart-throbber {
+  background-image: url(images/throbber.gif);
+  background-repeat: no-repeat;
+  background-position: 100% -20px;
+}

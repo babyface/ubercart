@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.ca.inc,v 1.1.2.10 2009/02/10 21:58:16 islandusurper Exp $
+// $Id: uc_cart.ca.inc,v 1.1.2.11 2009/02/24 15:35:49 islandusurper Exp $
 
 /**
  * @file
@@ -57,9 +57,12 @@ function uc_cart_ca_trigger() {
  * Implementation of hook_ca_predicate().
  */
 function uc_cart_ca_predicate() {
-  $predicates['uc_checkout_email_notification'] = array(
-    '#title' => t('E-mail checkout notifications'),
-    '#description' => t('Send an e-mail about the new order.'),
+  $predicates = array();
+
+  // Setup a default predicate for customer checkout notifications.
+  $predicates['uc_checkout_customer_notification'] = array(
+    '#title' => t('E-mail customer checkout notification'),
+    '#description' => t('E-mail the customer an invoice from their recent order.'),
     '#class' => 'notification',
     '#status' => 1,
     '#trigger' => 'uc_checkout_complete',
@@ -78,6 +81,17 @@ function uc_cart_ca_predicate() {
           'view' => 'checkout-mail',
         ),
       ),
+    ),
+  );
+
+  // Setup a default predicate for admin checkout notifications.
+  $predicates['uc_checkout_admin_notification'] = array(
+    '#title' => t('E-mail admin checkout notification'),
+    '#description' => t('E-mail a short order summary to an administrator when a customer checks out.'),
+    '#class' => 'notification',
+    '#status' => 1,
+    '#trigger' => 'uc_checkout_complete',
+    '#actions' => array(
       array(
         '#name' => 'uc_order_email_invoice',
         '#title' => t('Send an e-mail to the administrator(s)'),

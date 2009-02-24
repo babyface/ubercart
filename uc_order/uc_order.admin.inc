@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.11 2009/02/13 22:01:12 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.12 2009/02/24 15:35:53 islandusurper Exp $
 
 /**
  * @file
@@ -85,7 +85,8 @@ function uc_order_settings_form() {
   );
   $form['customer']['uc_cust_view_order_invoices'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Allow customers to view order invoices from their accounts.'),
+    '#title' => t('Allow customers to view order invoices from their order history.'),
+    '#description' => t('Enabling this feature allows pop-up invoices to be opened when a particular order is being viewed.'),
     '#summary callback' => 'summarize_checkbox',
     '#summary arguments' => array(
       t('Customers are allowed to view order invoices from their accounts.'),
@@ -96,7 +97,7 @@ function uc_order_settings_form() {
   $form['customer']['uc_cust_order_invoice_template'] = array(
     '#type' => 'select',
     '#title' => t('On-site invoice template'),
-    '#description' => t('Select the invoice template to use when invoices are viewed on the site.<br />This is separate from the template used to e-mail invoices to customers.'),
+    '#description' => t('Select the invoice template to use when invoices are viewed on the site.<br />This is separate from the template used to e-mail invoices to customers which is configured through <a href="!url">Conditional actions</a>.', array('!url' => url(CA_UI_PATH))),
     '#options' => uc_order_template_options(),
     '#summary' => t('You are using the %template order invoice template.', array('%template' => variable_get('uc_cust_order_invoice_template', 'customer'))),
     '#default_value' => variable_get('uc_cust_order_invoice_template', 'customer'),
@@ -1152,34 +1153,16 @@ function uc_order_edit_products($order) {
       }
       break;
     case 'add':
+      $form_state['values'] = $_POST;
       $product = node_load(intval($_POST['nid']));
       $product->qty = intval($_POST['qty']);
       $product->price = $product->sell_price;
-      if (module_exists('uc_manufacturer')) {
-        $product->manufacturer = uc_product_get_manufacturer($product->nid);
-        $product->manufacturer = $product->manufacturer->name;
-      }
-      if (module_exists('uc_attribute')) {
-        $form_state['values'] = array(
-          'nid' => intval($_POST['nid']),
-          'attributes' => $_POST['attributes'],
-        );
-        $product->data = module_invoke_all('add_to_cart_data', $form_state['values']);
-        $attributes = array();
-        $product->options = _uc_cart_product_get_options($product);
-        foreach ($product->options as $option) {
-          $product->cost += $option['cost'];
-          $product->price += $option['price'];
-          $product->weight += $option['weight'];
-          $attributes[$option['attribute']] = $option['name'];
-        }
-        $product->data['attributes'] = $attributes;
-        $product->module = $product->data['module'];
-        if ($product->data['model']) {
-          $product->model = $product->data['model'];
-        }
-      }
+      $product->data = module_invoke_all('add_to_cart_data', $form_state['values']);
+
+      module_invoke_all('cart_item', 'load', $product);
+      drupal_alter('order_product', $product, $order);
       uc_order_product_save($order->order_id, $product);
+
       if (variable_get('uc_order_logging', TRUE)) {
         uc_order_log_changes($order->order_id, array('add' => 'Added ('. $product->qty .') '. $product->title .' to order.'));
       }

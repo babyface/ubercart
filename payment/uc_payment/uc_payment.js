@@ -1,4 +1,4 @@
-// $Id: uc_payment.js,v 1.5.2.4 2008/11/07 21:13:25 islandusurper Exp $
+// $Id: uc_payment.js,v 1.5.2.5 2009/02/24 15:35:51 islandusurper Exp $
 
 // Arrays for order total preview data.
 var li_titles = {};
@@ -102,7 +102,7 @@ function render_line_items() {
   );
   $('#edit-panes-payment-current-total').val(cur_total).click();
 
-  $('#order-total-throbber').attr('style', 'background-image: url(' + Drupal.settings.basePath + 'misc/throbber.gif); background-repeat: no-repeat; background-position: 100% -20px;').html('&nbsp;&nbsp;&nbsp;&nbsp;');
+  $('#order-total-throbber').addClass('ubercart-throbber').html('&nbsp;&nbsp;&nbsp;&nbsp;');
 
   // Post the line item data to a URL and get it back formatted for display.
   $.post(Drupal.settings.basePath + '?q=cart/checkout/line_items', li_info,

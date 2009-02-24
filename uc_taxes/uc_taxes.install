@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.install,v 1.10.2.5 2009/02/10 21:58:14 islandusurper Exp $
+// $Id: uc_taxes.install,v 1.10.2.6 2009/02/24 15:35:48 islandusurper Exp $
 
 /**
  * @file
@@ -164,7 +164,7 @@ function uc_taxes_update_6() {
   $ret = array();
   if (module_exists('workflow_ng_ui')) {
     $configurations = array();
-    $taxes = uc_taxes_get_rates();
+    $taxes = uc_taxes_rate_load();
     foreach ($taxes as $tax) {
       $configurations['uc_taxes_'. $tax->id] = array(
         '#name' => 'uc_taxes_'. $tax->id,

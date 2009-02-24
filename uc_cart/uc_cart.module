@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.16 2009/02/13 22:01:13 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.17 2009/02/24 15:35:49 islandusurper Exp $
 
 /**
  * @file
@@ -211,7 +211,7 @@ function uc_cart_enable() {
 function uc_cart_theme() {
   return array(
     'uc_cart_block_title' => array(
-      'arguments' => array('title' => NULL, 'title_class' => NULL, 'cart_image' => FALSE, 'arrow_up_image' => FALSE),
+      'arguments' => array('title' => NULL, 'icon_class' => FALSE, 'collapsible' => FALSE),
     ),
     'uc_cart_block_title_icon' => array(
       'arguments' => array(),
@@ -393,12 +393,10 @@ function uc_cart_block($op = 'list', $delta = 0, $edit = array()) {
         if (!$cachable && variable_get('uc_cart_block_collapsible', TRUE)) {
           drupal_add_js(array('ucCollapsedBlock' => variable_get('uc_cart_block_collapsed', TRUE)), 'setting');
           drupal_add_js(drupal_get_path('module', 'uc_cart') .'/uc_cart_block.js');
-          $arrow_up_image = $uc_cart_path .'/images/bullet-arrow-up.gif';
-          $title_class = 'block-cart-title-bar cart-block-toggle';
+          $collapsible = TRUE;
         }
         else {
-          $arrow_up_image = FALSE;
-          $title_class = 'block-cart-title-bar';
+          $collapsible = FALSE;
         }
 
         // Build the cart image if enabled.
@@ -406,15 +404,15 @@ function uc_cart_block($op = 'list', $delta = 0, $edit = array()) {
           // If the cart is empty or we need a cachable cart block...
           if ($cachable || !$product_count) {
             // Use the "empty" cart icon.
-            $cart_image = $uc_cart_path .'/images/cart_empty.gif';
+            $icon_class = 'cart-block-icon-empty';
           }
           else {
             // Otherwise use the "full" cart icon.
-            $cart_image = $uc_cart_path .'/images/cart_full.gif';
+            $icon_class = 'cart-block-icon-full';
           }
         }
         else {
-          $cart_image = FALSE;
+          $icon_class = FALSE;
         }
 
         // Set the text of the block title.
@@ -429,7 +427,7 @@ function uc_cart_block($op = 'list', $delta = 0, $edit = array()) {
           // Caching is turned on and the user is not logged in, so we should
           // deliver a block that is safe for caching.
           $block = array(
-            'subject' => theme('uc_cart_block_title', $title, $title_class, $cart_image),
+            'subject' => theme('uc_cart_block_title', $title, $icon_class, $collapsible),
             'content' => theme('uc_cart_block_content_cachable'),
           );
         }
@@ -466,11 +464,11 @@ function uc_cart_block($op = 'list', $delta = 0, $edit = array()) {
           }
 
           // Build the item count text and cart links.
-          $item_text = format_plural($item_count, '<span class=".num-items">@count</span> Item', '<span class=".num-items">@count</span> Items');
+          $item_text = format_plural($item_count, '<span class="num-items">@count</span> Item', '<span class="num-items">@count</span> Items');
 
           $summary_links = array(
             'cart-block-view-cart' => array(
-              'title' => 'View cart',
+              'title' => t('View cart'),
               'href' => 'cart',
               'attributes' => array('rel' => 'nofollow'),
             ),
@@ -479,14 +477,14 @@ function uc_cart_block($op = 'list', $delta = 0, $edit = array()) {
           // Only add the checkout link if checkout is enabled.
           if (variable_get('uc_checkout_enabled', TRUE)) {
             $summary_links['cart-block-checkout'] = array(
-              'title' => 'Checkout',
+              'title' => t('Checkout'),
               'href' => 'cart/checkout',
               'attributes' => array('rel' => 'nofollow'),
             );
           }
 
           $block = array(
-            'subject' => theme('uc_cart_block_title', $title, $title_class, $cart_image, $arrow_up_image),
+            'subject' => theme('uc_cart_block_title', $title, $icon_class, $collapsible),
             'content' => theme('uc_cart_block_content', $help_text, $items, $item_count, $item_text, $total, $summary_links),
           );
         }
@@ -559,32 +557,29 @@ function uc_cart_block_settings_form_submit($edit = array()) {
  *
  * @param $title
  *   The text to use for the title of the block.
- * @param $title_class
- *   The class to assign to the title's span based on collapsibility settings.
- * @param $cart_image
- *   Filepath to the shopping cart icon to use or FALSE if the icon is disabled.
- * @param $arrow_up_image
- *   Filepath to the arrow up image or FALSE if collapsibility is disabled.
+ * @param $icon_class
+ *   Class to use for the cart icon image or FALSE if the icon is disabled.
+ * @param $collapsible
+ *   TRUE or FALSE indicating whether or not the cart block is collapsible.
  * @ingroup themeable
  */
-function theme_uc_cart_block_title($title, $title_class, $cart_image = FALSE, $arrow_up_image = FALSE) {
+function theme_uc_cart_block_title($title, $icon_class = 'cart-empty', $collapsible = TRUE) {
   $output = '';
 
   // Add in the cart image if specified.
-  if ($cart_image) {
-    $output .= theme('uc_cart_block_title_icon', $cart_image);
+  if ($icon_class) {
+    $output .= theme('uc_cart_block_title_icon', $icon_class);
   }
 
-  // Add the main title span and text.
-  $output .= '<span class="'. $title_class .'" id="block-cart-title-bar-text">'
-            .'<span id="block-cart-title">'. $title .'</span></span>';
-
-
-  // Add the arrow image if specified.
-  if ($arrow_up_image) {
-    $output .= '<span class="block-cart-title-bar cart-block-toggle" id="block-cart-title-bar-arrow">'
-             . theme('image', $arrow_up_image, '[]', t('Expand the cart block.'), array('id' => 'block-cart-title-arrow'))
-              .'</span>';
+  // Add the main title span and text, with or without the arrow based on the
+  // cart block collapsibility settings.
+  if ($collapsible) {
+    $output .= '<span class="cart-block-title-bar" alt="'. t('Show/hide shopping cart contents.')
+              .'" title="'. t('Show/hide shopping cart contents.') .'">'
+             . $title .'<span class="cart-block-arrow"></span></span>';
+  }
+  else {
+    $output .= '<span class="cart-block-title-bar">'. $title .'</span>';
   }
 
   return $output;
@@ -593,12 +588,12 @@ function theme_uc_cart_block_title($title, $title_class, $cart_image = FALSE, $a
 /**
  * Theme the shopping cart icon.
  *
- * @param $cart_image
- *   Filepath to the shopping cart icon to use.
+ * @param $icon_class
+ *   Class to use for the cart icon image, either cart-full or cart-empty.
  * @ingroup themeable
  */
-function theme_uc_cart_block_title_icon($cart_image) {
-  return l(theme('image', $cart_image, '', t('Shopping cart'), array('id' => 'block-cart-title-image')), 'cart', array('html' => TRUE));
+function theme_uc_cart_block_title_icon($icon_class) {
+  return l('<span class="'. $icon_class .'" alt="'. t('View your shopping cart.') .'" title="'. t('View your shopping cart.') .'" />', 'cart', array('html' => TRUE));
 }
 
  /**
@@ -638,7 +633,7 @@ function theme_uc_cart_block_content($help_text, $items, $item_count, $item_text
   }
 
   // Add a wrapper div for use when collapsing the block.
-  $output .= '<div id="block-cart-contents">';
+  $output .= '<div id="cart-block-contents">';
 
   // Add a table of items in the cart or the empty message.
   $output .= theme('uc_cart_block_items', $items);
@@ -735,7 +730,7 @@ function uc_cart_uc_message() {
   global $user;
 
   $messages['checkout_instructions'] = '';
-  $messages['review_instructions'] = t("Your order is almost complete. Please review the details below and click '!submit' if all the information is correct.  You may use the 'Back' button to make changes to your order if necessary.", array('!submit' => variable_get('uc_checkout_submit_button', t('Submit order'))));
+  $messages['review_instructions'] = t("Your order is almost complete. Please review the details below and click 'Submit order' if all the information is correct.  You may use the 'Back' button to make changes to your order if necessary.");
   $messages['completion_message'] = t('Your order is complete! Your order number is [order-id].');
   $messages['completion_logged_in'] = t('Thank you for shopping at [store-name]. While logged in, you may continue shopping or <a href="[order-url]">view your current order status</a> and order history.');
   $messages['completion_existing_user'] = t("Thank you for shopping at [store-name]. Your current order has been attached to the account we found matching your e-mail address\n\n<a href=\"[site-url]/user\">Login</a> and view your current order status and order history. Remember to login when you make your next purchase for a faster checkout experience!");

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.module,v 1.7.2.11 2009/01/19 20:31:22 islandusurper Exp $
+// $Id: uc_recurring.module,v 1.7.2.12 2009/02/24 15:35:51 islandusurper Exp $
 
 /**
  * @file
@@ -129,6 +129,11 @@ function uc_recurring_form_alter(&$form, &$form_state, $form_id) {
     // Make no changes if no recurring fees are found.
     if (uc_recurring_find_fees($order) == array()) {
       return;
+    }
+
+    // If configured, display a message about the recurring fees.
+    if ($message = variable_get('uc_recurring_checkout_message', '')) {
+      drupal_set_message(check_markup($message));
     }
 
     // Remove invalid payment methods from the payment pane.
@@ -610,6 +615,12 @@ function uc_recurring_settings_form() {
     '#description' => t('Only selected payment methods will be available for customers purchasing products with recurring fees.<br/>It is up to you to make sure your chosen handler is compatible with the payment methods you select.<br />For example, the uc_recurring handler is only compatible with the Credit Card payment method.'),
     '#options' => $options,
     '#default_value' => variable_get('uc_recurring_payment_methods', array()),
+  );
+  $form['uc_recurring_checkout_message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Recurring free checkout form message'),
+    '#description' => t('Enter a message to be displayed on the checkout form page when a customer has products in the cart with recurring fees.<br />Leave blank to not display any message.'),
+    '#default_value' => variable_get('uc_recurring_checkout_message', ''),
   );
   $form['uc_recurring_checkout_process'] = array(
     '#type' => 'checkbox',

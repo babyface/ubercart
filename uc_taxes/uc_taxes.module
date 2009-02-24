@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.12.2.7 2009/01/02 20:18:39 islandusurper Exp $
+// $Id: uc_taxes.module,v 1.12.2.8 2009/02/24 15:35:48 islandusurper Exp $
 
 /**
  * @file
@@ -7,6 +7,9 @@
  *
  * Allows tax rules to be set up and applied to orders.
  */
+
+require_once('uc_taxes.ca.inc');
+
 
 /******************************************************************************
  * Drupal Hooks                                                               *
@@ -41,24 +44,39 @@ function uc_taxes_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'uc_taxes.admin.inc',
   );
-  $items['admin/store/settings/taxes/edit'] = array(
-    'title' => 'Edit tax rule',
+  $items['admin/store/settings/taxes/overview'] = array(
+    'title' => 'Overview',
+    'weight' => 0,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['admin/store/settings/taxes/add'] = array(
+    'title' => 'Add a tax rate',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_taxes_form'),
     'access arguments' => array('configure taxes'),
-    'type' => MENU_CALLBACK,
     'file' => 'uc_taxes.admin.inc',
+    'weight' => 5,
+    'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/store/settings/taxes/copy'] = array(
-    'page callback' => 'uc_taxes_copy',
+  $items['admin/store/settings/taxes/%/edit'] = array(
+    'title' => 'Edit a tax rate',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_taxes_form', 4),
     'access arguments' => array('configure taxes'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_taxes.admin.inc',
   );
-  $items['admin/store/settings/taxes/delete'] = array(
+  $items['admin/store/settings/taxes/%/clone'] = array(
+    'page callback' => 'uc_taxes_clone',
+    'page arguments' => array(4),
+    'access arguments' => array('configure taxes'),
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_taxes.admin.inc',
+  );
+  $items['admin/store/settings/taxes/%/delete'] = array(
     'title' => 'Delete tax rule',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('uc_taxes_delete'),
+    'page arguments' => array('uc_taxes_delete_form', 4),
     'access arguments' => array('configure taxes'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_taxes.admin.inc',
@@ -72,10 +90,9 @@ function uc_taxes_menu() {
   return $items;
 }
 
-function uc_taxes_init() {
-  require_once('uc_taxes.ca.inc');
-}
-
+/**
+ * Implementation of hook_form_alter().
+ */
 function uc_taxes_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'uc_cart_checkout_form') {
     if (isset($form['panes']['payment'])) {
@@ -245,26 +262,85 @@ function uc_line_item_tax_subtotal($op, $order) {
   }
 }
 
+
 /******************************************************************************
  * Module and Helper Functions
  ******************************************************************************/
 
 /**
- * Load all tax rates.
+ * Save a tax rate to the database.
+ *
+ * @param $rate
+ *   The tax rate object to be saved.
+ * @return
+ *   The saved tax rate object including the rate ID for new rates.
  */
-function uc_taxes_get_rates() {
-  static $taxes = array();
+function uc_taxes_rate_save($rate) {
+  // Prepare the arrays for saving.
+  $rate->taxed_product_types = serialize($rate->taxed_product_types);
+  $rate->taxed_line_items = serialize($rate->taxed_line_items);
 
-  if (empty($taxes)) {
+  // Save it as a new rate if no ID is specified.
+  if (!$rate->id) {
+    drupal_write_record('uc_taxes', $rate);
+  }
+  else {
+    // Otherwise update the existing tax rate's data.
+    drupal_write_record('uc_taxes', $rate, array('id'));
+  }
+
+  return $rate;
+}
+
+/**
+ * Load a tax rate or all tax rates from the database.
+ *
+ * @param $rate_id
+ *   The ID of the specific rate to load or NULL to return all available rates.
+ * @return
+ *   An object representing the requested tax rate or an array of all tax rates
+ *     keyed by rate ID.
+ */
+function uc_taxes_rate_load($rate_id = NULL) {
+  static $rates = array();
+
+  // If the rates have not been cached yet...
+  if (empty($rates)) {
+    // Get all the rate data from the database.
     $result = db_query("SELECT * FROM {uc_taxes} ORDER BY weight");
-    while ($rule = db_fetch_object($result)) {
-      $rule->taxed_product_types = unserialize($rule->taxed_product_types);
-      $rule->taxed_line_items = unserialize($rule->taxed_line_items);
-      $taxes[$rule->id] = $rule;
+
+    // Loop through each returned row.
+    while ($rate = db_fetch_object($result)) {
+      // Unserialize some arrays and cache the rate in a static array.
+      $rate->taxed_product_types = unserialize($rate->taxed_product_types);
+      $rate->taxed_line_items = unserialize($rate->taxed_line_items);
+
+      $rates[$rate->id] = $rate;
     }
   }
 
-  return $taxes;
+  // Return a rate as specified.
+  if ($rate_id) {
+    return $rates[$rate_id];
+  }
+  else {
+    // Or return the whole shebang.
+    return $rates;
+  }
+}
+
+/**
+ * Delete a tax rate from the database.
+ *
+ * @param $rate_id
+ *   The ID of the tax rate to delete.
+ */
+function uc_taxes_rate_delete($rate_id) {
+  // Delete the tax rate record.
+  db_query("DELETE FROM {uc_taxes} WHERE id = %d", $rate_id);
+
+  // Delete the associated predicated if it has been saved to the database.
+  ca_delete_predicate('uc_taxes_'. $rate_id);
 }
 
 /**
@@ -316,8 +392,9 @@ function uc_taxes_calculate_tax($order) {
       }
     }
   }
-  $taxes = uc_taxes_get_rates();
+
   $order->taxes = array();
+
   $arguments = array(
     'order' => array(
       '#entity' => 'uc_order',
@@ -335,7 +412,7 @@ function uc_taxes_calculate_tax($order) {
       '#data' => $account,
     ),
   );
-  foreach ($taxes as $tax) {
+  foreach (uc_taxes_rate_load() as $tax) {
     $arguments['tax']['#data'] = $tax;
     $predicates = ca_load_trigger_predicates('calculate_taxes');
     if (ca_evaluate_conditions($predicates['uc_taxes_'. $tax->id], $arguments)) {
@@ -375,3 +452,4 @@ function uc_taxes_javascript() {
   }
   exit();
 }
+

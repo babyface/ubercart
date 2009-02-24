@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.pages.inc,v 1.1.2.6 2009/01/19 20:31:22 islandusurper Exp $
+// $Id: uc_paypal.pages.inc,v 1.1.2.7 2009/02/24 15:35:55 islandusurper Exp $
 
 /**
  * @file
@@ -396,6 +396,6 @@ function uc_paypal_cancel() {
 
   drupal_set_message(t('Your PayPal payment was cancelled. Please feel free to continue shopping or contact us for assistance.'));
 
-  drupal_goto('cart');
+  drupal_goto(variable_get('uc_paypal_wps_cancel_return_url', 'cart'));
 }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.16 2009/02/13 22:01:12 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.17 2009/02/24 15:35:52 islandusurper Exp $
 
 /**
  * @file
@@ -90,16 +90,6 @@ function uc_product_menu() {
     'access arguments' => array('administer product features'),
     'weight' => 0,
     'type' => MENU_LOCAL_TASK,
-    'file' => 'uc_product.admin.inc',
-  );
-  $items['admin/store/settings/products/edit/image-widgets'] = array(
-    'title' => 'Product images',
-    'description' => 'Choose and enable an existing image widget.',
-    'access arguments' => array('administer products'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('uc_product_image_widgets'),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 1,
     'file' => 'uc_product.admin.inc',
   );
 

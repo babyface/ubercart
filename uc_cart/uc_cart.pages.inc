@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.7 2009/02/13 22:01:13 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.8 2009/02/24 15:35:49 islandusurper Exp $
 
 /**
  * @file
@@ -176,7 +176,7 @@ function uc_cart_checkout_form() {
           $opt = variable_get('uc_collapse_current_pane', FALSE) ? $pane['id'] : 'false';
           $form['panes'][$pane['id']]['next'] = array(
             '#type' => 'button',
-            '#value' => variable_get('uc_checkout_next_button', t('Next')),
+            '#value' => t('Next'),
             '#weight' => variable_get("uc_pane_{$pane_id}_field_button_weight", 20),
             '#attributes' => array('onclick' => "return uc_cart_next_button_click(this, '". $pane['next'] ."', '". $opt ."');"),
             '#prefix' => '<div class="next-button show-onload">',
@@ -191,9 +191,20 @@ function uc_cart_checkout_form() {
   }
   unset($_SESSION['expanded_panes']);
 
-  $form['cart_contents'] = array('#type' => 'hidden', '#value' => serialize(uc_cart_get_contents()));
-  $form['cancel'] = array('#type' => 'submit', '#submit' => FALSE, '#value' => t('Cancel'));
-  $form['continue'] = array('#type' => 'submit', '#value' => variable_get('uc_checkout_review_button', t('Review order')));
+  $form['cart_contents'] = array(
+    '#type' => 'hidden',
+    '#value' => serialize(uc_cart_get_contents()),
+  );
+
+  $form['cancel'] = array(
+    '#type' => 'submit',
+    '#value' => t('Cancel'),
+    '#submit' => FALSE,
+  );
+  $form['continue'] = array(
+    '#type' => 'submit',
+    '#value' => t('Review order'),
+  );
 
   return $form;
 }
@@ -203,26 +214,19 @@ function theme_uc_cart_checkout_form($form) {
 
   $output = '<div>'. check_markup(variable_get('uc_checkout_instructions', ''), variable_get('uc_checkout_instructions_format', FILTER_FORMAT_DEFAULT), FALSE) .'</div>';
 
-  if (arg(1) == 'checkout2') {
-    foreach (element_children($form['panes']) as $pane_id) {
-      $output .= drupal_render($form['panes'][$pane_id]);
-    }
-  }
-  else {
-    foreach (element_children($form['panes']) as $pane_id) {
-      if (function_exists(($func = _checkout_pane_data($pane_id, 'callback')))) {
-        $result = $func('theme', $form['panes'][$pane_id], NULL);
-        if (!empty($result)) {
-          $output .= $result;
-          $form['panes'][$pane_id] = array();
-        }
-        else {
-          $output .= drupal_render($form['panes'][$pane_id]);
-        }
+  foreach (element_children($form['panes']) as $pane_id) {
+    if (function_exists(($func = _checkout_pane_data($pane_id, 'callback')))) {
+      $result = $func('theme', $form['panes'][$pane_id], NULL);
+      if (!empty($result)) {
+        $output .= $result;
+        $form['panes'][$pane_id] = array();
       }
       else {
         $output .= drupal_render($form['panes'][$pane_id]);
       }
+    }
+    else {
+      $output .= drupal_render($form['panes'][$pane_id]);
     }
   }
 
@@ -382,12 +386,12 @@ function uc_cart_checkout_review_form() {
 
   $form['back'] = array(
     '#type' => 'submit',
-    '#submit' => array('uc_cart_checkout_review_form_back'),
     '#value' => t('Back'),
+    '#submit' => array('uc_cart_checkout_review_form_back'),
   );
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => variable_get('uc_checkout_submit_button', t('Submit order')),
+    '#value' => t('Submit order'),
   );
 
   return $form;

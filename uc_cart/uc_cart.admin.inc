@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.admin.inc,v 1.1.2.6 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_cart.admin.inc,v 1.1.2.7 2009/02/24 15:35:49 islandusurper Exp $
 
 /**
  * @file
@@ -252,20 +252,6 @@ function uc_cart_checkout_settings_form() {
     ),
     '#default_value' => variable_get('uc_checkout_anonymous', TRUE),
   );
-  $form['general']['uc_checkout_review_button'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Review order button text'),
-    '#description' => t('Change the text on the review order button at the bottom of the checkout screen.'),
-    '#summary' => t('Review order button says @button_text', array('@button_text' => variable_get('uc_checkout_review_button', t('Review order')))),
-    '#default_value' => variable_get('uc_checkout_review_button', t('Review order')),
-  );
-  $form['general']['uc_checkout_submit_button'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Submit order button text'),
-    '#description' => t('Change the text on the submit order button at the bottom of the review screen.'),
-    '#summary' => t('Submit order button says @button_text', array('@button_text' => variable_get('uc_checkout_submit_button', t('Submit order')))),
-    '#default_value' => variable_get('uc_checkout_submit_button', t('Submit order')),
-  );
   $form['general']['uc_cart_delivery_not_shippable'] = array(
     '#type' => 'checkbox',
     '#title' => t('Hide shipping information when possible for carts with no shippable items.'),
@@ -301,13 +287,6 @@ function uc_cart_checkout_settings_form() {
       t('Collapsible panes will not collapse when their next buttons are clicked.'),
     ),
     '#default_value' => variable_get('uc_collapse_current_pane', TRUE),
-  );
-  $form['pane_settings']['uc_checkout_next_button'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Next pane button text'),
-    '#description' => t('Change the text on the checkout pane buttons to expand the next pane.'),
-    '#default_value' => variable_get('uc_checkout_next_button', t('Next')),
-    '#summary' => t('Next buttons on checkout panes say %text', array('%text' => variable_get('uc_checkout_next_button', t('Next')))),
   );
 
   $form['completion'] = array(

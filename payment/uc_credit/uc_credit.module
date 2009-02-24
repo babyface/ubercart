@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.5.2.11 2009/02/13 22:01:15 islandusurper Exp $
+// $Id: uc_credit.module,v 1.5.2.12 2009/02/24 15:35:50 islandusurper Exp $
 
 /**
  * @file
@@ -227,7 +227,7 @@ function uc_credit_exit() {
   $args = explode('/', $_GET['q']);
 
   // Make sure sensitive checkout session data doesn't persist on other pages.
-  if (isset($args[1]) && $args[1] != 'checkout' && isset($_SESSION['sescrd'])) {
+  if (isset($_SESSION['sescrd']) && (!isset($args[1]) || $args[1] != 'checkout')) {
     unset($_SESSION['sescrd']);
   }
 }

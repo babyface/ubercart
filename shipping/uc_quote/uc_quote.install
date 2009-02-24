@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.install,v 1.5.2.6 2009/02/04 13:44:33 islandusurper Exp $
+// $Id: uc_quote.install,v 1.5.2.7 2009/02/24 15:35:55 islandusurper Exp $
 
 /**
  * @file
@@ -341,7 +341,9 @@ function uc_quote_update_6001() {
 function uc_quote_update_6002() {
   $ret = array();
 
-  db_drop_table($ret, 'uc_quote_manufacturer_locations');
+  if (db_table_exists('uc_quote_manufacturer_locations')) {
+    db_drop_table($ret, 'uc_quote_manufacturer_locations');
+  }
 
   return $ret;
 }

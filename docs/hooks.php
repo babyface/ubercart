@@ -1,5 +1,5 @@
 <?php
-// $Id: hooks.php,v 1.1.2.9 2009/02/04 13:44:34 islandusurper Exp $
+// $Id: hooks.php,v 1.1.2.10 2009/02/24 15:35:54 islandusurper Exp $
 
 /**
  * @file
@@ -113,7 +113,7 @@ function hook_calculate_tax($order) {
     }
   }
   $_SESSION['taxes'] = array();
-  $taxes = uc_taxes_get_rates();
+  $taxes = uc_taxes_rate_load();
   foreach ($taxes as $tax) {
     // Gotta pass a fake line_item entity for the data to be saved to $_SESSION.
     workflow_ng_invoke_event('calculate_tax_'. $tax->id, $order, $tax, $account, array());

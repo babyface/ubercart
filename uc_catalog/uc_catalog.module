@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.14 2009/02/04 13:44:30 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.15 2009/02/24 15:35:50 islandusurper Exp $
 
 /**
  * @file
@@ -409,7 +409,7 @@ function uc_catalog_block($op = 'list', $delta = 0, $edit = array()) {
             }
 
             // Now, create a structured menu, separate from Drupal's menu.
-            $content .= theme('uc_catalog_block', $menu_tree);
+            $content = theme('uc_catalog_block', $menu_tree);
 
             $subject = variable_get('uc_catalog_name', t('Catalog'));
             if (variable_get('uc_catalog_block_title', FALSE)) {

@@ -1,10 +1,10 @@
-// $Id: uc_cart_block.js,v 1.8.2.2 2008/11/07 21:13:22 islandusurper Exp $
+// $Id: uc_cart_block.js,v 1.8.2.3 2009/02/24 15:35:49 islandusurper Exp $
 
 /**
  * Set the behavior to (un)collapse the cart block on a click
  */
 Drupal.behaviors.ucCollapseBlock = function(context) {
-  $('.cart-block-toggle:not(.ucCollapseBlock-processed)', context).addClass('ucCollapseBlock-processed').click(
+  $('.cart-block-title-bar:not(.ucCollapseBlock-processed)', context).addClass('ucCollapseBlock-processed').click(
     function() {
       cart_block_toggle();
     }
@@ -17,7 +17,14 @@ Drupal.behaviors.ucCollapseBlock = function(context) {
 $(document).ready(
   function() {
     if (Drupal.settings.ucCollapsedBlock == true) {
-      $('#block-cart-contents').hide();
+      // Hide the contents.
+      $('#cart-block-contents').hide();
+
+      // Add the appropriate title bar class.
+      $('.cart-block-title-bar').addClass('cart-block-toggle');
+
+      // Add the appropriate arrow class.
+      $('.cart-block-arrow').removeClass('arrow-down').addClass('arrow-up');
     }
   }
 );
@@ -26,13 +33,14 @@ $(document).ready(
  * Toggle the shopping cart block open and closed.
  */
 function cart_block_toggle() {
-  $('#block-cart-contents').toggle();
+  // Toggle the display of the cart contents table.
+  $('#cart-block-contents').toggle();
 
-  isrc = $('#block-cart-title-arrow').attr('src');
-  if (isrc.toLowerCase().match("up") != null) {
-    $('#block-cart-title-arrow').attr('src', isrc.split('-up').join('-down'));
+  // Toggle the class of the cart block arrow.
+  if ($('.cart-block-arrow').hasClass('arrow-up')) {
+    $('.cart-block-arrow').removeClass('arrow-up').addClass('arrow-down');
   }
   else {
-    $('#block-cart-title-arrow').attr('src', isrc.split('-down').join('-up'));
+    $('.cart-block-arrow').removeClass('arrow-down').addClass('arrow-up');
   }
 }

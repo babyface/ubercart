@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.12 2009/02/10 21:58:15 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.13 2009/02/24 15:35:51 islandusurper Exp $
 
 /**
  * @file
@@ -15,6 +15,33 @@ define('UC_PRODUCT_KIT_MUTABLE', 1);
 /******************************************************************************
  * Drupal Hooks                                                               *
  ******************************************************************************/
+
+/**
+ * Implementation of hook_menu().
+ */
+function uc_product_kit_menu() {
+  $items = array();
+
+  $items['admin/store/settings/products/edit/product-kits'] = array(
+    'title' => 'Product kits',
+    'description' => 'Configure the product kit settings.',
+    'access arguments' => array('administer product kits'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_product_kit_settings_form'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+    'file' => 'uc_product_kit.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function uc_product_kit_perm() {
+  return array('administer product kits');
+}
 
 /**
  * Implementation of hook_access().
@@ -295,25 +322,6 @@ function uc_product_kit_forms($form_id, $args) {
     $forms['uc_catalog_buy_it_now_form_'. $product->nid] = array('callback' => 'uc_product_kit_buy_it_now_form');
   }
   return $forms;
-}
-
-/**
- * Add product kit settings to the product settings form.
- */
-function uc_product_kit_form_alter(&$form, &$form_state, $form_id) {
-  if ($form_id == 'uc_product_settings_form') {
-    $form['uc_product_kit_mutable'] = array(
-      '#type' => 'radios',
-      '#title' => t('How are product kits handled by the cart?'),
-      '#options' => array(
-        UC_PRODUCT_KIT_UNMUTABLE_NO_LIST => t('As a unit. Customers may only change how many kits they are buying. Do not list component products.'),
-        UC_PRODUCT_KIT_UNMUTABLE_WITH_LIST => t('As a unit. Customers may only change how many kits they are buying. List component products.'),
-        UC_PRODUCT_KIT_MUTABLE => t('As individual products. Customers may add or remove kit components at will.'),
-      ),
-      '#default_value' => variable_get('uc_product_kit_mutable', 0),
-      '#weight' => -5,
-    );
-  }
 }
 
 /**
