@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.14 2009/02/13 22:01:12 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.15 2009/02/27 22:41:32 islandusurper Exp $
 
 /**
  * @file
@@ -226,6 +226,61 @@ function uc_order_ca_condition() {
     '#category' => t('Order'),
     '#description' => t('Returns TRUE if the order has any shippable products.'),
     '#callback' => 'uc_order_condition_is_shippable',
+    '#arguments' => array(
+      'order' => $order_arg,
+    ),
+  );
+
+  $conditions['uc_order_condition_user_name'] = array(
+    '#title' => t('Check the user name.'),
+    '#category' => t('Order: User'),
+    '#description' => t('Returns TRUE if the user name matches the condition.'),
+    '#callback' => 'uc_order_condition_user_name',
+    '#arguments' => array(
+      'order' => $order_arg,
+    ),
+  );
+  $conditions['uc_order_condition_user_mail'] = array(
+    '#title' => t('Check the user email address.'),
+    '#category' => t('Order: User'),
+    '#description' => t('Returns TRUE if the user email addresses matches the condition.'),
+    '#callback' => 'uc_order_condition_user_mail',
+    '#arguments' => array(
+      'order' => $order_arg,
+    ),
+  );
+  $conditions['uc_order_condition_user_created'] = array(
+    '#title' => t('Check the user creation date.'),
+    '#category' => t('Order: User'),
+    '#description' => t('Returns TRUE if the user creation date matches the condition.'),
+    '#callback' => 'uc_order_condition_user_created',
+    '#arguments' => array(
+      'order' => $order_arg,
+    ),
+  );
+  $conditions['uc_order_condition_user_login'] = array(
+    '#title' => t('Check the user last login date.'),
+    '#category' => t('Order: User'),
+    '#description' => t('Returns TRUE if the user last login date matches the condition.'),
+    '#callback' => 'uc_order_condition_user_login',
+    '#arguments' => array(
+      'order' => $order_arg,
+    ),
+  );
+  $conditions['uc_order_condition_user_language'] = array(
+    '#title' => t('Check the user language setting.'),
+    '#category' => t('Order: User'),
+    '#description' => t('Returns TRUE if the user language setting matches the condition.'),
+    '#callback' => 'uc_order_condition_user_language',
+    '#arguments' => array(
+      'order' => $order_arg,
+    ),
+  );
+  $conditions['uc_order_condition_user_roles'] = array(
+    '#title' => t('Check the role of the user.'),
+    '#category' => t('Order: User'),
+    '#description' => t('Returns TRUE if the user roles match your settings.'),
+    '#callback' => 'uc_order_condition_user_roles',
     '#arguments' => array(
       'order' => $order_arg,
     ),
@@ -552,7 +607,7 @@ function uc_order_condition_count_products($order, $settings) {
 }
 
 function uc_order_condition_count_products_form($form_state, $settings = array()) {
-  $options = array('all' => t('<All products>'));
+  $options = array('all' => t('- All products -'));
   $result = db_query("SELECT nid, model FROM {uc_products} ORDER BY model");
   while ($product = db_fetch_object($result)) {
     $options[$product->nid] = $product->model;
@@ -561,7 +616,7 @@ function uc_order_condition_count_products_form($form_state, $settings = array()
     '#title' => t('Products'),
     '#options' => $options,
     '#default_value' => $settings['products'],
-    '#description' => check_plain(t('Selecting "<All products>" will override any other selections and returns the total number of products in the order.')),
+    '#description' => check_plain(t('Selecting "- All products -" will override any other selections and returns the total number of products in the order.')),
     '#multiple' => TRUE,
   );
   $form['product_count_value'] = array(
@@ -620,7 +675,7 @@ function uc_order_condition_products_weight($order, $settings) {
 }
 
 function uc_order_condition_products_weight_form($form_state, $settings = array()) {
-  $options = array('all' => t('<All products>'));
+  $options = array('all' => t('- All products -'));
   $result = db_query("SELECT nid, model FROM {uc_products}");
   while ($product = db_fetch_object($result)) {
     $options[$product->nid] = $product->model;
@@ -629,7 +684,7 @@ function uc_order_condition_products_weight_form($form_state, $settings = array(
     '#title' => t('Products'),
     '#options' => $options,
     '#default_value' => $settings['products'],
-    '#description' => check_plain(t('Selecting "<All products>" will override any other selections and returns the total number of products in the order.')),
+    '#description' => check_plain(t('Selecting "- All products -" will override any other selections and returns the total number of products in the order.')),
     '#multiple' => TRUE,
   );
   $form['weight_units'] = array('#type' => 'select',
@@ -669,6 +724,206 @@ function uc_order_condition_products_weight_form($form_state, $settings = array(
 
 function uc_order_condition_is_shippable($order, $settings) {
   return uc_order_is_shippable($order);
+}
+
+// Check an user name
+function uc_order_condition_user_name($order, $settings) {
+  if ($account = uc_order_user_load($order)) {
+    return $account->name == $settings['name'];
+  }
+  else {
+    // Anonymous users have no names.
+    return empty($settings['name']);
+  }
+}
+
+function uc_order_condition_user_name_form($form_state, $settings = array()) {
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('User name'),
+    '#default_value' => isset($settings['name']) ? $settings['name'] : '',
+    '#autocomplete_path' => 'user/autocomplete',
+    '#description' => t('Leave blank for %anonymous.', array('%anonymous' => variable_get('anonymous', t('Anonymous')))),
+  );
+
+  return $form;
+}
+
+// Check an user email
+function uc_order_condition_user_mail($order, $settings) {
+  $account = uc_order_user_load($order);
+  return $account->mail == $settings['mail'];
+}
+
+function uc_order_condition_user_mail_form($form_state, $settings = array()) {
+  $form['mail'] = array(
+    '#type' => 'textfield',
+    '#title' => t('User email'),
+    '#default_value' => isset($settings['mail']) ? $settings['mail'] : '',
+  );
+
+  return $form;
+}
+
+// Check an user creation date
+function uc_order_condition_user_created($order, $settings) {
+  $account = uc_order_user_load($order);
+
+  // Get the beginning of the day the user registered.
+  $user_created = $account->created - ($account->created % 86400);
+  $settings_created = gmmktime(0, 0, 0, $settings['created']['month'], $settings['created']['day'], $settings['created']['year']);
+
+  switch ($settings['operator']) {
+    case 'less':
+      return $user_created < $settings_created;
+    case 'less_equal':
+      return $user_created <= $settings_created;
+    case 'equal':
+      return $user_created == $settings_created;
+    case 'not_equal':
+      return $user_created != $settings_created;
+    case 'greater_equal':
+      return $user_created >= $settings_created;
+    case 'greater':
+      return $user_created > $settings_created;
+  }
+}
+
+function uc_order_condition_user_created_form($form_state, $settings = array()) {
+  $form['operator'] = array(
+    '#type' => 'radios',
+    '#title' => t('Operator'),
+    '#options' => array(
+      'less' => t('User was created before the specified date.'),
+      'less_equal' => t('User was created on or before the specified date.'),
+      'equal' => t('User was created on the specified date.'),
+      'not_equal' => t('User was not created on the specified date.'),
+      'greater_equal' => t('User was created on or after the specified date.'),
+      'greater' => t('User was created after the specified date.'),
+    ),
+    '#default_value' => isset($settings['operator']) ? $settings['operator'] : 'equal',
+  );
+  $form['created'] = array(
+    '#type' => 'date',
+    '#title' => t('User creation date'),
+    '#default_value' => isset($settings['created']) ? $settings['created'] : '',
+  );
+
+  return $form;
+}
+
+// Check an user last login date
+function uc_order_condition_user_login($order, $settings) {
+  $account = uc_order_user_load($order);
+
+  // Get the beginning of the day the user last logged in.
+  $user_login = $account->login - ($account->login % 86400);
+  $settings_login = gmmktime(0, 0, 0, $settings['login']['month'], $settings['login']['day'], $settings['login']['year']);
+
+  switch ($settings['operator']) {
+    case 'less':
+      return $user_login < $settings_login;
+    case 'less_equal':
+      return $user_login <= $settings_login;
+    case 'equal':
+      return $user_login == $settings_login;
+    case 'not_equal':
+      return $user_login != $settings_login;
+    case 'greater_equal':
+      return $user_login >= $settings_login;
+    case 'greater':
+      return $user_login > $settings_login;
+  }
+}
+
+function uc_order_condition_user_login_form($form_state, $settings = array()) {
+  $form['operator'] = array(
+    '#type' => 'radios',
+    '#title' => t('Operator'),
+    '#options' => array(
+      'less' => t('User last logged in before the specified date.'),
+      'less_equal' => t('User last logged in on, or before the specified date.'),
+      'equal' => t('User last logged in on the specified date.'),
+      'not_equal' => t('User did not log in last on the specified date.'),
+      'greater_equal' => t('User last logged in on or after the specified date.'),
+      'greater' => t('User last logged after the specified date.'),
+    ),
+    '#default_value' => isset($settings['operator']) ? $settings['operator'] : 'equal',
+  );
+  $form['login'] = array(
+    '#type' => 'date',
+    '#title' => t('User last login date'),
+    '#default_value' => isset($settings['created']) ? $settings['created'] : '',
+  );
+
+  return $form;
+}
+
+// Check an user language setting
+function uc_order_condition_user_language($order, $settings) {
+  $account = uc_order_user_load($order);
+  $user_prefered_language = user_preferred_language($account);
+  return $user_prefered_language->language == $settings['language'];
+}
+
+function uc_order_condition_user_language_form($form_state, $settings = array()) {
+  $languages = language_list();
+  $options = array();
+  foreach ($languages as $language) {
+    $options[$language->language] = $language->name.' ('.$language->native.')';
+  }
+  $form['language'] = array(
+    '#type' => 'select',
+    '#title' => t('User language setting'),
+    '#options' => $options,
+    '#default_value' => isset($settings['language']) ? $settings['language'] : '',
+  );
+
+  return $form;
+}
+
+// Check an user roles.
+function uc_order_condition_user_roles($order, $settings) {
+  $account = uc_order_user_load($order);
+  $settings['roles'] = array_filter($settings['roles']);
+
+  if ($settings['operator'] == 'AND') {
+    foreach ($settings['roles'] as $key) {
+      if (!isset($account->roles[$key])) {
+        return FALSE;
+      }
+    }
+    return TRUE;
+  }
+  else {
+    foreach ($settings['roles'] as $key) {
+      if (isset($account->roles[$key])) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+}
+
+function uc_order_condition_user_roles_form($form_state, $settings = array()) {
+  $form['operator'] = array(
+    '#type' => 'radios',
+    '#title' => t('Operator'),
+    '#description' => t('If you use an <em>AND</em> case and want to check a custom role, make sure <em>authenticated user</em> is checked too or the condition will return FALSE.'),
+    '#options' => array(
+      'AND' => t('AND: If the user has all of these roles.'),
+      'OR' => t('OR: If the user has any of these roles.'),
+    ),
+    '#default_value' => isset($settings['operator']) ? $settings['operator'] : 'AND',
+  );
+  $form['roles'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Roles'),
+    '#options' => user_roles(),
+    '#default_value' => isset($settings['roles']) ? $settings['roles'] : array(),
+  );
+
+  return $form;
 }
 
 /******************************************************************************

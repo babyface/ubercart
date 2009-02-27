@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.12 2009/02/13 22:01:13 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.13 2009/02/27 22:41:35 islandusurper Exp $
 
 /**
  * @file
@@ -553,7 +553,10 @@ function ca_actions_form($form_state, $pid, $title = TRUE) {
       $callback .= '_form';
 
       if (function_exists($callback)) {
-        $form['actions'][$i]['settings'] = $callback(array(), $action['#settings']);
+        // Load the trigger data.
+        $trigger_data = ca_load_trigger($predicate['#trigger']);
+
+        $form['actions'][$i]['settings'] = $callback(array(), $action['#settings'], $trigger_data['#arguments']);
       }
 
       $form['actions'][$i]['remove'] = array(
@@ -867,7 +870,8 @@ function _ca_conditions_form_condition($condition, $trigger) {
   // Setup a variable to decide if we can collapse the arguments fieldset.
   $collapsed = TRUE;
 
-  foreach ($condition_data[$condition['#name']]['#arguments'] as $key => $value) {
+  // Cast to an array to accommodate conditions that need no arguments.
+  foreach ((array) $condition_data[$condition['#name']]['#arguments'] as $key => $value) {
     // Load the available arguments for each entity as received by the
     // trigger when it was pulled.
     $options = ca_load_trigger_arguments($trigger, $value['#entity']);
@@ -899,8 +903,11 @@ function _ca_conditions_form_condition($condition, $trigger) {
   $callback = $condition_data[$condition['#name']]['#callback'] .'_form';
 
   if (function_exists($callback)) {
-    // Add the condition's form elements to the fieldset.
-    $form['settings'] += $callback(array(), $condition['#settings']);
+   // Load the trigger data.
+   $trigger_data = ca_load_trigger($trigger);
+
+  // Add the condition's form elements to the fieldset.
+    $form['settings'] += $callback(array(), $condition['#settings'], $trigger_data['#arguments']);
   }
 
   $form['remove'] = array(

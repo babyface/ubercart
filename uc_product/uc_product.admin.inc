@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.admin.inc,v 1.1.2.11 2009/02/24 15:35:52 islandusurper Exp $
+// $Id: uc_product.admin.inc,v 1.1.2.12 2009/02/27 22:41:32 islandusurper Exp $
 
 /**
  * @file
@@ -500,60 +500,10 @@ function uc_product_feature_add_form_submit($form, &$form_state) {
  */
 function uc_product_image_defaults() {
   uc_product_add_default_image_field();
+  uc_product_add_imagecache_presets();
 
-  $presets = array('product', 'product_full', 'product_list', 'uc_thumbnail');
-  if (module_exists('uc_catalog')) {
-    $presets[] = 'uc_category';
-  }
-  if (module_exists('uc_cart')) {
-    $presets[] = 'cart';
-  }
+  drupal_set_message(t('Default image support configured for Ubercart products using CCK and ImageCache.'));
 
-  foreach ($presets as $preset_name) {
-    $preset = imagecache_preset_by_name($preset_name);
-    if (empty($preset)) {
-      // No preset of that name, so make a new one.
-      $preset = imagecache_preset_save(array('presetname' => $preset_name));
-    }
-
-    $actions = imagecache_preset_actions($preset);
-    if (empty($actions)) {
-      // The preset has no actions, so scale the image.
-      $action = array(
-        'action' => 'imagecache_scale',
-        'presetid' => $preset['presetid'],
-        'weight' => 0,
-        'data' => array(
-          'upscale' => 0,
-        ),
-      );
-      switch ($preset_name) {
-        case 'product':
-        case 'product_list':
-          $action['data']['width'] = '100';
-          $action['data']['height'] = '100';
-        break;
-        case 'cart':
-          $action['data']['width'] = '50';
-          $action['data']['height'] = '50';
-        break;
-        case 'uc_category':
-          $action['data']['width'] = '96';
-          $action['data']['height'] = '96';
-        break;
-        case 'uc_thumbnail':
-          $action['data']['width'] = '35';
-          $action['data']['height'] = '35';
-        break;
-        default:
-          // Do not save the action and get the next preset.
-          // Continue thinks swtich() is a loop, so continue it and the
-          // foreach().
-        continue 2;
-      }
-      imagecache_action_save($action);
-    }
-  }
   drupal_goto('admin/store');
 }
 

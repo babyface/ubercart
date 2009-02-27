@@ -1,4 +1,4 @@
-// $Id: uc_taxes.js,v 1.10.2.6 2009/02/13 22:01:13 islandusurper Exp $
+// $Id: uc_taxes.js,v 1.10.2.7 2009/02/27 22:41:31 islandusurper Exp $
 
 /**
  * Calculate the number of bytes of a Unicode string.
@@ -62,10 +62,18 @@ function getTax() {
   var order_size = 21;
   var line_item = '';
   var key;
+  var type;
   var i = 0;
   for (key in li_titles) {
     if (key != 'subtotal') {
-      line_item = line_item + 'i:' + i + ';a:3:{s:5:"title";s:' + li_titles[key].bytes() + ':"' + li_titles[key] + '";s:4:"type";s:'+ key.bytes() + ':"'+ key + '";s:6:"amount";d:' + li_values[key] + ';}';
+      temp = key.split('_', 2);
+      if (temp[1] != undefined && temp[1].match(/^\d+$/)) {
+        type = temp[0];
+      }
+      else {
+        type = key;
+      }
+      line_item = line_item + 'i:' + i + ';a:3:{s:5:"title";s:' + li_titles[key].bytes() + ':"' + li_titles[key] + '";s:4:"type";s:'+ type.bytes() + ':"'+ type + '";s:6:"amount";d:' + li_values[key] + ';}';
       i++;
     }
   }
@@ -99,13 +107,13 @@ function getTax() {
       dataType: "json",
       success: function(taxes) {
         var key;
-        var render;
+        var render = false;
         var i;
         var j;
         for (j in taxes) {
           key = 'tax_' + taxes[j].id;
           // Check that this tax is a new line item, or updates its amount.
-          if (!li_values[key] || li_values[key] != taxes[j].amount) {
+          if (li_values[key] == undefined || li_values[key] != taxes[j].amount) {
             // The "Subtotal before taxes" line item is not added into the
             // Total line item.
             if (taxes[j].id == 'subtotal') {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.12.2.8 2009/02/24 15:35:48 islandusurper Exp $
+// $Id: uc_taxes.module,v 1.12.2.9 2009/02/27 22:41:31 islandusurper Exp $
 
 /**
  * @file
@@ -148,13 +148,14 @@ function uc_taxes_order($op, $arg1, $arg2) {
       //$arg1->line_items = uc_order_load_line_items($arg1, TRUE);
       if (is_array($arg1->line_items)) {
         //drupal_set_message('<pre>'. var_export($arg1->line_items, TRUE) .'</pre>');
-        foreach ($arg1->line_items as $line) {
+        foreach ($arg1->line_items as $i => $line) {
           if ($line['type'] == 'tax') {
             $delete = TRUE;
             foreach ($line_items as $id => $new_line) {
               if ($new_line['title'] == $line['title']) {
                 if ($new_line['amount'] != $line['amount']) {
-                  uc_order_update_line_item($line['line_item_id'], $new_line['title'], $new_line['amount']);
+                  uc_order_update_line_item($line['line_item_id'], $new_line['title'], $new_line['amount'], $new_line['data']);
+                  $arg1->line_items[$i]['amount'] = $new_line['amount'];
                   $changes[] = t('Changed %title to %amount.', array('%amount' => uc_currency_format($new_line['amount']), '%title' => $new_line['title']));
                 }
                 unset($line_items[$id]);
@@ -164,6 +165,7 @@ function uc_taxes_order($op, $arg1, $arg2) {
             }
             if ($delete) {
               uc_order_delete_line_item($line['line_item_id']);
+              unset($arg1->line_items[$i]);
               $changes[] = t('Removed %title.', array('%title' => $line['title']));
             }
           }
@@ -171,7 +173,9 @@ function uc_taxes_order($op, $arg1, $arg2) {
       }
       if (is_array($line_items)) {
         foreach ($line_items as $line) {
-          uc_order_line_item_add($arg1->order_id, $line['id'], $line['title'], $line['amount'], $line['weight']);
+          uc_order_line_item_add($arg1->order_id, $line['id'], $line['title'], $line['amount'], $line['weight'], $line['data']);
+          $line['type'] = 'tax';
+          $arg1->line_items[] = $line;
           $changes[] = t('Added %amount for %title.', array('%amount' => uc_currency_format($line['amount']), '%title' => $line['title']));
         }
       }
@@ -191,21 +195,6 @@ function uc_taxes_order($op, $arg1, $arg2) {
  */
 function uc_line_item_tax($op, $order) {
   switch ($op) {
-    case 'cart-preview':
-      $taxes = module_invoke_all('calculate_tax', $order);
-      $script = '';
-      foreach ($taxes as $tax) {
-        $script .= "set_line_item('tax_". $tax->id ."', '". $tax->name ."', ". $tax->amount .", + ". variable_get('uc_li_tax_weight', 9) + ($tax->weight / 10) .", 1, false);\n";
-      }
-      if ($script) {
-        drupal_add_js("if (Drupal.jsEnabled) { \$(document).ready(function() {
-          if (window.set_line_item) {
-            ". $script .";
-            render_line_items();
-          }
-        })};", 'inline');
-      }
-      break;
     case 'load':
       $lines = array();
       $taxes = module_invoke_all('calculate_tax', $order);
@@ -215,6 +204,7 @@ function uc_line_item_tax($op, $order) {
           'title' => $tax->name,
           'amount' => $tax->amount,
           'weight' => variable_get('uc_li_tax_weight', 9) + $tax->weight / 10,
+          'data' => $tax->data,
         );
       }
       return $lines;
@@ -387,7 +377,7 @@ function uc_taxes_calculate_tax($order) {
   }
   if (is_array($order->line_items)) {
     foreach ($order->line_items as $i => $line) {
-      if (substr($line['type'], 0, 4) == 'tax_' && substr($line['type'], 5) != 'subtotal') {
+      if (substr($line['type'], 0, 3) == 'tax' && substr($line['type'], 4) != '_subtotal') {
         unset($order->line_items[$i]);
       }
     }

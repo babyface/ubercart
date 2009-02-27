@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.admin.inc,v 1.1.2.7 2009/02/24 15:35:48 islandusurper Exp $
+// $Id: uc_taxes.admin.inc,v 1.1.2.8 2009/02/27 22:41:31 islandusurper Exp $
 
 /**
  * @file
@@ -102,6 +102,7 @@ function uc_taxes_form($form_state, $rate_id = NULL) {
   // TODO: Remove the need for a special case for product kit module.
   $options = uc_product_type_names();
   unset($options['product_kit']);
+  $options['blank-line'] = t('"Blank line" product');
 
   $form['taxed_product_types'] = array(
     '#type' => 'checkboxes',

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.module,v 1.12.2.10 2009/01/02 20:18:42 islandusurper Exp $
+// $Id: uc_stock.module,v 1.12.2.11 2009/02/27 22:41:33 islandusurper Exp $
 
 /**
  * @file
@@ -44,7 +44,7 @@ function uc_stock_menu() {
     'description' => 'View the stock settings.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_stock_settings_form'),
-    'access arguments' => array('administer products'),
+    'access arguments' => array('administer product stock'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'uc_stock.admin.inc',
   );
@@ -60,12 +60,16 @@ function uc_stock_menu() {
     'title' => 'Stock',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_stock_edit_form', 1),
-    'access arguments' => array('administer products'),
+    'access arguments' => array('administer product stock'),
     'weight' => 10,
     'type' => MENU_LOCAL_TASK,
     'file' => 'uc_stock.admin.inc',
   );
   return $items;
+}
+
+function uc_stock_perm() {
+  return array('administer product stock');
 }
 
 function uc_stock_theme() {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.15 2009/02/24 15:35:52 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.16 2009/02/27 22:41:37 islandusurper Exp $
 
 /**
  * @file
@@ -54,7 +54,7 @@ function uc_attribute_menu() {
     'title' => 'Attributes',
     'description' => 'Create and edit attributes and options.',
     'page callback' => 'uc_attribute_admin',
-    'access arguments' => array('administer products'),
+    'access arguments' => array('administer attributes'),
     'type' => MENU_NORMAL_ITEM,
     'weight' => -1,
     'file' => 'uc_attribute.admin.inc',
@@ -68,7 +68,7 @@ function uc_attribute_menu() {
     'title' => 'Add an attribute',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_attribute_form'),
-    'access arguments' => array('administer products'),
+    'access arguments' => array('administer attributes'),
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
     'file' => 'uc_attribute.admin.inc',
@@ -78,7 +78,7 @@ function uc_attribute_menu() {
     'description' => 'Configure the attribute settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_attribute_admin_settings'),
-    'access arguments' => array('administer products'),
+    'access arguments' => array('administer attributes'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'uc_attribute.admin.inc',
   );
@@ -86,14 +86,14 @@ function uc_attribute_menu() {
     'title' => 'Edit attribute',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_attribute_form', 3),
-    'access arguments' => array('administer products'),
+    'access arguments' => array('administer attributes'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_attribute.admin.inc',
   );
   $items['admin/store/attributes/%uc_attribute/delete'] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_attribute_delete_confirm', 3),
-    'access arguments' => array('administer products'),
+    'access arguments' => array('administer attributes'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_attribute.admin.inc',
   );
@@ -101,7 +101,7 @@ function uc_attribute_menu() {
     'title' => 'Options',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_attribute_options_form', 3),
-    'access arguments' => array('administer products'),
+    'access arguments' => array('administer attributes'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_attribute.admin.inc',
   );
@@ -115,7 +115,7 @@ function uc_attribute_menu() {
     'title' => 'Add an option',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_attribute_option_form', 3, NULL),
-    'access arguments' => array('administer products'),
+    'access arguments' => array('administer attributes'),
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
     'file' => 'uc_attribute.admin.inc',
@@ -124,7 +124,7 @@ function uc_attribute_menu() {
     'title' => 'Edit option',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_attribute_option_form', 3, 5),
-    'access arguments' => array('administer products'),
+    'access arguments' => array('administer attributes'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_attribute.admin.inc',
   );
@@ -132,7 +132,7 @@ function uc_attribute_menu() {
     'title' => 'Delete option',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_attribute_option_delete_confirm', 3, 5),
-    'access arguments' => array('administer products'),
+    'access arguments' => array('administer attributes'),
     'type' => MENU_CALLBACK,
     'file' => 'uc_attribute.admin.inc',
   );
@@ -142,7 +142,7 @@ function uc_attribute_menu() {
     'title' => 'Attributes',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_object_attributes_form', 4, 'class'),
-    'access arguments' => array('administer product classes'),
+    'access callback' => 'uc_attribute_product_class_access',
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
     'file' => 'uc_attribute.admin.inc',
@@ -151,7 +151,7 @@ function uc_attribute_menu() {
     'title' => 'Options',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_object_options_form', 4, 'class'),
-    'access arguments' => array('administer product classes'),
+    'access callback' => 'uc_attribute_product_class_access',
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
     'file' => 'uc_attribute.admin.inc',
@@ -162,7 +162,7 @@ function uc_attribute_menu() {
     'title' => 'Attributes',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_object_attributes_form', 1, 'product', 'overview'),
-    'access callback' => 'uc_attribute_product_attribute_access',
+    'access callback' => 'uc_attribute_product_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
@@ -172,7 +172,7 @@ function uc_attribute_menu() {
     'title' => 'Attributes',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_object_attributes_form', 1, 'product', 'add'),
-    'access callback' => 'uc_product_is_product',
+    'access callback' => 'uc_attribute_product_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
@@ -182,7 +182,7 @@ function uc_attribute_menu() {
     'title' => 'Options',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_object_options_form', 1, 'product'),
-    'access callback' => 'uc_attribute_product_attribute_access',
+    'access callback' => 'uc_attribute_product_option_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
@@ -192,7 +192,7 @@ function uc_attribute_menu() {
     'title' => 'Adjustments',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_product_adjustments_form', 1),
-    'access callback' => 'uc_attribute_product_attribute_access',
+    'access callback' => 'uc_attribute_product_option_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
     'weight' => 3,
@@ -202,12 +202,24 @@ function uc_attribute_menu() {
   return $items;
 }
 
-function uc_attribute_product_attribute_access($node) {
+function uc_attribute_product_class_access() {
+  return user_access('administer product classes') && user_access('administer attributes');
+}
+
+function uc_attribute_product_access($node) {
   if ($node->type == 'product_kit') {
     return FALSE;
   }
 
-  return uc_product_is_product($node) && node_access('update', $node);
+  return uc_product_is_product($node) && node_access('update', $node) && (user_access('administer attributes') || user_access('administer product attributes'));
+}
+
+function uc_attribute_product_option_access($node) {
+  return uc_product_is_product($node) && node_access('update', $node) && (user_access('administer attributes') || user_access('administer product attributes') || user_access('administer product options'));
+}
+
+function uc_attribute_perm() {
+  return array('adminster attributes', 'administer product attributes', 'administer product options');
 }
 
 function uc_attribute_init() {

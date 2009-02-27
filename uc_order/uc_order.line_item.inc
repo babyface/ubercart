@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.line_item.inc,v 1.1.2.3 2008/11/07 21:13:23 islandusurper Exp $
+// $Id: uc_order.line_item.inc,v 1.1.2.4 2009/02/27 22:41:32 islandusurper Exp $
 
 /**
  * @file
@@ -71,9 +71,14 @@ function uc_line_items_calculate($order) {
 /**
  * Update a line item.
  */
-function uc_order_update_line_item($id, $title, $amount) {
+function uc_order_update_line_item($id, $title, $amount, $data = NULL) {
   db_query("UPDATE {uc_order_line_items} SET title = '%s', amount = %f "
           ."WHERE line_item_id = %d", $title, $amount, $id);
+
+  if (!is_null($data)) {
+    db_query("UPDATE {uc_order_line_items} SET data = '%s' WHERE line_item_id = %d", serialize($data), $id);
+  }
+
   return TRUE;
 }
 
@@ -91,12 +96,12 @@ function uc_order_delete_line_item($id, $order = FALSE) {
   return TRUE;
 }
 
-function uc_order_line_item_add($order_id, $type, $title, $amount, $weight = NULL) {
+function uc_order_line_item_add($order_id, $type, $title, $amount, $weight = NULL, $data = NULL) {
   if (is_null($weight)) {
     $weight = _line_item_data($type, 'weight');
   }
 
-  db_query("INSERT INTO {uc_order_line_items} (order_id, type, title, amount, weight) VALUES (%d, '%s', '%s', %f, %d)", $order_id, $type, $title, $amount, $weight);
+  db_query("INSERT INTO {uc_order_line_items} (order_id, type, title, amount, weight, data) VALUES (%d, '%s', '%s', %f, %d, '%s')", $order_id, $type, $title, $amount, $weight, serialize($data));
 
   return TRUE;
 }

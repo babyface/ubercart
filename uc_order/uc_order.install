@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.9.2.8 2009/02/04 13:44:31 islandusurper Exp $
+// $Id: uc_order.install,v 1.9.2.9 2009/02/27 22:41:32 islandusurper Exp $
 
 /**
  * @file
@@ -369,6 +369,10 @@ function uc_order_schema() {
         'size' => 'small',
         'not null' => TRUE,
         'default' => 0,
+      ),
+      'data' => array(
+        'description' => t('Serialized array of extra data.'),
+        'type' => 'text',
       ),
     ),
     'indexes' => array(
@@ -904,6 +908,18 @@ function uc_order_update_6006() {
     ),
   );
   db_change_field($ret, 'uc_order_products', 'weight', 'weight', $schema['weight']);
+
+  return $ret;
+}
+
+// add data field to uc_order_line_items
+function uc_order_update_6007() {
+
+  $ret = array();
+
+  if (!db_column_exists('uc_order_line_items', 'data')) {
+    db_add_field($ret, 'uc_order_line_items', 'data', array('type' => 'text'));
+  }
 
   return $ret;
 }

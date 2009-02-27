@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.module,v 1.1.2.13 2009/02/13 22:01:13 islandusurper Exp $
+// $Id: ca.module,v 1.1.2.14 2009/02/27 22:41:35 islandusurper Exp $
 
 /**
  * @file
@@ -414,12 +414,18 @@ function _ca_evaluate_condition($condition, $arguments, $condition_data) {
   }
 
   // Loop through the expected arguments for a condition.
-  foreach ($condition_data[$condition['#name']]['#arguments'] as $key => $value) {
+  // Cast to an array to accommodate conditions that need no arguments.
+  foreach ((array) $condition_data[$condition['#name']]['#arguments'] as $key => $value) {
     // Using the argument map for the condition on this predicate, fetch the
     // argument that was passed to the trigger that matches to the argument
     // needed to evaluate this condition.
     if (isset($condition['#argument_map'][$key])) {
-      $args[] = $arguments[$condition['#argument_map'][$key]]['#data'];
+      if ($value['#entity'] == 'arguments') {
+        $args[] = $arguments;
+      }
+      else {
+        $args[] = $arguments[$condition['#argument_map'][$key]]['#data'];
+      }
     }
     else {
       // Skip this condition of the predicate didn't map the arguments needed.
@@ -435,9 +441,9 @@ function _ca_evaluate_condition($condition, $arguments, $condition_data) {
 
   // If the negate operator is TRUE, then switch the result!
   if ($condition['#settings']['negate']) {
-
     $result = !$result;
   }
+
   return $result;
 }
 
@@ -471,7 +477,7 @@ function ca_perform_actions($predicate, $arguments) {
       continue;
     }
 
-    // Loop through the expected arguments for a condition.
+    // Loop through the expected arguments for an action.
     foreach ($action_data[$action['#name']]['#arguments'] as $key => $value) {
       // Using the argument map for the action on this predicate, fetch the
       // argument that was passed to the trigger that matches to the argument
@@ -479,7 +485,12 @@ function ca_perform_actions($predicate, $arguments) {
       if (isset($action['#argument_map'][$key])) {
         // Adding the arguments as references so action functions can update the
         // arguments here when they make changes to the argument data.
-        $args[] = &$arguments[$action['#argument_map'][$key]]['#data'];
+        if ($value['#entity'] == 'arguments') {
+          $args[] = &$arguments;
+        }
+        else {
+          $args[] = &$arguments[$action['#argument_map'][$key]]['#data'];
+        }
       }
       else {
         // Skip this action of the predicate didn't map the arguments needed.
@@ -546,13 +557,20 @@ function ca_load_trigger_arguments($trigger, $entity) {
   if (!isset($arguments[$trigger][$entity])) {
     $arguments[$trigger][$entity] = array();
 
-    // Load the trigger data.
-    $trigger_data = ca_load_trigger($trigger);
+    // Handle the arguments entity specially, as it should never be specified
+    // in a trigger.
+    if ($entity == 'arguments') {
+      $arguments[$trigger][$entity]['arguments'] = t('Arguments');
+    }
+    else {
+      // Load the trigger data.
+      $trigger_data = ca_load_trigger($trigger);
 
-    // Add the trigger's arguments to the options array if the entity matches.
-    foreach ((array) $trigger_data['#arguments'] as $key => $value) {
-      if ($value['#entity'] == $entity) {
-        $arguments[$trigger][$entity][$key] = $value['#title'];
+      // Add the trigger's arguments to the options array if the entity matches.
+      foreach ((array) $trigger_data['#arguments'] as $key => $value) {
+        if ($value['#entity'] == $entity) {
+          $arguments[$trigger][$entity][$key] = $value['#title'];
+        }
       }
     }
   }
@@ -619,11 +637,12 @@ function ca_load_trigger_conditions($trigger = '') {
 
     foreach ($conditions as $name => $condition) {
       // Check through each argument needed for the condition.
-      foreach ($condition['#arguments'] as $argument) {
+      // Cast to an array to accommodate conditions that need no arguments.
+      foreach ((array) $condition['#arguments'] as $argument) {
         $entity = $argument['#entity'];
         // If the condition requires an entity the trigger doesn't provide,
         // then skip to the next condition.
-        if (!$trigger_entities[$entity]) {
+        if ($entity != 'arguments' && !$trigger_entities[$entity]) {
           continue 2;
         }
       }
@@ -706,9 +725,9 @@ function ca_load_trigger_actions($trigger = '') {
       // Check through each argument needed for the condition.
       foreach ($action['#arguments'] as $argument) {
         $entity = $argument['#entity'];
-        // If the condition requires an entity the trigger doesn't provide,
-        // then skip to the next condition.
-        if (!$trigger_entities[$entity]) {
+        // If the action requires an entity the trigger doesn't provide,
+        // then skip to the next action.
+        if ($entity != 'arguments' && !$trigger_entities[$entity]) {
           continue 2;
         }
       }

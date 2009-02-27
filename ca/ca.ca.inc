@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.ca.inc,v 1.1.2.4 2009/02/13 22:01:13 islandusurper Exp $
+// $Id: ca.ca.inc,v 1.1.2.5 2009/02/27 22:41:35 islandusurper Exp $
 
 /**
  * @file: This file includes some generic conditions and actions.
@@ -31,6 +31,10 @@ function ca_ca_entity() {
     '#load' => 'node_load',
     '#save' => 'node_save',
   );
+  $entities['arguments'] = array(
+    '#title' => t('Trigger arguments'),
+    '#type' => 'array',
+  );
 
   return $entities;
 }
@@ -59,6 +63,16 @@ function ca_ca_condition() {
     ),
   );
 
+  $conditions['ca_condition_custom_php'] = array(
+    '#title' => t('Execute custom PHP code'),
+    '#description' => t('Returns whatever your custom PHP code returns.'),
+    '#category' => t('System'),
+    '#callback' => 'ca_condition_custom_php',
+    '#arguments' => array(
+      'arguments' => array('#entity' => 'arguments', '#title' => t('Arguments')),
+    ),
+  );
+
   return $conditions;
 }
 
@@ -75,6 +89,15 @@ function ca_ca_action() {
     '#category' => t('Drupal'),
     '#callback' => 'ca_action_drupal_set_message',
     '#arguments' => array(),
+  );
+
+  $actions['ca_action_custom_php'] = array(
+    '#title' => t('Execute custom PHP code'),
+    '#category' => t('System'),
+    '#callback' => 'ca_action_custom_php',
+    '#arguments' => array(
+      'arguments' => array('#entity' => 'arguments', '#title' => t('Arguments')),
+    ),
   );
 
   return $actions;
@@ -268,20 +291,11 @@ function ca_condition_node_field_comparison_form($form_state, $settings = array(
 
 // Display a message to the user.
 function ca_action_drupal_set_message($settings) {
-  // Get the specified input format or use the default.
-  /*if (!empty($settings['message_format'])) {
-    $format = $settings['message_format'];
-  }
-  else {
-    $format = FILTER_FORMAT_DEFAULT;
-  }*/
-
-  // Filter the text using the format.
+  // Filter the text using the default format.
   $message = check_markup($settings['message_text'], FILTER_FORMAT_DEFAULT, FALSE);
-  // $message = check_plain($settings['message_text']);
 
   // Return if there's nothing to display.
-  if (empty($message)) {
+  if (empty($message) || empty($settings['message_text'])) {
     return;
   }
 
@@ -312,8 +326,6 @@ function ca_action_drupal_set_message_form($form_state, $settings = array()) {
     '#value' => theme('filter_tips', $tips, FALSE, theme('filter_tips_more_info')),
   );
 
-  //$form['message_format'] = filter_form($settings['message_format']);
-
   $form['message_type'] = array(
     '#type' => 'radios',
     '#title' => t('Message type'),
@@ -325,4 +337,85 @@ function ca_action_drupal_set_message_form($form_state, $settings = array()) {
   );
 
   return $form;
+}
+
+// Evaluate a custom PHP condition.
+function ca_condition_custom_php($arguments, $settings) {
+  return _ca_custom_php_eval($settings['php'], $arguments);
+}
+
+function ca_condition_custom_php_form($form_state, $settings = array(), $arguments = array()) {
+  $form['variables'] = _ca_custom_php_variables_table($arguments);
+
+  $form['php'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Custom PHP'),
+    '#description' => t('Enter the custom PHP to be evaluated when this condition is executed.  Should not include &lt;?php ?> delimiters.'),
+    '#default_value' => isset($settings['php']) ? $settings['php'] : '',
+  );
+
+  return $form;
+}
+
+// Perform a custom PHP action.
+function ca_action_custom_php($arguments, $settings) {
+  _ca_custom_php_eval($settings['php'], $arguments);
+}
+
+function ca_action_custom_php_form($form_state, $settings = array(), $arguments = array()) {
+  $form['variables'] = _ca_custom_php_variables_table($arguments);
+
+  $form['php'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Custom PHP'),
+    '#description' => t('Enter the custom PHP to be evaluated when this action is executed.  Should not include &lt;?php ?> delimiters.'),
+    '#default_value' => isset($settings['php']) ? $settings['php'] : '',
+  );
+
+  return $form;
+}
+
+/**
+ * Returns a fieldset used to display available variables for custom PHP
+ *   conditions and actions.
+ */
+function _ca_custom_php_variables_table($arguments) {
+  $rows = array();
+
+  $header = array(t('Variable'), t('Type'), t('Description'));
+
+  // Translate the arguments into descriptive rows.
+  foreach ($arguments as $key => $value) {
+    $rows[] = array(check_plain('$'. $key), check_plain($value['#entity']), $value['#title']);
+  }
+
+  if (empty($rows)) {
+    $rows[] = array(array('data' => t('No variables available.'), 'colspan' => 3));
+  }
+
+  $fieldset = array(
+    '#type' => 'fieldset',
+    '#title' => t('Available PHP variables'),
+    '#description' => t('You may use these variables in your custom PHP.')
+                    . theme('table', $header, $rows),
+    '#collapsible' => TRUE,
+  );
+
+  return $fieldset;
+}
+
+/**
+ * Evaluates a custom PHP condition or action with trigger arguments available
+ *   as variables.
+ */
+function _ca_custom_php_eval($php, $arguments) {
+  $argument_data = array();
+
+  // Convert the arguments to an array of data that we can extract.
+  foreach ($arguments as $key => $value) {
+    $argument_data[$key] = $value['#data'];
+  }
+
+  extract($argument_data);
+  return eval($php);
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.8 2009/02/24 15:35:49 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.9 2009/02/27 22:41:36 islandusurper Exp $
 
 /**
  * @file
@@ -212,7 +212,7 @@ function uc_cart_checkout_form() {
 function theme_uc_cart_checkout_form($form) {
   drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart.css');
 
-  $output = '<div>'. check_markup(variable_get('uc_checkout_instructions', ''), variable_get('uc_checkout_instructions_format', FILTER_FORMAT_DEFAULT), FALSE) .'</div>';
+  $output = '<div id="checkout-instructions">'. check_markup(variable_get('uc_checkout_instructions', ''), variable_get('uc_checkout_instructions_format', FILTER_FORMAT_DEFAULT), FALSE) .'</div>';
 
   foreach (element_children($form['panes']) as $pane_id) {
     if (function_exists(($func = _checkout_pane_data($pane_id, 'callback')))) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.2 2009/02/10 21:58:16 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.3 2009/02/27 22:41:38 islandusurper Exp $
 
 /**
  * @file
@@ -849,10 +849,10 @@ function uc_google_checkout_accept_risk($risk) {
 function uc_google_checkout_order_state_change($change) {
   $order_id = uc_google_checkout_get_order($change->{'google-order-number'});
   if ($order_id) {
-    $new_financial = $change->{'new-financial-order-state'};
-    $new_fulfillment = $change->{'new-fulfillment-order-state'};
-    $prev_financial = $change->{'previous-financial-order-state'};
-    $prev_fulfillment = $change->{'previous-fulfillment-order-state'};
+    $new_financial = (string)$change->{'new-financial-order-state'};
+    $new_fulfillment = (string)$change->{'new-fulfillment-order-state'};
+    $prev_financial = (string)$change->{'previous-financial-order-state'};
+    $prev_fulfillment = (string)$change->{'previous-fulfillment-order-state'};
     db_query("UPDATE {uc_gc_orders} SET financial_state = '%s', fulfillment_state = '%s' WHERE order_id = %d AND financial_state = '%s' AND fulfillment_state = '%s'", array($new_financial, $new_fulfillment, $order_id, $prev_financial, $prev_fulfillment));
     if ($new_financial != $prev_financial) {
       $_SESSION['google_updates'] = TRUE;

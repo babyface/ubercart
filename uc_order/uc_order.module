@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.16 2009/02/24 15:35:53 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.17 2009/02/27 22:41:32 islandusurper Exp $
 
 /**
  * @file
@@ -1018,6 +1018,19 @@ function uc_order_save($order) {
 }
 
 /**
+ * Load an order user if available, else, load the current user.
+ */
+function uc_order_user_load($order) {
+  if (!empty($order->uid)) {
+    $user = user_load($order->uid);
+  }
+  else {
+    global $user;
+  }
+  return $user;
+}
+
+/**
  * Function to save a product to an order.
  */
 function uc_order_product_save($order_id, $product) {
@@ -1180,6 +1193,7 @@ function uc_order_load_line_items($order, $stored) {
         'title' => $row->title,
         'amount' => $row->amount,
         'weight' => $row->weight,
+        'data' => unserialize($row->data),
       );
     }
   }
@@ -1198,6 +1212,7 @@ function uc_order_load_line_items($order, $stored) {
               'title' => $line['title'],
               'amount' => $line['amount'],
               'weight' => isset($line['weight']) ? $line['weight'] : $type['weight'],
+              'data' => $line['data'],
             );
           }
         }
@@ -1436,6 +1451,7 @@ function uc_order_load_invoice($order, $op = 'view', $template = 'customer') {
               'title' => $line['title'],
               'amount' => $line['amount'],
               'weight' => $item['weight'],
+              'data' => $item['data'],
             );
           }
         }

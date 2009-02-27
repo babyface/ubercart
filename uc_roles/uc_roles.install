@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.install,v 1.2.2.10 2009/01/02 20:18:42 islandusurper Exp $
+// $Id: uc_roles.install,v 1.2.2.11 2009/02/27 22:41:34 islandusurper Exp $
 
 /**
  * @file
@@ -196,9 +196,6 @@ function uc_roles_update_6001() {
 
   db_drop_index($ret, 'uc_roles_products', 'pfid');
   db_add_primary_key($ret, 'uc_roles_products', array('pfid'));
-
-  db_drop_index($ret, 'uc_roles_products', 'uc_roles_products_model');
-  db_add_index($ret, 'uc_roles_products', 'model', array('model'));
 
   return $ret;
 }
