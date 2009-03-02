@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.13 2009/02/24 15:35:51 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.14 2009/03/02 16:20:52 islandusurper Exp $
 
 /**
  * @file
@@ -139,8 +139,10 @@ function uc_product_kit_insert(&$node) {
     $values[] = $product->nid;
     $values[] = $node->mutable;
     $values[] = 1;
-    $values[] = $product->sell_price;
-    $placeholders[] = '(%d, %d, %d, %d, %d, %f)';
+    $values[] = 0;
+    $values[] = 0;
+    $values[] = 1;
+    $placeholders[] = '(%d, %d, %d, %d, %d, %f, %d, %d)';
 
     $obj->model .= $product->model .' / ';
     $obj->list_price += $product->list_price;
@@ -151,7 +153,7 @@ function uc_product_kit_insert(&$node) {
       $obj->shippable = TRUE;
     }
   }
-  db_query("INSERT INTO {uc_product_kits} (vid, nid, product_id, mutable, qty, discount) VALUES ". implode(',', $placeholders), $values);
+  db_query("INSERT INTO {uc_product_kits} (vid, nid, product_id, mutable, qty, discount, ordering, synchronized) VALUES ". implode(',', $placeholders), $values);
   $obj->model = rtrim($obj->model, ' / ');
   db_query("INSERT INTO {uc_products} (vid, nid, model, list_price, cost, sell_price, weight, weight_units, default_qty, unique_hash, ordering, shippable) VALUES (%d, %d, '%s', %f, %f, %f, %f, '%s', %d, '%s', %d, %d)",
     $obj->vid, $obj->nid, $obj->model, $obj->list_price, $obj->cost, $obj->sell_price, $obj->weight, $obj->weight_units, $obj->default_qty,
@@ -183,6 +185,23 @@ function uc_product_kit_update(&$node) {
   $obj->ordering = $node->ordering;
   $obj->shippable = FALSE;
 
+  $override_discounts = isset($node->kit_total) && is_numeric($node->kit_total);
+  $product_count = count($node->products);
+
+  // Get the price of all the products without any discounts. This number is
+  // used if a total kit price was specified to calculate the individual
+  // product discounts.
+  if ($override_discounts) {
+    $base_price = 0;
+    foreach ($node->products as $nid) {
+      $product = node_load($nid, NULL, TRUE);
+      if (is_null($node->items[$nid]['qty']) || $node->items[$nid]['qty'] === '') {
+        $node->items[$nid]['qty'] = 1;
+      }
+      $base_price += $product->sell_price * $node->items[$nid]['qty'];
+    }
+  }
+
   $values = array();
   $placeholders = array();
   foreach ($node->products as $nid) {
@@ -190,25 +209,34 @@ function uc_product_kit_update(&$node) {
     $values[] = $node->nid;
     $values[] = $nid;
     $values[] = $node->mutable;
-    $product = node_load($nid, NULL, TRUE);
+    $product = node_load($nid);
+
+    // When a total kit price is specified, calculate the individual product
+    // discounts needed to reach it, taking into account the product quantities
+    // and their relative prices. More expensive products should be given a
+    // proportionally higher discount.
+    if ($override_discounts) {
+      // After all the algebra that went into finding this formula, it's
+      // surprising how simple it is.
+      $discount = ($node->kit_total - $base_price) * $product->sell_price / $base_price;
+    }
+    else {
+      $discount = $node->items[$nid]['discount'];
+    }
 
     if (is_null($node->items[$nid]['qty']) || $node->items[$nid]['qty'] === '') {
       $node->items[$nid]['qty'] = 1;
     }
-    $values[] = $node->items[$nid]['qty'];
-    $values[] = $node->items[$nid]['discount'];
-    $values[] = $node->items[$nid]['ordering'];
-    $placeholders[] = '(%d, %d, %d, %d, %d, %f, %d)';
 
     $product->qty = $node->items[$nid]['qty'];
-    if (is_numeric($node->items[$nid]['discount'])) {
-      if ($node->items[$nid]['discount'] < 0) {
-        $product->sell_price += $node->items[$nid]['discount'];
-      }
-      else {
-        $product->sell_price = $node->items[$nid]['discount'];
-      }
-    }
+    $product->sell_price += $discount;
+
+    $values[] = $product->qty;
+    $values[] = $discount;
+    $values[] = $node->items[$nid]['ordering'];
+    $values[] = !$override_discounts;
+    $placeholders[] = '(%d, %d, %d, %d, %d, %f, %d, %d)';
+
     $obj->model .= $product->model .' / ';
     $obj->list_price += $product->list_price * $product->qty;
     $obj->cost += $product->cost * $product->qty;
@@ -222,7 +250,7 @@ function uc_product_kit_update(&$node) {
   if (!$node->revision) {
     db_query("DELETE FROM {uc_product_kits} WHERE nid = %d", $node->nid);
   }
-  db_query("INSERT INTO {uc_product_kits} (vid, nid, product_id, mutable, qty, discount, ordering) VALUES ". implode(',', $placeholders), $values);
+  db_query("INSERT INTO {uc_product_kits} (vid, nid, product_id, mutable, qty, discount, ordering, synchronized) VALUES ". implode(',', $placeholders), $values);
   if ($node->revision) {
     db_query("INSERT INTO {uc_products} (vid, nid, model, list_price, cost, sell_price, weight, weight_units, default_qty, unique_hash, ordering, shippable) VALUES (%d, %d, '%s', %f, %f, %f, %f, '%s', %d, '%s', %d, %d)",
       $obj->vid, $obj->nid, $obj->model, $obj->list_price, $obj->cost, $obj->sell_price, $obj->weight, $obj->weight_units, $obj->default_qty,
@@ -261,13 +289,16 @@ function uc_product_kit_load(&$node) {
   $obj = new stdClass();
 
   $products = array();
-  $result = db_query("SELECT product_id, mutable, qty, discount, ordering FROM {uc_product_kits} WHERE vid = %d ORDER BY ordering", $node->vid);
+  $result = db_query("SELECT product_id, mutable, qty, discount, ordering, synchronized FROM {uc_product_kits} WHERE vid = %d ORDER BY ordering", $node->vid);
   while ($prod = db_fetch_object($result)) {
     $obj->mutable = $prod->mutable;
+    $obj->synchronized = $prod->synchronized;
+
     $product = node_load($prod->product_id);
     $product->qty = $prod->qty;
     $product->discount = $prod->discount;
     $product->ordering = $prod->ordering;
+
     $products[$prod->product_id] = $product;
   }
   uasort($products, '_uc_product_kit_sort_products');
@@ -332,6 +363,9 @@ function uc_product_kit_forms($form_id, $args) {
 function uc_product_kit_form(&$node) {
   $form = array();
 
+  $sign_flag = variable_get('uc_sign_after_amount', FALSE);
+  $currency_sign = variable_get('uc_currency_sign', '$');
+
   $form['title'] = array('#type' => 'textfield',
     '#title' => t('Name'),
     '#required' => TRUE,
@@ -386,7 +420,10 @@ function uc_product_kit_form(&$node) {
     '#options' => $products,
     '#default_value' => isset($node->products) ? array_keys($node->products) : array(),
   );
-  $form['base']['items'] = array('#tree' => TRUE);
+  $synchronized = FALSE;
+  $total = 0;
+  $base_total = 0;
+  $form['base']['items'] = array('#tree' => TRUE, '#weight' => 1);
   if (isset($node->products)) {
     foreach ($node->products as $i => $product) {
       $form['base']['items'][$i] = array('#type' => 'fieldset',
@@ -407,11 +444,38 @@ function uc_product_kit_form(&$node) {
       $item = node_load($i);
       $form['base']['items'][$i]['discount'] = array('#type' => 'textfield',
         '#title' => t('Discount'),
-        '#description' => t('Enter a negative value to lower the item price by that amount. Enter a postive value to set the item price to that amount. This discount is applied to each %product in the kit.', array('%product' => $product->title)),
-        '#default_value' => (is_null($product->discount) || $product->discount === '' ? $item->sell_price : $product->discount),
+        '#description' => t('Enter a positive or negative value to raise or lower the item price by that amount. This change is applied to each %product in the kit.', array('%product' => $product->title)),
+        '#field_prefix' => t('@price + ', array('@price' => uc_currency_format($product->sell_price))),
+        '#default_value' => isset($product->discount) ? number_format($product->discount, 3, '.', '') : 0,
         '#size' => 5,
       );
+      $total += $product->sell_price * $product->qty;
+      $base_total += $product->sell_price * $product->qty;
+      if (isset($product->discount)) {
+        $total += $product->discount * $product->qty;
+      }
     }
+    if (!$node->synchronized && $node->sell_price != $total) {
+      // Component products have changed their prices. Recalculate discounts
+      // to keep the same total.
+      $total = $base_total;
+      foreach ($node->products as $i => $product) {
+        $discount = ($node->sell_price - $base_total) * $product->sell_price / $base_total;
+        $total += $discount * $product->qty;
+        $form['base']['items'][$i]['discount']['#default_value'] = number_format($discount, 3, '.', '');
+      }
+    }
+    $form['base']['kit_total'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Total price'),
+      '#default_value' => $node->synchronized ? '' : $total,
+      '#description' => t('If this field is set, the discounts of the individual products will be recalculated to equal this value. Currently, the total sell price is %price.', array('%price' => uc_currency_format($total))),
+      '#weight' => 0,
+      '#size' => 20,
+      '#maxlength' => 35,
+      '#field_prefix' => $sign_flag ? '' : $currency_sign,
+      '#field_suffix' => $sign_flag ? $currency_sign : '',
+    );
   }
   $form['base']['default_qty'] = array('#type' => 'textfield',
     '#title' => t('Default quantity to add to cart'),
@@ -424,7 +488,7 @@ function uc_product_kit_form(&$node) {
   $form['base']['ordering'] = array('#type' => 'weight',
     '#title' => t('List position'),
     '#delta' => 25,
-    '#default_value' => $node->ordering,
+    '#default_value' => isset($node->ordering) ? $node->ordering : 0,
     '#weight' => 30,
   );
 
