@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.ca.inc,v 1.1.2.9 2009/02/27 22:41:31 islandusurper Exp $
+// $Id: uc_taxes.ca.inc,v 1.1.2.10 2009/03/17 19:19:27 islandusurper Exp $
 
 /**
  * @file
@@ -76,53 +76,7 @@ function uc_taxes_ca_action() {
  *   The line item array representing the amount of tax.
  */
 function uc_taxes_action_apply_tax($order, $tax) {
-  $amount = 0;
-  $taxable_amount = 0;
-  if (is_array($order->products)) {
-    foreach ($order->products as $item) {
-      $node = node_load($item->nid);
-
-      // Special handling for manually added "Blank line" products.
-      if (!$node) {
-        $node = new stdClass();
-        $node->type = 'blank-line';
-        $node->shippable = $item->weight > 0;
-      }
-
-      // Tax products if they are of a taxed type and if it is shippable if
-      // the tax only applies to shippable products.
-      if (in_array($node->type, $tax->taxed_product_types) && ($tax->shippable == 0 || $node->shippable == 1)) {
-        $taxable_amount += $item->price * $item->qty;
-      }
-    }
-  }
-  $taxed_line_items = $tax->taxed_line_items;
-  if (is_array($order->line_items) && is_array($taxed_line_items)) {
-    foreach ($order->line_items as $key => $line_item) {
-      if ($line_item['type'] == 'tax' && $line_item['title'] == $tax->name) {
-        // Don't tax yourself.
-        continue;
-      }
-      if (in_array($line_item['type'], $taxed_line_items)) {
-        $taxable_amount += $line_item['amount'];
-      }
-    }
-  }
-  if (isset($taxed_line_items['tax'])) {
-    foreach ($order->taxes as $other_tax) {
-      $taxable_amount += $other_tax->amount;
-    }
-  }
-  $amount = $taxable_amount * $tax->rate;
-  if ($amount) {
-    $line_item = (object)array('id' => $tax->id, 'name' => $tax->name, 'amount' => $amount, 'weight' => $tax->weight);
-    $line_item->data = array(
-      'tax_rate' => $tax->rate,
-      'taxable_amount' => $taxable_amount,
-      'tax_jurisdiction' => $tax->name,
-    );
-    return $line_item;
-  }
+  return uc_taxes_apply_tax($order, $tax);
 }
 
 /**

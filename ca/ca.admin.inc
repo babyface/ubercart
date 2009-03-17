@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.13 2009/02/27 22:41:35 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.14 2009/03/17 19:19:26 islandusurper Exp $
 
 /**
  * @file
@@ -1064,7 +1064,7 @@ function ca_conditions_form_update_conditions($pid, $data) {
 
   // Override the top level operator if need be.
   if (isset($data['operator'])) {
-    $condtions['#operator'] = $data['operator'];
+    $conditions['#operator'] = $data['operator'];
   }
 
   // Use a variable to track the group array key so we can "reset" the keys.

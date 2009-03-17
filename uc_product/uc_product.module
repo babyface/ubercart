@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.18 2009/02/27 22:41:32 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.19 2009/03/17 19:19:28 islandusurper Exp $
 
 /**
  * @file
@@ -564,7 +564,7 @@ function theme_uc_product_form_prices($form) {
   return "<table><tr><td>\n". drupal_render($form['list_price'])
     .'</td><td>'. drupal_render($form['cost'])
     .'</td><td>'. drupal_render($form['sell_price'])
-    ."</td></tr></table>\n";
+    ."</td></tr></table>\n". drupal_render($form);
 }
 
 /**
@@ -749,7 +749,7 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
       '#weight' => $weight['add_to_cart'],
     );
   }
-  //drupal_set_message('<pre>'. print_r($breadcrumb, TRUE) .'</pre>');
+
   return $node;
 }
 
@@ -819,6 +819,20 @@ function uc_product_form_alter(&$form, &$form_state, $form_id) {
 
     $form['#validate'][] = 'node_search_validate';
   }
+
+  // Add a button to product node forms to continue editing after saving.
+  if (uc_product_is_product_form($form)) {
+    $form['buttons']['save_continue'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save and continue'),
+      '#weight' => 7,
+      '#submit' => array('node_form_submit', 'uc_product_save_continue_submit'),
+    );
+  }
+}
+
+function uc_product_save_continue_submit($form, &$form_state) {
+  $form_state['redirect'] = 'node/'. $form_state['values']['nid'] .'/edit';
 }
 
 function uc_product_node_type_form_alter(&$form, &$form_state) {
@@ -1420,6 +1434,10 @@ function theme_uc_product_image($images, $teaser = 0, $page = 0) {
   }
   $output .= '<br />';
   foreach ($images as $thumbnail) {
+    // Node preview adds extra values to $images that aren't files.
+    if (!is_array($thumbnail) || empty($thumbnail['filepath'])) {
+      continue;
+    }
     if ($image_widget) {
       $output .= '<a href="'. imagecache_create_url('product_full', $thumbnail['filepath']) .'" title="'. $thumbnail['data']['title'] .'"'. $image_widget_func($rel_count) .'>';
     }
@@ -1605,8 +1623,24 @@ function uc_product_get_image_widget() {
 
   // Get the current image widget. (if any)
   if (!$got_widget) {
+    // Invoke hook to find widgets
     $image_widgets = uc_store_get_image_widgets();
-    $image_widget = $image_widgets[variable_get('uc_product_image_widget', NULL)];
+
+    // Find widget preference, if any
+    $widget_name = variable_get('uc_product_image_widget', NULL);
+
+    if ($widget_name != NULL) {
+      // Widget to use has been set in admin menu
+      $image_widget = $image_widgets[$widget_name];
+    }
+    else {
+      // Widget to use has not been chosen, so default to
+      // first element of array, if any
+      $keys = array_keys($image_widgets);
+      $image_widget = $image_widgets[$keys[0]];
+      variable_set('uc_product_image_widget', $keys[0]);
+    }
+
     $got_widget = TRUE;
   }
 
@@ -1729,18 +1763,20 @@ function uc_product_add_default_image_field($type = NULL) {
   $label = t('Image');
   $field = array(
     'label' => $label,
-    'type' => 'image',
+    'type' => 'filefield',
     'widget_type' => 'imagefield_widget',
-    'file_extensions' => 'gif jpg jpeg png bmp',
-    'custom_title' => '1',
-    'custom_alt' => '1',
-    'required' => '0',
-    'multiple' => '1',
-    'list_default' => '0',
-    'force_list_default' => '1',
     'weight' => -2,
+    'file_extensions' => 'gif jpg png',
+    'custom_alt' => 1,
+    'custom_title' => 1,
+    'description' => '',
+    'required' => 0,
+    'multiple' => '1',
+    'list_field' => '0',
+    'list_default' => 1,
+    'description_field' => '0',
     'module' => 'filefield',
-    'widget_module' => 'filefield',
+    'widget_module' => 'imagefield',
     'columns' => array(
       'fid' => array(
         'type' => 'int',
@@ -1790,7 +1826,7 @@ function uc_product_add_default_image_field($type = NULL) {
 
     $instances = content_field_instance_read(array('field_name' => $field_name, 'type_name' => $type));
 
-    if (sizeof($instances) < 1) {
+    if (count($instances) < 1) {
       // Only add the field if it doesn't exist. Don't overwrite any changes.
       if (content_field_instance_create($field)) {
         variable_set('uc_image_'. $type, $field_name);

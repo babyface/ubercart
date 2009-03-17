@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.module,v 1.7.2.12 2009/02/24 15:35:51 islandusurper Exp $
+// $Id: uc_recurring.module,v 1.7.2.13 2009/03/17 19:19:28 islandusurper Exp $
 
 /**
  * @file
@@ -320,7 +320,7 @@ function uc_recurring_order($op, &$arg1, $arg2) {
               case 'fail':
                 return array(array('pass' => FALSE, 'message' => t('Your order cannot be completed, because we could not process your recurring payment. Please review your payment details and contact us to complete your order if the problem persists.')));
               case 'proceed':
-                return array(array('pass' => TRUE, 'message' => t('Your order has been submitted, but we may need to contact you to ensure your recurring fee is setup properly. Thank you for your understanding.')));
+                return array(array('pass' => TRUE, 'message' => t('Your order has been submitted, but we may need to contact you to ensure your recurring fee is set up properly. Thank you for your understanding.')));
             }
           }
         }
@@ -648,7 +648,7 @@ function uc_recurring_user_table($uid) {
   $rows = array();
   $output = '';
 
-  // Setup a header array for the table.
+  // Set up a header array for the table.
   $header = array(t('Order'), t('Amount'), t('Interval'), t('Next charge'), t('Remaining'), t('Operations'));
 
   // Loop through the fees sorted by the order ID descending.

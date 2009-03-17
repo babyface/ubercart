@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.8 2009/02/24 15:35:51 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.9 2009/03/17 19:19:29 islandusurper Exp $
 
 /**
  * @file
@@ -455,7 +455,12 @@ function uc_country_import_form_submit($form, &$form_state) {
   $files = $form_state['values']['import_file'];
 
   foreach ($files as $file) {
-    uc_country_import($file);
+    if (uc_country_import($file)) {
+      drupal_set_message(t('Country file @file imported.', array('@file' => $file)));
+    }
+    else {
+      drupal_set_message(t('Country file @file could not import or had no install function.', array('@file' => $file)), 'error');
+    }
   }
 }
 

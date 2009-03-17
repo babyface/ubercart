@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.16 2009/02/24 15:35:51 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.17 2009/03/17 19:19:29 islandusurper Exp $
 
 /**
  * @file
@@ -1413,22 +1413,29 @@ function _country_import_list() {
 
 /**
  * Import an Ubercart country file by filename.
+ *
+ * @param $file
+ *   The filename of the country to import.
+ * @return
+ *   TRUE or FALSE indicating whether or not the country was imported.
  */
 function uc_country_import($file) {
+  require_once(drupal_get_path('module', 'uc_store') .'/countries/'. $file);
+
   $pieces = explode('_', substr($file, 0, strlen($file) - 4));
+
   $country_id = $pieces[count($pieces) - 2];
   $version = $pieces[count($pieces) - 1];
   $country = substr($file, 0, strlen($file) - strlen($country_id) - strlen($version) - 6);
 
-  require_once(drupal_get_path('module', 'uc_store') .'/countries/'. $file);
   $func = $country .'_install';
+
   if (function_exists($func)) {
     $func();
-    drupal_set_message(t('Country file @file imported.', array('@file' => $file)));
+    return TRUE;
   }
-  else {
-    drupal_set_message(t('Country file @file had no install function.', array('@file' => $file)), 'error');
-  }
+
+  return FALSE;
 }
 
 /**

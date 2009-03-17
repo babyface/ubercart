@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.12 2009/02/24 15:35:53 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.13 2009/03/17 19:19:27 islandusurper Exp $
 
 /**
  * @file
@@ -1520,7 +1520,7 @@ function uc_order_mail_invoice_form_submit($form, &$form_state) {
  * Display a log of changes made to an order.
  */
 function uc_order_log($order) {
-  $result = db_query("SELECT * FROM {uc_order_log} WHERE order_id = %d", $order->order_id);
+  $result = db_query("SELECT * FROM {uc_order_log} WHERE order_id = %d ORDER BY created, order_log_id", $order->order_id);
 
   while ($change = db_fetch_object($result)) {
     $user = uc_get_initials($change->uid);

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.install,v 1.11.2.6 2009/03/02 16:20:52 islandusurper Exp $
+// $Id: uc_product_kit.install,v 1.11.2.7 2009/03/17 19:19:29 islandusurper Exp $
 
 /**
  * @file
@@ -50,12 +50,12 @@ function uc_product_kit_schema() {
         'size' => 'small',
         'not null' => TRUE,
         'default' => 0,
+      ),
       'synchronized' => array(
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,
         'default' => 0,
-      ),
       ),
     ),
     'primary key' => array('vid', 'product_id'),
@@ -186,7 +186,16 @@ function uc_product_kit_update_6002() {
   if (!db_column_exists('uc_product_kits', 'synchronized')) {
     db_add_field($ret, 'uc_product_kits', 'synchronized', array('type' => 'int', 'size', 'tiny', 'not null' => TRUE, 'default' => 0));
     $ret[] = update_sql("UPDATE {uc_product_kits} SET synchronized = 1 WHERE discount < 0");
-    $ret[] = update_sql("UPDATE {uc_product_kits} AS pk JOIN {uc_products} AS p ON pk.product_id = p.nid SET pk.discount = pk.discount - p.sell_price WHERE pk.discount >= 0");
+
+    switch ($GLOBALS['db_type']) {
+      case 'mysql':
+      case 'mysqli':
+        $ret[] = update_sql("UPDATE {uc_product_kits} AS pk JOIN {uc_products} AS p ON pk.product_id = p.nid SET pk.discount = pk.discount - p.sell_price WHERE pk.discount >= 0;");
+      break;
+      case 'pgsql':
+        $ret[] = update_sql("UPDATE {uc_product_kits} SET discount = discount - (SELECT p.sell_price FROM {uc_products} p JOIN {uc_product_kits} pk ON pk.product_id = p.nid WHERE pk.discount >= 0);");
+      break;
+    }
   }
 
   return $ret;

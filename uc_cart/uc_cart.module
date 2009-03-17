@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.17 2009/02/24 15:35:49 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.18 2009/03/17 19:19:28 islandusurper Exp $
 
 /**
  * @file
@@ -593,7 +593,7 @@ function theme_uc_cart_block_title($title, $icon_class = 'cart-empty', $collapsi
  * @ingroup themeable
  */
 function theme_uc_cart_block_title_icon($icon_class) {
-  return l('<span class="'. $icon_class .'" alt="'. t('View your shopping cart.') .'" title="'. t('View your shopping cart.') .'" />', 'cart', array('html' => TRUE));
+  return l('<span class="'. $icon_class .'" alt="'. t('View your shopping cart.') .'" title="'. t('View your shopping cart.') .'"></span>', 'cart', array('html' => TRUE));
 }
 
  /**

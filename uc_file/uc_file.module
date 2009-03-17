@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.2.2.12 2009/02/04 13:44:34 islandusurper Exp $
+// $Id: uc_file.module,v 1.2.2.13 2009/03/17 19:19:28 islandusurper Exp $
 
 /**
  * @file
@@ -1682,7 +1682,7 @@ function uc_file_user_renew($fid, $user, $pfid, $file_limits, $force_overwrite) 
     $file_user['expiration'] = $file_user['expiration'] ? $file_user['expiration'] : 0;
 
     // Calculate hash
-    $file_user['file_key'] = drupal_get_token(serialize($file_user));
+    $file_user['file_key'] = $file_user['file_key'] ? $file_user['file_key'] : drupal_get_token(serialize($file_user));
 
     // Write and queue the file_user object.
     drupal_write_record('uc_file_users', $file_user, $key);

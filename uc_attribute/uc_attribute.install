@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.install,v 1.10.2.5 2009/02/10 21:58:12 islandusurper Exp $
+// $Id: uc_attribute.install,v 1.10.2.6 2009/03/17 19:19:27 islandusurper Exp $
 
 /**
  * @file
@@ -617,3 +617,17 @@ function uc_attribute_update_6001() {
 
   return $ret;
 }
+
+function uc_attribute_update_6002() {
+  $ret = array();
+
+  $result = db_query("SELECT * FROM {permission}");
+  while($perm = db_fetch_object($result)) {
+    $perm->perm = str_replace("adminster attributes", "administer attributes", $perm->perm);
+    drupal_write_record('permission', $perm, 'pid');
+  }
+  $ret[] = array('success' => TRUE, 'query' => "Replaced all instances of 'adminster attributes' with 'administer attributes' in the permissions table.");
+
+  return $ret;
+}
+

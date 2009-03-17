@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.16 2009/02/27 22:41:37 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.17 2009/03/17 19:19:27 islandusurper Exp $
 
 /**
  * @file
@@ -215,11 +215,15 @@ function uc_attribute_product_access($node) {
 }
 
 function uc_attribute_product_option_access($node) {
+  if ($node->type == 'product_kit') {
+    return FALSE;
+  }
+
   return uc_product_is_product($node) && node_access('update', $node) && (user_access('administer attributes') || user_access('administer product attributes') || user_access('administer product options'));
 }
 
 function uc_attribute_perm() {
-  return array('adminster attributes', 'administer product attributes', 'administer product options');
+  return array('administer attributes', 'administer product attributes', 'administer product options');
 }
 
 function uc_attribute_init() {

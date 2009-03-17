@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.5.2.12 2009/02/24 15:35:50 islandusurper Exp $
+// $Id: uc_credit.module,v 1.5.2.13 2009/03/17 19:19:27 islandusurper Exp $
 
 /**
  * @file
@@ -15,7 +15,7 @@ define('UC_CREDIT_PRIOR_AUTH_CAPTURE', 'prior_auth_capture');
 // Used to authorize and capture money all at once.
 define('UC_CREDIT_AUTH_CAPTURE', 'auth_capture');
 
-// Used to setup a credit card reference through the payment gateway.
+// Used to set up a credit card reference through the payment gateway.
 define('UC_CREDIT_REFERENCE_SET', 'reference_set');
 
 // Used to capture funds using a credit card reference.
@@ -132,7 +132,7 @@ function uc_credit_form_alter(&$form, &$form_state, $form_id) {
       // Store the encrypted details to the form for processing on submit.
       $form['sescrd'] = array(
         '#type' => 'hidden',
-        '#value' => $_SESSION['sescrd'],
+        '#value' => base64_encode($_SESSION['sescrd']),
       );
 
       // Add submit handler to preserve CC details for the back button and
@@ -241,7 +241,7 @@ function uc_credit_exit() {
  * Implementation of hook_store_status().
  */
 function uc_credit_store_status() {
-  // Throw up an error row if encryption has not been setup yet.
+  // Throw up an error row if encryption has not been set up yet.
   if ($key = uc_credit_encryption_key()) {
     $statuses[] = array(
       'status' => 'ok',
@@ -276,7 +276,7 @@ function uc_credit_order($op, &$arg1, $arg2) {
   if ($arg1->payment_method == 'credit' && ($op == 'save' || $op == 'load')) {
     // Log an error if encryption isn't configured properly.
     if (!uc_credit_encryption_key()) {
-      watchdog('uc_credit', 'Credit card encryption must be setup to process credit cards.');
+      watchdog('uc_credit', 'Credit card encryption must be set up to process credit cards.');
     }
   }
 
@@ -945,7 +945,7 @@ function uc_payment_method_credit_form($form_state, $order) {
     );
   }
 
-  // Setup the default CC number on the credit card form.
+  // Set up the default CC number on the credit card form.
   if (variable_get('uc_credit_validate_numbers', TRUE) && (strlen($order->payment_details['cc_number']) > 4 && !_valid_card_number($order->payment_details['cc_number']))) {
     // Display the number as is if it does not validate so it can be corrected.
     $default_num = $order->payment_details['cc_number'];
@@ -978,7 +978,7 @@ function uc_payment_method_credit_form($form_state, $order) {
   $form['cc_exp_year'] = uc_select_year(t('Expiration Year'), $order->payment_details['cc_exp_year']);
 
   if (variable_get('uc_credit_issue_enabled', FALSE)) {
-    // Setup the default Issue Number on the credit card form.
+    // Set up the default Issue Number on the credit card form.
     if (!_valid_card_issue($order->payment_details['cc_issue'])) {
       // Display the Issue Number as is if it does not validate so it can be corrected.
       $default_card_issue = $order->payment_details['cc_issue'];
@@ -1004,7 +1004,7 @@ function uc_payment_method_credit_form($form_state, $order) {
   }
 
   if (variable_get('uc_credit_cvv_enabled', TRUE)) {
-    // Setup the default CVV  on the credit card form.
+    // Set up the default CVV  on the credit card form.
     if (!_valid_cvv($order->payment_details['cc_cvv'])) {
       // Display the CVV as is if it does not validate so it can be corrected.
       $default_cvv = $order->payment_details['cc_cvv'];
@@ -1203,14 +1203,18 @@ function uc_credit_cache($op, $data = NULL, $encrypted = TRUE) {
 
 // Caches the encrypted CC data on the review order form for processing.
 function uc_credit_cart_review_back_submit($form, &$form_state) {
-  $_SESSION['sescrd'] = $_POST['sescrd'];
-  uc_credit_cache('save', $_POST['sescrd']);
+  $session_card_data = base64_decode($_POST['sescrd']);
+
+  $_SESSION['sescrd'] = $session_card_data;
+  uc_credit_cache('save', $session_card_data);
 }
 
 // Caches the encrypted CC data on the review order form for processing.
 function uc_credit_cart_review_pre_form_submit($form, &$form_state) {
-  $_SESSION['sescrd'] = $_POST['sescrd'];
-  uc_credit_cache('save', $_POST['sescrd']);
+  $session_card_data = base64_decode($_POST['sescrd']);
+
+  $_SESSION['sescrd'] = $session_card_data;
+  uc_credit_cache('save', $session_card_data);
 }
 
 // Clears the temporary CC data if the review order form submits.

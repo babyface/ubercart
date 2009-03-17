@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.ca.inc,v 1.1.2.5 2009/02/27 22:41:35 islandusurper Exp $
+// $Id: ca.ca.inc,v 1.1.2.6 2009/03/17 19:19:26 islandusurper Exp $
 
 /**
  * @file: This file includes some generic conditions and actions.
@@ -70,6 +70,16 @@ function ca_ca_condition() {
     '#callback' => 'ca_condition_custom_php',
     '#arguments' => array(
       'arguments' => array('#entity' => 'arguments', '#title' => t('Arguments')),
+    ),
+  );
+
+  $conditions['ca_condition_user_roles'] = array(
+    '#title' => t("Check the user's roles"),
+    '#category' => t('User'),
+    '#description' => t('Returns TRUE if the user roles match your settings.'),
+    '#callback' => 'ca_condition_user_roles',
+    '#arguments' => array(
+      'user' => array('#entity' => 'user', '#title' => t('User')),
     ),
   );
 
@@ -352,6 +362,49 @@ function ca_condition_custom_php_form($form_state, $settings = array(), $argumen
     '#title' => t('Custom PHP'),
     '#description' => t('Enter the custom PHP to be evaluated when this condition is executed.  Should not include &lt;?php ?> delimiters.'),
     '#default_value' => isset($settings['php']) ? $settings['php'] : '',
+  );
+
+  return $form;
+}
+
+// Check a user's roles.
+function ca_condition_user_roles($account, $settings) {
+  $settings['roles'] = array_filter($settings['roles']);
+
+  if ($settings['operator'] == 'AND') {
+    foreach ($settings['roles'] as $key) {
+      if (!isset($account->roles[$key])) {
+        return FALSE;
+      }
+    }
+    return TRUE;
+  }
+  else {
+    foreach ($settings['roles'] as $key) {
+      if (isset($account->roles[$key])) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+}
+
+function ca_condition_user_roles_form($form_state, $settings = array()) {
+  $form['operator'] = array(
+    '#type' => 'radios',
+    '#title' => t('Operator'),
+    '#description' => t('If you specify <em>AND</em> and want to check a custom role, remember to specify <em>authenticated user</em> where applicable.'),
+    '#options' => array(
+      'OR' => t('OR: If the user has any of these roles.'),
+      'AND' => t('AND: If the user has all of these roles.'),
+    ),
+    '#default_value' => isset($settings['operator']) ? $settings['operator'] : 'OR',
+  );
+  $form['roles'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Roles'),
+    '#options' => user_roles(),
+    '#default_value' => isset($settings['roles']) ? $settings['roles'] : array(),
   );
 
   return $form;

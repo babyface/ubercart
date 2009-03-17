@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.14 2009/03/02 16:20:52 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.15 2009/03/17 19:19:29 islandusurper Exp $
 
 /**
  * @file
@@ -780,7 +780,7 @@ function uc_product_kit_add_to_cart($nid, $qty, $kit_data) {
 }
 
 /**
- * Implementation of Übercart's hook_cart_item().
+ * Implementation of Ubercart's hook_cart_item().
  */
 function uc_product_kit_cart_item($op, &$item) {
   switch ($op) {
@@ -788,12 +788,7 @@ function uc_product_kit_cart_item($op, &$item) {
       if (isset($item->data['kit_id']) && ($kit = node_load($item->data['kit_id'])) && $kit->mutable != UC_PRODUCT_KIT_MUTABLE) {
         $kit_discount = $kit->products[$item->nid]->discount;
         if ($kit_discount !== '') {
-          if ($kit_discount < 0) {
-            $item->price += $kit_discount;
-          }
-          else {
-            $item->price += $kit_discount - $kit->products[$item->nid]->sell_price;
-          }
+          $item->price += $kit_discount;
         }
       }
     break;

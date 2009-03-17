@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.views_default.inc,v 1.1.2.3 2009/01/19 20:31:27 islandusurper Exp $
+// $Id: uc_product.views_default.inc,v 1.1.2.4 2009/03/17 19:19:29 islandusurper Exp $
 
 /**
  * @file
@@ -72,22 +72,6 @@ function uc_product_views_default_views() {
     );
   }
   $handler->override_option('fields', $fields);
-  $handler->override_option('sorts', array(
-    'ordering' => array(
-      'order' => 'ASC',
-      'id' => 'ordering',
-      'table' => 'uc_products',
-      'field' => 'ordering',
-      'relationship' => 'none',
-    ),
-    'title' => array(
-      'order' => 'ASC',
-      'id' => 'title',
-      'table' => 'node',
-      'field' => 'title',
-      'relationship' => 'none',
-    ),
-  ));
   $handler->override_option('filters', array(
     'status' => array(
       'operator' => '=',

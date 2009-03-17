@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.5.2.9 2009/02/13 22:01:14 islandusurper Exp $
+// $Id: uc_ups.module,v 1.5.2.10 2009/03/17 19:19:28 islandusurper Exp $
 
 /**
  * @file
@@ -323,6 +323,18 @@ function uc_ups_shipping_quote($packages, $origin, $destination, $ups_service) {
   $shipfrom_country = $shipfrom_country[0]['country_iso_code_2'];
   $shipfrom_zip = $origin->postal_code;
 
+  $ups_units = variable_get('uc_ups_unit_system', variable_get('uc_length_unit', 'in'));
+  switch ($ups_units) {
+    case 'in':
+      $units = 'LBS';
+      $unit_name = 'Pounds';
+      break;
+    case 'cm':
+      $units = 'KGS';
+      $unit_name = 'Kilograms';
+      break;
+  }
+
   $shipment_weight = 0;
   $package_schema = '';
   foreach ($packages as $package) {
@@ -349,17 +361,13 @@ function uc_ups_shipping_quote($packages, $origin, $destination, $ups_service) {
           $package_schema .= "</Dimensions>";
         }
         $size = $package->length * $conversion + 2 * $conversion * ($package->width + $package->height);
-        switch (variable_get('uc_ups_unit_system', variable_get('uc_length_unit', 'in'))) {
+        switch ($ups_units) {
           case 'in':
-            $units = 'LBS';
-            $unit_name = 'Pounds';
             $conversion = uc_weight_conversion($package->weight_units, 'lb');
-          break;
+            break;
           case 'cm':
-            $units = 'KGS';
-            $unit_name = 'Kilograms';
             $conversion = uc_weight_conversion($package->weight_units, 'kg');
-          break;
+            break;
         }
         $weight = max(1, $package->weight * $conversion);
         $shipment_weight += $weight;
@@ -433,7 +441,8 @@ function uc_ups_shipping_quote($packages, $origin, $destination, $ups_service) {
     </ShipFrom>
     <ShipmentWeight>
       <UnitOfMeasurement>
-        <Code>LBS</Code>
+        <Code>$units</Code>
+        <Description>$unit_name</Description>
       </UnitOfMeasurement>
       <Weight>". number_format($shipment_weight, 1, '.', '') ."</Weight>
     </ShipmentWeight>
@@ -504,7 +513,8 @@ function uc_ups_shipment_request($packages, $origin, $destination, $ups_service)
   $shipfrom_country = $shipfrom_country[0]['country_iso_code_2'];
   $shipfrom_zip = $origin->postal_code;
 
-  //$shipment_weight = 0;
+  $ups_units = variable_get('uc_ups_unit_system', variable_get('uc_length_unit', 'in'));
+
   $package_schema = '';
   foreach ($packages as $package) {
     $qty = $package->qty;
@@ -513,7 +523,6 @@ function uc_ups_shipment_request($packages, $origin, $destination, $ups_service)
       $package_schema .= "<Package>";
         $package_schema .= "<PackagingType>";
           $package_schema .= "<Code>". $package_type['code'] ."</Code>";
-          //$package_schema .= "<Description>". $package_type['description'] ."</Description>";
         $package_schema .= "</PackagingType>";
         if ($package->pkg_type == '02' && $package->length && $package->width && $package->height) {
           if ($package->length < $package->width) {
@@ -530,20 +539,15 @@ function uc_ups_shipment_request($packages, $origin, $destination, $ups_service)
           $package_schema .= "</Dimensions>";
         }
         $size = $package->length * $conversion + 2 * $conversion * ($package->width + $package->height);
-        switch (variable_get('uc_ups_unit_system', variable_get('uc_length_unit', 'in'))) {
+        switch ($ups_units) {
           case 'in':
-            $units = 'LBS';
-            $unit_name = 'Pounds';
-            $conversion = constant(strtoupper($package->weight_units) .'_TO_LB');
-          break;
+            $conversion = uc_weight_conversion($package->weight_units, 'lb');
+            break;
           case 'cm':
-            $units = 'KGS';
-            $unit_name = 'Kilograms';
-            $conversion = constant(strtoupper($package->weight_units) .'_TO_KG');
-          break;
+            $conversion = uc_weight_conversion($package->weight_units, 'kg');
+            break;
         }
         $weight = $package->weight * $conversion;
-        //$shipment_weight += $weight;
         $package_schema .= "<PackageWeight>";
           $package_schema .= "<UnitOfMeasurement>";
             $package_schema .= "<Code>$units</Code>";
@@ -650,12 +654,6 @@ function uc_ups_shipment_request($packages, $origin, $destination, $ups_service)
       $schema .= "<Code>{$service[code]}</Code>";
       $schema .= "<Description>{$service[description]}</Description>";
     $schema .= "</Service>";
-    /* $schema .= "<ShipmentWeight>";
-      $schema .= "<UnitOfMeasurement>";
-        $schema .= "<Code>LBS</Code>";
-      $schema .= "</UnitOfMeasurement>";
-      $schema .= "<Weight>". number_format($shipment_weight, 1, '.', '') ."</Weight>";
-    $schema .= "</ShipmentWeight>"; */
     $schema .= $package_schema;
   $schema .= "</Shipment>";
   $schema .= "<LabelSpecification>";
@@ -690,40 +688,68 @@ function uc_ups_quote($products, $details) {
   $method = uc_ups_shipping_method();
 
   $addresses = array((array)variable_get('uc_quote_store_default_address', new stdClass()));
+  $key = 0;
   $last_key = 0;
   $packages = array();
   if (variable_get('uc_ups_all_in_one', TRUE) && count($products) > 1) {
     foreach ($products as $product) {
       if ($product->nid) {
+        // Packages are grouped by the address from which they will be
+        // shipped. We will keep track of the different addresses in an array
+        // and use their keys for the array of packages.
+
         $address = (array)uc_quote_get_default_shipping_address($product->nid);
         $key = array_search($address, $addresses);
         if ($key === FALSE) {
+          // This is a new address. Increment the address counter $last_key
+          // instead of using [] so that it can be used in $packages and
+          // $addresses.
           $addresses[++$last_key] = $address;
           $key = $last_key;
-          $packages[$key][0] = new stdClass();
         }
       }
-      $packages[$key][0]->weight += $product->weight * $product->qty * uc_weight_conversion($product->weight_units, 'lb');
-      $conversion = uc_weight_conversion($product->length_units, 'in');
-      $packages[$key][0]->price += $product->price * $product->qty;
-      $packages[$key][0]->length = max($product->length * $conversion, $package->length);
-      $packages[$key][0]->width = max($product->width * $conversion, $package->width);
-      $packages[$key][0]->height = max($product->height * $conversion, $package->height);
-    }
-    foreach ($packages as $key => $package) {
-      if (!$package[0]->weight) {
-        unset($packages[$key]);
-        continue;
+
+      // Add this product to the last package from the found address or start
+      // a new package.
+      if (isset($packages[$key]) && count($packages[$key])) {
+        $package = array_pop($packages[$key]);
       }
-      $packages[$key][0]->length_units = 'in';
-      $packages[$key][0]->weight_units = 'lb';
-      $packages[$key][0]->qty = 1;
-      $packages[$key][0]->pkg_type = '02';
+      else {
+        $package = _uc_ups_new_package();
+      }
+
+      $weight = $product->weight * $product->qty * uc_weight_conversion($product->weight_units, 'lb');
+
+      $package->weight += $weight;
+      $package->price += $product->price * $product->qty;
+
+      $conversion = uc_weight_conversion($product->length_units, 'in');
+      $package->length = max($product->length * $conversion, $package->length);
+      $package->width = max($product->width * $conversion, $package->width);
+      $package->height = max($product->height * $conversion, $package->height);
+
+      $packages[$key][] = $package;
+    }
+    foreach ($packages as $addr_key => $shipment) {
+      foreach ($shipment as $key => $package) {
+        if (!$package->weight) {
+          unset($packages[$addr_key][$key]);
+          continue;
+        }
+        elseif ($package->weight > 150) {
+          // UPS has a weight limit on packages of 150 lbs. Pretend the
+          // products can be divided into enough packages.
+          $qty = floor($package->weight / 150) + 1;
+          $package->qty = $qty;
+          $package->weight /= $qty;
+          $package->price /= $qty;
+        }
+      }
     }
   }
   else {
     foreach ($products as $product) {
-      $addr_key = 0;
+      $key = 0;
       if ($product->nid) {
         $address = (array)uc_quote_get_default_shipping_address($product->nid);
         $key = array_search($address, $addresses);
@@ -738,6 +764,7 @@ function uc_ups_quote($products, $details) {
       $num_of_pkgs = (int)($product->qty / $product->pkg_qty);
       if ($num_of_pkgs) {
         $package = drupal_clone($product);
+        $package->description = $product->model;
         $package->weight = $product->weight * $product->pkg_qty;
         $package->price = $product->price * $product->pkg_qty;
         $package->qty = $num_of_pkgs;
@@ -1176,4 +1203,22 @@ function _uc_ups_pkg_types() {
     '2b' => t('Medium Express Box'),
     '2c' => t('Large Express Box'),
   );
+}
+
+function _uc_ups_new_package() {
+  $package = new stdClass();
+
+  $package->weight = 0;
+  $package->price = 0;
+
+  $package->length = 0;
+  $package->width = 0;
+  $package->height = 0;
+
+  $package->length_units = 'in';
+  $package->weight_units = 'lb';
+  $package->qty = 1;
+  $package->pkg_type = '02';
+
+  return $package;
 }
