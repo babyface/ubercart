@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.2.2.13 2009/02/10 21:58:17 islandusurper Exp $
+// $Id: uc_roles.module,v 1.2.2.14 2009/04/02 21:01:47 islandusurper Exp $
 
 /**
  * @file
@@ -23,7 +23,7 @@ require_once 'uc_roles.ca.inc';
  * Implementation of hook_help().
  */
 function uc_roles_help($path, $arg) {
-  if ($path == 'node/%/edit/features' && $arg[4] == 'role') {
+  if ($path == 'node/%/edit/uc-features' && $arg[4] == 'role') {
     return t('Add roles through this page and then use the <a href="!url">conditional actions interface</a> to limit which orders they are applied to. Most important is the order status on which role granting will be triggered.', array('!url' => url(CA_UI_PATH)));
   }
   switch ($path) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_pack.admin.inc,v 1.1.2.4 2009/02/04 13:44:33 islandusurper Exp $
+// $Id: uc_payment_pack.admin.inc,v 1.1.2.5 2009/04/02 21:01:47 islandusurper Exp $
 
 /**
  * @file
@@ -19,7 +19,7 @@ function uc_payment_pack_receive_check_form($form_state, $order) {
   );
   $form['check_exists'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Check has already been received.'),
+    '#title' => t('Check has already cleared.'),
     '#attributes' => array('onclick' => 'receive_check_toggle(this.checked);'),
   );
   $form['amount'] = array(
@@ -77,7 +77,7 @@ function uc_payment_pack_receive_check_form_validate($form, &$form_state) {
 function uc_payment_pack_receive_check_form_submit($form, &$form_state) {
   global $user;
 
-  uc_payment_enter($form_state['values']['order_id'], _payment_method_data('check', 'id'), $form_state['values']['amount'], $user->uid, '', $form_state['values']['comment']);
+  uc_payment_enter($form_state['values']['order_id'], 'check', $form_state['values']['amount'], $user->uid, '', $form_state['values']['comment']);
 
   db_query("INSERT INTO {uc_payment_check} (order_id, clear_date) VALUES (%d, %d)",
     $form_state['values']['order_id'], mktime(12, 0, 0, $form_state['values']['clear_month'],
@@ -85,6 +85,6 @@ function uc_payment_pack_receive_check_form_submit($form, &$form_state) {
 
   drupal_set_message(t('Check received, expected clear date of @date.', array('@date' => $form_state['values']['clear_month'] .'/'. $form_state['values']['clear_day'] .'/'. $form_state['values']['clear_year'])));
 
-  drupal_goto('admin/store/orders/'. $form_state['values']['order_id']);
+  $form_state['redirect'] = 'admin/store/orders/'. $form_state['values']['order_id'];
 }
 

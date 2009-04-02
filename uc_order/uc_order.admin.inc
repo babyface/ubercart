@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.13 2009/03/17 19:19:27 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.14 2009/04/02 21:01:46 islandusurper Exp $
 
 /**
  * @file
@@ -972,7 +972,7 @@ function uc_order_history($user) {
 function uc_order_view($order, $view = 'view') {
   if ($view == 'customer') {
     $breadcrumb = drupal_get_breadcrumb();
-    $breadcrumb[2] = l(t('Order history'), 'user/'. arg(1) .'/orders');
+    $breadcrumb[2] = l(t('Order history'), 'user/'. arg(1) .'/uc-orders');
     drupal_set_breadcrumb($breadcrumb);
   }
 
@@ -1001,7 +1001,8 @@ function uc_order_view($order, $view = 'view') {
   }
 
   if ($view == 'customer' && variable_get('uc_cust_view_order_invoices', TRUE)) {
-    drupal_add_js("function open_invoice() { window.open(Drupal.settings.basePath + '". (variable_get('clean_url', 0) ? '' : '?q=') ."user/". arg(1) ."/order/". arg(3) ."/invoice/print', '". t('Invoice') ."', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=600,height=480,left=50,top=50'); }", 'inline');
+    $url = url('user/' . arg(1) . '/order/' . arg(3) . '/invoice/print');
+    drupal_add_js("function open_invoice() { window.open('$url', '". t('Invoice') ."', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=600,height=480,left=50,top=50'); }", 'inline');
     $contents = '<a href="#" onclick="open_invoice();">'
                . uc_store_get_icon('file:print') .' '
                . t('Click to open a window with a printable invoice.') .'</a>';
@@ -1014,6 +1015,9 @@ function uc_order_view($order, $view = 'view') {
 function uc_order_edit_form($form_state, $order) {
   $form['order_id'] = array('#type' => 'hidden', '#value' => $order->order_id);
   $form['order_uid'] = array('#type' => 'hidden', '#value' => $order->uid);
+
+  $modified = isset($form_state['post']['order_modified']) ? $form_state['post']['order_modified'] : time();
+  $form['order_modified'] = array('#type' => 'hidden', '#value' => $modified);
 
   $panes = _order_pane_list('edit');
   foreach ($panes as $pane) {
@@ -1065,12 +1069,19 @@ function theme_uc_order_edit_form($form) {
     }
   }
 
-  $output .= '<div class="order-pane abs-left">'. drupal_render($form['order_id'])
+  $output .= '<div class="order-pane abs-left">'. drupal_render($form['order_id']) . drupal_render($form['order_modified'])
            . drupal_render($form['form_id']) . drupal_render($form['form_token'])
            . drupal_render($form['submit-changes']) . drupal_render($form['delete'])
             .'</div>';
 
   return $output;
+}
+
+function uc_order_edit_form_validate($form, &$form_state) {
+  $order = uc_order_load($form_state['values']['order_id']);
+  if ($form_state['values']['order_modified'] < $order->modified) {
+    form_set_error('order_modified', t('This order has been modified by another user, changes cannot be saved.'));
+  }
 }
 
 function uc_order_edit_form_submit($form, &$form_state) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.pages.inc,v 1.1.2.9 2009/02/24 15:35:49 islandusurper Exp $
+// $Id: uc_catalog.pages.inc,v 1.1.2.10 2009/04/02 21:01:47 islandusurper Exp $
 
 /**
  * @file
@@ -116,7 +116,7 @@ function theme_uc_catalog_browse($tid = 0) {
   }
   if (count($catalog->products)) {
     if (count($links)) {
-      $output .= theme('links', $links, array('class' => 'links inline')) ."<br />\n";
+      $output .= theme('links', $links, array('class' => 'links inline uc-categories')) ."<br />\n";
     }
     $output .= $catalog->description;
     $output .= theme('uc_catalog_products', $catalog->products);

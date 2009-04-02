@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.17 2009/03/17 19:19:29 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.18 2009/04/02 21:01:47 islandusurper Exp $
 
 /**
  * @file
@@ -801,6 +801,10 @@ function uc_store_get_icon($path, $small = FALSE, $class = 'uc-store-icon', $alt
  * Format an amount for display with the store's currency settings.
  */
 function uc_currency_format($value, $sign = TRUE, $thou = TRUE, $dec = NULL) {
+  if ($value === NULL) {
+    return NULL;
+  }
+
   if (variable_get('uc_currency_prec', 2) > 0) {
     if (abs($value) < '.'. str_repeat('0', variable_get('uc_currency_prec', 2) - 1) .'1') {
       $value = 0;

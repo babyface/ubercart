@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.15 2009/03/17 19:19:27 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.16 2009/04/02 21:01:45 islandusurper Exp $
 
 /**
  * @file
@@ -415,8 +415,10 @@ function uc_quote_action_get_quote($order, $method) {
  * Implementation of Ubercart's hook_cart_pane.
  */
 function uc_quote_cart_pane($items) {
-  if (!variable_get('uc_cap_quotes_enabled', FALSE) || (variable_get('uc_cart_delivery_not_shippable', TRUE) && !uc_cart_is_shippable())) {
-    return array();
+  if (arg(0) == 'cart') {
+    if (!variable_get('uc_cap_quotes_enabled', FALSE) || (variable_get('uc_cart_delivery_not_shippable', TRUE) && !uc_cart_is_shippable())) {
+      return array();
+    }
   }
   $panes[] = array('id' => 'quotes',
     'title' => t('Shipping quotes'),
@@ -817,7 +819,6 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2) {
       $method = $methods[$quote_option[0]];
       $quote_data = array();
 
-      $predicate = ca_load_trigger_predicates('get_quote_from_'. $method['id']);
       $arguments = array(
         'order' => array(
           '#entity' => 'uc_order',
@@ -835,7 +836,10 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2) {
           '#data' => $user,
         ),
       );
-      if (ca_evaluate_conditions($predicate, $arguments)) {
+
+      $predicates = ca_load_trigger_predicates('get_quote_from_'. $method['id']);
+      $predicate = array_shift($predicates);
+      if ($predicate && ca_evaluate_conditions($predicate, $arguments)) {
         $quote_data = uc_quote_action_get_quote($arg1, $method, $user);
       }
 
@@ -843,6 +847,7 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2) {
         drupal_set_message(t('Invalid option selected. Recalculate shipping quotes to continue.'), 'error');
         return FALSE;
       }
+
       $label = $method['quote']['accessorials'][$quote_option[1]];
       $arg1->quote['rate'] = $quote_data[$quote_option[1]]['rate'];
       $result = db_query("SELECT line_item_id FROM {uc_order_line_items} WHERE order_id = %d AND type = 'shipping'", $arg1->order_id);

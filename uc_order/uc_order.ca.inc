@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.15 2009/02/27 22:41:32 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.16 2009/04/02 21:01:46 islandusurper Exp $
 
 /**
  * @file
@@ -1000,7 +1000,7 @@ function uc_order_action_email($order, $settings) {
   );
 
   // Apply token replacements to from and recipient e-mail addressses.
-  $addresses = token_replace_multiple($settings['from'], $settings['replacements']);
+  $from = token_replace_multiple($settings['from'], $settings['replacements']);
   $addresses = token_replace_multiple($settings['addresses'], $settings['replacements']);
 
   // Split up our recipient e-mail addresses.
@@ -1010,7 +1010,7 @@ function uc_order_action_email($order, $settings) {
   }
 
   foreach ($recipients as $email) {
-    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, empty($settings['from']) ? uc_store_email_from() : $settings['from']);
+    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, empty($from) ? uc_store_email_from() : $from);
 
     if (!$sent['result']) {
       watchdog('ca', 'Attempt to e-mail @email concerning order @order_id failed.', array('@email' => $email, '@order_id' => $order->order_id), WATCHDOG_ERROR);

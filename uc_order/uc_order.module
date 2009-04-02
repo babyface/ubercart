@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.18 2009/03/17 19:19:27 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.19 2009/04/02 21:01:46 islandusurper Exp $
 
 /**
  * @file
@@ -157,7 +157,7 @@ function uc_order_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'uc_order.admin.inc',
   );
-  $items['user/%user/orders'] = array(
+  $items['user/%user/uc-orders'] = array(
     'title' => 'Orders',
     'description' => 'View your order history.',
     'page callback' => 'uc_order_history',
@@ -476,7 +476,7 @@ function uc_order_user($op, &$edit, &$account, $category = NULL) {
           '#title' => t('Orders'),
           'link' => array(
             '#type' => 'user_profile_item',
-            '#value' => l(t('Click here to view your order history.'), 'user/'. $account->uid .'/orders'),
+            '#value' => l(t('Click here to view your order history.'), 'user/'. $account->uid .'/uc-orders'),
           ),
         );
       }
@@ -1412,6 +1412,8 @@ function _get_order_screen_titles() {
 function uc_order_load_invoice($order, $op = 'view', $template = 'customer') {
   static $invoice;
 
+  drupal_set_message($template);
+
   if (isset($invoice[$order->order_id][$template])) {
     return $invoice[$order->order_id][$template];
   }
@@ -1475,28 +1477,24 @@ function uc_order_load_invoice($order, $op = 'view', $template = 'customer') {
   return $output;
 }
 
-/**
- * Return array of invoice template files found in ubercart/uc_order/templates.
- */
+// Return an array of invoice templates found in ubercart/uc_order/templates.
 function uc_invoice_template_list() {
-  $dir = drupal_get_path('module', 'uc_order') .'/templates/';
+  static $templates = array();
 
-  $templates = array();
-  if (is_dir($dir)) {
-    if ($dh = opendir($dir)) {
-      while (($file = readdir($dh)) !== FALSE) {
-        switch (filetype($dir . $file)) {
-          case 'file':
-            if (substr($file, -9, 9) == '.itpl.php') {
-              $templates[] = substr($file, 0, strlen($file) - 9);
-            }
-            break;
-        }
-      }
-      closedir($dh);
+  // If the template list hasn't already been loaded...
+  if (empty($templates)) {
+    // Get the path to the templates directory.
+    $dir = drupal_get_path('module', 'uc_order') .'/templates';
+
+    // Loop through all the files found in the directory.
+    foreach (file_scan_directory($dir, '.*\.itpl\.php', array('.', '..', 'CVS'), 0, FALSE) as $file) {
+      // Add them by name to the templates array, trimming off the extension.
+      $templates[] = substr($file->name, 0, strlen($file->name) - 5);
     }
+
+    // Sort the template names alphabetically.
+    sort($templates);
   }
-  sort($templates);
 
   return $templates;
 }

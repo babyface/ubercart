@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.pages.inc,v 1.1.2.4 2009/01/02 20:18:41 islandusurper Exp $
+// $Id: uc_quote.pages.inc,v 1.1.2.5 2009/04/02 21:01:45 islandusurper Exp $
 
 /**
  * @file
@@ -46,7 +46,7 @@ function uc_quote_request_quotes() {
   $fake_order = new stdClass();
   $fake_order->uid = $_POST['uid'];
   $fake_order->products = $products;
-  foreach ($_POST['details'] as $type => $address) {
+  foreach ((array) $_POST['details'] as $type => $address) {
     foreach ($address as $key => $value) {
       if ($key == 'country' AND $value == '') {
         $value = variable_get('uc_store_country', 840);

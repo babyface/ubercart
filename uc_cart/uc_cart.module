@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.18 2009/03/17 19:19:28 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.19 2009/04/02 21:01:45 islandusurper Exp $
 
 /**
  * @file
@@ -883,7 +883,7 @@ function uc_cart_view_form($form_state, $items = NULL) {
     }
   }
 
-  $form['items'] = uc_cart_view_table($form['items']);
+  $form['items'] = tapir_get_table('uc_cart_view_table', $form['items']);
 
   // If the continue shopping element is enabled...
   if (($cs_type = variable_get('uc_continue_shopping_type', 'link')) !== 'none') {
@@ -1355,6 +1355,16 @@ function uc_cart_remove_item($nid, $cid = NULL, $data = array()) {
   }
 
   $cart_id = !(is_null($cid) || empty($cid)) ? $cid : uc_cart_get_id();
+
+  // Invoke hook_cart_item() with $op = 'remove' in enabled modules.
+  $result = db_query("SELECT c.*, n.title, n.vid FROM {node} n INNER JOIN {uc_cart_products} c ON n.nid = c.nid WHERE c.cart_id = '%s' AND c.nid = %d", $cart_id, $nid);
+  if ($item = db_fetch_object($result)) {
+    foreach (module_implements('cart_item') as $module) {
+      $func = $module .'_cart_item';
+      $func('remove', $item);
+    }
+  }
+
   db_query("DELETE FROM {uc_cart_products} WHERE cart_id = '%s' AND nid = %d AND data = '%s'", $cart_id, $nid, serialize($data));
 }
 
@@ -1382,7 +1392,17 @@ function uc_cart_empty($cart_id) {
     return;
   }
 
+  // Empty cart one item at a time.  This will ensure the cart_item hook is fired with $op set to 'remove' for each item.
+  $items = uc_cart_get_contents($cart_id);
+  foreach($items as $item) {
+    uc_cart_remove_item($item->nid, $cart_id, $item->data);
+  }
+
+  // Probably don't need this query, but it will ensure anything not removed with the above loop is removed here.
   db_query("DELETE FROM {uc_cart_products} WHERE cart_id = '%s'", $cart_id);
+
+  // Remove cached cart.
+  uc_cart_get_contents($cart_id, 'rebuild');
 }
 
 function uc_cart_cart_pane_list($items, $action = NULL) {

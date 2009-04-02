@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.pages.inc,v 1.1.2.7 2009/02/13 22:01:15 islandusurper Exp $
+// $Id: uc_file.pages.inc,v 1.1.2.8 2009/04/02 21:01:45 islandusurper Exp $
 
 /**
  * @file
@@ -347,7 +347,7 @@ function _uc_file_download_redirect($uid = NULL) {
   }
   // Redirect users back to their file page.
   else {
-    drupal_goto('user/'. $uid .'/files');
+    drupal_goto('user/'. $uid .'/uc-files');
   }
 }
 

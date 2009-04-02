@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.5.2.10 2009/03/17 19:19:28 islandusurper Exp $
+// $Id: uc_ups.module,v 1.5.2.11 2009/04/02 21:01:47 islandusurper Exp $
 
 /**
  * @file
@@ -946,7 +946,7 @@ function uc_ups_fulfill_order($form_state, $order, $package_ids) {
 
   $form = array_merge($form, uc_shipping_address_form($form_state, $addresses, $order));
 
-  foreach (array('delivery_email', 'delivery_last_name', 'delivery_company', 'delivery_street1', 'delivery_city', 'delivery_zone', 'delivery_country', 'delivery_postal_code') as $field) {
+  foreach (array('delivery_email', 'delivery_last_name', 'delivery_street1', 'delivery_city', 'delivery_zone', 'delivery_country', 'delivery_postal_code') as $field) {
     $form['destination'][$field]['#required'] = TRUE;
   }
 
@@ -998,6 +998,9 @@ function uc_ups_fulfill_order_validate($form, &$form_state) {
   }
   $_SESSION['ups'] = array();
   $_SESSION['ups']['origin'] = $origin;
+  if (empty($destination->company)) {
+    $destination->company = $destination->first_name .' '. $destination->last_name;
+  }
   $_SESSION['ups']['destination'] = $destination;
   foreach ($form_state['values']['packages'] as $id => $pkg_form) {
     $package = uc_shipping_package_load($id);

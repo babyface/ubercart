@@ -1,27 +1,27 @@
-/* $Id: uc_cart_block.css,v 1.7.2.6 2009/02/24 15:35:49 islandusurper Exp $ */
+/* $Id: uc_cart_block.css,v 1.7.2.7 2009/04/02 21:01:45 islandusurper Exp $ */
 
 /**
  * Styles for the cart block icon.
  */
 .cart-block-icon-full, .cart-block-icon-empty {
-  display: inline-block;
+  display: inline;
   padding: 2px 12px 8px 12px;
   height: 7px;
 }
 
 .cart-block-icon-full {
-  background: transparent url(images/cart_full.gif) no-repeat left center;
+  background: transparent url(images/cart-full.png) no-repeat left center;
 }
 
 .cart-block-icon-empty {
-  background: transparent url(images/cart_empty.gif) no-repeat left center;
+  background: transparent url(images/cart-empty.png) no-repeat left center;
 }
 
 /**
  * Styles for the cart block title and toggle.
  */
 .cart-block-title-bar {
-  display: inline-block;
+  display: inline;
 }
 
 .cart-block-toggle {
@@ -29,7 +29,7 @@
 }
 
 .cart-block-arrow {
-  display: inline-block;
+  display: inline;
   padding: 2px 15px 8px 15px;
   height: 7px;
 }
@@ -107,7 +107,7 @@
 }
 
 .cart-block-summary-total {
-  width: 100%;
+  width: auto;
   text-align: right;
 }
 

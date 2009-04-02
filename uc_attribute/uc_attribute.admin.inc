@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.7 2009/02/10 21:58:12 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.8 2009/04/02 21:01:47 islandusurper Exp $
 
 /**
  * @file
@@ -28,7 +28,7 @@ function uc_attribute_admin() {
       l(t('delete'), 'admin/store/attributes/'. $attr->aid .'/delete'),
     );
     $rows[] = array(
-      $attr->name,
+      check_plain($attr->name),
       $attr->required == 1 ? t('Yes') : t('No'),
       array('data' => $attr->ordering, 'align' => 'center'),
       array('data' => $attr->options, 'align' => 'center'),
@@ -192,7 +192,7 @@ function uc_attribute_options_form($form_state, $attribute) {
   foreach ($attribute->options as $key => $data) {
     $form['options'][$key] = array(
       'name' => array(
-        '#value' => $data->name,
+        '#value' => check_plain($data->name),
       ),
       'cost' => array(
         '#value' => $data->cost,
@@ -464,10 +464,10 @@ function uc_object_attributes_form($form_state, $object, $type, $view = 'overvie
             '#default_value' => 0,
           ),
           'name' => array(
-            '#value' => $attribute->name,
+            '#value' => check_plain($attribute->name),
           ),
           'option' => array(
-            '#value' => $option ? ($option->name .' ('. uc_currency_format($option->price) .')' ) : t('n/a'),
+            '#value' => $option ? (check_plain($option->name) .' ('. uc_currency_format($option->price) .')' ) : t('n/a'),
           ),
           'required' => array(
             '#type' => 'checkbox',
@@ -515,7 +515,7 @@ function uc_object_attributes_form($form_state, $object, $type, $view = 'overvie
     $form['add'] = array(
       '#type' => 'submit',
       '#value' => t('Add attributes'),
-      '#suffix' => l(t('Cancel'), $type == 'product' ? 'node/'. $id .'/edit/attributes' : 'admin/store/products/classes/'. $class->pcid .'/attributes'),
+      '#suffix' => l(t('Cancel'), $type == 'product' ? 'node/'. $id .'/edit/uc-attributes' : 'admin/store/products/classes/'. $class->pcid .'/attributes'),
       '#weight' => 0,
     );
   }
@@ -644,7 +644,7 @@ function uc_object_attributes_form_submit($form, &$form_state) {
   }
 
   if ($form_state['values']['type'] == 'product') {
-    $form_state['redirect'] = 'node/'. $form_state['values']['id'] .'/edit/attributes';
+    $form_state['redirect'] = 'node/'. $form_state['values']['id'] .'/edit/uc-attributes';
   }
   else {
     $form_state['redirect'] = 'admin/store/products/classes/'. $form_state['values']['id'] .'/attributes';
@@ -674,7 +674,7 @@ function uc_object_options_form($form_state, $object, $type) {
 
   foreach ($attributes as $aid => $attribute) {
     $form['attributes'][$aid]['name'] = array(
-      '#value' => $attribute->name,
+      '#value' => check_plain($attribute->name),
     );
     $form['attributes'][$aid]['aid'] = array(
       '#type' => 'hidden',
@@ -700,7 +700,7 @@ function uc_object_options_form($form_state, $object, $type) {
         $form['attributes'][$aid]['options'][$oid]['select'] = array(
           '#type' => 'checkbox',
           '#default_value' => isset($attribute->options[$oid]) ? TRUE : FALSE,
-          '#title' => $option->name,
+          '#title' => check_plain($option->name),
         );
         $form['attributes'][$aid]['options'][$oid]['cost'] = array(
           '#type' => 'textfield',
@@ -914,7 +914,7 @@ function uc_product_adjustments_form($form_state, $node) {
     $query_where .= " ao$i.aid = ". $prod_attr->aid ." AND";
     $query_order .= " po$i.ordering, ao$i.name,";
     ++$i;
-    $attribute_names .= '<th>'. $prod_attr->name .'</th>';
+    $attribute_names .= '<th>'. check_plain($prod_attr->name) .'</th>';
     $attribute_ids[] = $prod_attr->aid;
   }
   $num_prod_attr = count($attribute_ids);
@@ -964,8 +964,8 @@ function uc_product_adjustments_form($form_state, $node) {
       $row_title = '';
       $comb_array = array();
       for ($j = 1; $j <= $num_prod_attr; ++$j) {
-        $cells .= '<td>'. $combo->{'name'. $j} .'</td>';
-        $row_title .= $combo->{'name'. $j} .', ';
+        $cells .= '<td>'. check_plain($combo->{'name'. $j}) .'</td>';
+        $row_title .= check_plain($combo->{'name'. $j}) .', ';
         $comb_array[$combo->{'aid'. $j}] = $combo->{'oid'. $j};
       }
       $row_title = substr($row_title, 0, strlen($row_title) - 2);

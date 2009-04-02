@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.module,v 1.7.2.13 2009/03/17 19:19:28 islandusurper Exp $
+// $Id: uc_recurring.module,v 1.7.2.14 2009/04/02 21:01:46 islandusurper Exp $
 
 /**
  * @file
@@ -437,21 +437,21 @@ function uc_recurring_event_info() {
     '#label' => t('Recurring payment expires'),
     '#module' => t('Recurring Payments'),
     '#arguments' => array(
-      'order' => array('#entity' => 'order', '#lable' => t('Order')),
+      'order' => array('#entity' => 'order', '#label' => t('Order')),
     ),
   );
   $events['fee_charge_successful'] = array(
     '#label' => t('Payment is charged successfully'),
     '#module' => t('Recurring Payments'),
     '#arguments' => array(
-      'order' => array('#entity' => 'order', '#lable' => t('Order')),
+      'order' => array('#entity' => 'order', '#label' => t('Order')),
     ),
   );
   $events['fee_charge_fails'] = array(
     '#label' => t('Payment charge fails'),
     '#module' => t('Recurring Payments'),
     '#arguments' => array(
-      'order' => array('#entity' => 'order', '#lable' => t('Order')),
+      'order' => array('#entity' => 'order', '#label' => t('Order')),
     ),
   );
 
@@ -618,7 +618,7 @@ function uc_recurring_settings_form() {
   );
   $form['uc_recurring_checkout_message'] = array(
     '#type' => 'textarea',
-    '#title' => t('Recurring free checkout form message'),
+    '#title' => t('Recurring fee checkout form message'),
     '#description' => t('Enter a message to be displayed on the checkout form page when a customer has products in the cart with recurring fees.<br />Leave blank to not display any message.'),
     '#default_value' => variable_get('uc_recurring_checkout_message', ''),
   );

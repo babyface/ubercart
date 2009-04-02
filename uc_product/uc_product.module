@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.19 2009/03/17 19:19:28 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.20 2009/04/02 21:01:46 islandusurper Exp $
 
 /**
  * @file
@@ -104,7 +104,7 @@ function uc_product_menu() {
   );
   $features = module_invoke_all('product_feature');
   if (!empty($features)) {
-    $items['node/%node/edit/features'] = array(
+    $items['node/%node/edit/uc-features'] = array(
       'title' => 'Features',
       'page callback' => 'uc_product_features',
       'page arguments' => array(1),
@@ -225,7 +225,7 @@ function uc_product_access($op, $node, $account) {
 }
 
 /**
- * Menu access callback for 'node/%node/edit/features'.
+ * Menu access callback for 'node/%node/edit/uc-features'.
  */
 function uc_product_feature_access($node) {
   return uc_product_is_product($node) && user_access('administer product features');
@@ -359,10 +359,12 @@ function uc_product_node_info($reset = FALSE) {
  */
 function uc_product_forms($form_id, $args) {
   $forms = array();
-  $product = $args[0];
-  if (in_array($product->type, array_keys(uc_product_node_info()))) {
-    $forms['uc_product_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_add_to_cart_form');
-    $forms['uc_catalog_buy_it_now_form_'. $product->nid] = array('callback' => 'uc_catalog_buy_it_now_form');
+  if (is_object($args[0]) && isset($args[0]->type)) {
+    $product = $args[0];
+    if (in_array($product->type, array_keys(uc_product_node_info()))) {
+      $forms['uc_product_add_to_cart_form_'. $product->nid] = array('callback' => 'uc_product_add_to_cart_form');
+      $forms['uc_catalog_buy_it_now_form_'. $product->nid] = array('callback' => 'uc_catalog_buy_it_now_form');
+    }
   }
   return $forms;
 }
@@ -754,6 +756,15 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
 }
 
 /**
+ * Default product classes to use node-product.tpl.php if they don't have their own template.
+ */
+function uc_product_preprocess_node(&$variables) {
+  if (uc_product_is_product($variables['type'])) {
+    array_unshift($variables['template_files'], 'node-product');
+  }
+}
+
+/**
  * Implementation of hook_form_alter().
  */
 function uc_product_form_alter(&$form, &$form_state, $form_id) {
@@ -835,7 +846,7 @@ function uc_product_save_continue_submit($form, &$form_state) {
   $form_state['redirect'] = 'node/'. $form_state['values']['nid'] .'/edit';
 }
 
-function uc_product_node_type_form_alter(&$form, &$form_state) {
+function uc_product_form_node_type_form_alter(&$form, &$form_state) {
   $type = $form['#node_type'];
 
   if (module_exists('content') && uc_product_is_product($type->type)) {
@@ -844,7 +855,9 @@ function uc_product_node_type_form_alter(&$form, &$form_state) {
 
     $options = array('' => t('None'));
     foreach ($fields as $field_name => $field) {
-      $options[$field_name] = $field['widget']['label'];
+      if ($field['widget']['type'] == 'imagefield_widget') {
+        $options[$field_name] = $field['widget']['label'];
+      }
     }
 
     $form['uc_product'] = array(
@@ -1421,33 +1434,30 @@ function theme_uc_product_image($images, $teaser = 0, $page = 0) {
 
   $first = array_shift($images);
 
-  $output = '<div class="product-image">';
+  $output = '<div class="product-image"><div class="main-product-image">';
+  $output .= '<a href="'. imagecache_create_url('product_full', $first['filepath']) .'" title="'. $first['data']['title'] .'"';
   if ($image_widget) {
-    $output .= '<a href="'. imagecache_create_url('product_full', $first['filepath']) .'" title="'. $first['data']['title'] .'"'. $image_widget_func($rel_count) .'>';
+    $output .= $image_widget_func($rel_count);
   }
+  $output .= '>';
   $output .= theme('imagecache', 'product', $first['filepath'], $first['data']['alt'], $first['data']['title']);
-  /* if (count($images)) {
-    $output .= '<br />'. t('Click for more images.');
-  } */
-  if ($image_widget) {
-    $output .= '</a>';
-  }
-  $output .= '<br />';
+  $output .= '</a></div><div class="more-product-images">';
   foreach ($images as $thumbnail) {
     // Node preview adds extra values to $images that aren't files.
     if (!is_array($thumbnail) || empty($thumbnail['filepath'])) {
       continue;
     }
+    $output .= '<a href="'. imagecache_create_url('product_full', $thumbnail['filepath']) .'" title="'. $thumbnail['data']['title'] .'"';
     if ($image_widget) {
-      $output .= '<a href="'. imagecache_create_url('product_full', $thumbnail['filepath']) .'" title="'. $thumbnail['data']['title'] .'"'. $image_widget_func($rel_count) .'>';
+      $output .= $image_widget_func($rel_count);
     }
+    $output .= '>';
     $output .= theme('imagecache', 'uc_thumbnail', $thumbnail['filepath'], $thumbnail['data']['alt'], $thumbnail['data']['title']);
-    if ($image_widget) {
-      $output .= '</a>';
-    }
+    $output .= '</a>';
   }
-  $output .= '</div>';
+  $output .= '</div></div>';
   $rel_count++;
+
   return $output;
 }
 
@@ -1540,10 +1550,18 @@ function uc_product_is_product_form($form) {
  * models on this node.
  */
 function uc_product_get_models($node) {
-  $models = array_merge(array(NULL => t('Any'), $node->model => $node->model), module_invoke_all('uc_product_models', $node));
+  // Get any modules' SKUs on this node.
+  $models = module_invoke_all('uc_product_models', $node);
+  // Add the base SKU of the node.
+  $models[$node->model] = $node->model;
 
+  // Now we map the SKUs to the keys, for form handling, etc.
+  $models = drupal_map_assoc($models);
+  // Sort the SKUs
   asort($models);
-  return $models;
+
+  // And finally, we prepend 'Any' so it's the first option.
+  return array(NULL => 'Any') + $models;
 }
 
 /**
@@ -1715,7 +1733,7 @@ function uc_product_feature_form($form) {
     '#value' => t('Save feature'),
   );
   $form['cancel'] = array(
-    '#value' => l(t('Cancel'), 'node/'. intval(arg(1)) .'/edit/features'),
+    '#value' => l(t('Cancel'), 'node/'. intval(arg(1)) .'/edit/uc-features'),
   );
 
   return $form;
@@ -1754,7 +1772,7 @@ function uc_product_feature_save($data) {
     drupal_set_message(t('The product feature has been updated.'));
   }
 
-  return 'node/'. $data['nid'] .'/edit/features';
+  return 'node/'. $data['nid'] .'/edit/uc-features';
 }
 
 function uc_product_add_default_image_field($type = NULL) {

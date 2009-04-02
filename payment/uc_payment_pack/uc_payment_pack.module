@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_pack.module,v 1.6.2.5 2008/11/07 21:13:27 islandusurper Exp $
+// $Id: uc_payment_pack.module,v 1.6.2.6 2009/04/02 21:01:47 islandusurper Exp $
 
 /**
  * @file Provides the check/money order, COD, and "other" payment methods.
@@ -79,15 +79,11 @@ function uc_payment_method_other($op, &$arg1) {
   switch ($op) {
     case 'order-view':
     case 'customer-view':
-      $result = db_query("SELECT description FROM {uc_payment_other} WHERE "
-                        ."order_id = %d", $arg1->order_id);
-      if ($row = db_fetch_object($result)) {
-        $output = t('Type:') .' '. $row->description;
+      // Fetch the description for the payment entered by the administrator.
+      if ($description = db_result(db_query("SELECT description FROM {uc_payment_other} WHERE order_id = %d", $arg1->order_id))) {
+        return t('Description: @desc', array('@desc' => $description));
       }
-      else {
-        $output = t('Type:') .' '. t('Unknown');
-      }
-      return $output;
+      break;
 
     case 'order-details':
       $details = drupal_get_form('uc_payment_method_other_form', $arg1);
@@ -98,19 +94,15 @@ function uc_payment_method_other($op, &$arg1) {
       return $changes;
 
     case 'order-load':
-      $result = db_query("SELECT description FROM {uc_payment_other} WHERE "
-                        ."order_id = %d", $arg1->order_id);
-      if ($row = db_fetch_object($result)) {
-        $arg1->payment_details['description'] = $row->description;
+      if ($description = db_result(db_query("SELECT description FROM {uc_payment_other} WHERE order_id = %d", $arg1->order_id))) {
+        $arg1->payment_details['description'] = $description;
       }
       break;
 
     case 'order-save':
       db_query("DELETE FROM {uc_payment_other} WHERE order_id = %d", $arg1->order_id);
-      if (strlen($arg1->payment_details['pm_other_description']) > 0) {
-        db_query("INSERT INTO {uc_payment_other} (order_id, description) VALUES "
-                ."(%d, '%s')", $arg1->order_id,
-                $arg1->payment_details['pm_other_description']);
+      if (!empty($arg1->payment_details['pm_other_description'])) {
+        db_query("INSERT INTO {uc_payment_other} (order_id, description) VALUES (%d, '%s')", $arg1->order_id, $arg1->payment_details['pm_other_description']);
       }
       break;
   }
@@ -338,8 +330,7 @@ function uc_payment_method_check($op, &$arg1) {
       if (!variable_get('uc_payment_tracking', TRUE)) {
         return '';
       }
-      $result = db_query("SELECT clear_date FROM {uc_payment_check} WHERE "
-                        ."order_id = %d ", $arg1->order_id);
+      $result = db_query("SELECT clear_date FROM {uc_payment_check} WHERE order_id = %d ", $arg1->order_id);
       if ($check = db_fetch_object($result)) {
         $output = t('Check received') .'<br />'
                 . t('Expected clear date:') .'<br />'. format_date($check->clear_date, 'custom', variable_get('uc_date_format_default', 'm/d/Y'));

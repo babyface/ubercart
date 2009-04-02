@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.5.2.13 2009/03/17 19:19:27 islandusurper Exp $
+// $Id: uc_credit.module,v 1.5.2.14 2009/04/02 21:01:46 islandusurper Exp $
 
 /**
  * @file
@@ -415,7 +415,7 @@ function uc_payment_method_credit($op, &$arg1, $silent = FALSE) {
       }
 
       // Account for partial CC numbers when masked by the system.
-      if (substr($cc_data['cc_number'], 0, strlen(t('(Last 4) '))) == t('(Last 4) ')) {
+      if (substr($cc_data['cc_number'], 0, strlen(t('(Last4)'))) == t('(Last4)')) {
         // Recover the number from the encrypted data in $_POST if truncated.
         if (isset($cache['cc_number'])) {
           $cc_data['cc_number'] = $cache['cc_number'];
