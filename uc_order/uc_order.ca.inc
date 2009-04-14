@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.16 2009/04/02 21:01:46 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.17 2009/04/14 13:51:16 islandusurper Exp $
 
 /**
  * @file
@@ -1044,7 +1044,9 @@ function uc_order_action_email_form($form_state, $settings = array()) {
     '#title' => t('Message'),
     '#default_value' => $settings['message'],
   );
-  $form['format'] = filter_form($settings['format']);
+
+  // We add the #is_format element to allow us to locate and configure the filters.
+  $form['format'] = filter_form($settings['format']) + array('#is_format' => TRUE);
 
   $form['token_help'] = array(
     '#type' => 'fieldset',
@@ -1090,13 +1092,11 @@ function uc_order_action_email_invoice($order, $settings) {
   }
 
   $settings['message'] = uc_order_load_invoice($order, $settings['view'], $settings['template']);
-  $settings['format'] = 2; // Full HTML.
 
   if (empty($recipients)) {
     watchdog('ca', 'Attempted to e-mail an invoice with no recipient.', array(), WATCHDOG_ERROR);
     return;
   }
-
 
   foreach ($recipients as $email) {
     $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, empty($settings['from']) ? uc_store_email_from() : $settings['form']);
@@ -1128,6 +1128,9 @@ function uc_order_action_email_invoice_form($form_state, $settings = array()) {
     '#default_value' => $settings['subject'],
     '#required' => TRUE,
   );
+
+  // We add the #is_format element to allow us to locate and configure the filters.
+  $form['format'] = filter_form($settings['format']) + array('#is_format' => TRUE);
 
   $form['token_help'] = array(
     '#type' => 'fieldset',

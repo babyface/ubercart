@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.18 2009/04/02 21:01:47 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.19 2009/04/14 13:51:21 islandusurper Exp $
 
 /**
  * @file
@@ -295,6 +295,7 @@ function uc_attribute_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
       case 'load':
         $attributes = uc_product_get_attributes($node->nid);
         if (is_array($attributes) && !empty($attributes)) {
+          $node->attributes = $attributes;
           return array('attributes' => $attributes);
         }
         break;
@@ -570,7 +571,10 @@ function _uc_cart_product_get_options($item) {
  */
 function _uc_attribute_alter_form($product) {
   // If the product doesn't have attributes, return the form as it is.
-  if (!isset($product->attributes) || !is_array($product->attributes)) {
+  if (!isset($product->attributes)) {
+    $product->attributes = uc_product_get_attributes($product->nid);
+  }
+  if (!is_array($product->attributes) || empty($product->attributes)) {
     return NULL;
   }
 
@@ -670,5 +674,18 @@ function uc_attribute_priced_attributes($nid) {
 }
 
 function theme_uc_attribute_add_to_cart($form) {
-  return drupal_render($form);
+  $output = '<div class="attributes">';
+  $stripes = array('even' => 'odd', 'odd' => 'even');
+  $parity = 'even';
+  foreach (element_children($form) as $aid) {
+    $parity = $stripes[$parity];
+    $classes = array('attribute', 'attribute-'. $aid, $parity);
+    $output .= '<div class="'. implode(' ', $classes) .'">';
+    $output .= drupal_render($form[$aid]);
+    $output .= '</div>';
+  }
+
+  $output .= drupal_render($form) .'</div>';
+
+  return $output;
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.ca.inc,v 1.1.2.4 2009/02/10 21:58:14 islandusurper Exp $
+// $Id: uc_file.ca.inc,v 1.1.2.5 2009/04/14 13:51:17 islandusurper Exp $
 
 /**
  * @file
@@ -231,7 +231,9 @@ function uc_file_build_email_form($form_state, $settings, $token_filters) {
     '#title' => t('Message'),
     '#default_value' => $settings['message'],
   );
-  $form['format'] = filter_form($settings['format']);
+
+  // We add the #is_format element to allow us to locate and configure the filters.
+  $form['format'] = filter_form($settings['format']) + array('#is_format' => TRUE);
 
   $form['token_help'] = array(
     '#type' => 'fieldset',

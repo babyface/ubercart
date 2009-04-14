@@ -1,5 +1,5 @@
 <?php
-// $Id: customer.itpl.php,v 1.5.2.3 2009/02/04 13:44:33 islandusurper Exp $
+// $Id: customer.itpl.php,v 1.5.2.4 2009/04/14 13:51:19 islandusurper Exp $
 
 /**
  * This file is the default customer invoice template for Ubercart.
@@ -20,7 +20,7 @@
                 </td>
                 <td width="98%">
                   <div style="padding-left: 1em;">
-                  <span style="font-size: large;">[store-name]</span><br/>
+                  <span style="font-size: large;">[store-name]</span><br />
                   [site-slogan]
                   </div>
                 </td>
@@ -41,7 +41,7 @@
 
             <?php if (isset($_SESSION['new_user'])) { ?>
             <p><b><?php echo t('An account has been created for you with the following details:'); ?></b></p>
-            <p><b><?php echo t('Username:'); ?></b> [new-username]<br/>
+            <p><b><?php echo t('Username:'); ?></b> [new-username]<br />
             <b><?php echo t('Password:'); ?></b> [new-password]</p>
             <?php } ?>
 
@@ -52,7 +52,7 @@
 
             <table cellpadding="4" cellspacing="0" border="0" width="100%" style="font-family: verdana, arial, helvetica; font-size: small;">
               <tr>
-                <td colspan="2" bgcolor="#006699">
+                <td colspan="2" bgcolor="#006699" style="color: white;">
                   <b><?php echo t('Purchasing Information:'); ?></b>
                 </td>
               </tr>
@@ -108,7 +108,7 @@
               </tr>
 
               <tr>
-                <td colspan="2" bgcolor="#006699">
+                <td colspan="2" bgcolor="#006699" style="color: white;">
                   <b><?php echo t('Order Summary:'); ?></b>
                 </td>
               </tr>

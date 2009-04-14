@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.ca.inc,v 1.1.2.10 2009/03/17 19:19:27 islandusurper Exp $
+// $Id: uc_taxes.ca.inc,v 1.1.2.11 2009/04/14 13:51:19 islandusurper Exp $
 
 /**
  * @file
@@ -36,7 +36,7 @@ function uc_taxes_ca_trigger() {
     '#arguments' => array(
       'order' => array('#entity' => 'uc_order', '#title' => t('Order')),
       'tax' => array('#entity' => 'tax', '#title' => t('Tax rule')),
-      'user' => array('#entity' => 'user', '#title' => t('User account')),
+      'account' => array('#entity' => 'user', '#title' => t('User account')),
     ),
   );
 
@@ -99,7 +99,7 @@ function uc_taxes_ca_predicate() {
           '#name' => 'uc_taxes_action_apply_tax_'. $rate->id,
           '#title' => t('Apply !name', array('!name' => $rate->name)),
           '#argument_map' => array(
-            'order' => 'uc_order',
+            'order' => 'order',
             'tax' => 'tax',
           ),
         ),

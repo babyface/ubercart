@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.14 2009/03/17 19:19:26 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.15 2009/04/14 13:51:16 islandusurper Exp $
 
 /**
  * @file
@@ -125,151 +125,6 @@ function ca_admin($groupby = 'trigger') {
   $output .= l(t('Add a predicate'), CA_UI_PATH .'/add');
 
   return $output;
-}
-
-/**
- * Landing page for converting Workflow-ng configurations.
- *
- * From this page, the user can begin the batch processing of any Workflow-ng
- * configurations in the site's database into Conditional Actions predicates.
- */
-function ca_conversion_page() {
-  $output = t('TODO: Fill this page out. :)');
-
-  // TODO: Figure out if the conversion needs to be done
-  // Generally, it should only happen when someone upgrades from Drupal 5 to
-  // Drupal 6.
-
-  // TODO: Do batch processing because I can imagine some people having a lot
-  // of Ubercart-related Workflow-ng configurations.
-
-  return $output;
-}
-
-/**
- * Batch API callback (that's the plan, anyway).
- *
- *
- */
-function _ca_convert_configurations() {
-  global $user;
-
-  if (db_table_exists('workflow_ng_cfgs')) {
-    $result = db_query("SELECT name, data FROM {workflow_ng_cfgs} WHERE altered = 1");
-    $predicates = array();
-    while ($configuration_row = db_fetch_object($result)) {
-      $predicate = array('#pid' => $configuration_row->name);
-      $conditions = array();
-      $actions = array();
-      if ($configuration = unserialize($configuration_row->data)) {
-        $predicate['#class'] = $configuration['#module'];
-        $predicate['#title'] = $configuration['#label'];
-        switch ($configuration['#event']) {
-          case 'order_status_update':
-            $trigger = 'uc_order_status_update';
-          break;
-          case 'payment_entered':
-            $trigger = 'uc_payment_entered';
-          break;
-          case 'checkout_complete':
-            $trigger = 'uc_checkout_complete';
-          break;
-          default:
-            $trigger = $configuration['#event'];
-          break;
-        }
-        if (strpos($trigger, 'calculate_tax_') === 0) {
-          $tax_id = substr($trigger, 14);
-          $trigger = 'calculate_taxes';
-        }
-        $predicate['#trigger'] = $trigger;
-        $predicate['#weight'] = $configuration['#weight'];
-        $predicate['#status'] = $configuration['#active'];
-        for ($i = 0; isset($configuration[$i]); $i++) {
-          if ($configuration[$i]['#type'] == 'action') {
-            $action = _ca_convert_actions($configuration[$i], $tax_id);
-            if ($action) {
-              $actions[] = $action;
-            }
-          }
-          else {
-            $condition = _ca_convert_conditions($configuration[$i]);
-            if ($condition) {
-              $conditions[] = $condition;
-            }
-          }
-        }
-        if ($conditions) {
-          $predicate['#conditions'] = array(
-            '#operator' => 'AND',
-            '#conditions' => $conditions,
-          );
-        }
-        $predicate['#uid'] = $user->uid;
-        ca_save_predicate($predicate);
-      }
-    }
-  }
-}
-
-/**
- * Helper function for converting Ubercart's Workflow-ng conditions.
- */
-function _ca_convert_conditions($condition_tree) {
-  $ca_condition = array();
-
-  if ($condition_tree['#type'] == 'AND' || $condition_tree['#type'] == 'OR') {
-    $ca_condition['#operator'] = $condition_tree['#type'];
-    $ca_condition['#conditions'] = array();
-    for ($i = 0; isset($condition_tree[$i]); $i++) {
-      $condition = _ca_convert_conditions($condition_tree[$i]);
-      if ($condition) {
-        $ca_condition['#conditions'][] = $condition;
-      }
-    }
-  }
-  else if ($condition_tree['#type'] == 'condition') {
-    switch ($condition_tree['#name']) {
-      case 'uc_payment_condition_balance':
-        $ca_condition['#name'] = 'uc_payment_condition_order_balance';
-        break;
-      default:
-        $ca_condition['#name'] = $condition_tree['#name'];
-        break;
-    }
-    $ca_condition['#title'] = $condition_tree['#label'];
-    $ca_condition['#argument_map'] = $condition_tree['#argument map'];
-    $ca_condition['#settings'] = $condition_tree['#settings'];
-    if (isset($condition_tree['#negate'])) {
-      $ca_condition['#settings']['negate'] = $condition_tree['#negate'];
-    }
-  }
-
-  return $ca_condition;
-}
-
-/**
- * Helper function for converting Ubercart's Workflow-ng actions.
- */
-function _ca_convert_actions($wf_action, $tax_id = NULL) {
-  $action = $wf_action;
-
-  switch ($action['#name']) {
-    case 'uc_order_action_update_status':
-      $action['#name'] = 'uc_order_update_status';
-      break;
-    case 'uc_taxes_action_apply_tax':
-      $action['#name'] = 'uc_taxes_action_apply_tax_'. $tax_id;
-      break;
-  }
-
-  if (isset($action['#label'])) {
-    $action['#title'] = $action['#label'];
-    unset($action['#label']);
-  }
-  else {
-    $action['#title'] = $action['#name'];
-  }
 }
 
 // Form to allow the creation and editing of conditional action predicates.
@@ -592,6 +447,8 @@ function ca_actions_form($form_state, $pid, $title = TRUE) {
     '#submit' => array('ca_actions_form_save_changes_submit'),
   );
 
+  filter_configure_form($form);
+
   return $form;
 }
 
@@ -755,6 +612,8 @@ function ca_conditions_form($form_state, $pid, $title = TRUE) {
     '#value' => t('Save changes'),
     '#submit' => array('ca_conditions_form_save_changes_submit'),
   );
+
+  filter_configure_form($form);
 
   return $form;
 }
@@ -1108,3 +967,255 @@ function ca_conditions_form_update_conditions($pid, $data) {
   return $predicate;
 }
 
+/**
+ * Landing page for converting Workflow-ng configurations.
+ *
+ * From this page, the user can begin the batch processing of any Workflow-ng
+ * configurations in the site's database into Conditional Actions predicates.
+ */
+function ca_conversion_form() {
+  $form = array();
+
+  $form['help'] = array(
+    '#value' => '<div>'. t('Use this form during the update process from Ubercart 1.0 to 2.0 to convert your Workflow-ng configurations to Conditional Actions predicates.  Once your configurations are converted, you should complete your uninstallation of Workflow-ng.') .'</div>',
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Convert configurations'),
+  );
+
+  return $form;
+}
+
+function ca_conversion_form_submit($form, &$form_state) {
+  // Convert workflow-ng configurations in a batch process because there may be
+  // a lot of them.
+  $batch = array(
+    'operations' => array(
+      array('_ca_convert_configurations', array()),
+    ),
+    'finished' => '_ca_conversion_finished',
+    'title' => t('Converting Workflow-ng configurations'),
+    'init_message' => t('Beginning conversion...'),
+    'progress_message' => t('@percentage% converted'),
+    'file' => drupal_get_path('module', 'ca') . '/ca.admin.inc',
+  );
+
+  batch_set($batch);
+}
+
+// Batch API callback for Workflow-ng configuration conversion.
+function _ca_convert_configurations(&$context) {
+  global $user;
+
+  if (db_table_exists('workflow_ng_cfgs')) {
+    if (!isset($context['sandbox']['progress'])) {
+      // Initialize batch data.
+      $context['sandbox']['progress'] = 0;
+      $context['sandbox']['current_cfg'] = '';
+      $context['sandbox']['max'] = db_result(db_query("SELECT COUNT(name) FROM {workflow_ng_cfgs} WHERE altered = 1"));
+    }
+
+    $limit = 25;
+
+    $result = db_query_range("SELECT name, data FROM {workflow_ng_cfgs} WHERE altered = 1 AND name > '%s' ORDER BY name", $context['sandbox']['current_cfg'], 0, $limit);
+    $predicates = array();
+
+    while ($configuration_row = db_fetch_object($result)) {
+      $predicate = array('#pid' => $configuration_row->name);
+      $conditions = array();
+      $actions = array();
+      if ($configuration = unserialize($configuration_row->data)) {
+        $predicate['#class'] = $configuration['#module'];
+        $predicate['#title'] = $configuration['#label'];
+
+        // Convert event names to corresponding triggers.
+        switch ($configuration['#event']) {
+          case 'order_status_update':
+            $trigger = 'uc_order_status_update';
+          break;
+          case 'payment_entered':
+            $trigger = 'uc_payment_entered';
+          break;
+          case 'checkout_complete':
+            $trigger = 'uc_checkout_complete';
+          break;
+          default:
+            $trigger = $configuration['#event'];
+          break;
+        }
+
+        // In UC 1.x, taxes had an event for each tax rate, using the same
+        // action. In UC 2.x, they use the same trigger, but have separate
+        // actions.
+        if (strpos($trigger, 'calculate_tax_') === 0) {
+          $tax_id = substr($trigger, 14);
+          $trigger = 'calculate_taxes';
+        }
+
+        $predicate['#trigger'] = $trigger;
+        $predicate['#weight'] = $configuration['#weight'];
+        $predicate['#status'] = $configuration['#active'];
+
+        // Numeric keys in $configuration could be for conditions or actions.
+        // Take each and categorize them to add them to the predicate later.
+        for ($i = 0; isset($configuration[$i]); $i++) {
+          if ($configuration[$i]['#type'] == 'action') {
+            $action = _ca_convert_actions($configuration[$i], $tax_id);
+            if ($action) {
+              $actions[] = $action;
+            }
+          }
+          else {
+            $condition = _ca_convert_conditions($configuration[$i]);
+            if ($condition) {
+              $conditions[] = $condition;
+            }
+          }
+        }
+
+        // Conditions are optional. If there are no actions, there's no reason
+        // to make a predicate.
+        if ($conditions) {
+          $predicate['#conditions'] = array(
+            '#operator' => 'AND',
+            '#conditions' => $conditions,
+          );
+        }
+        if ($actions) {
+          $predicate['#actions'] = $actions;
+          $predicate['#uid'] = $user->uid;
+          ca_save_predicate($predicate);
+        }
+      }
+
+      // Store some result for post-processing in the finished callback.
+      $context['results'][] = $configuration_row->name;
+
+      // Update our progress information.
+      $context['sandbox']['progress']++;
+      $context['sandbox']['current_cfg'] = $configuration_row->name;
+      $context['message'] = t('Now processing %cfg', array('%cfg' => $configuration_row->name));
+    }
+
+    // Inform the batch engine that we are not finished,
+    // and provide an estimation of the completion level we reached.
+    if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
+      $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+    }
+  }
+}
+
+// Helper function for converting Ubercart's Workflow-ng conditions.
+function _ca_convert_conditions($condition_tree) {
+  static $condition_data;
+  $ca_condition = array();
+
+  if (!isset($condition_data)) {
+    $condition_data = module_invoke_all('ca_condition');
+  }
+
+  // Handle multiple conditions recursively.
+  if ($condition_tree['#type'] == 'AND' || $condition_tree['#type'] == 'OR') {
+    $ca_condition['#operator'] = $condition_tree['#type'];
+    $ca_condition['#conditions'] = array();
+    for ($i = 0; isset($condition_tree[$i]); $i++) {
+      $condition = _ca_convert_conditions($condition_tree[$i]);
+      if ($condition) {
+        $ca_condition['#conditions'][] = $condition;
+      }
+    }
+  }
+  else if ($condition_tree['#type'] == 'condition') {
+    // Some conditions were renamed but check the same things.
+    switch ($condition_tree['#name']) {
+      case 'uc_order_condition_order_total':
+        $ca_condition['#name'] = 'uc_order_condition_total';
+        break;
+      case 'uc_payment_condition_balance':
+        $ca_condition['#name'] = 'uc_payment_condition_order_balance';
+        break;
+      case 'workflow_ng_condition_custom_php':
+        $ca_condition['#name'] = 'ca_condition_custom_php';
+        break;
+      case 'workflow_ng_condition_user_hasrole':
+        $ca_condition['#name'] = 'ca_condition_user_roles';
+        $condition_tree['#settings']['operator'] = $condition_tree['#settings']['operation'];
+        unset($condition_tree['#settings']['operation']);
+        break;
+      default:
+        $ca_condition['#name'] = $condition_tree['#name'];
+        break;
+    }
+
+    if (isset($condition_tree['#label'])) {
+      $ca_condition['#title'] = $condition_tree['#label'];
+    }
+    else {
+      $ca_condition['#title'] = $condition_data[$ca_condition['#name']]['#title'];
+    }
+
+    $ca_condition['#argument_map'] = $condition_tree['#argument map'];
+    foreach ($ca_condition['#argument_map'] as $key => $value) {
+      if ($key == 'user') {
+        $key = 'account';
+      }
+      if ($value == 'user') {
+        $value = 'account';
+      }
+      $ca_condition['#argument_map'][$key] = $value;
+    }
+
+    $ca_condition['#settings'] = $condition_tree['#settings'];
+    if (isset($condition_tree['#negate'])) {
+      $ca_condition['#settings']['negate'] = $condition_tree['#negate'];
+    }
+  }
+
+  return $ca_condition;
+}
+
+// Helper function for converting Ubercart's Workflow-ng actions.
+function _ca_convert_actions($wf_action, $tax_id = NULL) {
+  static $action_data;
+  $action = $wf_action;
+
+  if (!isset($action_data)) {
+    $action_data = module_invoke_all('ca_action');
+  }
+
+  // Some actions were renamed, but do the same things.
+  switch ($action['#name']) {
+    case 'uc_order_action_update_status':
+      $action['#name'] = 'uc_order_update_status';
+      break;
+    case 'uc_taxes_action_apply_tax':
+      $action['#name'] = 'uc_taxes_action_apply_tax_'. $tax_id;
+      break;
+    case 'workflow_ng_action_custom_php':
+      $action['#name'] = 'ca_action_custom_php';
+      break;
+  }
+
+  if (isset($action['#label'])) {
+    $action['#title'] = $action['#label'];
+    unset($action['#label']);
+  }
+  else {
+    $action['#title'] = $action_data[$action['#name']]['#title'];
+  }
+
+  return $action;
+}
+
+// Finalization function to hide the conversion tab.
+function _ca_conversion_finished() {
+  // Set a variable to hide the conversion tab.
+  variable_set('ca_show_conversion_tab', FALSE);
+
+  // Display a message and redirect to the overview page.
+  drupal_set_message('Your Workflow-ng configurations have been converted.  Please verify the results in your Conditional Actions predicates below.');
+
+  drupal_goto(CA_UI_PATH);
+}

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.ca.inc,v 1.1.2.5 2009/02/04 13:44:32 islandusurper Exp $
+// $Id: uc_roles.ca.inc,v 1.1.2.6 2009/04/14 13:51:14 islandusurper Exp $
 
 /**
  * @file
@@ -73,7 +73,7 @@ function uc_roles_ca_predicate() {
   );
 
   $user_args = array(
-    'user' => 'user',
+    'account' => 'account',
     'expiration' => 'expiration',
   );
 
@@ -213,7 +213,7 @@ function uc_roles_ca_action() {
     '#category' => t('Notification'),
     '#callback' => 'uc_roles_action_user_email',
     '#arguments' => array(
-      'user' => array(
+      'account' => array(
         '#entity' => 'user',
         '#title' => t('User'),
       ),
@@ -258,7 +258,7 @@ function uc_roles_ca_trigger() {
     '#title' => t('E-mail for revoked roles'),
     '#category' => t('Notification'),
     '#arguments' => array(
-      'user' => $account,
+      'account' => $account,
       'expiration' => $expiration,
     ),
   );
@@ -276,7 +276,7 @@ function uc_roles_ca_trigger() {
     '#title' => t('E-mail for role expiration reminders'),
     '#category' => t('Notification'),
     '#arguments' => array(
-      'user' => $account,
+      'account' => $account,
       'expiration' => $expiration,
     ),
   );
@@ -391,7 +391,9 @@ function ca_build_email_form($form_state, $settings, $token_filters) {
     '#title' => t('Message'),
     '#default_value' => $settings['message'],
   );
-  $form['format'] = filter_form($settings['format']);
+
+  // We add the #is_format element to allow us to locate and configure the filters.
+  $form['format'] = filter_form($settings['format']) + array('#is_format' => TRUE);
 
   $form['token_help'] = array(
     '#type' => 'fieldset',

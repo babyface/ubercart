@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.5.2.10 2009/02/24 15:35:55 islandusurper Exp $
+// $Id: uc_paypal.module,v 1.5.2.11 2009/04/14 13:51:18 islandusurper Exp $
 
 /**
  * @file
@@ -279,52 +279,6 @@ function uc_paypal_wpp_charge($order_id, $amount, $data) {
 
   $order = uc_order_load($order_id);
 
-  list($desc, $subtotal) = _uc_paypal_product_details($order->products);
-
-  if (intval($order->payment_details['cc_exp_month']) < 10) {
-    $expdate = '0'. $order->payment_details['cc_exp_month'] . $order->payment_details['cc_exp_year'];
-  }
-  else {
-    $expdate = $order->payment_details['cc_exp_month'] . $order->payment_details['cc_exp_year'];
-  }
-
-  $cc_type = NULL;
-  if (isset($order->payment_details['cc_type'])) {
-    switch (strtolower($order->payment_details['cc_type'])) {
-      case 'amex':
-      case 'american express':
-        $cc_type = 'Amex';
-        break;
-      case 'visa':
-        $cc_type = 'Visa';
-        break;
-      case 'mastercard':
-      case 'master card':
-        $cc_type = 'MasterCard';
-        break;
-      case 'discover':
-        $cc_type = 'Discover';
-        break;
-    }
-  }
-  if (is_null($cc_type)) {
-    $cc_type = _uc_paypal_card_type($order->payment_details['cc_number']);
-    if ($cc_type === FALSE) {
-      drupal_set_message(t('The credit card type did not pass validation.'), 'error');
-      watchdog('uc_paypal', 'Could not figure out cc type: @number / @type', array('@number' => $order->payment_details['cc_number'], '@type' => $order->payment_details['cc_type']), WATCHDOG_ERROR);
-      return array('success' => FALSE);
-    }
-  }
-
-  $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
-  if ($billing_country === FALSE) {
-    $billing_country = array(0 => array('country_iso_code_2' => 'US'));
-  }
-  $delivery_country = uc_get_country_data(array('country_id' => $order->delivery_country));
-  if ($delivery_country === FALSE) {
-    $delivery_country = array(0 => array('country_iso_code_2' => 'US'));
-  }
-
   if ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE) {
     $nvp_request = array(
       'METHOD' => 'DoCapture',
@@ -335,6 +289,52 @@ function uc_paypal_wpp_charge($order_id, $amount, $data) {
     );
   }
   else {
+    list($desc, $subtotal) = _uc_paypal_product_details($order->products);
+
+    if (intval($order->payment_details['cc_exp_month']) < 10) {
+      $expdate = '0'. $order->payment_details['cc_exp_month'] . $order->payment_details['cc_exp_year'];
+    }
+    else {
+      $expdate = $order->payment_details['cc_exp_month'] . $order->payment_details['cc_exp_year'];
+    }
+
+    $cc_type = NULL;
+    if (isset($order->payment_details['cc_type'])) {
+      switch (strtolower($order->payment_details['cc_type'])) {
+        case 'amex':
+        case 'american express':
+          $cc_type = 'Amex';
+          break;
+        case 'visa':
+          $cc_type = 'Visa';
+          break;
+        case 'mastercard':
+        case 'master card':
+          $cc_type = 'MasterCard';
+          break;
+        case 'discover':
+          $cc_type = 'Discover';
+          break;
+      }
+    }
+    if (is_null($cc_type)) {
+      $cc_type = _uc_paypal_card_type($order->payment_details['cc_number']);
+      if ($cc_type === FALSE) {
+        drupal_set_message(t('The credit card type did not pass validation.'), 'error');
+        watchdog('uc_paypal', 'Could not figure out cc type: @number / @type', array('@number' => $order->payment_details['cc_number'], '@type' => $order->payment_details['cc_type']), WATCHDOG_ERROR);
+        return array('success' => FALSE);
+      }
+    }
+
+    $billing_country = uc_get_country_data(array('country_id' => $order->billing_country));
+    if ($billing_country === FALSE) {
+      $billing_country = array(0 => array('country_iso_code_2' => 'US'));
+    }
+    $delivery_country = uc_get_country_data(array('country_id' => $order->delivery_country));
+    if ($delivery_country === FALSE) {
+      $delivery_country = array(0 => array('country_iso_code_2' => 'US'));
+    }
+
     $nvp_request = array(
       'METHOD' => 'DoDirectPayment',
       'PAYMENTACTION' => $data['txn_type'] == UC_CREDIT_AUTH_ONLY ? 'Authorization' : 'Sale',

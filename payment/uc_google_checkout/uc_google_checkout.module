@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.3 2009/02/27 22:41:38 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.4 2009/04/14 13:51:18 islandusurper Exp $
 
 /**
  * @file
@@ -357,11 +357,11 @@ function uc_google_checkout_shipment($op, $shipment) {
 function uc_google_checkout_cart_form() {
   if (variable_get('uc_google_checkout_mode', 'checkout') == 'checkout') {
     $merchant_id = variable_get('uc_google_checkout_merchant_id', '');
-    $checkout_url = 'http://checkout.google.com';
+    $checkout_url = 'https://checkout.google.com';
   }
   else {
     $merchant_id = variable_get('uc_google_checkout_test_merchant_id', '');
-    $checkout_url = 'http://sandbox.google.com/checkout';
+    $checkout_url = 'https://sandbox.google.com/checkout';
   }
   if (!$merchant_id) {
     watchdog('uc_google_checkout', 'Google Checkout is enabled, but no Merchant ID found.', array(), WATCHDOG_ERROR, 'admin/store/settings/google_checkout');

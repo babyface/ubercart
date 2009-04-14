@@ -1,4 +1,4 @@
-// $Id: uc_cart.js,v 1.8.2.4 2009/02/24 15:35:49 islandusurper Exp $
+// $Id: uc_cart.js,v 1.8.2.5 2009/04/14 13:51:12 islandusurper Exp $
 
 var copy_box_checked = false;
 var uc_ce_submit_disable = false;
@@ -88,7 +88,7 @@ function update_billing_field(field) {
       $('#edit-panes-billing-billing-zone').attr('disabled', $('#edit-panes-delivery-delivery-zone').attr('disabled'));
     }
 
-    $('#edit-panes-billing-billing' + field.id.substring(28)).val($(field).val());
+    $('#edit-panes-billing-billing' + field.id.substring(28)).val($(field).val()).change();
   }
 }
 
@@ -99,7 +99,7 @@ function update_delivery_field(field) {
       $('#edit-panes-delivery-delivery-zone').attr('disabled', $('#edit-panes-billing-billing-zone').attr('disabled'));
     }
 
-    $('#edit-panes-delivery-delivery' + field.id.substring(26)).val($(field).val());
+    $('#edit-panes-delivery-delivery' + field.id.substring(26)).val($(field).val()).change();
   }
 }
 

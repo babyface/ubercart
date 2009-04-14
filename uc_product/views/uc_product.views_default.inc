@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.views_default.inc,v 1.1.2.4 2009/03/17 19:19:29 islandusurper Exp $
+// $Id: uc_product.views_default.inc,v 1.1.2.5 2009/04/14 13:51:20 islandusurper Exp $
 
 /**
  * @file
@@ -56,7 +56,7 @@ function uc_product_views_default_views() {
       'label_type' => 'widget',
       'format' => 'product_list_linked',
       'multiple' => array(
-        'group' => 0,
+        'group' => 1,
         'multiple_number' => '1',
         'multiple_from' => '0',
         'multiple_reversed' => 0,

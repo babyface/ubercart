@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.5.2.11 2009/04/02 21:01:47 islandusurper Exp $
+// $Id: uc_ups.module,v 1.5.2.12 2009/04/14 13:51:14 islandusurper Exp $
 
 /**
  * @file
@@ -56,6 +56,10 @@ function uc_ups_theme() {
     ),
     'uc_ups_label_image' => array(
       'arguments' => array(),
+      'file' => 'uc_ups.admin.inc',
+    ),
+    'uc_ups_option_label' => array(
+      'arguments' => array('service' => NULL),
       'file' => 'uc_ups.admin.inc',
     ),
   );
@@ -833,7 +837,7 @@ function uc_ups_quote($products, $details) {
   foreach ($quotes as $key => $quote) {
     if (isset($quote['rate'])) {
       $quotes[$key]['format'] = uc_currency_format($quote['rate']);
-      $quotes[$key]['option_label'] = '<img class="ups-logo" src="'. base_path() . drupal_get_path('module', 'uc_ups') .'/uc_ups_logo.gif" /> '. t('@method Rate', array('@method' => $method['ups']['quote']['accessorials'][$key]));
+      $quotes[$key]['option_label'] = theme('uc_ups_option_label', $method['ups']['quote']['accessorials'][$key]);
     }
   }
 

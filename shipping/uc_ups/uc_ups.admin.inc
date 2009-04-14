@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.admin.inc,v 1.1.2.5 2009/02/10 21:58:16 islandusurper Exp $
+// $Id: uc_ups.admin.inc,v 1.1.2.6 2009/04/14 13:51:14 islandusurper Exp $
 
 /**
  * @file
@@ -349,4 +349,23 @@ FOLD HERE</td>
 </html>';
 
   exit();
+}
+
+
+/**
+ * Theme function to format the UPS service name and rate amount line-item shown
+ *   to the customer.
+ *
+ * @param $service
+ *   The UPS service name.
+ * @ingroup themeable
+ */
+function theme_uc_ups_option_label($service) {
+  // Start with logo as required by the UPS terms of service.
+  $output = '<img class="ups-logo" src="'. url(drupal_get_path('module', 'uc_ups')) .'/uc_ups_logo.gif" alt="'. t('UPS Logo') .'" /> ';
+
+  // Add the UPS service name.
+  $output .= t('@service Rate', array('@service' => $service));
+
+  return $output;
 }

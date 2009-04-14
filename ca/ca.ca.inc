@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.ca.inc,v 1.1.2.6 2009/03/17 19:19:26 islandusurper Exp $
+// $Id: ca.ca.inc,v 1.1.2.7 2009/04/14 13:51:16 islandusurper Exp $
 
 /**
  * @file: This file includes some generic conditions and actions.
@@ -79,7 +79,7 @@ function ca_ca_condition() {
     '#description' => t('Returns TRUE if the user roles match your settings.'),
     '#callback' => 'ca_condition_user_roles',
     '#arguments' => array(
-      'user' => array('#entity' => 'user', '#title' => t('User')),
+      'account' => array('#entity' => 'user', '#title' => t('User')),
     ),
   );
 

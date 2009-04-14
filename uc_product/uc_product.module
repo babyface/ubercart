@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.20 2009/04/02 21:01:46 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.21 2009/04/14 13:51:13 islandusurper Exp $
 
 /**
  * @file
@@ -843,7 +843,7 @@ function uc_product_form_alter(&$form, &$form_state, $form_id) {
 }
 
 function uc_product_save_continue_submit($form, &$form_state) {
-  $form_state['redirect'] = 'node/'. $form_state['values']['nid'] .'/edit';
+  $form_state['redirect'] = 'node/'. $form_state['nid'] .'/edit';
 }
 
 function uc_product_form_node_type_form_alter(&$form, &$form_state) {
@@ -1286,7 +1286,7 @@ function uc_catalog_buy_it_now_form_submit($form, &$form_state) {
  * @ingroup themeable
  */
 function theme_uc_product_model($model, $teaser = 0, $page = 0) {
-  $output = '<div class="model">';
+  $output = '<div class="product-info model">';
   $output .= t('SKU: @sku', array('@sku' => $model));
   $output .= '</div>';
   return $output;
@@ -1371,7 +1371,7 @@ function uc_product_add_to_cart_form_submit($form, &$form_state) {
  * @ingroup themeable
  */
 function theme_uc_product_price($price, $class, $no_label = 0) {
-  $output = '<div class="'. $class .'">';
+  $output = '<div class="product-info '. $class .'">';
   if ($no_label) {
     $output .= uc_currency_format($price);
   }
@@ -1402,7 +1402,7 @@ function theme_uc_product_price($price, $class, $no_label = 0) {
  * @ingroup themeable
  */
 function theme_uc_product_weight($weight, $unit = NULL, $teaser = 0, $page = 0) {
-  $output = '<div class="weight">';
+  $output = '<div class="product-info weight">';
   $output .= t('Weight: !weight', array('!weight' => uc_weight_format($weight, $unit)));
   $output .= '</div>';
   return $output;
@@ -1414,7 +1414,7 @@ function theme_uc_product_weight($weight, $unit = NULL, $teaser = 0, $page = 0) 
  * @ingroup themeable
  */
 function theme_uc_product_dimensions($length, $width, $height, $units = NULL, $teaser = 0, $page = 0) {
-  $output = '<div class="dimensions">';
+  $output = '<div class="product-info dimensions">';
   $output .= t('Dimensions: !length × !width × !height', array('!length' => uc_length_format($length, $units), '!width' => uc_length_format($width, $units), '!height' => uc_length_format($height, $units)));
   $output .= '</div>';
   return $output;

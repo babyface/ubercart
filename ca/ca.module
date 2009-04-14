@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.module,v 1.1.2.14 2009/02/27 22:41:35 islandusurper Exp $
+// $Id: ca.module,v 1.1.2.15 2009/04/14 13:51:15 islandusurper Exp $
 
 /**
  * @file
@@ -43,18 +43,10 @@ function ca_menu() {
     'page callback' => 'ca_admin',
     'page arguments' => array('class'),
     'access arguments' => array('administer conditional actions'),
-    'file' => 'ca.admin.inc',
+    'type' => MENU_LOCAL_TASK,
     'weight' => 5,
-    'type' => MENU_LOCAL_TASK,
-  );
-  /* $items[CA_UI_PATH .'/convert'] = array(
-    'title' => 'Convert configurations',
-    'description' => 'Translate Workflow-ng configurations into Conditional Actions predicates.',
-    'page callback' => 'ca_conversion_page',
-    'access arguments' => array('administer conditional actions'),
-    'type' => MENU_LOCAL_TASK,
     'file' => 'ca.admin.inc',
-  ); */
+  );
   $items[CA_UI_PATH .'/add'] = array(
     'title' => 'Add a predicate',
     'description' => 'Allows an administrator to create a new predicate.',
@@ -63,6 +55,16 @@ function ca_menu() {
     'access arguments' => array('administer conditional actions'),
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
+    'file' => 'ca.admin.inc',
+  );
+  $items[CA_UI_PATH .'/convert'] = array(
+    'title' => 'Convert configurations',
+    'description' => 'Convert Workflow-ng configurations into Conditional Actions predicates.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ca_conversion_form'),
+    'access callback' => 'ca_convert_configurations_access',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10,
     'file' => 'ca.admin.inc',
   );
   $items[CA_UI_PATH .'/%/edit'] = array(
@@ -122,6 +124,13 @@ function ca_menu() {
   );
 
   return $items;
+}
+
+/**
+ * Determine access to the configuration conversion form.
+ */
+function ca_convert_configurations_access() {
+  return user_access('administer conditional actions') && variable_get('ca_show_conversion_tab', TRUE);
 }
 
 /**
@@ -1019,3 +1028,39 @@ function ca_weight_sort($a, $b) {
   return ($a['#weight'] > $b['#weight']) ? 1 : -1;
 }
 
+/**
+ * Configure the #parents and #id field of any child filter_form's.
+ * Unfortunately, FAPI doesn't give us any way to know we have a filter
+ * element, so we require all filters to have an #is_format element.
+ */
+function filter_configure_form(&$form) {
+  // Grab all the filters, and search for the formats.
+  $formats = filter_formats();
+  _filter_configure_form_recur($form, $formats, array());
+}
+
+/**
+ * Recursive filter configuration.
+ */
+function _filter_configure_form_recur(&$form, &$formats, $parents) {
+  // Look for our special element, then search the children.
+  if (isset($form['#is_format']) ? $form['#is_format'] : FALSE) {
+    foreach (element_children($form) as $key) {
+      // Found a filter.
+      if (array_key_exists($key, $formats)) {
+        // Configure the parents and ID so FAPI is happy.
+        $form[$key] = array(
+          '#parents' => $parents,
+          '#id' => form_clean_id('edit-'. implode('-', array_merge($parents, array($key)))),
+        ) + $form[$key];
+
+      }
+    }
+  }
+  else {
+    // Keep looking.
+    foreach (element_children($form) as $key) {
+      _filter_configure_form_recur($form[$key], $formats, array_merge($parents, array($key)));
+    }
+  }
+}
