@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_2checkout.module,v 1.6.2.5 2009/01/19 20:31:20 islandusurper Exp $
+// $Id: uc_2checkout.module,v 1.6.2.6 2009/04/18 07:29:19 islandusurper Exp $
 
 /**
  * @file
@@ -179,9 +179,19 @@ function uc_2checkout_form($form_state, $order) {
     $country = array(0 => array('country_iso_code_3' => 'USA'));
   }
 
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => '2checkout-form',
+  );
+  $options = array(
+    'sign' => FALSE,
+    'dec' => '.',
+    'thou' => FALSE,
+  );
+
   $data = array(
     'sid' => variable_get('uc_2checkout_sid', ''),
-    'total' => uc_currency_format($order->order_total, FALSE, FALSE, '.'),
+    'total' => uc_price($order->order_total, $context, $options),
     'cart_order_id' => $order->order_id,
     'demo' => variable_get('uc_2checkout_demo', TRUE) ? 'Y' : 'N',
     'fixed' => 'Y',
@@ -207,7 +217,7 @@ function uc_2checkout_form($form_state, $order) {
     $data['c_prod_'. $i] = $product->model .','. $product->qty;
     $data['c_name_'. $i] = $product->title;
     $data['c_description_'. $i] = $desc;
-    $data['c_price_'. $i] = uc_currency_format($product->price, FALSE, FALSE, '.');
+    $data['c_price_'. $i] = uc_price($product->price, $context, $options);
   }
 
   $form['#action'] = _2checkout_post_url(variable_get('uc_2checkout_checkout_type', 'multi'));

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.5.2.12 2009/04/14 13:51:14 islandusurper Exp $
+// $Id: uc_ups.module,v 1.5.2.13 2009/04/18 07:29:17 islandusurper Exp $
 
 /**
  * @file
@@ -834,9 +834,16 @@ function uc_ups_quote($products, $details) {
     }
   }
   uasort($quotes, 'uc_quote_price_sort');
+  $context = array(
+    'location' => 'shipping-quote',
+  );
   foreach ($quotes as $key => $quote) {
     if (isset($quote['rate'])) {
-      $quotes[$key]['format'] = uc_currency_format($quote['rate']);
+      $context['subject']['quote'] = $quote;
+      $context['revision'] = 'altered';
+      $quotes[$key]['rate'] = uc_price($quote['rate'], $context);
+      $context['revision'] = 'formatted';
+      $quotes[$key]['format'] = uc_price($quote['rate'], $context);
       $quotes[$key]['option_label'] = theme('uc_ups_option_label', $method['ups']['quote']['accessorials'][$key]);
     }
   }

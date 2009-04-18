@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.line_item.inc,v 1.1.2.4 2009/02/27 22:41:32 islandusurper Exp $
+// $Id: uc_order.line_item.inc,v 1.1.2.5 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -24,9 +24,21 @@ function uc_line_item_subtotal($op, $arg1) {
       );
       return $lines;
     case 'cart-preview':
+      $context = array(
+        'revision' => 'altered',
+        'location' => 'cart-preview-subtotal-item',
+      );
       $subtotal = 0;
       foreach ($arg1 as $item) {
-        $total = ($item->qty) ? $item->qty * $item->price : $item->price;
+        $price_info = array(
+          'price' => $item->price,
+          'qty' => ($item->qty) ? $item->qty : 1,
+        );
+        $context['subject'] = array(
+          'cart_item' => $item,
+          'node' => node_load($item->nid),
+        );
+        $total = uc_price($price_info, $context);
         $subtotal += $total;
       }
       if (module_exists('uc_payment') && variable_get('uc_pane_payment_enabled', TRUE)) {

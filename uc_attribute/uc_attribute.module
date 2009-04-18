@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.19 2009/04/14 13:51:21 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.20 2009/04/18 07:29:18 islandusurper Exp $
 
 /**
  * @file
@@ -322,7 +322,7 @@ function uc_attribute_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
         $output = '';
         $attributes = uc_product_get_attributes($node->nid);
         foreach ($attributes as $attribute) {
-          $output .= '<h3>'. $attribute->name .'</h3>';
+          $output .= '<h3>'. uc_attribute_get_name($attribute) .'</h3>';
           foreach ($attribute->options as $option) {
             $output .= $option->name .' ';
           }
@@ -462,7 +462,7 @@ function uc_attribute_load($attr_id, $nid = NULL, $type = '') {
   if ($nid) {
     switch ($type) {
       case 'product':
-        $attribute = db_fetch_object(db_query("SELECT a.aid, a.name, a.ordering AS default_ordering, a.required AS default_required, a.display AS default_display, a.description, pa.default_option, pa.required, pa.ordering, pa.display FROM {uc_attributes} AS a LEFT JOIN {uc_product_attributes} AS pa ON a.aid = pa.aid AND pa.nid = %d WHERE a.aid = %d", $nid, $attr_id));
+        $attribute = db_fetch_object(db_query("SELECT a.aid, a.name, a.label AS default_label, a.ordering AS default_ordering, a.required AS default_required, a.display AS default_display, a.description, pa.label, pa.default_option, pa.required, pa.ordering, pa.display FROM {uc_attributes} AS a LEFT JOIN {uc_product_attributes} AS pa ON a.aid = pa.aid AND pa.nid = %d WHERE a.aid = %d", $nid, $attr_id));
         $result = db_query("SELECT po.nid, po.oid, po.cost, po.price, po.weight, po.ordering, ao.name, ao.aid FROM {uc_product_options} AS po LEFT JOIN {uc_attribute_options} AS ao ON po.oid = ao.oid AND nid = %d WHERE aid = %d ORDER BY po.ordering, ao.name", $nid, $attr_id);
         break;
       case 'class':
@@ -471,7 +471,7 @@ function uc_attribute_load($attr_id, $nid = NULL, $type = '') {
         break;
       default:
         $attribute = db_fetch_object(db_query("SELECT * FROM {uc_attributes} WHERE aid = %d", $attr_id));
-        $result = db_query("SELECT * FROM {uc_attribute_options} WHERE aid = %d ORDER BY ordering, name", $attr_id);
+        $result = db_query("SELECT * FROM {uc_attribute_options} WHERE aid = %d ORDER BY ordering, name, label", $attr_id);
         break;
     }
     if (isset($attribute->default_ordering) && is_null($attribute->ordering)) {
@@ -482,6 +482,12 @@ function uc_attribute_load($attr_id, $nid = NULL, $type = '') {
     }
     if (isset($attribute->default_display) && is_null($attribute->display)) {
       $attribute->display = $attribute->default_display;
+    }
+    if (isset($attribute->default_label) && is_null($attribute->label)) {
+      $attribute->label = $attribute->default_label;
+    }
+    if (empty($attribute->label)) {
+      $attribute->label = $attribute->name;
     }
   }
   else {
@@ -546,11 +552,11 @@ function _uc_cart_product_get_options($item) {
       // Only discrete options can affect the price of an item.
       if ($attribute->display && count($attribute->options)) {
         $options[$aid] = (array)$attribute->options[$oid];
-        $options[$aid]['attribute'] = $attribute->name;
+        $options[$aid]['attribute'] = _uc_attribute_get_name($attribute);
       }
       else {
         $options[$aid] = array(
-          'attribute' => $attribute->name,
+          'attribute' => _uc_attribute_get_name($attribute),
           'oid' => 0,
           'name' => $oid,
           'cost' => 0,
@@ -626,7 +632,6 @@ function _uc_attribute_alter_form($product) {
       }
       $form_attributes[$attribute->aid] = array(
         '#type' => $attribute->display == 1 ? 'select' : 'radios',
-        '#title' => check_plain($attribute->name),
         '#description' => check_markup($attribute->description),
         '#default_value' => $attribute->default_option,
         '#options' => $options,
@@ -636,12 +641,17 @@ function _uc_attribute_alter_form($product) {
     else {
       $form_attributes[$attribute->aid] = array(
         '#type' => 'textfield',
-        '#title' => $attribute->name,
         '#description' => check_markup($attribute->description),
         '#default_value' => $attribute->required == FALSE ? $attribute->options[$attribute->default_option]->name : '',
         '#required' => $attribute->required,
       );
     }
+
+    $name = _uc_attribute_get_name($attribute, FALSE);
+    if (!is_null($name)) {
+      $form_attributes[$attribute->aid]['#title'] = check_plain($name);
+    }
+
     $form_attributes['#theme'] = 'uc_attribute_add_to_cart';
   }
   return $form_attributes;
@@ -688,4 +698,34 @@ function theme_uc_attribute_add_to_cart($form) {
   $output .= drupal_render($form) .'</div>';
 
   return $output;
+}
+
+/**
+ * Returns the attribute name to display.
+ *
+ * An attributes with a label set returns that label except when set to
+ * '<none>'. In this case, a NULL is returned. The $title argument forces the
+ * function to return the name property instead of label when label is set to
+ * '<none>'.
+ *
+ * The NULL return value is typically used by forms so they know to hide the
+ * #title property of the element.
+ *
+ * @param $attribute
+ *   Attribute object
+ * @param $title
+ *   TRUE indicates the function is to return the attribute name when its label
+ *   is set to '<none>'.
+ * @return
+ *   When the attribute label is set and not '<none>', it is returned.
+ *   Otherwise, the attribute name is returned when $title is TRUE and NULL is
+ *   returned when $title is FALSE.
+ */
+function _uc_attribute_get_name($attribute, $title = TRUE) {
+  if (!$title && $attribute->label == '<none>') {
+    return NULL;
+  }
+  else {
+    return (empty($attribute->label) || ($attribute->label == '<none>' && $title) ? $attribute->name : $attribute->label);
+  }
 }

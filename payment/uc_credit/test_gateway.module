@@ -1,5 +1,5 @@
 <?php
-// $Id: test_gateway.module,v 1.1.2.5 2008/11/07 21:13:23 islandusurper Exp $
+// $Id: test_gateway.module,v 1.1.2.6 2009/04/18 07:29:17 islandusurper Exp $
 
 /**
  * @file
@@ -45,7 +45,11 @@ function test_gateway_charge($order_id, $amount, $data) {
   // drupal_set_message('<pre>'. print_r($order->payment_details, TRUE) .'</pre>');
 
   if ($success) {
-    $message = t('Credit card charged: !amount', array('!amount' => uc_currency_format($amount)));
+    $context = array(
+      'revision' => 'formatted-original',
+      'location' => 'test-gateway-charge-comment',
+    );
+    $message = t('Credit card charged: !amount', array('!amount' => uc_price($amount, $context)));
     uc_order_comment_save($order_id, $user->uid, $message, 'admin');
   }
   else {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.module,v 1.7.2.14 2009/04/02 21:01:46 islandusurper Exp $
+// $Id: uc_recurring.module,v 1.7.2.15 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -571,9 +571,14 @@ function uc_recurring_feature_form_submit($form, &$form_state) {
     'number_intervals' => intval($form_state['values']['number_intervals']),
   );
 
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'recurring-feature-submit',
+  );
+
   $args = array(
     '@product' => empty($fee['model']) ? t('this product') : t('product @model', array('@model' => $fee['model'])),
-    '!amount' => uc_currency_format($fee['fee_amount']),
+    '!amount' => uc_price($fee['fee_amount'], $context),
     '!initial' => $fee['initial_charge'],
     '!regular' => $fee['regular_interval'],
     '!intervals' => t('!num times', array('!num' => $fee['number_intervals'] - 1)),
@@ -651,6 +656,11 @@ function uc_recurring_user_table($uid) {
   // Set up a header array for the table.
   $header = array(t('Order'), t('Amount'), t('Interval'), t('Next charge'), t('Remaining'), t('Operations'));
 
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'recurring-user-table',
+  );
+
   // Loop through the fees sorted by the order ID descending.
   $result = db_query("SELECT * FROM {uc_recurring_users} WHERE uid = %d AND remaining_intervals > 0 ORDER BY order_id DESC", $uid);
   while ($fee = db_fetch_array($result)) {
@@ -665,7 +675,7 @@ function uc_recurring_user_table($uid) {
     // Add the row to the table for display.
     $rows[] = array(
       l($fee['order_id'], 'user/'. $uid .'/order/'. $fee['order_id']),
-      uc_currency_format($fee['fee_amount']),
+      uc_price($fee['fee_amount'], $context),
       array('data' => check_plain($fee['regular_interval']), 'nowrap' => 'nowrap'),
       $fee['remaining_intervals'] == 0 ? '-' : format_date($fee['next_charge'], 'small'),
       $fee['remaining_intervals'],
@@ -886,7 +896,11 @@ function uc_recurring_charge($fee) {
   // Handle the result.
   if ($result['success'] === TRUE) {
     uc_payment_enter($fee['order_id'], 'credit', $fee['fee_amount'], 0, $result['data'], t('Recurring fee payment.') .'<br />'. $result['comment']);
-    uc_order_comment_save($fee['order_id'], 0, t('!amount recurring fee collected for @model. (ID: <a href="!url">!fee</a>)', array('!url' => url('admin/store/orders/recurring/view/fee/'. $fee['rfid']), '!fee' => $fee['rfid'], '!amount' => uc_currency_format($fee['fee_amount']), '@model' => $fee['data']['model'])));
+    $context = array(
+      'revision' => 'formatted-original',
+      'location' => 'recurring-charge-comment',
+    );
+    uc_order_comment_save($fee['order_id'], 0, t('!amount recurring fee collected for @model. (ID: <a href="!url">!fee</a>)', array('!url' => url('admin/store/orders/recurring/view/fee/'. $fee['rfid']), '!fee' => $fee['rfid'], '!amount' => uc_price($fee['fee_amount'], $context), '@model' => $fee['data']['model'])));
 
     // Modules can hook into the charge process using hook_recurring_api().
     module_invoke_all('recurring_api', 'charge', $fee);

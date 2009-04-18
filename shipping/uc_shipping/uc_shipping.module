@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.6.2.8 2009/02/10 21:58:16 islandusurper Exp $
+// $Id: uc_shipping.module,v 1.6.2.9 2009/04/18 07:29:15 islandusurper Exp $
 
 /**
  * @file
@@ -236,7 +236,14 @@ function uc_shipping_package_view($package) {
   if ($package->length && $package->width && $package->height) {
     $rows[] = array(t('Dimensions:'), t('!l x !w x !h', array('!l' => uc_length_format($package->length), '!w' => uc_length_format($package->width), '!h' => uc_length_format($package->height))));
   }
-  $rows[] = array(t('Insured value:'), uc_currency_format($package->value));
+  $context = array(
+    'location' => 'shipping-package-view',
+    'subject' => array(
+      'package' => $package,
+      'field' => 'value',
+    ),
+  );
+  $rows[] = array(t('Insured value:'), uc_price($package->value, $context));
   if ($package->tracking_number) {
     $rows[] = array(t('Tracking number:'), check_plain($package->tracking_number));
   }

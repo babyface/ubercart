@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.8 2009/04/02 21:01:47 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.9 2009/04/18 07:29:19 islandusurper Exp $
 
 /**
  * @file
@@ -11,6 +11,7 @@
 function uc_attribute_admin() {
   $header = array(
     array('data' => t('Name'), 'field' => 'a.name', 'sort' => 'asc'),
+    array('data' => t('Label'), 'field' => 'a.label'),
     t('Required'),
     array('data' => t('List position'), 'field' => 'a.ordering'),
     t('Number of options'),
@@ -20,8 +21,11 @@ function uc_attribute_admin() {
 
   $display_types = _uc_attribute_display_types();
 
-  $result = pager_query("SELECT a.aid, a.name, a.required, a.ordering, a.display, COUNT(ao.oid) AS options FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid, a.name, a.ordering, a.required, a.display". tablesort_sql($header), 30, 0, "SELECT COUNT(aid) FROM {uc_attributes}");
+  $result = pager_query("SELECT a.aid, a.name, a.label, a.required, a.ordering, a.display, COUNT(ao.oid) AS options FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid, a.name, a.ordering, a.required, a.display". tablesort_sql($header), 30, 0, "SELECT COUNT(aid) FROM {uc_attributes}");
   while ($attr = db_fetch_object($result)) {
+    if (empty($attr->label)) {
+      $attr->label = $attr->name;
+    }
     $ops = array(
       l(t('edit'), 'admin/store/attributes/'. $attr->aid .'/edit'),
       l(t('options'), 'admin/store/attributes/'. $attr->aid .'/options'),
@@ -29,6 +33,7 @@ function uc_attribute_admin() {
     );
     $rows[] = array(
       check_plain($attr->name),
+      check_plain($attr->label),
       $attr->required == 1 ? t('Yes') : t('No'),
       array('data' => $attr->ordering, 'align' => 'center'),
       array('data' => $attr->options, 'align' => 'center'),
@@ -67,9 +72,15 @@ function uc_attribute_form($form_state, $attribute = NULL) {
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Name'),
-    '#description' => t('This name will appear to customers on product add to cart forms.'),
+    '#description' => t('The name of the attribute used in administrative forms'),
     '#default_value' => $attribute->name,
     '#required' => TRUE,
+  );
+  $form['label'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Label'),
+    '#description' => t("Enter a label that customers will see instead of the attribute name. Use &lt;none&gt; if you don't want a title to appear at all."),
+    '#default_value' => empty($attribute->label) ? $attribute->name : $attribute->label,
   );
   $form['description'] = array(
     '#type' => 'textfield',
@@ -112,10 +123,10 @@ function uc_attribute_form($form_state, $attribute = NULL) {
  */
 function uc_attribute_form_submit($form, &$form_state) {
   if (!empty($form_state['values']['aid'])) {
-    db_query("UPDATE {uc_attributes} SET name = '%s', ordering = %d, required = %d, display = %d, description = '%s' WHERE aid = %d", $form_state['values']['name'], $form_state['values']['ordering'], $form_state['values']['required'], $form_state['values']['display'], $form_state['values']['description'], $form_state['values']['aid']);
+    db_query("UPDATE {uc_attributes} SET name = '%s', label = '%s', ordering = %d, required = %d, display = %d, description = '%s' WHERE aid = %d", $form_state['values']['name'], $form_state['values']['label'], $form_state['values']['ordering'], $form_state['values']['required'], $form_state['values']['display'], $form_state['values']['description'], $form_state['values']['aid']);
   }
   else {
-    db_query("INSERT INTO {uc_attributes} (name, ordering, required, display, description) VALUES ('%s', %d, %d, %d, '%s')", $form_state['values']['name'], $form_state['values']['ordering'], $form_state['values']['required'], $form_state['values']['display'], $form_state['values']['description']);
+    db_query("INSERT INTO {uc_attributes} (name, label, ordering, required, display, description) VALUES ('%s', '%s', %d, %d, %d, '%s')", $form_state['values']['name'], $form_state['values']['label'], $form_state['values']['ordering'], $form_state['values']['required'], $form_state['values']['display'], $form_state['values']['description']);
   }
 
   $form_state['redirect'] = 'admin/store/attributes';
@@ -447,16 +458,28 @@ function uc_object_attributes_form($form_state, $object, $type, $view = 'overvie
   }
 
   $used_aids = array();
+  $used_labels = array();
   foreach ($attributes as $attribute) {
     $used_aids[] = $attribute->aid;
+    if (!empty($attribute->label)) {
+      $used_labels[] = $attribute->label;
+    }
   }
 
   if ($view == 'overview') {
     $form['#tree'] = TRUE;
 
+    $context = array(
+      'revision' => 'formatted',
+      'location' => 'attribute-form-default-option',
+    );
     if (count($attributes) > 0) {
       foreach ($attributes as $attribute) {
         $option = $attribute->options[$attribute->default_option];
+        $context['subject'] = array(
+          'attribute' => $attribute,
+          'option' => $option,
+        );
 
         $form['attributes'][$attribute->aid] = array(
           'remove' => array(
@@ -466,8 +489,13 @@ function uc_object_attributes_form($form_state, $object, $type, $view = 'overvie
           'name' => array(
             '#value' => check_plain($attribute->name),
           ),
+          'label' => array(
+            '#type' => 'textfield',
+            '#default_value' => empty($attribute->label) ? $attribute->name : $attribute->label,
+            '#size' => 6,
+          ),
           'option' => array(
-            '#value' => $option ? (check_plain($option->name) .' ('. uc_currency_format($option->price) .')' ) : t('n/a'),
+            '#value' => $option ? (check_plain($option->name) .' ('. uc_price($option->price, $context) .')' ) : t('n/a'),
           ),
           'required' => array(
             '#type' => 'checkbox',
@@ -496,9 +524,9 @@ function uc_object_attributes_form($form_state, $object, $type, $view = 'overvie
   elseif ($view == 'add') {
     // Get list of attributes not already assigned to this node or class.
     $unused_attributes = array();
-    $result = db_query("SELECT a.aid, a.name FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid, a.name ORDER BY a.name");
+    $result = db_query("SELECT a.aid, a.name, a.label FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid, a.name ORDER BY a.name");
     while ($attribute = db_fetch_object($result)) {
-      if (!in_array($attribute->aid, $used_aids)) {
+      if (!in_array($attribute->aid, $used_aids) && !in_array($attribute->label, $used_labels)) {
         $unused_attributes[$attribute->aid] = $attribute->name;
       }
     }
@@ -543,13 +571,14 @@ function uc_object_attributes_form($form_state, $object, $type, $view = 'overvie
  */
 function theme_uc_object_attributes_form($form) {
   if ($form['view']['#value'] == 'overview') {
-    $header = array(t('Remove'), t('Name'), t('Default'), t('Required'), t('List position'), t('Display'));
+    $header = array(t('Remove'), t('Name'), t('Label'), t('Default'), t('Required'), t('List position'), t('Display'));
 
     if (count(element_children($form['attributes'])) > 0) {
       foreach (element_children($form['attributes']) as $aid) {
         $row = array(
           drupal_render($form['attributes'][$aid]['remove']),
           drupal_render($form['attributes'][$aid]['name']),
+          drupal_render($form['attributes'][$aid]['label']),
           drupal_render($form['attributes'][$aid]['option']),
           drupal_render($form['attributes'][$aid]['required']),
           drupal_render($form['attributes'][$aid]['ordering']),
@@ -597,18 +626,19 @@ function uc_object_attributes_form_submit($form, &$form_state) {
         $remove_aids[] = $aid;
       }
       else {
-        db_query("UPDATE $attr_table SET ordering = %d, required = %d, display = %d WHERE aid = %d AND $id = $sql_type", $attribute['ordering'], $attribute['required'], $attribute['display'], $aid, $form_state['values']['id']);
+        db_query("UPDATE $attr_table SET label = '%s', ordering = %d, required = %d, display = %d WHERE aid = %d AND $id = $sql_type", $attribute['label'], $attribute['ordering'], $attribute['required'], $attribute['display'], $aid, $form_state['values']['id']);
         $changed = TRUE;
       }
     }
 
     if (count($remove_aids) > 0) {
-      $values = array($form_state['values']['id'], implode(', ', $remove_aids));
+      $id_value = $form_state['values']['id'];
+      $remove_aids_value = implode(', ', $remove_aids);
 
-      db_query("DELETE FROM $opt_table WHERE EXISTS (SELECT * FROM {uc_attribute_options} AS ao WHERE $opt_table.oid = ao.oid AND ao.aid IN (%s)) AND $opt_table.$id = $sql_type", $values);
-      db_query("DELETE FROM $attr_table WHERE $id = $sql_type AND aid IN (%s)", $values);
+      db_query("DELETE FROM $opt_table WHERE EXISTS (SELECT * FROM {uc_attribute_options} AS ao WHERE $opt_table.oid = ao.oid AND ao.aid IN (%s)) AND $opt_table.$id = $sql_type", $remove_aids_value, $id_value);
+      db_query("DELETE FROM $attr_table WHERE $id = $sql_type AND aid IN (%s)", $id_value, $remove_aids_value);
       if ($form_state['values']['type'] == 'product') {
-        db_query("DELETE FROM {uc_product_adjustments} WHERE nid = %d", $form_state['values']['id']);
+        db_query("DELETE FROM {uc_product_adjustments} WHERE nid = %d", $id_value);
       }
 
       drupal_set_message(format_plural(count($remove_aids), '@count attribute has been removed.', '@count attributes have been removed.'));
@@ -633,7 +663,7 @@ function uc_object_attributes_form_submit($form, &$form_state) {
       else {
         $oid = 0;
       }
-      db_query("INSERT INTO $attr_table ($id, aid, ordering, default_option, required, display) SELECT $sql_type, aid, ordering, %d, required, display FROM {uc_attributes} WHERE aid = %d", $form_state['values']['id'], $oid, $aid);
+      db_query("INSERT INTO $attr_table ($id, aid, label, ordering, default_option, required, display) SELECT $sql_type, aid, label, ordering, %d, required, display FROM {uc_attributes} WHERE aid = %d", $form_state['values']['id'], $oid, $aid);
     }
     if (count($form_state['values']['add_attributes']) > 0) {
       if ($form_state['values']['type'] == 'product') {

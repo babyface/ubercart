@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.5.2.9 2009/01/19 20:31:21 islandusurper Exp $
+// $Id: uc_payment.module,v 1.5.2.10 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -141,7 +141,12 @@ function uc_payment_token_values($type, $object = NULL) {
       if (empty($values['order-payment-method'])) {
         $values['order-payment-method'] = _payment_method_data($order->payment_method, 'name');
       }
-      $values['order-payment-balance'] = uc_currency_format(uc_payment_balance($order));
+
+      $context = array(
+        'revision' => 'formatted',
+        'location' => 'payment-balance-token',
+      );
+      $values['order-payment-balance'] = uc_price(uc_payment_balance($order), $context);
       break;
   }
 
@@ -326,18 +331,28 @@ function uc_payment_get_totals() {
              .' <span id="order-total-throbber"></span><table>';
     $grand_total = 0;
 
+    $context = array(
+      'location' => 'checkout-order-total-preview',
+    );
+
     foreach ($totals as $line) {
       if (!empty($line[2])) {
+        $context['subject'] = array(
+          'line_item' => $line,
+        );
         $output .= '<tr><td align="right"><b>'. $line[2] .':</b></td>'
-                  .'<td align="right">'. uc_currency_format($line[1]) .'</td></tr>';
+                  .'<td align="right">'. uc_price($line[1], $context) .'</td></tr>';
         if ($line[3]) {
           $grand_total += round($line[1], 2);
         }
       }
     }
 
+    $context['subject'] = array(
+      'grand_total' => $grand_total,
+    );
     $output .= '<tr><td align="right"><b>'. t('Order total:') .'</b></td>'
-              .'<td align="right">'. uc_currency_format($grand_total)
+              .'<td align="right">'. uc_price($grand_total, $context)
               .'</td></tr></table>';
   }
 
@@ -532,7 +547,7 @@ function uc_payment_process($method, $order_id, $amount, $data = NULL, $default 
   }
   else {
     // Otherwise display the failue message in the logs.
-    watchdog('uc_payment', 'Payment failed: @message', array('@message' => $result['message']), WATCHDOG_WARNING);
+    watchdog('uc_payment', 'Payment failed for order @order_id: @message', array('@order_id' => $order_id, '@message' => $result['message']), WATCHDOG_WARNING, l(t('view order'), 'admin/store/orders/'. $order_id));
   }
 
   // If we have a message for display and aren't simply charging with the
@@ -566,7 +581,11 @@ function uc_payment_enter($order_id, $method, $amount, $uid, $data, $comment) {
 
   if (variable_get('uc_payment_logging', TRUE)) {
     global $user;
-    $log_message = t('@method payment for @amount entered by @user.', array('@method' => $method_name, '@amount' => uc_currency_format($amount), '@user' => uc_get_initials($user->uid)));
+    $context = array(
+      'revision' => 'formatted',
+      'location' => 'payment-log',
+    );
+    $log_message = t('@method payment for @amount entered by @user.', array('@method' => $method_name, '@amount' => uc_price($amount, $context), '@user' => uc_get_initials($user->uid)));
     uc_order_log_changes($order_id, array($log_message));
   }
 
@@ -587,7 +606,14 @@ function uc_payment_delete($receipt_id) {
   if (variable_get('uc_payment_logging', TRUE)) {
     global $user;
     $payment = uc_payment_load($receipt_id);
-    $log_message = t('@method payment for @amount deleted by @user.', array('@method' => $payment->method, '@amount' => uc_currency_format($payment->amount), '@user' => uc_get_initials($user->uid)));
+    $context = array(
+      'revision' => 'formatted',
+      'location' => 'payment-delete-log',
+      'subject' => array(
+        'payment' => $payment,
+      ),
+    );
+    $log_message = t('@method payment for @amount deleted by @user.', array('@method' => $payment->method, '@amount' => uc_price($payment->amount, $context), '@user' => uc_get_initials($user->uid)));
     uc_order_log_changes($payment->order_id, array($log_message));
   }
 

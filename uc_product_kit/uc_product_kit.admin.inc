@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.admin.inc,v 1.1.2.1 2009/02/24 15:35:51 islandusurper Exp $
+// $Id: uc_product_kit.admin.inc,v 1.1.2.2 2009/04/18 07:29:17 islandusurper Exp $
 
 /**
  * @file
@@ -17,7 +17,7 @@ function uc_product_kit_settings_form() {
     '#options' => array(
       UC_PRODUCT_KIT_UNMUTABLE_NO_LIST => t('As a unit. Customers may only change how many kits they are buying. Do not list component products.'),
       UC_PRODUCT_KIT_UNMUTABLE_WITH_LIST => t('As a unit. Customers may only change how many kits they are buying. List component products.'),
-      UC_PRODUCT_KIT_MUTABLE => t('As individual products. Customers may add or remove kit components at will.'),
+      UC_PRODUCT_KIT_MUTABLE => t('As individual products. Customers may add or remove kit components at will. Discounts entered below are not applied to the kit price'),
     ),
     '#default_value' => variable_get('uc_product_kit_mutable', 0),
     '#weight' => -5,

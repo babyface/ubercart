@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.9 2009/02/27 22:41:36 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.10 2009/04/18 07:29:17 islandusurper Exp $
 
 /**
  * @file
@@ -57,7 +57,12 @@ function uc_cart_checkout() {
     drupal_goto('cart');
   }
 
-  if (($min = variable_get('uc_minimum_subtotal', 0)) > 0) {
+  $context = array(
+    'revision' => 'altered',
+    'location' => 'minimum-subtotal',
+  );
+
+  if (($min = uc_price(variable_get('uc_minimum_subtotal', 0), $context)) > 0) {
     $subtotal = 0;
     $items = uc_cart_get_contents();
     if (is_array($items) && count($items) > 0) {
@@ -69,7 +74,11 @@ function uc_cart_checkout() {
       }
     }
     if ($subtotal < $min) {
-      drupal_set_message(variable_get('uc_minimum_subtotal_text', t('The minimum order subtotal for checkout is !min.', array('!min' => uc_currency_format($min)))), 'error');
+      $context = array(
+        'revision' => 'formatted-original',
+        'location' => 'minimum-subtotal-message',
+      );
+      drupal_set_message(variable_get('uc_minimum_subtotal_text', t('The minimum order subtotal for checkout is !min.', array('!min' => uc_price($min, $context)))), 'error');
       drupal_goto('cart');
     }
   }
@@ -191,9 +200,30 @@ function uc_cart_checkout_form() {
   }
   unset($_SESSION['expanded_panes']);
 
+  $context = array(
+    'revision' => 'altered',
+    'location' => 'cart-checkout-item',
+  );
+  $contents = uc_cart_get_contents();
+  foreach ($contents as $key => $item) {
+    $price_info = array(
+      'price' => $item->price,
+      'qty' => $item->qty,
+    );
+    $context['subject'] = array(
+      'cart_item' => $item,
+      'node' => node_load($item->nid),
+    );
+
+    // Get the altered price per unit, as ordered products have a locked-in
+    // price. Price altering rules may change over time, but the amount paid
+    // by the customer does not after the fact.
+    $contents[$key]->price = uc_price($price_info, $context) / $item->qty;
+  }
+
   $form['cart_contents'] = array(
     '#type' => 'hidden',
-    '#value' => serialize(uc_cart_get_contents()),
+    '#value' => serialize($contents),
   );
 
   $form['cancel'] = array(

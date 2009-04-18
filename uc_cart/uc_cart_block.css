@@ -1,4 +1,4 @@
-/* $Id: uc_cart_block.css,v 1.7.2.8 2009/04/14 13:51:12 islandusurper Exp $ */
+/* $Id: uc_cart_block.css,v 1.7.2.9 2009/04/18 07:29:17 islandusurper Exp $ */
 
 /**
  * Styles for the cart block icon.
@@ -113,6 +113,10 @@
 
 .cart-block-summary-total label {
   font-weight: bold;
+}
+
+.cart-block-summary-total .uc-price {
+  display: inline;
 }
 
 .cart-block-summary-links {

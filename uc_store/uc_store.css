@@ -1,4 +1,8 @@
-/* $Id: uc_store.css,v 1.8.2.4 2009/02/24 15:35:51 islandusurper Exp $ */
+/* $Id: uc_store.css,v 1.8.2.5 2009/04/18 07:29:16 islandusurper Exp $ */
+
+.uc-price {
+  white-space: nowrap;
+}
 
 .uc-store-admin-table {
   margin: 1em auto;

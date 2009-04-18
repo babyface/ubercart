@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.19 2009/04/02 21:01:45 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.20 2009/04/18 07:29:17 islandusurper Exp $
 
 /**
  * @file
@@ -451,7 +451,7 @@ function uc_cart_block($op = 'list', $delta = 0, $edit = array()) {
 
               if (!empty($display_item)) {
                 $items[] = array(
-                  'qty' => t('@qtyx', array('@qty' => $display_item['qty']['#default_value'])),
+                  'qty' => t('@qty&times;', array('@qty' => $display_item['qty']['#default_value'])),
                   'title' => $display_item['title']['#value'],
                   'price' => $display_item['#total'],
                   'desc' => isset($display_item['description']['#value']) ? $display_item['description']['#value'] : FALSE,
@@ -459,7 +459,7 @@ function uc_cart_block($op = 'list', $delta = 0, $edit = array()) {
               }
 
               $item_count += $item->qty;
-              $total += $item->price * $item->qty;
+              $total += $display_item['#total'];
             }
           }
 
@@ -660,12 +660,20 @@ function theme_uc_cart_block_items($items) {
     $output = '<table class="cart-block-items"><tbody>';
     $row_class = 'odd';
 
+    $context = array(
+      'location' => 'cart-block-item',
+    );
+
     // Loop through each item.
     foreach ($items as $item) {
+      $context['subject'] = array(
+        'cart_item' => $item,
+        'field' => 'price',
+      );
       // Add the basic row with quantity, title, and price.
       $output .= '<tr class="'. $row_class .'"><td class="cart-block-item-qty">'. $item['qty'] .'</td>'
                 .'<td class="cart-block-item-title">'. $item['title'] .'</td>'
-                .'<td class="cart-block-item-price">'. uc_currency_format($item['price']) .'</td></tr>';
+                .'<td class="cart-block-item-price">'. uc_price($item['price'], $context) .'</td></tr>';
 
       // Add a row of description if necessary.
       if ($item['desc']) {
@@ -700,11 +708,15 @@ function theme_uc_cart_block_items($items) {
  * @ingroup themeable
  */
 function theme_uc_cart_block_summary($item_count, $item_text, $total, $summary_links) {
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'cart-block-total',
+  );
   // Build the basic table with the number of items in the cart and total.
   $output = '<table class="cart-block-summary"><tbody><tr>'
            .'<td class="cart-block-summary-items">'. $item_text .'</td>'
            .'<td class="cart-block-summary-total"><label>'. t('Total:')
-           .'</label> '. uc_currency_format($total) .'</td></tr>';
+           .'</label> '. uc_price($total, $context) .'</td></tr>';
 
   // If there are products in the cart...
   if ($item_count > 0) {
@@ -857,6 +869,10 @@ function uc_cart_view_form($form_state, $items = NULL) {
     '#tree' => TRUE,
   );
 
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'cart-subtotal',
+  );
   $i = 0;
   foreach ($items as $item) {
     $display_item = module_invoke($item->module, 'cart_display', $item);
@@ -875,8 +891,9 @@ function uc_cart_view_form($form_state, $items = NULL) {
           '#value' => '',
         );
       }
+
       $form['items'][$i]['total'] = array(
-        '#value' => $display_item['#total'],
+        '#value' => uc_price($display_item['#total'], $context),
         '#theme' => 'uc_cart_view_price',
       );
       $i++;
@@ -992,7 +1009,7 @@ function theme_uc_cart_view_form($form) {
 }
 
 function theme_uc_cart_view_price($form) {
-  return uc_currency_format($form['#value']);
+  return $form['#value'];
 }
 
 function uc_cart_view_table($table) {
@@ -1031,9 +1048,14 @@ function uc_cart_view_table($table) {
     $table[$i]['total']['#cell_attributes'] = array('nowrap' => 'nowrap', 'class' => 'price');
     $table[$i]['#attributes'] = array('valign' => 'top');
   }
+
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'cart-table-subtotal',
+  );
   $table[] = array(
     'total' => array(
-      '#value' => '<strong>'. t('Subtotal:') .'</strong> '. uc_currency_format($subtotal),
+      '#value' => '<strong>'. t('Subtotal:') .'</strong> '. uc_price($subtotal, $context),
       '#cell_attributes' => array(
         'colspan' => 'full',
         'align' => 'right',

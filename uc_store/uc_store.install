@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.install,v 1.9.2.3 2008/12/09 15:20:37 islandusurper Exp $
+// $Id: uc_store.install,v 1.9.2.4 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -98,6 +98,9 @@ function uc_store_schema() {
     ),
     'primary key' => array('path_hash'),
   );
+
+  $schema['cache_uc_price'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_uc_price']['description'] = t('Cache table for Ubercart store prices.');
 
   return $schema;
 }
@@ -233,5 +236,15 @@ function uc_store_update_6000() {
   db_change_field($ret, 'uc_zones', 'zone_id', 'zone_id', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE), array('primary key' => array('zone_id')));
   db_change_field($ret, 'uc_zones', 'zone_country_id', 'zone_country_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('zone_country_id' => array('zone_country_id'))));
 
+  return $ret;
+}
+
+function uc_store_update_6001() {
+  $ret = array();
+
+  $schema['cache_uc_price'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_uc_price']['description'] = t('Cache table for Ubercart store prices.');
+
+  db_create_table($ret, 'cache_uc_price', $schema['cache_uc_price']);
   return $ret;
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_checkout_pane.inc,v 1.5.2.4 2008/11/07 21:13:25 islandusurper Exp $
+// $Id: uc_payment_checkout_pane.inc,v 1.5.2.5 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -100,8 +100,14 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
         }
       }
       usort($line_items, 'uc_weight_sort');
+
+      $context = array(
+        'revision' => 'formatted',
+        'location' => 'checkout-review-line-item',
+      );
       foreach ($line_items as $line_item) {
-        $review[] = array('title' => $line_item['title'], 'data' => uc_currency_format($line_item['amount']));
+        $context['subject'] = array('line_item' => $line_item);
+        $review[] = array('title' => $line_item['title'], 'data' => uc_price($line_item['amount'], $context));
       }
       $review_data = _payment_method_data($arg1->payment_method, 'review');
       if (empty($review_data)) {

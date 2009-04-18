@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.15 2009/02/24 15:35:50 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.16 2009/04/18 07:29:19 islandusurper Exp $
 
 /**
  * @file
@@ -686,8 +686,12 @@ function theme_uc_catalog_products($products) {
 function theme_uc_catalog_product_grid($products) {
   $product_table = '<div class="category-grid-products"><table>';
   $count = 0;
+  $context = array(
+    'location' => 'catalog-grid-product',
+  );
   foreach ($products as $nid) {
     $product = node_load($nid);
+    $context['subject'] = array('node' => $product);
 
     if ($count == 0) {
       $product_table .= "<tr>";
@@ -713,7 +717,7 @@ function theme_uc_catalog_product_grid($products) {
     }
     $product_table .= '<span class="catalog-grid-image">'. $imagelink .'</span>';
     if (variable_get('uc_catalog_grid_display_sell_price', TRUE)) {
-      $product_table .= '<span class="catalog-grid-sell-price">'. uc_currency_format($product->sell_price) .'</span>';
+      $product_table .= '<span class="catalog-grid-sell-price">'. uc_price($product->sell_price, $context) .'</span>';
     }
     if (variable_get('uc_catalog_grid_display_add_to_cart', TRUE)) {
       if (variable_get('uc_catalog_grid_display_attributes', TRUE)) {

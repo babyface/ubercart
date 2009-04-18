@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.ca.inc,v 1.1.2.6 2009/01/19 20:31:21 islandusurper Exp $
+// $Id: uc_payment.ca.inc,v 1.1.2.7 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -176,7 +176,11 @@ function uc_payment_condition_order_balance($order, $settings) {
 }
 
 function uc_payment_condition_order_balance_form($form_state, $settings = array()) {
-  $zero = array('!zero' => uc_currency_format(0));
+  $context = array(
+    'revision' => 'formatted',
+    'location' => 'zero-balance',
+  );
+  $zero = array('!zero' => uc_price(0, $context));
   $options = array(
     'less' => t('Balance is less than !zero.', $zero),
     'less_equal' => t('Balance is less than or equal to !zero.', $zero),

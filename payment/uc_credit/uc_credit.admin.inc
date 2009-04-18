@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.admin.inc,v 1.1.2.2 2008/11/07 21:13:23 islandusurper Exp $
+// $Id: uc_credit.admin.inc,v 1.1.2.3 2009/04/18 07:29:17 islandusurper Exp $
 
 /**
  * @file
@@ -17,10 +17,17 @@ function uc_credit_terminal($order) {
     $output .= '<p>'. t('Be warned that credit card data will automatically be converted to the last 4 digits of the card once a transaction has occurred.  As such, subsequent charges after a partial payment will not have any stored credit card information to use.') .'</p>';
   }
 
-  $output .= '<div><strong>'. t('Order total: @total', array('@total' => uc_currency_format($order->order_total))) .'</strong></div>'
-            .'<div><strong>'. t('Balance: @balance', array('@balance' => uc_currency_format(uc_payment_balance($order)))) .'</strong></div>';
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'credit-card-terminal',
+    'subject' => array(
+      'order' => $order,
+    ),
+  );
+  $output .= '<div><strong>'. t('Order total: @total', array('@total' => uc_price($order->order_total, $context))) .'</strong></div>'
+            .'<div><strong>'. t('Balance: @balance', array('@balance' => uc_price(uc_payment_balance($order), $context))) .'</strong></div>';
 
-  $output .= drupal_get_form('uc_credit_terminal_form', $order, $balance);
+  $output .= drupal_get_form('uc_credit_terminal_form', $order);
 
   return $output;
 }
@@ -38,11 +45,21 @@ function uc_credit_terminal_form($form_state, $order, $lock_amount = FALSE) {
 
   $balance = uc_payment_balance($order);
 
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'credit-card-form',
+  );
+  $options = array(
+    'sign' => FALSE,
+    'thou' => FALSE,
+    'dec' => '.',
+  );
+
   // Let the administrator set the amount to charge.
   $form['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Charge Amount'),
-    '#default_value' => $balance > 0 ? uc_currency_format($balance, FALSE, FALSE) : 0,
+    '#default_value' => $balance > 0 ? uc_price($balance, $context, $options) : 0,
     '#size' => 10,
     '#disabled' => $lock_amount,
     '#field_prefix' => variable_get('uc_sign_after_amount', FALSE) ? '' : variable_get('uc_currency_sign', '$'),
@@ -99,7 +116,7 @@ function uc_credit_terminal_form($form_state, $order, $lock_amount = FALSE) {
 
   foreach ((array) $order->data['cc_txns']['authorizations'] as $auth_id => $data) {
     if (empty($data['captured'])) {
-      $options[$auth_id] = t('@auth_id - @date - @amount authorized', array('@auth_id' => strtoupper($auth_id), '@date' => format_date($data['authorized'], 'small'), '@amount' => uc_currency_format($data['amount'])));
+      $options[$auth_id] = t('@auth_id - @date - @amount authorized', array('@auth_id' => strtoupper($auth_id), '@date' => format_date($data['authorized'], 'small'), '@amount' => uc_price($data['amount'], $context)));
     }
   }
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.pages.inc,v 1.1.2.7 2009/02/24 15:35:55 islandusurper Exp $
+// $Id: uc_paypal.pages.inc,v 1.1.2.8 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -78,17 +78,25 @@ function uc_paypal_ipn($order_id = 0) {
     db_query("INSERT INTO {uc_payment_paypal_ipn} (order_id, txn_id, txn_type, mc_gross, status, receiver_email, payer_email, received) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d)",
       $order_id, $txn_id, $txn_type, $payment_amount, $payment_status, $receiver_email, $payer_email, time());
 
+    $context = array(
+      'revision' => 'formatted-original',
+      'location' => 'paypal-ipn',
+    );
+    $options = array(
+      'sign' => FALSE,
+    );
+
     switch ($payment_status) {
       case 'Canceled_Reversal':
-        uc_order_comment_save($order_id, 0, t('PayPal has cancelled the reversal and returned !amount !currency to your account.', array('!amount' => uc_currency_format($payment_amount, FALSE), '!currency' => $payment_currency)), 'admin');
+        uc_order_comment_save($order_id, 0, t('PayPal has cancelled the reversal and returned !amount !currency to your account.', array('!amount' => uc_price($payment_amount, $context, $options), '!currency' => $payment_currency)), 'admin');
         break;
 
       case 'Completed':
         $comment = t('PayPal transaction ID: @txn_id', array('@txn_id' => $txn_id));
         uc_payment_enter($order_id, 'paypal_wps', $payment_amount, $order->uid, NULL, $comment);
         uc_cart_complete_sale($order);
-        uc_order_comment_save($order_id, 0, t('Payment of @amount @currency submitted through PayPal.', array('@amount' => uc_currency_format($payment_amount, FALSE), '@currency' => $payment_currency)), 'order', 'payment_received');
-        uc_order_comment_save($order_id, 0, t('PayPal IPN reported a payment of @amount @currency.', array('@amount' => uc_currency_format($payment_amount, FALSE), '@currency' => $payment_currency)));
+        uc_order_comment_save($order_id, 0, t('Payment of @amount @currency submitted through PayPal.', array('@amount' => uc_price($payment_amount, $context, $options), '@currency' => $payment_currency)), 'order', 'payment_received');
+        uc_order_comment_save($order_id, 0, t('PayPal IPN reported a payment of @amount @currency.', array('@amount' => uc_price($payment_amount, $context, $options), '@currency' => $payment_currency)));
         break;
 
       case 'Denied':

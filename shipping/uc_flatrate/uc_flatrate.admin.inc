@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.admin.inc,v 1.1.2.9 2009/02/10 21:58:13 islandusurper Exp $
+// $Id: uc_flatrate.admin.inc,v 1.1.2.10 2009/04/18 07:29:15 islandusurper Exp $
 
 /**
  * @file
@@ -13,16 +13,23 @@
 function uc_flatrate_admin_methods() {
   $output = '';
 
+  $context = array(
+    'revision' => 'formatted',
+    'location' => 'shipping-flatrate-method-admin',
+  );
+
   $rows = array();
   $enabled = variable_get('uc_quote_enabled', array());
   $weight = variable_get('uc_quote_method_weight', array());
   $result = db_query("SELECT mid, title, label, base_rate, product_rate FROM {uc_flatrate_methods}");
   while ($method = db_fetch_object($result)) {
+    $context['subject']['flatrate_method'] = $method;
+
     $row = array();
     $row[] = check_plain($method->title);
     $row[] = check_plain($method->label);
-    $row[] = uc_currency_format($method->base_rate);
-    $row[] = uc_currency_format($method->product_rate);
+    $row[] = uc_price($method->base_rate, $context);
+    $row[] = uc_price($method->product_rate, $context);
     $row[] = l(t('edit'), 'admin/store/settings/quotes/methods/flatrate/'. $method->mid);
     $row[] = l(t('conditions'), CA_UI_PATH .'/uc_flatrate_get_quote_'. $method->mid .'/edit/conditions');
     $rows[] = $row;

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.admin.inc,v 1.1.2.6 2009/04/14 13:51:14 islandusurper Exp $
+// $Id: uc_ups.admin.inc,v 1.1.2.7 2009/04/18 07:29:17 islandusurper Exp $
 
 /**
  * @file
@@ -206,7 +206,15 @@ function theme_uc_ups_confirm_shipment($form) {
   $output .= '<div class="shipment-data">';
   $method = uc_ups_shipping_method();
   $output .= '<b>'. $method['ups']['quote']['accessorials'][$_SESSION['ups']['service']] .'</b><br />';
-  $output .= '<i>'. check_plain($_SESSION['ups']['rate']['type']) .'</i>: '. uc_currency_format($_SESSION['ups']['rate']['amount']) .' ('. check_plain($_SESSION['ups']['rate']['currency']) .')<br />';
+  $context = array(
+    'revision' => 'formatted',
+    'location' => 'shipping-ups-confirm',
+    'subject' => array(
+      'ups_info' => $_SESSION['ups'],
+      'field' => 'amount',
+    ),
+  );
+  $output .= '<i>'. check_plain($_SESSION['ups']['rate']['type']) .'</i>: '. uc_price($_SESSION['ups']['rate']['amount'], $context) .' ('. check_plain($_SESSION['ups']['rate']['currency']) .')<br />';
   $ship_date = $_SESSION['ups']['ship_date'];
   $output .= 'Ship date: '. format_date(gmmktime(12, 0, 0, $ship_date['month'], $ship_date['day'], $ship_date['year']), 'custom', variable_get('uc_date_format_default', 'm/d/Y'));
   $exp_delivery = $_SESSION['ups']['expected_delivery'];

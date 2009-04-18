@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.12.2.10 2009/03/17 19:19:27 islandusurper Exp $
+// $Id: uc_taxes.module,v 1.12.2.11 2009/04/18 07:29:18 islandusurper Exp $
 
 /**
  * @file
@@ -145,6 +145,13 @@ function uc_taxes_order($op, $arg1, $arg2) {
       $changes = array();
       $line_items = uc_line_item_tax('load', $arg1);
       //$arg1->line_items = uc_order_load_line_items($arg1, TRUE);
+      $context = array(
+        'revision' => 'formatted',
+        'location' => 'tax-changes-log',
+        'subject' => array(
+          'order' => $arg1,
+        ),
+      );
       if (is_array($arg1->line_items)) {
         //drupal_set_message('<pre>'. var_export($arg1->line_items, TRUE) .'</pre>');
         foreach ($arg1->line_items as $i => $line) {
@@ -153,9 +160,10 @@ function uc_taxes_order($op, $arg1, $arg2) {
             foreach ($line_items as $id => $new_line) {
               if ($new_line['title'] == $line['title']) {
                 if ($new_line['amount'] != $line['amount']) {
+                  $context['subject']['line_item'] = $new_line;
                   uc_order_update_line_item($line['line_item_id'], $new_line['title'], $new_line['amount'], $new_line['data']);
                   $arg1->line_items[$i]['amount'] = $new_line['amount'];
-                  $changes[] = t('Changed %title to %amount.', array('%amount' => uc_currency_format($new_line['amount']), '%title' => $new_line['title']));
+                  $changes[] = t('Changed %title to %amount.', array('%amount' => uc_price($new_line['amount'], $context), '%title' => $new_line['title']));
                 }
                 unset($line_items[$id]);
                 $delete = FALSE;
@@ -175,7 +183,8 @@ function uc_taxes_order($op, $arg1, $arg2) {
           uc_order_line_item_add($arg1->order_id, $line['id'], $line['title'], $line['amount'], $line['weight'], $line['data']);
           $line['type'] = 'tax';
           $arg1->line_items[] = $line;
-          $changes[] = t('Added %amount for %title.', array('%amount' => uc_currency_format($line['amount']), '%title' => $line['title']));
+          $context['subject']['line_item'] = $line;
+          $changes[] = t('Added %amount for %title.', array('%amount' => uc_price($line['amount'], $context), '%title' => $line['title']));
         }
       }
       if (count($changes)) {

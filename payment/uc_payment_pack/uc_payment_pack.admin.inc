@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_pack.admin.inc,v 1.1.2.5 2009/04/02 21:01:47 islandusurper Exp $
+// $Id: uc_payment_pack.admin.inc,v 1.1.2.6 2009/04/18 07:29:15 islandusurper Exp $
 
 /**
  * @file
@@ -12,7 +12,16 @@
  */
 function uc_payment_pack_receive_check_form($form_state, $order) {
   $balance = uc_payment_balance($order);
-  $form['balance'] = array('#value' => uc_currency_format($balance));
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'receive-check-form',
+  );
+  $options = array(
+    'sign' => FALSE,
+    'thou' => FALSE,
+    'dec' => '.',
+  );
+  $form['balance'] = array('#value' => uc_price($balance, $context));
   $form['order_id'] = array(
     '#type' => 'hidden',
     '#value' => $order->order_id,
@@ -25,7 +34,7 @@ function uc_payment_pack_receive_check_form($form_state, $order) {
   $form['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Amount'),
-    '#default_value' => uc_currency_format($balance, FALSE, FALSE),
+    '#default_value' => uc_price($balance, $context, $options),
     '#size' => 10,
     '#field_prefix' => variable_get('uc_sign_after_amount', FALSE) ? '' : variable_get('uc_currency_sign', '$'),
     '#field_suffix' => variable_get('uc_sign_after_amount', FALSE) ? variable_get('uc_currency_sign', '$') : '',

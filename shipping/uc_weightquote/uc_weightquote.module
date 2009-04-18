@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.module,v 1.5.2.7 2009/02/13 22:01:15 islandusurper Exp $
+// $Id: uc_weightquote.module,v 1.5.2.8 2009/04/18 07:29:18 islandusurper Exp $
 
 /**
  * @file
@@ -173,16 +173,34 @@ function uc_weightquote_shipping_method() {
  *   A JSON object containing the shipping quote for the order.
  */
 function uc_weightquote_quote($products, $details) {
+  $method = uc_weightquote_shipping_method();
+
+  $context = array(
+    'revision' => 'altered',
+    'location' => 'shipping-weightquote-quote',
+    'subject' => array(
+      'method' => $method,
+    ),
+  );
+
   $rate = 0;
   foreach ($products as $product) {
     $node = node_load($product->nid);
-    $rate += $node->weightquote * $product->qty * $product->weight * uc_weight_conversion($node->weight_units, variable_get('uc_weight_unit', 'lb'));
+    $context['subject']['order_product'] = $product;
+    $price_info = array(
+      'price' => $node->weightquote,
+      'qty' => $product->qty,
+    );
+    $rate += uc_price($price_info, $context) * $product->weight * uc_weight_conversion($node->weight_units, variable_get('uc_weight_unit', 'lb'));
   }
   $rate += variable_get('uc_weightquote_base_rate', 0);
 
-  $method = uc_weightquote_shipping_method();
+  unset($context['subject']['order_product']);
+  $altered = uc_price($rate, $context);
+  $context['revision'] = 'formatted';
+  $formatted = uc_price($rate, $context);
 
-  $quotes[] = array('rate' => $rate, 'format' => uc_currency_format($rate), 'option_label' => $method['weightquote']['quote']['accessorials'][0]);
+  $quotes[] = array('rate' => $altered, 'format' => $formatted, 'option_label' => $method['weightquote']['quote']['accessorials'][0]);
 
   return $quotes;
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.17 2009/04/14 13:51:16 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.18 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -726,14 +726,21 @@ function uc_order_condition_is_shippable($order, $settings) {
   return uc_order_is_shippable($order);
 }
 
-// Check an user name
+// Check a user name
 function uc_order_condition_user_name($order, $settings) {
-  if ($account = uc_order_user_load($order)) {
-    return $account->name == $settings['name'];
-  }
-  else {
+  if (empty($order->uid)) {
     // Anonymous users have no names.
     return empty($settings['name']);
+  }
+  else {
+    // Load from the order.
+    if ($account = uc_order_user_load($order)) {
+      return $account->name == $settings['name'];
+    }
+    // Or, if the user doesn't exist anymore, return FALSE
+    else {
+      return FALSE;
+    }
   }
 }
 

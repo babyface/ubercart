@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.install,v 1.11.2.7 2009/03/17 19:19:29 islandusurper Exp $
+// $Id: uc_product_kit.install,v 1.11.2.8 2009/04/18 07:29:17 islandusurper Exp $
 
 /**
  * @file
@@ -181,6 +181,15 @@ function uc_product_kit_update_6001() {
 }
 
 function uc_product_kit_update_6002() {
+  $ret = array();
+
+  // Update moved to 6003 to fix flawed beta5 installations.
+  // See http://drupal.org/node/400720.
+
+  return $ret;
+}
+
+function uc_product_kit_update_6003() {
   $ret = array();
 
   if (!db_column_exists('uc_product_kits', 'synchronized')) {

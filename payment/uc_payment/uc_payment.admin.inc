@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.admin.inc,v 1.1.2.7 2009/02/10 21:58:17 islandusurper Exp $
+// $Id: uc_payment.admin.inc,v 1.1.2.8 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -297,10 +297,21 @@ function uc_payment_by_order_form($form_state, $order) {
   $total = $order->order_total;
   $payments = uc_payment_load_payments($order->order_id);
 
-  $form['order_total'] = array('#value' => uc_currency_format($total));
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'order-payments-admin',
+    'subject' => array(
+      'order' => $order,
+      'total' => $total,
+    ),
+  );
+  $form['order_total'] = array('#value' => uc_price($total, $context));
   $form['payments'] = tapir_get_table('uc_payments_table');
+
+  $context = array('revision' => 'themed-original');
   if ($payments !== FALSE) {
     foreach ($payments as $payment) {
+      $context['subject']['payment'] = $payment;
       $form['payments'][$payment->receipt_id]['#attributes'] = array('valign' => 'top');
       $form['payments'][$payment->receipt_id]['received'] = array(
         '#value' => format_date($payment->received, 'custom', variable_get('uc_date_format_default', 'm/d/Y') .'<b\r>H:i:s'),
@@ -312,11 +323,13 @@ function uc_payment_by_order_form($form_state, $order) {
         '#value' => ($payment->method == '') ? t('Unknown') : $payment->method,
       );
       $form['payments'][$payment->receipt_id]['amount'] = array(
-        '#value' => uc_currency_format($payment->amount),
+        '#value' => uc_price($payment->amount, $context),
       );
       $total -= $payment->amount;
+      unset($context['subject']['payment']);
+      $context['subject']['total'] = $total;
       $form['payments'][$payment->receipt_id]['balance'] = array(
-        '#value' => uc_currency_format($total),
+        '#value' => uc_price($total, $context, array('cache' => FALSE)),
       );
       $form['payments'][$payment->receipt_id]['comment'] = array(
         '#value' => ($payment->comment == '') ? '-' : filter_xss_admin($payment->comment),
@@ -333,7 +346,8 @@ function uc_payment_by_order_form($form_state, $order) {
       );
     }
   }
-  $form['balance'] = array('#value' => uc_currency_format($total));
+
+  $form['balance'] = array('#value' => uc_price($total, $context));
   $form['order_id'] = array(
     '#type' => 'hidden',
     '#value' => $order->order_id,
@@ -411,8 +425,16 @@ function uc_payment_delete_confirm_form($form_state, $order, $payment) {
     drupal_goto('admin/store/orders/'. $order->order_id .'/payments');
   }
 
+  $context = array(
+    'revision' => 'formatted',
+    'location' => 'payment-delete',
+    'subject' => array(
+      'payment' => $payment,
+    ),
+  );
+
   $desc = '<strong>'. t('Payment information:') .'</strong> '
-        . t('@method payment of @amount received on @date.', array('@method' => $payment->method, '@amount' => uc_currency_format($payment->amount), '@date' => format_date($payment->received, 'short')));
+        . t('@method payment of @amount received on @date.', array('@method' => $payment->method, '@amount' => uc_price($payment->amount, $context), '@date' => format_date($payment->received, 'short')));
 
   $form['order_id'] = array(
     '#type' => 'value',

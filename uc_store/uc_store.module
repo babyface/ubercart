@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.18 2009/04/02 21:01:47 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.19 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -318,6 +318,16 @@ function uc_store_menu() {
     'file' => 'uc_store.admin.inc',
   );
 
+  $items['admin/store/settings/price-handlers'] = array(
+    'title' => 'Price handler settings',
+    'description' => 'Select which price handlers to use for your store.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_price_settings_form'),
+    'access arguments' => array('administer store'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'uc_store.admin.inc',
+  );
+
   return $items;
 }
 
@@ -329,6 +339,7 @@ function uc_store_init() {
 
   require_once($dir .'/includes/summaries.inc');
   require_once($dir .'/includes/tapir.inc');
+  require_once($dir .'/includes/uc_price.inc');
 
   drupal_add_css($dir .'/uc_store.css');
 }
@@ -351,6 +362,16 @@ function uc_store_elements() {
   return $types;
 }
 
+/**
+ * Implementation of hook_flush_caches().
+ */
+function uc_store_flush_caches() {
+  return array('cache_uc_price');
+}
+
+/**
+ * Implementation of hook_theme().
+ */
 function uc_store_theme() {
   return array(
     'uc_admin_dashboard' => array(
@@ -368,8 +389,14 @@ function uc_store_theme() {
     'tapir_table' => array(
       'arguments' => array('form' => NULL),
     ),
+    'uc_price_settings_form' => array(
+      'arguments' => array('form' => NULL),
+    ),
     'summary_overview' => array(
       'arguments' => array(),
+    ),
+    'uc_price' => array(
+      'arguments' => array('value' => 0, 'context' => array(), 'options' => array()),
     ),
   );
 }
@@ -479,9 +506,9 @@ function uc_store_footer() {
     case 'node':
       // No footer on /node or /node/[type]/add.
       // Only add a footer on /node/[nid] if that node is a product.
-      if (!function_exists('uc_product_node_info') || count($parts) < 1 || intval($parts[1]) == 0) {
+      if (count($parts) < 1 || intval($parts[1]) == 0) {
         $node = node_load($parts[1]);
-        if ($node == FALSE || !uc_product_is_product($node->type)) {
+        if ($node == FALSE || !function_exists('uc_product_node_info') || !uc_product_is_product($node->type)) {
           break;
         }
       }
@@ -529,6 +556,33 @@ function uc_store_exit() {
 /******************************************************************************
  * Callback Functions, Forms, and Tables
  ******************************************************************************/
+
+// Theme a formatted price for display.
+function theme_uc_price($value, $context, $options) {
+  // Fixup class names.
+  if (!is_array($context['class'])) {
+    $context['class'] = array();
+  }
+  foreach ($context['class'] as $key => $class) {
+    $context['class'][$key] = 'uc-price-'. $class;
+  }
+  $context['class'][] = 'uc-price';
+  // Class the element.
+  $output = '<div class="'. implode(' ', $context['class']) .'">';
+  // Prefix(es).
+  if ($options['label'] && isset($options['prefixes'])) {
+    $output .= implode('', $options['prefixes']);
+  }
+  // Value.
+  $output .= $value;
+  // Suffix(es).
+  if ($options['label'] && isset($options['suffixes'])) {
+    $output .= implode('', $options['suffixes']);
+  }
+  $output .= '</div>';
+
+  return $output;
+}
 
 // Themes the dashboard on the admin/store page.
 function theme_uc_admin_dashboard($type, $menus) {
@@ -714,8 +768,12 @@ function uc_store_address_fields_form_reset($form_id, &$form_state) {
 function uc_store_js_util($func) {
   switch ($func) {
     case 'currency_format':
+      $context = array(
+        'revision' => 'formatted-original',
+        'location' => 'js-util-currency-format',
+      );
       $amount = is_numeric($_POST['amount']) ? $_POST['amount'] : 0;
-      $output = uc_currency_format($amount);
+      $output = uc_price($amount, $context);
       break;
     case 'zone_select':
       $country_id = intval($_POST['country_id']) > 0 ? intval($_POST['country_id']) : uc_store_default_country();

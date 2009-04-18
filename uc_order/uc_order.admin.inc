@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.14 2009/04/02 21:01:46 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.15 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -451,6 +451,14 @@ function uc_order_admin($sql = NULL, $args = NULL, $search = FALSE) {
     $address = 'billing';
   }
 
+  $context = array(
+    'revision' => 'themed-original',
+    'location' => 'orders-admin',
+    'subject' => array(
+      'field' => 'order_total',
+    ),
+  );
+
   $result = pager_query($sql, variable_get('uc_order_number_displayed', 30), 0, NULL, $args);
   while ($order = db_fetch_object($result)) {
     if ($address == 'shipping') {
@@ -470,12 +478,14 @@ function uc_order_admin($sql = NULL, $args = NULL, $search = FALSE) {
         $order_name = t('User: !name', array('!name' => $account));
       }
     }
+
+    $context['subject']['order'] = $order;
     $rows[] = array(
       'data' => array(
         array('data' => uc_order_actions($order, TRUE), 'nowrap' => 'nowrap'),
         array('data' => $order->order_id),
         array('data' => check_plain($order_name), 'nowrap' => 'nowrap'),
-        array('data' => uc_currency_format($order->order_total, TRUE), 'align' => 'right', 'nowrap' => 'true'),
+        array('data' => uc_price($order->order_total, $context), 'align' => 'right', 'nowrap' => 'true'),
         array('data' => format_date($order->created, 'custom', variable_get('uc_date_format_default', 'm/d/Y')), 'align' => 'center'),
         array('data' => $order->title),
       ),
@@ -945,9 +955,13 @@ function uc_order_history($user) {
   );
 
   $result = pager_query("SELECT o.order_id, o.created, os.title, SUM(op.qty) AS products, o.order_total AS total FROM {uc_orders} AS o LEFT JOIN {uc_order_statuses} AS os ON o.order_status = os.order_status_id LEFT JOIN {uc_order_products} AS op ON o.order_id = op.order_id WHERE o.uid = %d AND o.order_status IN ". uc_order_status_list('general', TRUE) ." GROUP BY o.order_id, o.created, os.title, o.order_total". tablesort_sql($header), 20, 0, "SELECT COUNT(*) FROM {uc_orders} WHERE uid = %d AND order_status NOT IN ". uc_order_status_list('specific', TRUE), $user->uid);
-
+  $context = array(
+    'revision' => 'themed-original',
+    'location' => 'order-history',
+  );
   // Build a table based on the customer's orders.
   while ($order = db_fetch_object($result)) {
+    $context['subject'] = array('order' => $order);
     $link = l($order->order_id, 'user/'. $user->uid .'/order/'. $order->order_id);
     if (user_access('view all orders')) {
       $link .= '<span class="order-admin-icons">'. uc_order_actions($order, TRUE) .'</span>';
@@ -957,7 +971,7 @@ function uc_order_history($user) {
       array('data' => $link, 'nowrap' => 'nowrap'),
       array('data' => $order->title),
       array('data' => (!is_null($order->products) ? $order->products : 0), 'align' => 'center'),
-      array('data' => uc_currency_format($order->total, TRUE), 'align' => 'right'),
+      array('data' => uc_price($order->total, $context), 'align' => 'right'),
     );
   }
 

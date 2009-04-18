@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_links.admin.inc,v 1.1.2.2 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: uc_cart_links.admin.inc,v 1.1.2.3 2009/04/18 07:29:18 islandusurper Exp $
 
 /**
  * @file
@@ -21,7 +21,7 @@ function uc_cart_links_settings_form() {
   $form['uc_cart_links_add_show'] = array(
     '#type' => 'checkbox',
     '#title' => t('Display the cart link product action when you add a product to your cart.'),
-    '#default_value' => variable_get('uc_cart_links_add_show', TRUE),
+    '#default_value' => variable_get('uc_cart_links_add_show', FALSE),
   );
   $form['uc_cart_links_track'] = array(
     '#type' => 'checkbox',

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_tax_report.module,v 1.1.2.1 2009/02/27 22:41:35 islandusurper Exp $
+// $Id: uc_tax_report.module,v 1.1.2.2 2009/04/18 07:29:18 islandusurper Exp $
 
 /**
  * @file
@@ -120,13 +120,17 @@ function uc_tax_report_report_page($start_date = NULL, $end_date = NULL, $status
   $amount = 0;
   $star_legend = '';
 
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'tax-report',
+  );
   foreach($totals as $line) {
     $row = array(
       $line['name'],
       $line['jurisdiction'],
       number_format($line['rate'] * 100, 3) . '%',
-      uc_currency_format($line['taxable_amount']),
-      uc_currency_format($line['amount']),
+      uc_price($line['taxable_amount'], $context),
+      uc_price($line['amount'], $context),
     );
     $rows[] = $row;
     $csv_rows[] = $row;
@@ -140,7 +144,7 @@ function uc_tax_report_report_page($start_date = NULL, $end_date = NULL, $status
       '*',
       '*',
       '*',
-      uc_currency_format($line['amount']),
+      uc_price($line['amount'], $context),
     );
     $rows[] = $row;
     $csv_rows[] = $row;
@@ -154,8 +158,8 @@ function uc_tax_report_report_page($start_date = NULL, $end_date = NULL, $status
     t('Total'),
     '',
     '',
-    uc_currency_format($taxable_amount),
-    uc_currency_format($amount),
+    uc_price($taxable_amount, $context),
+    uc_price($amount, $context),
   );
   $rows[] = $row;
   $csv_rows[] = $row;

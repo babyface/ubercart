@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.admin.inc,v 1.1.2.6 2009/04/02 21:01:48 islandusurper Exp $
+// $Id: uc_shipping.admin.inc,v 1.1.2.7 2009/04/18 07:29:15 islandusurper Exp $
 
 /**
  * @file
@@ -587,7 +587,15 @@ function uc_shipping_shipment_view($order, $shipment) {
   else {
     $rows[] = array(t('Services:'), $shipment->accessorials);
   }
-  $rows[] = array(t('Cost:'), uc_currency_format($shipment->cost));
+  $context = array(
+    'revision' => 'formatted',
+    'location' => 'shipping-order-view',
+    'subject' => array(
+      'shipment' => $shipment,
+      'field' => 'cost',
+    ),
+  );
+  $rows[] = array(t('Cost:'), uc_price($shipment->cost, $context));
   $output .= theme('table', array(), $rows, array('style' => 'width:auto'));
   $output .= '</div>';
   foreach ($shipment->packages as $package) {

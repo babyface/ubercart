@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.admin.inc,v 1.1.2.1 2009/01/19 20:37:30 islandusurper Exp $
+// $Id: uc_google_checkout.admin.inc,v 1.1.2.2 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -312,16 +312,20 @@ function uc_google_checkout_terminal($order) {
     }
   }
   $balance = uc_payment_balance($order);
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'google-checkout-terminal',
+  );
   $output .= '<p>'. t('Use this terminal to process credit card payments:') .'</p>'
             .'<table style="width: auto;"><tbody style="border-top: 0px;"><tr>'
             .'<td><strong>'. t('Order total:') .'</strong> </td><td>'
-           . uc_currency_format($order->order_total) .'</td></tr><tr><td>'
+           . uc_price($order->order_total, $context) .'</td></tr><tr><td>'
             .'<strong>'. t('Balance:') .'</strong> </td><td>'
-           . uc_currency_format($balance) .'</td></tr><tr><td><strong>'
+           . uc_price($balance, $context) .'</td></tr><tr><td><strong>'
            . t('Google Checkout total:') .'</strong></td><td>'
-           . uc_currency_format($order->gc_total) .'</td></tr><tr><td><strong>'
+           . uc_price($order->gc_total, $context) .'</td></tr><tr><td><strong>'
            . t('Google Checkout balance:') .'</strong></td<td>'
-           . uc_currency_format($gc_balance) .'</td></tr></tbody></table>';
+           . uc_prcie($gc_balance, $context) .'</td></tr></tbody></table>';
 
   if (in_array($order->financial_state, array('REVIEWING', 'CHARGEABLE', 'CHARGED'))) {
     $output .= drupal_get_form('uc_google_checkout_terminal_form', $order, $gc_balance);
@@ -360,10 +364,21 @@ function uc_google_checkout_terminal_form($form_state, $order, $amount = 0) {
       '#value' => 'charge',
     );
   }
+
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'google-checkout-terminal-form',
+  );
+  $options = array(
+    'sign' => FALSE,
+    'thou' => FALSE,
+    'dec' => '.',
+  );
+
   $form['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Amount'),
-    '#default_value' => uc_currency_format($amount, FALSE, FALSE),
+    '#default_value' => uc_price($amount, $context, $options),
     '#size' => 10,
     '#weight' => 0,
     '#field_prefix' => variable_get('uc_sign_after_amount', FALSE) ? '' : variable_get('uc_currency_sign', '$'),

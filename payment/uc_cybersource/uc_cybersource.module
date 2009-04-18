@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cybersource.module,v 1.4.2.5 2009/01/02 20:18:41 islandusurper Exp $
+// $Id: uc_cybersource.module,v 1.4.2.6 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -218,7 +218,17 @@ function uc_cybersource_charge($order_id, $amount, $data) {
 
   $order = uc_order_load($order_id);
 
-  $amount = uc_currency_format($amount, FALSE, FALSE, '.');
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'cybersource-charge',
+  );
+  $options = array(
+    'sign' => FALSE,
+    'thou' => FALSE,
+    'dec' => '.',
+  );
+
+  $amount = uc_price($amount, $context, $options);
 
   $cc_type = NULL;
   if (isset($order->payment_details['cc_type'])) {
@@ -370,7 +380,11 @@ function _uc_cybersource_post_charge($order, $amount, $data, $cc_type, $country)
     }
 
     // Create the order and payment ledger comments.
-    $o_comment = t('<b>Credit card !type:</b> !amount<br /><b>Decision: @decision</b><br /><b>Reason:</b> !reason', array('!type' => variable_get('uc_cybersource_transaction_type', 'sale'), '!amount' => uc_currency_format($nvp['orderAmount']), '@decision' => $nvp['decision'], '!reason' => _parse_cs_reason_code($nvp['reasonCode'])));
+    $context = array(
+      'revision' => 'formatted-original',
+      'location' => 'cybersource-post-charge',
+    );
+    $o_comment = t('<b>Credit card !type:</b> !amount<br /><b>Decision: @decision</b><br /><b>Reason:</b> !reason', array('!type' => variable_get('uc_cybersource_transaction_type', 'sale'), '!amount' => uc_price($nvp['orderAmount'], $context), '@decision' => $nvp['decision'], '!reason' => _parse_cs_reason_code($nvp['reasonCode'])));
     $p_comment = t('!id<br />!decision, Reason: !reason', array('!id' => $nvp['orderPage_serialNumber'], '!decision' => $nvp['decision'], '!reason' => $nvp['reasonCode']));
     if (!empty($nvp['ccAuthReply_avsCode'])) {
       $o_comment .= t('<br /><b>AVS:</b> !avs', array('!avs' => _parse_cs_avs_code($nvp['ccAuthReply_avsCode'])));
@@ -593,7 +607,11 @@ function _uc_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
     $types = uc_credit_transaction_types();
 
     // Create the order and payment ledger comments.
-    $o_comment = t('<b>@type:</b> @amount<br /><b>Decision: @decision</b><br /><b>Reason:</b> !reason', array('@type' => $types[$data['txn_type']], '@amount' => uc_currency_format($amount), '@decision' => $reply->decision, '!reason' => _parse_cs_reason_code($reply->reasonCode)));
+    $context = array(
+      'revision' => 'formatted-original',
+      'location' => 'cybersource-soap-charge',
+    );
+    $o_comment = t('<b>@type:</b> @amount<br /><b>Decision: @decision</b><br /><b>Reason:</b> !reason', array('@type' => $types[$data['txn_type']], '@amount' => uc_price($amount, $context), '@decision' => $reply->decision, '!reason' => _parse_cs_reason_code($reply->reasonCode)));
     $p_comment = t('<b>@type:</b><br />@id<br />@decision, Reason: !reason', array('@type' => $types[$data['txn_type']], '@id' => $reply->requestID, '@decision' => $reply->decision, '!reason' => $reply->reasonCode));
 
     if (!empty($reply->ccAuthReply->avsCode)) {
@@ -674,10 +692,18 @@ function uc_cybersource_tax_test($order) {
   // Fetch the taxes for the order.
   $data = uc_cybersource_calculate_tax($order);
 
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'cybersource-tax-test',
+  );
+
   // Build an item list for the taxes.
   $items = array();
   foreach ($data as $tax) {
-    $items[] = t('@tax: @amount', array('@tax' => $tax['name'], '@amount' => uc_currency_format($tax['amount'])));
+    $context['subject'] = array(
+      'tax' => $tax,
+    );
+    $items[] = t('@tax: @amount', array('@tax' => $tax['name'], '@amount' => uc_price($tax['amount'], $context)));
   }
 
   // Display a message if there are no taxes.
@@ -885,7 +911,11 @@ function uc_cybersource_calculate_tax($order) {
 
       // If it doesn't, log an error message and simply return the total.
       if ($total != floatval($reply->taxReply->totalTaxAmount)) {
-        watchdog('uc_cybersource', 'Tax calculation produced uneven results. Expected a total of @total, received the following: @dump', array('@total' => uc_currency_format($reply->taxReply->totalTaxAmount), '@dump' => '<pre>'. print_r($result, TRUE) .'</pre>'), WATCHDOG_ERROR);
+        $context = array(
+          'revision' => 'formatted-original',
+          'location' => 'cybersource-calculate-tax',
+        );
+        watchdog('uc_cybersource', 'Tax calculation produced uneven results. Expected a total of @total, received the following: @dump', array('@total' => uc_price($reply->taxReply->totalTaxAmount, $context), '@dump' => '<pre>'. print_r($result, TRUE) .'</pre>'), WATCHDOG_ERROR);
 
         $result = array(
           array(

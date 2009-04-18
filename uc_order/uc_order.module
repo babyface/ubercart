@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.20 2009/04/14 13:51:17 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.21 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -369,7 +369,15 @@ function uc_order_token_values($type, $object = NULL) {
       if (is_array($order->line_items)) {
         foreach ($order->line_items as $key => $value) {
           if ($value['type'] == 'subtotal') {
-            $subtotal = uc_currency_format($order->line_items[$key]['amount']);
+            $context = array(
+              'revision' => 'formatted',
+              'location' => 'order-subtotal-token',
+              'subject' => array(
+                'order' => $order,
+                'line_item' => $order->line_items[$key],
+              ),
+            );
+            $subtotal = uc_price($order->line_items[$key]['amount'], $context);
           }
           if ($value['type'] == 'shipping' && is_null($ship_method)) {
             $ship_method = $value['title'];
@@ -377,7 +385,15 @@ function uc_order_token_values($type, $object = NULL) {
         }
       }
       $values['order-subtotal'] = $subtotal;
-      $values['order-total'] = uc_currency_format($order->order_total);
+      $context = array(
+        'revision' => 'formatted-original',
+        'location' => 'order-total-token',
+        'subject' => array(
+          'order' => $order,
+          'field' => 'order_total',
+        ),
+      );
+      $values['order-total'] = uc_price($order->order_total, $context);
       $values['order-email'] = check_plain($order->primary_email);
       $values['order-shipping-address'] = uc_order_address($order, 'delivery');
       $values['order-shipping-phone'] = check_plain($order->delivery_phone);

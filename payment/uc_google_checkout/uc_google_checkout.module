@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.4 2009/04/14 13:51:18 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.5 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -497,7 +497,16 @@ function uc_google_checkout_cart_request($order) {
           $shipping_options .= '<carrier-pickup>'. $settings['pickup'] .'</carrier-pickup>';
           $shipping_options .= '<shipping-type>'. $services[$key] .'</shipping-type>';
           if ($settings['fixed_charge']) {
-            $shipping_options .= '<additional-fixed-charge currency="'. variable_get('uc_currency_code', 'USD') .'">'. number_format($settings['fixed_charge'], 2, '.', '') .'</additional-fixed-charge>';
+            $context = array(
+              'revision' => 'formatted-original',
+              'location' => 'google-checkout-cart-request',
+            );
+            $options = array(
+              'sign' => FALSE,
+              'thou' => FALSE,
+              'dec' => '.',
+            );
+            $shipping_options .= '<additional-fixed-charge currency="'. variable_get('uc_currency_code', 'USD') .'">'. uc_price($settings['fixed_charge'], $context, $options) .'</additional-fixed-charge>';
           }
           if ($settings['percent_adjustment']) {
             $shipping_options .= '<additional-variable-charge-percent>'. (float)$settings['percent_adjustment'] .'</additional-variable-charge-percent>';
@@ -926,7 +935,11 @@ function uc_google_checkout_charge_order($charge) {
   if ($order_id) {
     uc_payment_enter($order_id, 'google_checkout', $charge->{'latest-charge-amount'}, 0,
                      '', t('Payment received by Google Checkout'));
-    uc_order_comment_save($order_id, 0, t('Payment of %amount received by Google Checkout.', array('%amount' => uc_currency_format($charge->{'latest-charge-amount'}))), 'admin', 'chargeable');
+    $context = array(
+      'revision' => 'formatted-original',
+      'location' => 'google-checkout-charge-comment',
+    );
+    uc_order_comment_save($order_id, 0, t('Payment of %amount received by Google Checkout.', array('%amount' => uc_price($charge->{'latest-charge-amount'}, $context))), 'admin', 'chargeable');
     uc_google_checkout_notification_acknowledgement($charge['serial-number']);
   }
   else {
@@ -957,7 +970,11 @@ function uc_google_checkout_refund_order($refund) {
   if ($order_id) {
     uc_payment_enter($order_id, 'google_checkout', -$refund->{'latest-refund-amount'},
                      0, '', t('Refund received by Google Checkout'));
-    uc_order_comment_save($order_id, 0, t('Refund of %amount received by Google Checkout.', array('%amount' => uc_currency_format($refund->{'latest-refund-amount'}))),
+    $context = array(
+      'revision' => 'formatted-original',
+      'location' => 'google-checkout-refund-comment',
+    );
+    uc_order_comment_save($order_id, 0, t('Refund of %amount received by Google Checkout.', array('%amount' => uc_price($refund->{'latest-refund-amount'}, $context))),
                           'admin', 'processing');
     uc_google_checkout_notification_acknowledgement($refund['serial-number']);
   }

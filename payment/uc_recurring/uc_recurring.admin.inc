@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_recurring.admin.inc,v 1.1.2.2 2008/11/07 21:13:25 islandusurper Exp $
+// $Id: uc_recurring.admin.inc,v 1.1.2.3 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -34,6 +34,11 @@ function uc_recurring_admin() {
     $result = pager_query("SELECT * FROM {uc_recurring_users} AS ru" . tablesort_sql($header), 30);
   }
 
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'recurring-admin',
+  );
+
   while ($fee = db_fetch_array($result)) {
     $ops = array();
 
@@ -46,7 +51,7 @@ function uc_recurring_admin() {
     $rows[] = array(
       l($fee['rfid'], 'admin/store/orders/recurring/view/fee/'. $fee['rfid']),
       l($fee['order_id'], 'admin/store/orders/'. $fee['order_id']),
-      uc_currency_format($fee['fee_amount']),
+      uc_price($fee['fee_amount'], $context),
       $fee['remaining_intervals'] == 0 ? '-' : format_date($fee['next_charge'], 'small'),
       array('data' => check_plain($fee['regular_interval']), 'nowrap' => 'nowrap'),
       $fee['remaining_intervals'],
@@ -102,8 +107,12 @@ function uc_recurring_admin_filter_form_submit($form, &$form_state) {
 // Confirm a recurring fee charge.
 function uc_recurring_admin_charge_form() {
   $fee = uc_recurring_fee_load('user', arg(4));
+  $context = array(
+    'revision' => 'formatted-original',
+    'location' => 'recurring-charge-form',
+  );
   $form['message'] = array(
-    '#value' => '<div>'. t('Are you sure you want to charge the customer !amount at this time?', array('!amount' => uc_currency_format($fee['fee_amount']))) .'</div>',
+    '#value' => '<div>'. t('Are you sure you want to charge the customer !amount at this time?', array('!amount' => uc_price($fee['fee_amount'], $context))) .'</div>',
   );
   $form['submit'] = array(
     '#type' => 'submit',

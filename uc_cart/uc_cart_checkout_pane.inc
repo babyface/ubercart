@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.5.2.3 2009/01/02 20:18:41 islandusurper Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.5.2.4 2009/04/18 07:29:17 islandusurper Exp $
 
 /**
  * @file
@@ -27,13 +27,26 @@ function uc_checkout_pane_cart($op) {
     case 'review':
       $items = uc_cart_get_contents();
       $output = '<table>';
+      $context = array(
+        'location' => 'cart-review-item',
+        'subject' => array(),
+      );
       foreach ($items as $item) {
         $desc = check_plain($item->title);
         foreach (module_implements('cart_item_description') as $module) {
           $desc .= module_invoke($module, 'cart_item_description', $item);
         }
+
+        $price_info = array(
+          'price' => $item->price,
+          'qty' => $item->qty,
+        );
+        $context['subject'] = array(
+          'cart_item' => $item,
+          'node' => node_load($item->nid),
+        );
         $output .= '<tr valign="top"><td>'. $item->qty .'x</td><td width="100%">'. $desc
-                  .'</td><td nowrap="nowrap">'. uc_currency_format($item->price * $item->qty) .'</td></tr>';
+                  .'</td><td nowrap="nowrap">'. uc_price($price_info, $context) .'</td></tr>';
       }
       $output .= '</table>';
       $review[] = $output;
@@ -557,9 +570,23 @@ function theme_cart_review_table($show_subtotal = TRUE) {
     array('data' => t('Price'), 'class' => 'price'),
   );
 
+  $context = array(
+    'location' => 'cart-checkout-item',
+  );
+
   // Set up table rows.
   foreach (uc_cart_get_contents() as $item) {
-    $total = ($item->qty) ? $item->qty * $item->price : $item->price;
+    $price_info = array(
+      'price' => $item->price,
+      'qty' => $item->qty,
+    );
+    $context['subject'] = array(
+      'cart_item' => $item,
+      'node' => node_load($item->nid),
+    );
+    $context['revision'] = 'altered';
+
+    $total = uc_price($price_info, $context);
     $subtotal += $total;
 
     $description = check_plain($item->title);
@@ -567,17 +594,24 @@ function theme_cart_review_table($show_subtotal = TRUE) {
       $description .= module_invoke($module, 'cart_item_description', $item);
     }
 
+    // Remove node from context to prevent the price from being altered.
+    unset($context['subject']);
+    $context['revision'] = 'themed-original';
     $rows[] = array(
-      array('data' => t('@qtyx', array('@qty' => $item->qty)), 'class' => 'qty'),
+      array('data' => t('@qty&times;', array('@qty' => $item->qty)), 'class' => 'qty'),
       array('data' => $description, 'class' => 'products'),
-      array('data' => check_plain(uc_currency_format($total)), 'class' => 'price'),
+      array('data' => uc_price($total, $context), 'class' => 'price'),
     );
   }
 
   // Add the subtotal as the final row.
   if ($show_subtotal) {
+    $context = array(
+      'revision' => 'formatted-original',
+      'location' => 'cart-checkout-subtotal',
+    );
     $rows[] = array(
-      'data' => array(array('data' => '<span id="subtotal-title">' . t('Subtotal:') . '</span> ' . check_plain(uc_currency_format($subtotal)), 'colspan' => 4, 'class' => 'subtotal')),
+      'data' => array(array('data' => '<span id="subtotal-title">' . t('Subtotal:') . '</span> ' . uc_price($subtotal, $context), 'colspan' => 4, 'class' => 'subtotal')),
       'class' => 'subtotal',
     );
   }

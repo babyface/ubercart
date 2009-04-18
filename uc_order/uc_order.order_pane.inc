@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.9 2009/02/10 21:58:14 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.10 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -331,11 +331,18 @@ function uc_order_pane_line_items($op, $arg1) {
       }
       usort($line_items, 'uc_weight_sort');
 
+      $context = array(
+        'location' => 'order-line-items',
+        'subject' => array(
+          'order' => $arg1,
+        ),
+      );
       $output = '<table class="line-item-table">';
       foreach ($line_items as $item) {
+        $context['subject']['line_item'] = $item;
         $output .= '<tr><td class="li-title">'. check_plain($item['title']) .':</td>'
                   .'<td class="li-amount" nowrap="nowrap">'
-                 . uc_currency_format($item['amount']) .'</td></tr>';
+                 . uc_price($item['amount'], $context) .'</td></tr>';
       }
       $output .= '</table>';
       return $output;
@@ -394,6 +401,13 @@ function uc_order_pane_line_items($op, $arg1) {
         '#collapsed' => FALSE,
         '#tree' => TRUE,
       );
+
+      $context = array(
+        'location' => 'order-edit-line-items',
+        'subject' => array(
+          'order' => $arg1,
+        ),
+      );
       foreach ($line_items as $item) {
         $form['line_items'][$item['line_item_id']]['li_id'] = array(
           '#type' => 'hidden',
@@ -425,11 +439,12 @@ function uc_order_pane_line_items($op, $arg1) {
           );
         }
         else {
+          $context['subject']['line_item'] = $item;
           $form['line_items'][$item['line_item_id']]['title'] = array(
             '#value' => check_plain($item['title']),
           );
           $form['line_items'][$item['line_item_id']]['amount'] = array(
-            '#value' => uc_currency_format($item['amount']),
+            '#value' => uc_price($item['amount'], $context),
           );
         }
       }
@@ -724,6 +739,10 @@ function op_products_view_table($products) {
     'weight' => 5,
   );
 
+  $context = array(
+    'location' => 'order-view-products',
+  );
+
   if (is_array($products)) {
     foreach ($products as $product) {
       $data = array();
@@ -745,18 +764,29 @@ function op_products_view_table($products) {
         '#value' => check_plain($product->model),
         '#cell_attributes' => array('align' => 'center', 'nowrap' => 'nowrap'),
       );
+
+      $context['subject'] = array(
+        'order_product' => $product,
+        'field' => 'cost',
+      );
       if (user_access('administer products')) {
         $data['cost'] = array(
-          '#value' => uc_currency_format($product->cost),
+          '#value' => uc_price($product->cost, $context),
           '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
         );
       }
+
+      $context['subject']['field'] = 'price';
+      $price_info = array(
+        'price' => $product->price,
+        'qty' => $product->qty,
+      );
       $data['price'] = array(
-        '#value' => uc_currency_format($product->price),
+        '#value' => uc_price($product->price, $context),
         '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
       );
       $data['total'] = array(
-        '#value' => uc_currency_format($product->qty * $product->price),
+        '#value' => uc_price($price_info, $context),
         '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
       );
       $data['#attributes'] = array('valign' => 'top');
@@ -825,6 +855,10 @@ function op_products_customer_table($products) {
     'weight' => 5,
   );
 
+  $context = array(
+    'location' => 'order-customer-products',
+  );
+
   if (is_array($products)) {
     foreach ($products as $product) {
       $data = array();
@@ -846,18 +880,29 @@ function op_products_customer_table($products) {
         '#value' => check_plain($product->model),
         '#cell_attributes' => array('align' => 'center', 'nowrap' => 'nowrap'),
       );
+
+      $context['subject'] = array(
+        'order_product' => $product,
+        'field' => 'cost',
+      );
       if (user_access('administer products')) {
         $data['cost'] = array(
-          '#value' => uc_currency_format($product->cost),
+          '#value' => uc_price($product->cost, $context),
           '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
         );
       }
+
+      $context['subject']['field'] = 'price';
+      $price_info = array(
+        'price' => $product->price,
+        'qty' => $product->qty,
+      );
       $data['price'] = array(
-        '#value' => uc_currency_format($product->price),
+        '#value' => uc_price($product->price, $context),
         '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
       );
       $data['total'] = array(
-        '#value' => uc_currency_format($product->qty * $product->price),
+        '#value' => uc_price($price_info, $context),
         '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
       );
       $data['#attributes'] = array('valign' => 'top');

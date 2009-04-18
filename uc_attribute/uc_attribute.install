@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.install,v 1.10.2.6 2009/03/17 19:19:27 islandusurper Exp $
+// $Id: uc_attribute.install,v 1.10.2.7 2009/04/18 07:29:19 islandusurper Exp $
 
 /**
  * @file
@@ -19,6 +19,14 @@ function uc_attribute_schema() {
         'not null' => TRUE,
       ),
       'name' => array(
+        'description' => t('Name of the attribute'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'label' => array(
+        'description' => t('Label to use when attribute is displayed'),
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
@@ -131,6 +139,13 @@ function uc_attribute_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'label' => array(
+        'description' => t('Label to use when attribute is displayed'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
       'ordering' => array(
         'description' => t('Determines the list position of attributes.'),
         'type' => 'int',
@@ -231,6 +246,13 @@ function uc_attribute_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
+      ),
+      'label' => array(
+        'description' => t('Label to use when attribute is displayed'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
       ),
       'ordering' => array(
         'description' => t('Determines the list position of attributes.'),
@@ -574,7 +596,7 @@ function uc_attribute_update_6000() {
   db_change_field($ret, 'uc_attribute_options', 'aid', 'aid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_attribute_options', 'oid', 'oid', array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE));
   if ($GLOBALS['db_type'] == 'pgsql') {
-    db_add_primary_key($ret, 'uc_attributes', array('oid'));
+    db_add_primary_key($ret, 'uc_attribute_options', array('oid'));
   }
 
   db_drop_primary_key($ret, 'uc_class_attributes');
@@ -631,3 +653,24 @@ function uc_attribute_update_6002() {
   return $ret;
 }
 
+/**
+ * Add label to attributes to allow differently named attributes to show with
+ * the same label on product add to cart forms.
+ */
+function uc_attribute_update_6003() {
+  $ret = array();
+
+  $spec = array(
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'default' => '',
+  );
+  db_add_field($ret, 'uc_attributes', 'label', $spec);
+  db_add_field($ret, 'uc_class_attributes', 'label', $spec);
+  db_add_field($ret, 'uc_product_attributes', 'label', $spec);
+
+  $ret[] = array('success' => TRUE, 'query' => 'Added label to product attributes.');
+
+  return $ret;
+}

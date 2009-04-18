@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.9.2.9 2009/02/27 22:41:32 islandusurper Exp $
+// $Id: uc_order.install,v 1.9.2.10 2009/04/18 07:29:16 islandusurper Exp $
 
 /**
  * @file
@@ -818,11 +818,11 @@ function uc_order_update_6000() {
   db_change_field($ret, 'uc_order_products', 'order_id', 'order_id', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), array('indexes' => array('order_id' => array('order_id'))));
   db_change_field($ret, 'uc_order_products', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_order_products', 'qty', 'qty', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'small', 'not null' => TRUE, 'default' => 0));
-  db_change_field($ret, 'uc_order_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
-  db_change_field($ret, 'uc_order_products', 'price', 'price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
-  db_change_field($ret, 'uc_order_products', 'weight', 'weight', array('type' => 'float', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_order_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2,'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_order_products', 'price', 'price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_order_products', 'weight', 'weight', array('type' => 'float', 'not null' => TRUE, 'default' => 0));
   if ($GLOBALS['db_type'] == 'pgsql') {
-    db_add_primary_key($ret, 'uc_order_products', array('order_products_id'));
+    db_add_primary_key($ret, 'uc_order_products', array('order_product_id'));
   }
 
   db_change_field($ret, 'uc_order_statuses', 'weight', 'weight', array('type' => 'int', 'size' => 'small', 'not null' => TRUE, 'default' => 0));
@@ -836,8 +836,8 @@ function uc_order_update_6001() {
 
   // Make sure that those who had the faulty 6000 update have the right
   // precision and scale.
-  db_change_field($ret, 'uc_order_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
-  db_change_field($ret, 'uc_order_products', 'price', 'price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_order_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
+  db_change_field($ret, 'uc_order_products', 'price', 'price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2,'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }
