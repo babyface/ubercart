@@ -1,4 +1,4 @@
-/* $Id: uc_product.css,v 1.9.2.4 2009/01/19 20:31:27 islandusurper Exp $ */
+/* $Id: uc_product.css,v 1.9.2.5 2009/04/22 17:35:40 islandusurper Exp $ */
 
 .product-image {
   float: right;
@@ -7,6 +7,17 @@
   padding-top: 4px;
   padding-left: 4px;
   margin-left: 4px;
+}
+
+.uc-price-display {
+  float: right;
+  clear: right;
+  width: 100px;
+  text-align: center;
+  font-size: 1.3em;
+  font-weight: bold;
+  padding-bottom: 4px;
+  padding-left: 4px;
 }
 
 .display-price {

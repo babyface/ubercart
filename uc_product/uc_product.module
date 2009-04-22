@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.21 2009/04/14 13:51:13 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.22 2009/04/22 17:35:40 islandusurper Exp $
 
 /**
  * @file
@@ -695,27 +695,47 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
     'add_to_cart' => 10,
   ));
 
+  $context = array(
+    'location' => 'product-view',
+    'class' => array(
+      'product',
+    ),
+    'subject' => array(
+      'node' => $node,
+    ),
+  );
+
   if (module_exists('imagecache') && ($field = variable_get('uc_image_'. $node->type, '')) && isset($node->$field) && file_exists($node->{$field}[0]['filepath'])) {
     $node->content['image'] = array('#value' => theme('uc_product_image', $node->$field, $teaser, $page),
       '#access' => $enabled['image'],
       '#weight' => $weight['image'],
     );
   }
-  $node->content['display_price'] = array('#value' => theme('uc_product_price', $node->sell_price, 'display-price', TRUE),
+
+  $context['class'][1] = 'display';
+  $context['subject']['field'] = 'sell_price';
+  $node->content['display_price'] = array('#value' => uc_price($node->sell_price, $context),
     '#access' => $enabled['display_price'],
     '#weight' => $weight['display_price'],
   );
+
   if (!$teaser) {
     $node->content['model'] = array('#value' => theme('uc_product_model', $node->model, $teaser, $page),
       '#access' => $enabled['model'],
       '#weight' => $weight['model'],
     );
     $node->content['body']['#weight'] = 1;
-    $node->content['list_price'] = array('#value' => theme('uc_product_price', $node->list_price, 'list-price'),
+
+    $context['class'][1] = 'list';
+    $context['subject']['field'] = 'list_price';
+    $node->content['list_price'] = array('#value' => uc_price($node->list_price, $context),
       '#access' => $enabled['list_price'],
       '#weight' => $weight['list_price'],
     );
-    $node->content['cost'] = array('#value' => theme('uc_product_price', $node->cost, 'cost'),
+
+    $context['class'][1] = 'cost';
+    $context['subject']['field'] = 'cost';
+    $node->content['cost'] = array('#value' => uc_price($node->cost, $context),
       '#access' => $enabled['cost'] && user_access('administer products'),
       '#weight' => $weight['cost'],
     );
@@ -724,7 +744,9 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
     $node->content['#attributes'] = array('style' => 'display: inline');
   }
 
-  $node->content['sell_price'] = array('#value' => theme('uc_product_price', $node->sell_price, 'sell-price', $teaser),
+  $context['class'][1] = 'sell';
+  $context['subject']['field'] = 'sell_price';
+  $node->content['sell_price'] = array('#value' => uc_price($node->sell_price, $context, array('label' => !$teaser)),
     '#access' => $enabled['sell_price'],
     '#weight' => $weight['sell_price'],
   );
@@ -1076,7 +1098,21 @@ function uc_product_cart_display($item) {
   $element['title'] = array(
     '#value' => node_access('view', $node) ? l($item->title, 'node/'. $node->nid) : check_plain($item->title),
   );
-  $element['#total'] = $item->price * $item->qty;
+
+  $context = array(
+    'revision' => 'altered',
+    'location' => 'cart-item',
+    'subject' => array(
+      'cart_item' => $item,
+      'node' => $node,
+    ),
+  );
+  $price_info = array(
+    'price' => $item->price,
+    'qty' => $item->qty,
+  );
+
+  $element['#total'] = uc_price($price_info, $context);
   $element['data'] = array('#type' => 'hidden', '#value' => serialize($item->data));
   $element['qty'] = array(
     '#type' => 'textfield',
@@ -1199,6 +1235,9 @@ function uc_product_table($args = array()) {
     '#rows' => array(),
   );
 
+  $context = array(
+    'location' => 'product-tapir-table',
+  );
   foreach ($args as $nid) {
     $data = array();
     $node = node_load($nid);
@@ -1217,11 +1256,16 @@ function uc_product_table($args = array()) {
       '#value' => l($node->title, 'node/'. $node->nid),
       '#cell_attributes' => array('width' => '100%'),
     );
+
+    $context['subject'] = array('node' => $node);
     if ($enabled['list_price']) {
-      $data['list_price'] = array('#value' => uc_currency_format($node->list_price), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
+      $context['subject']['field'] = 'list_price';
+      $data['list_price'] = array('#value' => uc_price($node->list_price, $context), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
     }
     if ($enabled['sell_price']) {
-      $data['price'] = array('#value' => theme('uc_product_price', $node->sell_price, 'sell-price', TRUE), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
+      $context['subject']['field'] = 'sell_price';
+      $context['class'] = array('sell-price');
+      $data['price'] = array('#value' => uc_price($node->sell_price, $context, array('label' => FALSE)), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
     }
 
     if (module_exists('uc_cart') && arg(0) != 'admin' && $enabled['add_to_cart']) {

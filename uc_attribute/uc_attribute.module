@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.20 2009/04/18 07:29:18 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.21 2009/04/22 17:35:41 islandusurper Exp $
 
 /**
  * @file
@@ -322,7 +322,7 @@ function uc_attribute_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
         $output = '';
         $attributes = uc_product_get_attributes($node->nid);
         foreach ($attributes as $attribute) {
-          $output .= '<h3>'. uc_attribute_get_name($attribute) .'</h3>';
+          $output .= '<h3>'. _uc_attribute_get_name($attribute) .'</h3>';
           foreach ($attribute->options as $option) {
             $output .= $option->name .' ';
           }
@@ -596,19 +596,35 @@ function _uc_attribute_alter_form($product) {
 
   $form_attributes = array();
 
+  $context = array(
+    'revision' => 'formatted',
+    'location' => 'product-attribute-form-element',
+    'subject' => array(),
+  );
+
   // Loop through each product attribute and generate its form element.
   foreach ($attributes as $attribute) {
+    $context['subject']['attribute'] = $attribute;
     // Build the attribute's options array.
     $options = array();
     foreach ($attribute->options as $option) {
+      $context['subject']['option'] = $option;
       switch (variable_get('uc_attribute_option_price_format', 'adjustment')) {
         case 'total':
-          $display_price = in_array($attribute->aid, $priced_attributes) ? ', '. uc_currency_format(($product->sell_price + $option->price) * $qty) : '';
+          $price_info = array(
+            'price' => $product->sell_price + $option->price,
+            'qty' => $qty,
+          );
+          $display_price = in_array($attribute->aid, $priced_attributes) ? ', '. uc_price($price_info, $context) : '';
           if (count($priced_attributes) == 1) {
             break;
           }
         case 'adjustment':
-          $display_price = ($option->price != 0 ? ', '. ($option->price > 0 ? '+' : '') . uc_currency_format($option->price * $qty) : '');
+          $price_info = array(
+            'price' => $option->price,
+            'qty' => $qty,
+          );
+          $display_price = ($option->price != 0 ? ', '. ($option->price > 0 ? '+' : '') . uc_price($price_info, $context) : '');
           break;
         case 'none':
         default:
@@ -703,7 +719,7 @@ function theme_uc_attribute_add_to_cart($form) {
 /**
  * Returns the attribute name to display.
  *
- * An attributes with a label set returns that label except when set to
+ * An attribute with a label set returns that label except when set to
  * '<none>'. In this case, a NULL is returned. The $title argument forces the
  * function to return the name property instead of label when label is set to
  * '<none>'.
