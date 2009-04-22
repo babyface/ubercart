@@ -1,5 +1,5 @@
 <?php
-// $Id: hooks.php,v 1.1.2.11 2009/04/02 21:01:47 islandusurper Exp $
+// $Id: hooks.php,v 1.1.2.12 2009/04/22 17:45:10 islandusurper Exp $
 
 /**
  * @file
@@ -1137,6 +1137,35 @@ function hook_ucga_display() {
   if (arg(0) == 'cart' && arg(1) == '2checkout' && arg(2) == 'complete') {
     return TRUE;
   }
+}
+
+/**
+ * Use this hook to define price handlers for your module. You may define one
+ * price alterer and one price formatter. You may also define options that are
+ * merged into the options array in order of each price alterer's weight.
+ */
+function hook_uc_price_handler() {
+  return array(
+    'alter' => array(
+      'title' => t('My price handler'),
+      'description' => t('Handles my price alteration needs.'),
+      'callback' => 'my_price_handler_alter',
+    ),
+    'format' => array(
+      'title' => t('My price handler'),
+      'description' => t('Handles my price formatting needs.'),
+      'callback' => 'my_price_handler_format',
+    ),
+    'options' => array(
+      'sign' => variable_get('uc_currency_sign', '*'),
+      'sign_after' => TRUE,
+      'prec' => 4,
+      'dec' => ',',
+      'thou' => '.',
+      'label' => FALSE,
+      'my_option_that_my_formatter_recognizes' => 1337,
+    )
+  );
 }
 
 /**

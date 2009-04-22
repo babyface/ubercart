@@ -1,4 +1,4 @@
-# $Id: uc_cybersource.pot,v 1.1.2.1 2009/01/06 22:39:24 hass Exp $
+# $Id: uc_cybersource.pot,v 1.1.2.2 2009/04/22 17:45:11 islandusurper Exp $
 #
 # LANGUAGE translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>

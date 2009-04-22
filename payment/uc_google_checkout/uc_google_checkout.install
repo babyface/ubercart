@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.install,v 1.1.2.2 2009/04/22 17:35:41 islandusurper Exp $
+// $Id: uc_google_checkout.install,v 1.1.2.3 2009/04/22 17:45:10 islandusurper Exp $
 
 /**
  * @file

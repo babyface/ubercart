@@ -1,4 +1,4 @@
-# $Id: uc_cart_links.pot,v 1.1.2.2 2009/04/22 17:35:40 islandusurper Exp $
+# $Id: uc_cart_links.pot,v 1.1.2.3 2009/04/22 17:45:10 islandusurper Exp $
 #
 # LANGUAGE translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>

@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.module,v 1.1.2.15 2009/04/14 13:51:15 islandusurper Exp $
+// $Id: ca.module,v 1.1.2.16 2009/04/22 17:45:12 islandusurper Exp $
 
 /**
  * @file
@@ -156,6 +156,10 @@ function ca_perm() {
  *   TRUE or FALSE indicating if at least one predicate was evaluated.
  */
 function ca_pull_trigger() {
+  // Trigger actions can pull other triggers. Lock predicates when they are
+  // marked for evaluation so they can't be evaluated again.
+  static $locked;
+
   $args = func_get_args();
   $trigger = array_shift($args);
 
@@ -185,11 +189,17 @@ function ca_pull_trigger() {
 
   // Loop through the predicates and evaluate them one by one.
   foreach ($predicates as $pid => $predicate) {
-    // If all of a predicate's conditions evaluate to TRUE...
-    if (ca_evaluate_conditions($predicate, $arguments)) {
-      // Then perform its actions.
-      ca_perform_actions($predicate, $arguments);
+    // Prevent the predicate from being evaluated if it already has been with
+    // the same arguments.
+    $key = $pid . serialize($arguments);
+    if (!isset($locked[$key])) {
+      // If all of a predicate's conditions evaluate to TRUE...
+      if (ca_evaluate_conditions($predicate, $arguments)) {
+        // Then perform its actions.
+        ca_perform_actions($predicate, $arguments);
+      }
     }
+    $locked[$key] = TRUE;
   }
 
   return TRUE;
@@ -247,10 +257,6 @@ function ca_parse_trigger_args($trigger, $args) {
  *   An array of predicates.
  */
 function ca_load_trigger_predicates($trigger, $all = FALSE) {
-  // Trigger actions can pull other triggers. Lock predicates when they are
-  // marked for evaluation so they can't be evaluated again.
-  static $locked = array();
-
   // Load all the module defined predicates.
   $predicates = module_invoke_all('ca_predicate');
 
@@ -266,18 +272,8 @@ function ca_load_trigger_predicates($trigger, $all = FALSE) {
     if (!$all && $value['#status'] <= 0) {
       unset($predicates[$key]);
     }
-    else {
-      // Prevent predicates from being evaluated more than once in a page load.
-      if (in_array($key, $locked)) {
-        unset($predicates[$key]);
-      }
-      else {
-        $locked[$key] = $key;
-      }
-
-      if (!isset($value['#weight'])) {
-        $predicates[$key]['#weight'] = 0;
-      }
+    elseif (!isset($value['#weight'])) {
+      $predicates[$key]['#weight'] = 0;
     }
   }
 
@@ -288,28 +284,22 @@ function ca_load_trigger_predicates($trigger, $all = FALSE) {
     // these, we unset the module defined predicate and reconsider adding it in.
     if (!is_numeric($data['pid'])) {
       unset($predicates[$data['pid']]);
-      unset($locked[$data['pid']]);
     }
 
     // Add predicates from the database to our return array if $all == TRUE or
     // if the predicate is active.
     if ($all || $data['status'] > 0) {
-      // Prevent predicates from being evaluated more than once in a page load.
-      if (!in_array($data['pid'], $locked)) {
-        $predicate = ca_prepare_db_predicate($data);
+      $predicate = ca_prepare_db_predicate($data);
 
-        // Set the actions' weight if necessary and sort actions by their weight.
-        for ($i = 0; $i < count($predicate['#actions']); $i++) {
-          if (!isset($predicate['#actions'][$i]['#weight'])) {
-            $predicate['#actions'][$i]['#weight'] = 0;
-          }
+      // Set the actions' weight if necessary and sort actions by their weight.
+      for ($i = 0; $i < count($predicate['#actions']); $i++) {
+        if (!isset($predicate['#actions'][$i]['#weight'])) {
+          $predicate['#actions'][$i]['#weight'] = 0;
         }
-        usort($predicate['#actions'], 'ca_weight_sort');
-
-        $predicates[$data['pid']] = $predicate;
-
-        $locked[$key] = $data['pid'];
       }
+      usort($predicate['#actions'], 'ca_weight_sort');
+
+      $predicates[$data['pid']] = $predicate;
     }
   }
 
