@@ -1,4 +1,4 @@
-# $Id: uc_payment.pot,v 1.1 2008/07/10 12:40:57 islandusurper Exp $
+# $Id: uc_payment.pot,v 1.2 2009/04/22 17:41:53 islandusurper Exp $
 #
 # LANGUAGE translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>
@@ -637,7 +637,7 @@ msgstr ""
 msgid "Ubercart - core (optional)"
 msgstr ""
 
-#: (duplicate) uc_payment.install:41 ;74 ;156 
+#: (duplicate) uc_payment.install:41 ;74 ;156
 msgid "Payment received"
 msgstr ""
 
