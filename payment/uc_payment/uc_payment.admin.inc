@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.admin.inc,v 1.1.2.8 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_payment.admin.inc,v 1.1.2.9 2009/04/28 21:03:17 islandusurper Exp $
 
 /**
  * @file
@@ -298,7 +298,7 @@ function uc_payment_by_order_form($form_state, $order) {
   $payments = uc_payment_load_payments($order->order_id);
 
   $context = array(
-    'revision' => 'formatted-original',
+    'revision' => 'themed-original',
     'location' => 'order-payments-admin',
     'subject' => array(
       'order' => $order,
@@ -308,7 +308,6 @@ function uc_payment_by_order_form($form_state, $order) {
   $form['order_total'] = array('#value' => uc_price($total, $context));
   $form['payments'] = tapir_get_table('uc_payments_table');
 
-  $context = array('revision' => 'themed-original');
   if ($payments !== FALSE) {
     foreach ($payments as $payment) {
       $context['subject']['payment'] = $payment;

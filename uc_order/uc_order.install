@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.9.2.10 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_order.install,v 1.9.2.11 2009/04/28 21:03:15 islandusurper Exp $
 
 /**
  * @file
@@ -920,6 +920,64 @@ function uc_order_update_6007() {
   if (!db_column_exists('uc_order_line_items', 'data')) {
     db_add_field($ret, 'uc_order_line_items', 'data', array('type' => 'text'));
   }
+
+  return $ret;
+}
+
+// Remove new users' passwords from order data.
+function uc_order_update_6008(&$sandbox) {
+  $ret = array();
+
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_order_id'] = 0;
+    $sandbox['max'] = db_result(db_query("SELECT COUNT(order_id) FROM {uc_orders} WHERE data LIKE '%%new_user%%'"));
+  }
+
+  $limit = 100;
+
+  $result = db_query_range("SELECT order_id, data FROM {uc_orders} WHERE data LIKE '%%new_user%%' AND order_id > %d ORDER BY order_id", $sandbox['order_id'], 0, $limit);
+  while ($order = db_fetch_object($result)) {
+    $order->data = unserialize($order->data);
+    if (isset($order->data['new_user']['pass'])) {
+      unset($order->data['new_user']['pass']);
+      db_query("UPDATE {uc_orders} SET data = '%s' WHERE order_id = %d", serialize($order->data), $order->order_id);
+    }
+
+    $sandbox['progress']++;
+    $sandbox['current_order_id'] = $order->order_id;
+  }
+
+  $t = get_t();
+  $ret[] = array('success' => TRUE, 'query' => $t("Removed new users' passwords from order data."));
+
+  $ret['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+
+  return $ret;
+}
+
+function uc_order_update_6009() {
+  $ret = array();
+
+  $count = 0;
+  $result = db_query("SELECT pid, actions FROM {ca_predicates} WHERE actions LIKE '%%uc_order_email_invoice%%'");
+  while ($predicate = db_fetch_object($result)) {
+    $save = FALSE;
+    $actions = unserialize($predicate->actions);
+    foreach ($actions as $key => $action) {
+      if ($action['#name'] == 'uc_order_email_invoice') {
+        unset($actions[$key]['#settings']['format']);
+        $save = TRUE;
+      }
+    }
+    if ($save) {
+      db_query("UPDATE {ca_predicates} SET actions = '%s' WHERE pid = %d", serialize($actions), $predicate->pid);
+      $count++;
+    }
+  }
+
+  $t = get_t();
+  $ret[] = array('success' => TRUE, 'query' => $t('Fixed %count predicates with the action "uc_order_email_invoice".', array('%count' => $count)));
 
   return $ret;
 }

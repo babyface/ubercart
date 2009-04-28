@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.9 2009/04/18 07:29:19 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.10 2009/04/28 21:03:16 islandusurper Exp $
 
 /**
  * @file
@@ -407,7 +407,7 @@ function uc_attribute_option_form_submit($form, &$form_state) {
 function uc_attribute_option_delete_confirm($form_state, $attribute, $option) {
   if (empty($option)) {
     drupal_set_message(t('There is no option with that ID.'), 'error');
-    drupal_goto('admin/store/attributes/'. $aid .'/options');
+    drupal_goto('admin/store/attributes/'. $attribute->aid .'/options');
   }
   $aid = $attribute->aid;
   $oid = $option->oid;
@@ -470,7 +470,6 @@ function uc_object_attributes_form($form_state, $object, $type, $view = 'overvie
     $form['#tree'] = TRUE;
 
     $context = array(
-      'revision' => 'formatted',
       'location' => 'attribute-form-default-option',
     );
     if (count($attributes) > 0) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.ca.inc,v 1.1.2.12 2009/04/14 13:51:12 islandusurper Exp $
+// $Id: uc_cart.ca.inc,v 1.1.2.13 2009/04/28 21:03:14 islandusurper Exp $
 
 /**
  * @file
@@ -79,7 +79,6 @@ function uc_cart_ca_predicate() {
           'subject' => t('Your Order at [store-name]'),
           'template' => 'customer',
           'view' => 'checkout-mail',
-          'format' => 1,
         ),
       ),
     ),
@@ -105,7 +104,6 @@ function uc_cart_ca_predicate() {
           'subject' => t('New Order at [store-name]'),
           'template' => 'admin',
           'view' => 'admin-mail',
-          'format' => 1,
         ),
       ),
     ),

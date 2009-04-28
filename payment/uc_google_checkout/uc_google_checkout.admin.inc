@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.admin.inc,v 1.1.2.4 2009/04/22 17:45:10 islandusurper Exp $
+// $Id: uc_google_checkout.admin.inc,v 1.1.2.5 2009/04/28 21:03:15 islandusurper Exp $
 
 /**
  * @file
@@ -313,7 +313,7 @@ function uc_google_checkout_terminal($order) {
   }
   $balance = uc_payment_balance($order);
   $context = array(
-    'revision' => 'formatted-original',
+    'revision' => 'themed-original',
     'location' => 'google-checkout-terminal',
   );
   $output .= '<p>'. t('Use this terminal to process credit card payments:') .'</p>'

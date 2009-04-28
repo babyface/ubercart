@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.6.2.9 2009/04/18 07:29:15 islandusurper Exp $
+// $Id: uc_shipping.module,v 1.6.2.10 2009/04/28 21:03:15 islandusurper Exp $
 
 /**
  * @file
@@ -225,7 +225,7 @@ function uc_shipping_package_view($package) {
   $output = '';
   $rows = array();
 
-  $output .= '<div class="order-pane pos-left"><div class="order-pane-title">'. t('Package %id:', array('%id' => $package_id)) .'</div>';
+  $output .= '<div class="order-pane pos-left"><div class="order-pane-title">'. t('Package %id:', array('%id' => $package->package_id)) .'</div>';
   $rows[] = array(t('Contents:'), filter_xss_admin($package->description));
   if ($shipment) {
     $methods = module_invoke_all('shipping_method');

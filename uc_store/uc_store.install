@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.install,v 1.9.2.4 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_store.install,v 1.9.2.5 2009/04/28 21:03:14 islandusurper Exp $
 
 /**
  * @file
@@ -248,3 +248,16 @@ function uc_store_update_6001() {
   db_create_table($ret, 'cache_uc_price', $schema['cache_uc_price']);
   return $ret;
 }
+
+function uc_store_update_6002() {
+  $ret = array();
+
+  // UC Recurring was moved from core to http://drupal.org/project/uc_recurring.
+  // This will check for its existence and disable it, instructing the user to
+  // download and install the module from there.
+  module_disable(array('uc_recurring'));
+  $ret[] = array('success' => TRUE, 'query' => t("The Recurring Fees module was removed from core between Ubercart 2.0-rc1 and 2.0-rc2. If you were using it, it has been disabled and should be removed from your ubercart/payment directory if the old verion remains. You may continue using the module by downloading and installing the latest <a href=\"http://drupal.org/project/uc_recurring\">UC Recurring 6.x-1.x</a> release from drupal.org.  New features for the module will be developed in the contributed version of the module starting with the 6.x-2.x branch."));
+
+  return $ret;
+}
+

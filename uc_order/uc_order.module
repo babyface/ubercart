@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.21 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.22 2009/04/28 21:03:15 islandusurper Exp $
 
 /**
  * @file
@@ -528,7 +528,14 @@ function uc_order_mail($key, &$message, $params) {
       // Strip newline characters from e-mail subjects.
       // TODO: Maybe drupal_mail_send() should do this? -LM
       $message['subject'] = str_replace(array("\r\n", "\r", "\n"), ' ', $subject);
-      $message['body'] = check_markup($body, $params['format'], FALSE);
+
+      // Apply an input format to the message body if specified.
+      if (isset($params['format'])) {
+        $message['body'] = check_markup($body, $params['format'], FALSE);
+      }
+      else {
+        $message['body'] = $body;
+      }
 
       break;
   }

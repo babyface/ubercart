@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.10 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.11 2009/04/28 21:03:15 islandusurper Exp $
 
 /**
  * @file
@@ -1038,7 +1038,7 @@ function op_admin_comments_view_table($comments) {
 function _order_pane_list($view = 'view') {
   static $panes;
 
-  if (count($panes) > 0 && $action !== 'rebuild') {
+  if (count($panes) > 0) {
     return $panes;
   }
 

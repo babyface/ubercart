@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_checkout_pane.inc,v 1.5.2.5 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_payment_checkout_pane.inc,v 1.5.2.6 2009/04/28 21:03:17 islandusurper Exp $
 
 /**
  * @file
@@ -102,7 +102,6 @@ function uc_checkout_pane_payment($op, &$arg1, $arg2) {
       usort($line_items, 'uc_weight_sort');
 
       $context = array(
-        'revision' => 'formatted',
         'location' => 'checkout-review-line-item',
       );
       foreach ($line_items as $line_item) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.admin.inc,v 1.1.2.7 2009/04/18 07:29:17 islandusurper Exp $
+// $Id: uc_ups.admin.inc,v 1.1.2.8 2009/04/28 21:03:16 islandusurper Exp $
 
 /**
  * @file
@@ -207,7 +207,6 @@ function theme_uc_ups_confirm_shipment($form) {
   $method = uc_ups_shipping_method();
   $output .= '<b>'. $method['ups']['quote']['accessorials'][$_SESSION['ups']['service']] .'</b><br />';
   $context = array(
-    'revision' => 'formatted',
     'location' => 'shipping-ups-confirm',
     'subject' => array(
       'ups_info' => $_SESSION['ups'],

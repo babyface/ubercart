@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.5.2.4 2009/04/18 07:29:17 islandusurper Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.5.2.5 2009/04/28 21:03:14 islandusurper Exp $
 
 /**
  * @file
@@ -607,7 +607,7 @@ function theme_cart_review_table($show_subtotal = TRUE) {
   // Add the subtotal as the final row.
   if ($show_subtotal) {
     $context = array(
-      'revision' => 'formatted-original',
+      'revision' => 'themed-original',
       'location' => 'cart-checkout-subtotal',
     );
     $rows[] = array(

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.admin.inc,v 1.1.2.3 2009/04/18 07:29:17 islandusurper Exp $
+// $Id: uc_credit.admin.inc,v 1.1.2.4 2009/04/28 21:03:16 islandusurper Exp $
 
 /**
  * @file
@@ -9,7 +9,7 @@
 
 // Displays the credit card terminal page.
 function uc_credit_terminal($order) {
-  $output = l(t('Return to order view screen.'), 'admin/store/orders/'. $order_id);
+  $output = l(t('Return to order view screen.'), 'admin/store/orders/'. $order->order_id);
 
   $output .= '<p>'. t('Use this terminal to process credit card payments through your default gateway.') .'</p>';
 

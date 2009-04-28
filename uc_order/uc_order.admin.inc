@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.15 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.16 2009/04/28 21:03:15 islandusurper Exp $
 
 /**
  * @file
@@ -287,7 +287,7 @@ function uc_order_panes_form() {
       );
       $form['panes'][$view][$pane['id']]['uc_order_pane_'. $pane['id'] .'_show_'. $view] = array(
         '#type' => 'checkbox',
-        '#default_value' => variable_get('uc_order_pane_'. $pane['id'] .'_show_'. $view, TRUE),
+        '#default_value' => variable_get('uc_order_pane_'. $pane['id'] .'_show_'. $view, $pane['enabled']),
       );
       $form['panes'][$view][$pane['id']]['uc_order_pane_'. $pane['id'] .'_enabled'] = &$form['panes'][$view][$pane['id']]['uc_order_pane_'. $pane['id'] .'_show_'. $view];
       $form['panes'][$view][$pane['id']]['uc_order_pane_'. $pane['id'] .'_weight_'. $view] = array(
@@ -1001,7 +1001,7 @@ function uc_order_view($order, $view = 'view') {
   $panes = _order_pane_list($view);
   foreach ($panes as $pane) {
     if (in_array($view, $pane['show']) &&
-        variable_get('uc_order_pane_'. $pane['id'] .'_show_'. $view, TRUE)) {
+        variable_get('uc_order_pane_'. $pane['id'] .'_show_'. $view, $pane['enabled'])) {
       $func = $pane['callback'];
       if (function_exists($func) && ($contents = $func($view, $order)) != NULL) {
         $output .= '<div class="order-pane '. $pane['class'] .'">';
@@ -1036,7 +1036,7 @@ function uc_order_edit_form($form_state, $order) {
   $panes = _order_pane_list('edit');
   foreach ($panes as $pane) {
     if (in_array('edit', $pane['show']) &&
-        variable_get('uc_order_pane_'. $pane['id'] .'_show_edit', TRUE)) {
+        variable_get('uc_order_pane_'. $pane['id'] .'_show_edit', $pane['enabled'])) {
       $func = $pane['callback'];
       if (function_exists($func) && ($contents = $func('edit-form', $order)) != NULL) {
         $form = array_merge($form, $contents);
@@ -1373,21 +1373,20 @@ function uc_order_add_line_item_form_submit($form, &$form_state) {
  * When the Catalog module or uBrowser aren't enabled, use this product select.
  */
 function uc_order_load_product_select($order) {
-  $args = uc_product_types();
+  $types = uc_product_types();
 
   if (!empty($_POST['search'])) {
     $search = strtolower(str_replace('*', '%', check_plain($_POST['search'])));
+    $search_args = array_merge($types, array($search, $search));
 
-    $args[] = $search;
-    $args[] = $search;
     $result = db_query("SELECT n.nid, n.title FROM {node} AS n LEFT JOIN "
                       ."{uc_products} AS p ON n.nid = p.nid WHERE n.type IN "
-                      ."(". db_placeholders($args, 'varchar') .") AND (LOWER(n.title) LIKE '%s' OR LOWER(p.model) LIKE '%s')"
-                      ." ORDER BY n.title", $args);
+                      ."(". db_placeholders($types, 'varchar') .") AND (LOWER(n.title) LIKE '%s' OR LOWER(p.model) LIKE '%s')"
+                      ." ORDER BY n.title", $search_args);
   }
   else {
-    $result = db_query("SELECT nid, title FROM {node} WHERE type IN (". db_placeholders($args, 'varchar') .") "
-                      ."ORDER BY title", $args);
+    $result = db_query("SELECT nid, title FROM {node} WHERE type IN (". db_placeholders($types, 'varchar') .") "
+                      ."ORDER BY title", $types);
   }
   while ($row = db_fetch_object($result)) {
     $options[$row->nid] = $row->title;

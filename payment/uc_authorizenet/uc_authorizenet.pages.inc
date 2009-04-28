@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_authorizenet.pages.inc,v 1.1.2.1 2008/11/07 21:13:22 islandusurper Exp $
+// $Id: uc_authorizenet.pages.inc,v 1.1.2.2 2009/04/28 21:03:14 islandusurper Exp $
 
 /**
  * @file
@@ -149,6 +149,6 @@ function uc_authorizenet_arb_user_cancel_form_submit($form, &$form_state) {
     drupal_set_message(t('An error has occurred. Please try again and contact us if the problem persists.'), 'error');
   }
 
-  $form_state['redirect'] = 'user/'. $uid;
+  $form_state['redirect'] = 'user/'. $form_state['values']['uid'];
 }
 

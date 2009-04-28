@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.20 2009/04/22 17:41:53 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.21 2009/04/28 21:03:15 islandusurper Exp $
 
 /**
  * @file
@@ -1135,9 +1135,6 @@ function uc_order_action_email_invoice_form($form_state, $settings = array()) {
     '#default_value' => $settings['subject'],
     '#required' => TRUE,
   );
-
-  // We add the #is_format element to allow us to locate and configure the filters.
-  $form['format'] = filter_form($settings['format']) + array('#is_format' => TRUE);
 
   $form['token_help'] = array(
     '#type' => 'fieldset',

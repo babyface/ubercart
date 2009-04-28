@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.20 2009/04/18 07:29:17 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.21 2009/04/28 21:03:14 islandusurper Exp $
 
 /**
  * @file
@@ -593,7 +593,7 @@ function theme_uc_cart_block_title($title, $icon_class = 'cart-empty', $collapsi
  * @ingroup themeable
  */
 function theme_uc_cart_block_title_icon($icon_class) {
-  return l('<span class="'. $icon_class .'" alt="'. t('View your shopping cart.') .'" title="'. t('View your shopping cart.') .'"></span>', 'cart', array('html' => TRUE));
+  return l('<span class="'. $icon_class .'" title="'. t('View your shopping cart.') .'"></span>', 'cart', array('html' => TRUE));
 }
 
  /**
@@ -709,7 +709,7 @@ function theme_uc_cart_block_items($items) {
  */
 function theme_uc_cart_block_summary($item_count, $item_text, $total, $summary_links) {
   $context = array(
-    'revision' => 'formatted-original',
+    'revision' => 'themed-original',
     'location' => 'cart-block-total',
   );
   // Build the basic table with the number of items in the cart and total.
@@ -870,7 +870,7 @@ function uc_cart_view_form($form_state, $items = NULL) {
   );
 
   $context = array(
-    'revision' => 'formatted-original',
+    'revision' => 'themed-original',
     'location' => 'cart-subtotal',
   );
   $i = 0;
@@ -1050,7 +1050,7 @@ function uc_cart_view_table($table) {
   }
 
   $context = array(
-    'revision' => 'formatted-original',
+    'revision' => 'themed-original',
     'location' => 'cart-table-subtotal',
   );
   $table[] = array(
@@ -1161,7 +1161,8 @@ function uc_cart_complete_sale($order, $login = FALSE) {
 
       // Update the order's uid in this request and in the database.
       $order->uid = $account->uid;
-      db_query("UPDATE {uc_orders} SET uid = %d WHERE order_id = %d", $order->uid, $order->order_id);
+      unset($order->data['new_user']['pass']);
+      db_query("UPDATE {uc_orders} SET uid = %d, data = '%s' WHERE order_id = %d", $order->uid, serialize($order->data), $order->order_id);
 
       // Login the user if specified.
       if ($login) {

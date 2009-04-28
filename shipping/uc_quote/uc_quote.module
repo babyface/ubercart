@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.module,v 1.5.2.18 2009/04/22 17:35:41 islandusurper Exp $
+// $Id: uc_quote.module,v 1.5.2.19 2009/04/28 21:03:15 islandusurper Exp $
 
 /**
  * @file
@@ -867,7 +867,6 @@ function uc_checkout_pane_quotes($op, &$arg1, $arg2) {
 
     case 'review':
       $context = array(
-        'revision' => 'formatted',
         'location' => 'shipping-quote-checkout-pane-review',
       );
       $result = db_query("SELECT * FROM {uc_order_line_items} WHERE order_id = %d AND type = '%s'", $arg1->order_id, 'shipping');

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.7 2009/04/22 17:45:10 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.8 2009/04/28 21:03:15 islandusurper Exp $
 
 /**
  * @file
@@ -826,7 +826,7 @@ function uc_google_checkout_accept_risk($risk) {
     }
     $assessment .= '<br />';
 
-    $cvs_response = $risk_info->{'cvs-response'};
+    $cvn_response = $risk_info->{'cvn-response'};
     switch ($cvn_response) {
       case 'M':
         $assessment .= t('- CVN match');

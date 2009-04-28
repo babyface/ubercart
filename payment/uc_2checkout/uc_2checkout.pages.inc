@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_2checkout.pages.inc,v 1.1.2.2 2008/11/07 21:13:29 islandusurper Exp $
+// $Id: uc_2checkout.pages.inc,v 1.1.2.3 2009/04/28 21:03:17 islandusurper Exp $
 
 /**
  * @file
@@ -51,7 +51,7 @@ function uc_2checkout_complete($cart_id = 0) {
   }
   else {
     drupal_set_message(t('Your order will be processed as soon as your payment clears at 2Checkout.com.'));
-    uc_order_comment_save($order_id, 0, t('!type payment is pending approval at 2Checkout.com.', array('!type' => $_POST['pay_method'] == 'CC' ? t('Credit card') : t('eCheck'))), 'admin');
+    uc_order_comment_save($order->order_id, 0, t('!type payment is pending approval at 2Checkout.com.', array('!type' => $_POST['pay_method'] == 'CC' ? t('Credit card') : t('eCheck'))), 'admin');
   }
 
   // Empty that cart...

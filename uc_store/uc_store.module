@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.19 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.20 2009/04/28 21:03:14 islandusurper Exp $
 
 /**
  * @file
@@ -424,7 +424,14 @@ function uc_store_token_values($type, $object = NULL) {
           $settings['logo'] = $settings['logo_path'];
         }
       }
-      $values['site-logo'] = '<img src="'. url($base_url .'/'. $settings['logo'], array('absolute' => TRUE)) .'" />';
+
+      // Use a logo; but only if we have one to use.
+      if (isset($settings['logo']) && $settings['logo']) {
+        $values['site-logo'] = '<img src="'. url($base_url .'/'. $settings['logo'], array('absolute' => TRUE)) .'" />';
+      }
+      else {
+        $values['site-logo'] = '';
+      }
 
       $values['store-name'] = variable_get('uc_store_name', t('Our store'));
       $values['store-url'] = variable_get('uc_store_url', $base_url);
@@ -568,7 +575,7 @@ function theme_uc_price($value, $context, $options) {
   }
   $context['class'][] = 'uc-price';
   // Class the element.
-  $output = '<div class="'. implode(' ', $context['class']) .'">';
+  $output = '<span class="'. implode(' ', $context['class']) .'">';
   // Prefix(es).
   if ($options['label'] && isset($options['prefixes'])) {
     $output .= implode('', $options['prefixes']);
@@ -579,7 +586,7 @@ function theme_uc_price($value, $context, $options) {
   if ($options['label'] && isset($options['suffixes'])) {
     $output .= implode('', $options['suffixes']);
   }
-  $output .= '</div>';
+  $output .= '</span>';
 
   return $output;
 }
@@ -2020,7 +2027,7 @@ function uc_store_image_widget_thickbox($rel_count) {
   else {
     $img_index = 'uc_image';
   }
-  return 'class="thickbox" rel="'. $img_index .'"';
+  return ' class="thickbox" rel="'. $img_index .'"';
 }
 
 /**
@@ -2033,6 +2040,6 @@ function uc_store_image_widget_lightbox2($rel_count) {
   else {
     $img_index = 'lightbox';
   }
-  return 'rel="'. $img_index .'"';
+  return ' rel="'. $img_index .'"';
 }
 

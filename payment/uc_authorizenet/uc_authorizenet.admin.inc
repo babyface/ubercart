@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_authorizenet.admin.inc,v 1.1.2.1 2008/11/07 21:13:22 islandusurper Exp $
+// $Id: uc_authorizenet.admin.inc,v 1.1.2.2 2009/04/28 21:03:15 islandusurper Exp $
 
 /**
  * @file
@@ -9,6 +9,7 @@
 
 // Displays a form to update a subscriptions's CC info.
 function uc_authorizenet_arb_admin_update_form($form_state, $rfid) {
+  $order = new stdClass();
   $form = array();
 
   $fee = uc_recurring_fee_load('user', $rfid);

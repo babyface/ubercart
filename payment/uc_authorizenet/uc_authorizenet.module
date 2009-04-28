@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_authorizenet.module,v 1.4.2.7 2009/04/18 07:29:19 islandusurper Exp $
+// $Id: uc_authorizenet.module,v 1.4.2.8 2009/04/28 21:03:15 islandusurper Exp $
 
 /**
  * @file
@@ -864,7 +864,7 @@ function uc_authorizenet_arb_create($order, $fee) {
 function uc_authorizenet_arb_update($subscription_id, $updates, $order_id = NULL) {
   $server = variable_get('uc_authnet_arb_mode', 'disabled');
 
-  unset($update['paymentSchedule']);
+  unset($updates['paymentSchedule']);
 
   // Build the data array for the request.
   $data = array(

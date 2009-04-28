@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.5.2.13 2009/04/18 07:29:17 islandusurper Exp $
+// $Id: uc_ups.module,v 1.5.2.14 2009/04/28 21:03:16 islandusurper Exp $
 
 /**
  * @file
@@ -812,7 +812,7 @@ function uc_ups_quote($products, $details) {
           if (user_access('configure quotes') && variable_get('uc_quote_display_debug', FALSE)) {
             $quotes[$ups_service]['error'][] = (string)$error->ErrorSeverity .' '. (string)$error->ErrorCode .': '. (string)$error->ErrorDescription;
           }
-          if ((string)$error->ErrorSeverity == 'HardError') {
+          if (strpos((string)$error->ErrorSeverity, 'Hard') !== FALSE) {
             // All or nothing quote. If some products can't be shipped by
             // a certain service, no quote is given for that service. If
             // that means no quotes are given at all, they'd better call in.
@@ -1037,10 +1037,13 @@ function uc_ups_fulfill_order_validate($form, &$form_state) {
   if (isset($response->Response->Error)) {
     $error = $response->Response->Error;
     $error_msg = (string)$error->ErrorSeverity .' Error '. (string)$error->ErrorCode .': '. (string)$error->ErrorDescription;
-    drupal_set_message($error_msg, 'error');
     //drupal_set_message('<pre>'. print_r($_SESSION['ups']['packages'], TRUE) .'</pre>' . htmlentities($request) .' <br /><br /> '. htmlentities($response->data));
-    if ((string)$error->ErrorSeverity == 'HardError') {
-      return NULL;
+    if (strpos((string)$error->ErrorSeverity, 'Hard') !== FALSE) {
+      form_set_error('', $error_msg);
+      return FALSE;
+    }
+    else {
+      drupal_set_message($error_msg, 'error');
     }
   }
   $charge = new stdClass();

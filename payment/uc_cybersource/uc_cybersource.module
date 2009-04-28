@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cybersource.module,v 1.4.2.6 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_cybersource.module,v 1.4.2.7 2009/04/28 21:03:16 islandusurper Exp $
 
 /**
  * @file
@@ -337,7 +337,7 @@ function _uc_cybersource_post_charge($order, $amount, $data, $cc_type, $country)
   $request['amount'] = $amount;
   $request['currency'] = $currency;
   $request['merchantID'] = $merchantID;
-  $request['orderNumber'] = $order_id;
+  $request['orderNumber'] = $order->order_id;
   $request['orderPage_timestamp'] = $timestamp;
   $request['orderPage_ignoreAVS'] = variable_get('uc_cybersource_avs', 'true') == 'true' ? 'false' : 'true';
   $request['orderPage_signaturePublic'] = $pub_digest;

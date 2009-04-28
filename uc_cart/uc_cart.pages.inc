@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.10 2009/04/18 07:29:17 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.11 2009/04/28 21:03:14 islandusurper Exp $
 
 /**
  * @file
@@ -145,7 +145,7 @@ function uc_cart_checkout_form() {
   }
 
   foreach ($panes as $pane) {
-    if (variable_get('uc_pane_'. $pane['id'] .'_enabled', TRUE)) {
+    if (variable_get('uc_pane_'. $pane['id'] .'_enabled', $pane['enabled'])) {
       $pane['prev'] = _uc_cart_checkout_prev_pane($panes, $pane['id']);
       $pane['next'] = _uc_cart_checkout_next_pane($panes, $pane['id']);
 

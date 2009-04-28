@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.2.2.14 2009/04/02 21:01:45 islandusurper Exp $
+// $Id: uc_file.module,v 1.2.2.15 2009/04/28 21:03:14 islandusurper Exp $
 
 /**
  * @file
@@ -703,6 +703,8 @@ function uc_file_feature_delete($feature) {
  * Form builder for hook_product_feature
  */
 function uc_file_feature_form($form_state, $node, $feature) {
+  $form = array();
+
   if (!is_dir(variable_get('uc_file_base_dir', NULL))) {
     drupal_set_message(t('A file directory needs to be configured in <a href="!url">product feature settings</a> before a file can be selected.', array('!url' => url('admin/store/settings/products/edit/features'))), 'error');
     return $form;

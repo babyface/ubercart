@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.5.2.12 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_paypal.module,v 1.5.2.13 2009/04/28 21:03:16 islandusurper Exp $
 
 /**
  * @file
@@ -202,7 +202,7 @@ function uc_paypal_wpp_settings_form() {
     '#type' => 'select',
     '#title' => t('Currency code'),
     '#description' => t('Transactions can only be processed in one of the listed currencies.'),
-    '#options' => drupal_map_assoc(array('AUD', 'CAD', 'EUR', 'GBP', 'JPY', 'USD')),
+    '#options' => _uc_paypal_currency_array(),
     '#default_value' => variable_get('uc_paypal_wpp_currency', 'USD'),
   );
   $form['paypal_wpp']['uc_paypal_wpp_server'] = array(
@@ -613,7 +613,7 @@ function uc_paypal_ec_checkout($form, &$form_state) {
     'METHOD' => 'SetExpressCheckout',
     'RETURNURL' => url('cart/echeckout/selected', array('absolute' => TRUE)),
     'CANCELURL' => url('uc_paypal/wps/cancel', array('absolute' => TRUE)),
-    'AMT' => uc_price($order->order_total, $checkout, $options),
+    'AMT' => uc_price($order->order_total, $context, $options),
     'CURRENCYCODE' => variable_get('uc_paypal_wpp_currency', 'USD'),
     'PAYMENTACTION' => variable_get('uc_paypal_wpp_payment_action', 'Sale'),
     'DESC' => substr($desc, 0, 127),
@@ -1151,5 +1151,5 @@ function _uc_paypal_reversal_message($reason) {
 
 // Returns an array of possible currency codes.
 function _uc_paypal_currency_array() {
-  return drupal_map_assoc(array('AUD', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'JPY', 'NOK', 'NZD', 'PLN', 'SEK', 'SGD', 'USD'));
+  return drupal_map_assoc(array('AUD', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'JPY', 'MXN', 'NOK', 'NZD', 'PLN', 'SEK', 'SGD', 'USD'));
 }

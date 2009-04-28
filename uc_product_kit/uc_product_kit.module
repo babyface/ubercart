@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.17 2009/04/18 07:29:17 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.18 2009/04/28 21:03:14 islandusurper Exp $
 
 /**
  * @file
@@ -137,7 +137,9 @@ function uc_product_kit_insert(&$node) {
   $values = array();
   $placeholders = array();
   foreach ($node->products as $product) {
-    $product = node_load($product);
+    if (is_numeric($product)) {
+      $product = node_load($product);
+    }
 
     $values[] = $node->vid;
     $values[] = $node->nid;
@@ -199,9 +201,20 @@ function uc_product_kit_update(&$node) {
   if ($override_discounts) {
     $base_price = 0;
     foreach ($node->products as $nid) {
-      $product = node_load($nid, NULL, TRUE);
-      if (is_null($node->items[$nid]['qty']) || $node->items[$nid]['qty'] === '') {
-        $node->items[$nid]['qty'] = 1;
+      // Usually, $node is $form_state['values'] cast as an object.
+      // However, there could be times where node_save() is called with an
+      // actual product kit node. $node->products is an array of objects and
+      // $node->items doesn't exist then.
+      if (is_numeric($nid)) {
+        $product = node_load($nid, NULL, TRUE);
+        if (is_null($node->items[$nid]['qty']) || $node->items[$nid]['qty'] === '') {
+          $node->items[$nid]['qty'] = 1;
+        }
+      }
+      else {
+        $product = $nid;
+        $nid = $product->nid;
+        $node->items[$nid] = (array)$product;
       }
       $base_price += $product->sell_price * $node->items[$nid]['qty'];
     }
@@ -210,11 +223,18 @@ function uc_product_kit_update(&$node) {
   $values = array();
   $placeholders = array();
   foreach ($node->products as $nid) {
+    if (is_numeric($nid)) {
+      $product = node_load($nid);
+    }
+    else {
+      $product = $nid;
+      $nid = $product->nid;
+    }
+
     $values[] = $node->vid;
     $values[] = $node->nid;
     $values[] = $nid;
     $values[] = $node->mutable;
-    $product = node_load($nid);
 
     // When a total kit price is specified, calculate the individual product
     // discounts needed to reach it, taking into account the product quantities

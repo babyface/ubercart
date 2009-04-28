@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.22 2009/04/22 17:35:40 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.23 2009/04/28 21:03:17 islandusurper Exp $
 
 /**
  * @file
@@ -714,7 +714,7 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
 
   $context['class'][1] = 'display';
   $context['subject']['field'] = 'sell_price';
-  $node->content['display_price'] = array('#value' => uc_price($node->sell_price, $context),
+  $node->content['display_price'] = array('#value' => theme('uc_product_price', $node->sell_price, $context),
     '#access' => $enabled['display_price'],
     '#weight' => $weight['display_price'],
   );
@@ -728,14 +728,14 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
 
     $context['class'][1] = 'list';
     $context['subject']['field'] = 'list_price';
-    $node->content['list_price'] = array('#value' => uc_price($node->list_price, $context),
+    $node->content['list_price'] = array('#value' => theme('uc_product_price', $node->list_price, $context),
       '#access' => $enabled['list_price'],
       '#weight' => $weight['list_price'],
     );
 
     $context['class'][1] = 'cost';
     $context['subject']['field'] = 'cost';
-    $node->content['cost'] = array('#value' => uc_price($node->cost, $context),
+    $node->content['cost'] = array('#value' => theme('uc_product_price', $node->cost, $context),
       '#access' => $enabled['cost'] && user_access('administer products'),
       '#weight' => $weight['cost'],
     );
@@ -746,7 +746,7 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
 
   $context['class'][1] = 'sell';
   $context['subject']['field'] = 'sell_price';
-  $node->content['sell_price'] = array('#value' => uc_price($node->sell_price, $context, array('label' => !$teaser)),
+  $node->content['sell_price'] = array('#value' => theme('uc_product_price', $node->sell_price, $context, array('label' => !$teaser)),
     '#access' => $enabled['sell_price'],
     '#weight' => $weight['sell_price'],
   );
@@ -1414,29 +1414,11 @@ function uc_product_add_to_cart_form_submit($form, &$form_state) {
  *   Determines the label and the CSS class of the <div>.
  * @ingroup themeable
  */
-function theme_uc_product_price($price, $class, $no_label = 0) {
-  $output = '<div class="product-info '. $class .'">';
-  if ($no_label) {
-    $output .= uc_currency_format($price);
-  }
-  else {
-    switch ($class) {
-      case 'list-price':
-        $output .= t('List Price: !price', array('!price' => uc_currency_format($price)));
-      break;
-      case 'cost':
-        $output .= t('Cost: !price', array('!price' => uc_currency_format($price)));
-      break;
-      case 'sell-price':
-        $output .= t('Price: !price', array('!price' => uc_currency_format($price)));
-      break;
-      default:
-        $output .= uc_currency_format($price);
-      break;
-    }
-  }
-
+function theme_uc_product_price($price, $context, $options = array()) {
+  $output = '<div class="product-info '. implode(' ', (array)$context['class']) .'">';
+  $output .= uc_price($price, $context, $options);
   $output .= '</div>';
+
   return $output;
 }
 
