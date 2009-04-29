@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.admin.inc,v 1.1.2.8 2009/04/18 07:29:17 islandusurper Exp $
+// $Id: uc_cart.admin.inc,v 1.1.2.9 2009/04/29 12:32:47 islandusurper Exp $
 
 /**
  * @file
@@ -21,7 +21,7 @@ function uc_cart_cart_settings_overview() {
     $help_text = t('Help text is not shown in block.');
   }
   $summaries[] = array(
-    'path' => 'admin/store/settings/cart/edit/block',
+    'path' => url('admin/store/settings/cart/edit/block'),
     'href' => 'admin/store/settings/cart/edit/block',
     'title' => t('Cart block'),
     'items' => array(

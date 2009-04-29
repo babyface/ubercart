@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.install,v 1.6.2.6 2008/11/07 21:13:29 islandusurper Exp $
+// $Id: uc_stock.install,v 1.6.2.7 2009/04/29 12:32:49 islandusurper Exp $
 
 /**
  * @file
@@ -67,6 +67,11 @@ function uc_stock_install() {
 function uc_stock_uninstall() {
   drupal_uninstall_schema('uc_stock');
   db_query("DELETE FROM {variable} WHERE name LIKE 'uc_stock_%%'");
+  variable_del('uc_stock_threshold_notification');
+  variable_del('uc_stock_threshold_notification_recipients');
+  variable_del('uc_stock_threshold_notification_subject');
+  variable_del('uc_stock_threshold_notification_message');
+  variable_del('uc_stock_threshold_notification_format');
 }
 
 function uc_stock_update_6000() {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.23 2009/04/28 21:03:16 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.24 2009/04/29 12:32:45 islandusurper Exp $
 
 /**
  * @file
@@ -322,7 +322,7 @@ function uc_attribute_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
         $output = '';
         $attributes = uc_product_get_attributes($node->nid);
         foreach ($attributes as $attribute) {
-          $output .= '<h3>'. uc_attribute_get_name($attribute) .'</h3>';
+          $output .= '<h3>'. _uc_attribute_get_name($attribute) .'</h3>';
           foreach ($attribute->options as $option) {
             $output .= $option->name .' ';
           }
@@ -719,7 +719,7 @@ function theme_uc_attribute_add_to_cart($form) {
 /**
  * Returns the attribute name to display.
  *
- * An attributes with a label set returns that label except when set to
+ * An attribute with a label set returns that label except when set to
  * '<none>'. In this case, a NULL is returned. The $title argument forces the
  * function to return the name property instead of label when label is set to
  * '<none>'.
