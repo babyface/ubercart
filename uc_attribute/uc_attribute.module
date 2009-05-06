@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.24 2009/04/29 12:32:45 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.25 2009/05/06 18:38:04 islandusurper Exp $
 
 /**
  * @file
@@ -600,11 +600,12 @@ function _uc_attribute_alter_form($product) {
     'revision' => 'formatted',
     'location' => 'product-attribute-form-element',
     'subject' => array(),
+    'extras' => array(),
   );
 
   // Loop through each product attribute and generate its form element.
   foreach ($attributes as $attribute) {
-    $context['subject']['attribute'] = $attribute;
+    $context['extras']['attribute'] = $attribute;
     // Build the attribute's options array.
     $options = array();
     foreach ($attribute->options as $option) {

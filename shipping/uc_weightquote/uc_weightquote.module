@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.module,v 1.5.2.8 2009/04/18 07:29:18 islandusurper Exp $
+// $Id: uc_weightquote.module,v 1.5.2.9 2009/05/06 18:38:03 islandusurper Exp $
 
 /**
  * @file
@@ -178,7 +178,8 @@ function uc_weightquote_quote($products, $details) {
   $context = array(
     'revision' => 'altered',
     'location' => 'shipping-weightquote-quote',
-    'subject' => array(
+    'subject' => array(),
+    'extras' => array(
       'method' => $method,
     ),
   );

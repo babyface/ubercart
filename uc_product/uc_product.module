@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.23 2009/04/28 21:03:17 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.24 2009/05/06 18:38:04 islandusurper Exp $
 
 /**
  * @file
@@ -1104,6 +1104,8 @@ function uc_product_cart_display($item) {
     'location' => 'cart-item',
     'subject' => array(
       'cart_item' => $item,
+    ),
+    'extras' => array(
       'node' => $node,
     ),
   );
@@ -1410,7 +1412,7 @@ function uc_product_add_to_cart_form_submit($form, &$form_state) {
  *
  * @param $price
  *   The amount to print.
- * @param $class
+ * @param $context
  *   Determines the label and the CSS class of the <div>.
  * @ingroup themeable
  */

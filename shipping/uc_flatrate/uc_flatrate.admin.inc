@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.admin.inc,v 1.1.2.11 2009/04/28 21:03:17 islandusurper Exp $
+// $Id: uc_flatrate.admin.inc,v 1.1.2.12 2009/05/06 18:38:03 islandusurper Exp $
 
 /**
  * @file
@@ -15,6 +15,7 @@ function uc_flatrate_admin_methods() {
 
   $context = array(
     'location' => 'shipping-flatrate-method-admin',
+    'subject' => array(),
   );
 
   $rows = array();

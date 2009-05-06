@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.admin.inc,v 1.1.2.9 2009/04/29 12:32:47 islandusurper Exp $
+// $Id: uc_cart.admin.inc,v 1.1.2.10 2009/05/06 18:38:03 islandusurper Exp $
 
 /**
  * @file
@@ -25,7 +25,7 @@ function uc_cart_cart_settings_overview() {
     'href' => 'admin/store/settings/cart/edit/block',
     'title' => t('Cart block'),
     'items' => array(
-      t('Cart block is !option when empty.', array('!option' => variable_get('uc_cart_empty_hide', FALSE) ? t('hidden') : t('shown'))),
+      t('Cart block is !option when empty.', array('!option' => variable_get('uc_cart_block_empty_hide', FALSE) ? t('hidden') : t('shown'))),
       t('Cart block is !option by default.', array('!option' => variable_get('uc_cart_expanded', FALSE) ? t('expanded') : t('collapsed'))),
       $help_text,
     ),

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.11 2009/04/28 21:03:15 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.12 2009/05/06 18:38:02 islandusurper Exp $
 
 /**
  * @file
@@ -333,7 +333,8 @@ function uc_order_pane_line_items($op, $arg1) {
 
       $context = array(
         'location' => 'order-line-items',
-        'subject' => array(
+        'subject' => array(),
+        'extras' => array(
           'order' => $arg1,
         ),
       );
@@ -404,7 +405,8 @@ function uc_order_pane_line_items($op, $arg1) {
 
       $context = array(
         'location' => 'order-edit-line-items',
-        'subject' => array(
+        'subject' => array(),
+        'extras' => array(
           'order' => $arg1,
         ),
       );

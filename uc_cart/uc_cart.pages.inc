@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.11 2009/04/28 21:03:14 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.12 2009/05/06 18:38:03 islandusurper Exp $
 
 /**
  * @file
@@ -64,7 +64,6 @@ function uc_cart_checkout() {
 
   if (($min = uc_price(variable_get('uc_minimum_subtotal', 0), $context)) > 0) {
     $subtotal = 0;
-    $items = uc_cart_get_contents();
     if (is_array($items) && count($items) > 0) {
       foreach ($items as $item) {
         $data = module_invoke($item->module, 'cart_display', $item);
@@ -212,6 +211,8 @@ function uc_cart_checkout_form() {
     );
     $context['subject'] = array(
       'cart_item' => $item,
+    );
+    $context['extras'] = array(
       'node' => node_load($item->nid),
     );
 

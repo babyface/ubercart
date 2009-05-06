@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.6.2.12 2009/04/18 07:29:18 islandusurper Exp $
+// $Id: uc_usps.module,v 1.6.2.13 2009/05/06 18:38:03 islandusurper Exp $
 
 /**
  * @file
@@ -401,6 +401,7 @@ function uc_usps_quote($products, $details, $method) {
   }
   $context = array(
     'location' => 'shipping-usps-quote',
+    'subject' => array(),
   );
   foreach ($services as $key => $quote) {
     if (isset($quote['rate'])) {

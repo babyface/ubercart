@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.module,v 1.5.2.9 2009/04/18 07:29:15 islandusurper Exp $
+// $Id: uc_flatrate.module,v 1.5.2.10 2009/05/06 18:38:03 islandusurper Exp $
 
 /**
  * @file
@@ -58,6 +58,7 @@ function uc_flatrate_form_alter(&$form, &$form_state, $form_id) {
     $context = array(
       'revision' => 'formatted',
       'location' => 'shipping-flatrate-method-node-form',
+      'subject' => array(),
     );
     while ($method = db_fetch_object($result)) {
       $context['subject']['flatrate_method'] = $method;
@@ -209,10 +210,12 @@ function uc_flatrate_quote($products, $details, $method) {
   $context = array(
     'revision' => 'altered',
     'location' => 'shipping-flatrate-method-json',
+    'subject' => array(),
+    'extras' => array(),
   );
 
   if ($method = db_fetch_object(db_query("SELECT * FROM {uc_flatrate_methods} WHERE mid = %d", $mid))) {
-    $context['subject']['flatrate_method'] = $method;
+    $context['extras']['flatrate_method'] = $method;
     // Start at the base rate.
     $rate = $method->base_rate;
 

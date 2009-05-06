@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.5.2.14 2009/04/28 21:03:16 islandusurper Exp $
+// $Id: uc_ups.module,v 1.5.2.15 2009/05/06 18:38:04 islandusurper Exp $
 
 /**
  * @file
@@ -836,6 +836,7 @@ function uc_ups_quote($products, $details) {
   uasort($quotes, 'uc_quote_price_sort');
   $context = array(
     'location' => 'shipping-quote',
+    'subject' => array(),
   );
   foreach ($quotes as $key => $quote) {
     if (isset($quote['rate'])) {
@@ -866,7 +867,7 @@ function uc_ups_quote($products, $details) {
   if (empty($_SESSION['messages']['error'])) {
     unset($_SESSION['messages']['error']);
   }
-  db_query("DELETE FROM {watchdog} WHERE type = 'php' AND message LIKE '%%SSL: fatal protocol error%%'");
+  db_query("DELETE FROM {watchdog} WHERE type = 'php' AND variables LIKE '%%SSL: fatal protocol error%%'");
   // End of ugly hack.
 
   return $quotes;

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.line_item.inc,v 1.1.2.5 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_order.line_item.inc,v 1.1.2.6 2009/05/06 18:38:02 islandusurper Exp $
 
 /**
  * @file
@@ -36,6 +36,8 @@ function uc_line_item_subtotal($op, $arg1) {
         );
         $context['subject'] = array(
           'cart_item' => $item,
+        );
+        $context['extras'] = array(
           'node' => node_load($item->nid),
         );
         $total = uc_price($price_info, $context);

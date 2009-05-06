@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.admin.inc,v 1.1.2.9 2009/04/28 21:03:17 islandusurper Exp $
+// $Id: uc_payment.admin.inc,v 1.1.2.10 2009/05/06 18:38:02 islandusurper Exp $
 
 /**
  * @file
@@ -300,9 +300,9 @@ function uc_payment_by_order_form($form_state, $order) {
   $context = array(
     'revision' => 'themed-original',
     'location' => 'order-payments-admin',
-    'subject' => array(
+    'subject' => array(),
+    'extras' => array(
       'order' => $order,
-      'total' => $total,
     ),
   );
   $form['order_total'] = array('#value' => uc_price($total, $context));

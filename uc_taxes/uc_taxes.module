@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.12.2.11 2009/04/18 07:29:18 islandusurper Exp $
+// $Id: uc_taxes.module,v 1.12.2.12 2009/05/06 18:38:03 islandusurper Exp $
 
 /**
  * @file
@@ -148,7 +148,8 @@ function uc_taxes_order($op, $arg1, $arg2) {
       $context = array(
         'revision' => 'formatted',
         'location' => 'tax-changes-log',
-        'subject' => array(
+        'subject' => array(),
+        'extras' => array(
           'order' => $arg1,
         ),
       );

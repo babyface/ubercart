@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.10 2009/04/28 21:03:16 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.11 2009/05/06 18:38:04 islandusurper Exp $
 
 /**
  * @file
@@ -21,7 +21,7 @@ function uc_attribute_admin() {
 
   $display_types = _uc_attribute_display_types();
 
-  $result = pager_query("SELECT a.aid, a.name, a.label, a.required, a.ordering, a.display, COUNT(ao.oid) AS options FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid, a.name, a.ordering, a.required, a.display". tablesort_sql($header), 30, 0, "SELECT COUNT(aid) FROM {uc_attributes}");
+  $result = pager_query("SELECT a.aid, a.name, a.label, a.required, a.ordering, a.display, COUNT(ao.oid) AS options FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid, a.name, a.label, a.ordering, a.required, a.display". tablesort_sql($header), 30, 0, "SELECT COUNT(aid) FROM {uc_attributes}");
   while ($attr = db_fetch_object($result)) {
     if (empty($attr->label)) {
       $attr->label = $attr->name;
@@ -476,8 +476,10 @@ function uc_object_attributes_form($form_state, $object, $type, $view = 'overvie
       foreach ($attributes as $attribute) {
         $option = $attribute->options[$attribute->default_option];
         $context['subject'] = array(
-          'attribute' => $attribute,
           'option' => $option,
+        );
+        $context['extras'] = array(
+          'attribute' => $attribute,
         );
 
         $form['attributes'][$attribute->aid] = array(
@@ -523,7 +525,7 @@ function uc_object_attributes_form($form_state, $object, $type, $view = 'overvie
   elseif ($view == 'add') {
     // Get list of attributes not already assigned to this node or class.
     $unused_attributes = array();
-    $result = db_query("SELECT a.aid, a.name, a.label FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid, a.name ORDER BY a.name");
+    $result = db_query("SELECT a.aid, a.name, a.label FROM {uc_attributes} AS a LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid GROUP BY a.aid, a.name, a.label ORDER BY a.name");
     while ($attribute = db_fetch_object($result)) {
       if (!in_array($attribute->aid, $used_aids) && !in_array($attribute->label, $used_labels)) {
         $unused_attributes[$attribute->aid] = $attribute->name;

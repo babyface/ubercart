@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.18 2009/04/28 21:03:14 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.19 2009/05/06 18:38:03 islandusurper Exp $
 
 /**
  * @file
@@ -919,7 +919,24 @@ function uc_product_kit_cart_display($item) {
       $elements[$unique_id]['#extra'][] = array('data' => $item->qty .' x '. $title . $extra, 'class' => 'kit-component-cart-desc');
     }
 
-    $elements[$unique_id]['#total'] += $item->price * $item->qty;
+    $context = array(
+      'revision' => 'altered',
+      'location' => 'cart-item',
+      'subject' => array(
+        'cart_item' => $item,
+        'field' => 'price',
+      ),
+      'extras' => array(
+        'kit' => $kit,
+        'node' => $kit->products[$item->nid],
+      ),
+    );
+    $price_info = array(
+      'price' => $item->price,
+      'qty' => $item->qty,
+    );
+
+    $elements[$unique_id]['#total'] += uc_price($price_info, $context);
     $elements[$unique_id]['data'][$item->nid] = $item;
     $products[$unique_id][] = $item->nid;
 

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.9 2009/04/29 12:32:46 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.10 2009/05/06 18:38:02 islandusurper Exp $
 
 /**
  * @file
@@ -648,7 +648,7 @@ function uc_google_checkout_send_request($api, $request) {
   if (empty($_SESSION['messages']['error'])) {
     unset($_SESSION['messages']['error']);
   }
-  db_query("DELETE FROM {watchdog} WHERE type = 'php' AND message LIKE '%%SSL: fatal protocol error%%'");
+  db_query("DELETE FROM {watchdog} WHERE type = 'php' AND variables LIKE '%%SSL: fatal protocol error%%'");
   // End of ugly hack.
 
   return $response;

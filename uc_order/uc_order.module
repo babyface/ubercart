@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.22 2009/04/28 21:03:15 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.23 2009/05/06 18:38:02 islandusurper Exp $
 
 /**
  * @file
@@ -373,8 +373,10 @@ function uc_order_token_values($type, $object = NULL) {
               'revision' => 'formatted',
               'location' => 'order-subtotal-token',
               'subject' => array(
-                'order' => $order,
                 'line_item' => $order->line_items[$key],
+              ),
+              'extras' => array(
+                'order' => $order,
               ),
             );
             $subtotal = uc_price($order->line_items[$key]['amount'], $context);
@@ -389,8 +391,10 @@ function uc_order_token_values($type, $object = NULL) {
         'revision' => 'formatted-original',
         'location' => 'order-total-token',
         'subject' => array(
-          'order' => $order,
           'field' => 'order_total',
+        ),
+        'extras' => array(
+          'order' => $order,
         ),
       );
       $values['order-total'] = uc_price($order->order_total, $context);
