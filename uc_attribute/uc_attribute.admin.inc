@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.11 2009/05/06 18:38:04 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.12 2009/05/07 20:52:29 islandusurper Exp $
 
 /**
  * @file
@@ -199,6 +199,13 @@ function uc_attribute_options_form($form_state, $attribute) {
     '#value' => $attribute->aid,
   );
 
+  $context = array(
+    'location' => 'attribute-options-form',
+    'extras' => array(
+      'attribute' => $attribute,
+    ),
+  );
+
   // Loop through all the options on an attribute.
   foreach ($attribute->options as $key => $data) {
     $form['options'][$key] = array(
@@ -224,6 +231,15 @@ function uc_attribute_options_form($form_state, $attribute) {
                     l(t('delete'), 'admin/store/attributes/'. $attribute->aid .'/options/'. $key .'/delete'),
       ),
     );
+
+    $context['subject'] = array(
+      'option' => $option,
+      'field' => 'cost',
+    );
+    $form['options'][$key]['cost']['#value'] = uc_price($data->cost, $context);
+
+    $context['subject']['field'] = 'price';
+    $form['options'][$key]['price']['#value'] = uc_price($data->price, $context);
   }
 
   if (count($form['options'])) {
@@ -544,7 +560,7 @@ function uc_object_attributes_form($form_state, $object, $type, $view = 'overvie
     $form['add'] = array(
       '#type' => 'submit',
       '#value' => t('Add attributes'),
-      '#suffix' => l(t('Cancel'), $type == 'product' ? 'node/'. $id .'/edit/uc-attributes' : 'admin/store/products/classes/'. $class->pcid .'/attributes'),
+      '#suffix' => l(t('Cancel'), $type == 'product' ? 'node/'. $id .'/edit/attributes' : 'admin/store/products/classes/'. $class->pcid .'/attributes'),
       '#weight' => 0,
     );
   }
@@ -675,7 +691,7 @@ function uc_object_attributes_form_submit($form, &$form_state) {
   }
 
   if ($form_state['values']['type'] == 'product') {
-    $form_state['redirect'] = 'node/'. $form_state['values']['id'] .'/edit/uc-attributes';
+    $form_state['redirect'] = 'node/'. $form_state['values']['id'] .'/edit/attributes';
   }
   else {
     $form_state['redirect'] = 'admin/store/products/classes/'. $form_state['values']['id'] .'/attributes';

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.admin.inc,v 1.1.2.14 2009/04/02 21:01:46 islandusurper Exp $
+// $Id: uc_product.admin.inc,v 1.1.2.15 2009/05/07 20:52:29 islandusurper Exp $
 
 /**
  * @file
@@ -381,18 +381,18 @@ function uc_product_features($node) {
           db_query("DELETE FROM {uc_product_features} WHERE pfid = %d", intval(arg(5)));
 
           drupal_set_message(t('The product feature has been deleted.'));
-          drupal_goto('node/'. arg(1) .'/edit/uc-features');
+          drupal_goto('node/'. arg(1) .'/edit/features');
         }
 
         // Show the confirmation form for deleting this feature.
         $question = $node->title;
         $description = t('Are you sure you wish to delete this %feature?', array('%feature' => uc_product_feature_data($feature['fid'], 'title')))
                       .'<div><b>'. t('Description') .':</b><br />'. $feature['description'] .'</div><br />';
-        return drupal_get_form('confirm_form', $question, 'node/'. arg(1) .'/edit/uc-features', $description, t('Delete'), t('Cancel'), 'pf_delete');
+        return drupal_get_form('confirm_form', $question, 'node/'. arg(1) .'/edit/features', $description, t('Delete'), t('Cancel'), 'pf_delete');
       }
       else {
         drupal_set_message(t("That product feature doesn't exist."), 'error');
-        drupal_goto('node/'. arg(1) .'/edit/uc-features');
+        drupal_goto('node/'. arg(1) .'/edit/features');
       }
     }
 
@@ -411,12 +411,12 @@ function uc_product_features($node) {
     }
     else {
       drupal_set_message(t('Error: Attempted to add a non-existent product feature type.'), 'error');
-      drupal_goto('node/'. $node->nid .'/edit/uc-features');
+      drupal_goto('node/'. $node->nid .'/edit/features');
     }
 
     if (empty($output)) {
       drupal_set_message(t('Error: No form data was returned for that operation.'), 'error');
-      drupal_goto('node/'. $node->nid .'/edit/uc-features');
+      drupal_goto('node/'. $node->nid .'/edit/features');
     }
 
     return $output;
@@ -427,8 +427,8 @@ function uc_product_features($node) {
   $result = db_query("SELECT * FROM {uc_product_features} WHERE nid = %d ORDER BY pfid ASC", $node->nid);
   while ($feature = db_fetch_object($result)) {
     $operations = array(
-      l(t('edit'), 'node/'. $node->nid .'/edit/uc-features/'. $feature->fid .'/'. $feature->pfid),
-      l(t('delete'), 'node/'. $node->nid .'/edit/uc-features/'. $feature->fid .'/'. $feature->pfid .'/delete'),
+      l(t('edit'), 'node/'. $node->nid .'/edit/features/'. $feature->fid .'/'. $feature->pfid),
+      l(t('delete'), 'node/'. $node->nid .'/edit/features/'. $feature->fid .'/'. $feature->pfid .'/delete'),
     );
     $rows[] = array(
       'data' => array(
@@ -490,7 +490,7 @@ function theme_uc_product_feature_add_form($form) {
  * Submit handler for uc_product_feature_add_form_submit.
  */
 function uc_product_feature_add_form_submit($form, &$form_state) {
-  $form_state['redirect'] = 'node/'. arg(1) .'/edit/uc-features/'. $form_state['values']['feature'] .'/add';
+  $form_state['redirect'] = 'node/'. arg(1) .'/edit/features/'. $form_state['values']['feature'] .'/add';
 }
 
 /**

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.20 2009/04/28 21:03:14 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.21 2009/05/07 20:52:28 islandusurper Exp $
 
 /**
  * @file
@@ -434,13 +434,13 @@ function uc_store_token_values($type, $object = NULL) {
       }
 
       $values['store-name'] = variable_get('uc_store_name', t('Our store'));
-      $values['store-url'] = variable_get('uc_store_url', $base_url);
-      $values['store-link'] = l(variable_get('uc_store_name', t('Our store')), variable_get('uc_store_url', $base_url));
+      $values['store-url'] = $base_url;
+      $values['store-link'] = l(variable_get('uc_store_name', t('Our store')), $base_url);
       $values['store-owner'] = variable_get('uc_store_owner', '');
       $values['store-email'] = variable_get('uc_store_email', '');
       $values['store-phone'] = variable_get('uc_store_phone', '');
       $values['store-address'] = uc_store_address();
-      $values['store-help-url'] = url(variable_get('uc_notify_store_help_page', ''), array('absolute' => TRUE));
+      $values['store-help-url'] = url(variable_get('uc_store_help_page', ''), array('absolute' => TRUE));
       break;
   }
 

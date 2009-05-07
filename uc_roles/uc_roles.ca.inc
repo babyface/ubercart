@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.ca.inc,v 1.1.2.6 2009/04/14 13:51:14 islandusurper Exp $
+// $Id: uc_roles.ca.inc,v 1.1.2.7 2009/05/07 20:52:29 islandusurper Exp $
 
 /**
  * @file
@@ -114,7 +114,7 @@ function uc_roles_ca_predicate() {
         '#argument_map' => $user_args,
         '#settings' => array(
           'from' => uc_store_email_from(),
-          'addresses' => '[user-mail]',
+          'addresses' => '[mail]',
           'subject' => uc_get_message('uc_roles_revoke_subject'),
           'message' => uc_get_message('uc_roles_revoke_message'),
           'format' => 1,
@@ -160,7 +160,7 @@ function uc_roles_ca_predicate() {
         '#argument_map' => $user_args,
         '#settings' => array(
           'from' => uc_store_email_from(),
-          'addresses' => '[user-mail]',
+          'addresses' => '[mail]',
           'subject' => uc_get_message('uc_roles_reminder_subject'),
           'message' => uc_get_message('uc_roles_reminder_message'),
           'format' => 1,
@@ -320,7 +320,7 @@ function uc_roles_action_order_email($order, $role_expiration, $settings) {
 
 // Email settings form
 function uc_roles_action_order_email_form($form_state, $settings = array()) {
-  return ca_build_email_form($form_state, $settings, array('global', 'uc_roles'));
+  return ca_build_email_form($form_state, $settings, array('global', 'uc_roles', 'user'));
 }
 
 /**
@@ -357,7 +357,7 @@ function uc_roles_action_user_email($account, $role_expiration, $settings) {
 
 // Email settings form
 function uc_roles_action_user_email_form($form_state, $settings = array()) {
-  return ca_build_email_form($form_state, $settings, array('global', 'uc_roles'));
+  return ca_build_email_form($form_state, $settings, array('global', 'uc_roles', 'user'));
 }
 
 /**

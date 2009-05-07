@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_handler_field_buyitnow.inc,v 1.1.2.2 2008/11/07 21:13:28 islandusurper Exp $
+// $Id: uc_product_handler_field_buyitnow.inc,v 1.1.2.3 2009/05/07 20:52:29 islandusurper Exp $
 
 /**
  * @file
@@ -13,6 +13,13 @@ class uc_product_handler_field_buyitnow extends views_handler_field {
   function query() {
     $this->ensure_my_table();
     $this->add_additional_fields();
+  }
+
+  function element_type() {
+    if (isset($this->definition['element type'])) {
+      return $this->definition['element type'];
+    }
+    return 'div';
   }
 
   function render($values) {

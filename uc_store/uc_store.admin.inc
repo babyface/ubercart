@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.10 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.11 2009/05/07 20:52:28 islandusurper Exp $
 
 /**
  * @file
@@ -602,14 +602,14 @@ function uc_store_store_settings_form() {
   $form['store_address']['uc_store_zone'] = uc_zone_select(uc_get_field_name('zone'), variable_get('uc_store_zone', NULL), NULL, $country_id);
   $form['store_address']['uc_store_postal_code'] = uc_textfield(uc_get_field_name('postal_code'), variable_get('uc_store_postal_code', NULL), FALSE, NULL, 10);
 
-  $form['uc_notify_store_help_page'] = array(
+  $form['uc_store_help_page'] = array(
     '#type' => 'textfield',
     '#title' => t('Store help page'),
     '#description' => t('The Drupal page for the store help link.'),
-    '#default_value' => variable_get('uc_notify_store_help_page', ''),
+    '#default_value' => variable_get('uc_store_help_page', ''),
     '#size' => 32,
     '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q='),
-    '#summary' => variable_get('uc_notify_store_help_page', '') ? t('Help page is <a href="!url">!url</a>.', array('!url' => url(variable_get('uc_notify_store_help_page', ''), array('absolute' => TRUE)))) : t('Help page is not set.'),
+    '#summary' => variable_get('uc_store_help_page', '') ? t('Help page is <a href="!url">!url</a>.', array('!url' => url(variable_get('uc_store_help_page', ''), array('absolute' => TRUE)))) : t('Help page is not set.'),
   );
 
   return system_settings_form($form);
@@ -639,9 +639,6 @@ function uc_store_display_settings_form() {
   );
 
   $desc = t('Select the address to be used on customer lists and summaries.');
-  if (module_exists('uc_notify')) {
-    $desc .= ' '. t('Also applies to notification e-mails.');
-  }
   $form['uc_customer_list_address'] = array(
     '#type' => 'radios',
     '#title' => t('Primary customer address'),

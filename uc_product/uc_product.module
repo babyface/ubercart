@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.24 2009/05/06 18:38:04 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.25 2009/05/07 20:52:29 islandusurper Exp $
 
 /**
  * @file
@@ -104,7 +104,7 @@ function uc_product_menu() {
   );
   $features = module_invoke_all('product_feature');
   if (!empty($features)) {
-    $items['node/%node/edit/uc-features'] = array(
+    $items['node/%node/edit/features'] = array(
       'title' => 'Features',
       'page callback' => 'uc_product_features',
       'page arguments' => array(1),
@@ -225,7 +225,7 @@ function uc_product_access($op, $node, $account) {
 }
 
 /**
- * Menu access callback for 'node/%node/edit/uc-features'.
+ * Menu access callback for 'node/%node/edit/features'.
  */
 function uc_product_feature_access($node) {
   return uc_product_is_product($node) && user_access('administer product features');
@@ -1761,7 +1761,7 @@ function uc_product_feature_form($form) {
     '#value' => t('Save feature'),
   );
   $form['cancel'] = array(
-    '#value' => l(t('Cancel'), 'node/'. intval(arg(1)) .'/edit/uc-features'),
+    '#value' => l(t('Cancel'), 'node/'. intval(arg(1)) .'/edit/features'),
   );
 
   return $form;
@@ -1800,7 +1800,7 @@ function uc_product_feature_save($data) {
     drupal_set_message(t('The product feature has been updated.'));
   }
 
-  return 'node/'. $data['nid'] .'/edit/uc-features';
+  return 'node/'. $data['nid'] .'/edit/features';
 }
 
 function uc_product_add_default_image_field($type = NULL) {

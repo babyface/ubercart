@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.2.2.15 2009/04/28 21:03:14 islandusurper Exp $
+// $Id: uc_file.module,v 1.2.2.16 2009/05/07 20:52:29 islandusurper Exp $
 
 /**
  * @file
@@ -21,8 +21,6 @@ require_once('uc_file.ca.inc');
 define('UC_FILE_PAGER_SIZE', 50);
 define('UC_FILE_LIMIT_SENTINEL', -1);
 
-global $cache;
-
 /* **************************************************************************** *
  *  Hook Functions (Drupal)                                                     *
  * **************************************************************************** */
@@ -31,7 +29,7 @@ global $cache;
  * Implementation of hook_help().
  */
 function uc_file_help($path, $arg) {
-  if ($path == 'node/%/edit/uc-features' && $arg[4] == 'file') {
+  if ($path == 'node/%/edit/features' && $arg[4] == 'file') {
     return t('Add file downloads through this page and then use the <a href="!url">conditional actions interface</a> to limit which orders they are applied to. Most important is the order status on which file download access will be triggered.', array('!url' => url(CA_UI_PATH)));
   }
 }
@@ -66,7 +64,7 @@ function uc_file_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'uc_file.admin.inc',
   );
-  $items['user/%user/uc-files'] = array(
+  $items['user/%user/purchased-files'] = array(
     'title' => 'Files',
     'description' => 'View your purchased files.',
     'page callback' => 'uc_file_user_downloads',
@@ -388,7 +386,7 @@ function uc_file_user_view(&$account) {
 
       'user_items' => array(
         '#type' => 'user_profile_item',
-        '#value' => l(t('Click here to view your file downloads.'), 'user/'. $account->uid .'/uc-files'),
+        '#value' => l(t('Click here to view your file downloads.'), 'user/'. $account->uid .'/purchased-files'),
       ),
   );
 
@@ -714,7 +712,7 @@ function uc_file_feature_form($form_state, $node, $feature) {
     $form['file']['file_message'] = array(
       '#value' => t(
         'You must add files at the !url in order to attach them to a model.',
-        array('!url' => l(t('Ubercart file download administration page'), 'admin/store/products/files', array('query' => 'destination=node/'. $node->nid .'/edit/uc-features/file/add')))
+        array('!url' => l(t('Ubercart file download administration page'), 'admin/store/products/files', array('query' => 'destination=node/'. $node->nid .'/edit/features/file/add')))
       ),
     );
     return $form;
@@ -793,7 +791,7 @@ function uc_file_feature_form($form_state, $node, $feature) {
 
   $form['uc_file_limits'] = array(
     '#type' => 'fieldset',
-    '#description' => t('Use these options to override any global download limits set at the !url.', array('!url' => l(t('Ubercart product settings page'), 'admin/store/settings/products/edit/features', array('query' => 'destination=node/'. $node->nid .'/edit/uc-features/file/add')))),
+    '#description' => t('Use these options to override any global download limits set at the !url.', array('!url' => l(t('Ubercart product settings page'), 'admin/store/settings/products/edit/features', array('query' => 'destination=node/'. $node->nid .'/edit/features/file/add')))),
     '#collapsed' => FALSE,
     '#collapsible' => FALSE,
     '#title' => t('File limitations'),
@@ -1550,10 +1548,19 @@ function uc_file_remove_user_file_by_id($user, $fid) {
 }
 
 /**
+ * Central cache for all file data.
+ */
+function &_uc_file_get_cache() {
+  static $cache = array();
+
+  return $cache;
+}
+
+/**
  * Flush our cache.
  */
 function _uc_file_flush_cache() {
-  global $cache;
+  $cache = _uc_file_get_cache();
 
   $cache = array();
 }
@@ -1567,7 +1574,7 @@ function _uc_file_flush_cache() {
  *   A uc_file object.
  */
 function &uc_file_get_by_name($filename) {
-  global $cache;
+  $cache = _uc_file_get_cache();
 
   if (!isset($cache[$filename])) {
     $cache[$filename] = db_fetch_object(db_query("SELECT * FROM {uc_files} WHERE filename = '%s'", $filename));
@@ -1585,7 +1592,7 @@ function &uc_file_get_by_name($filename) {
  *   A uc_file object.
  */
 function &uc_file_get_by_id($fid) {
-  global $cache;
+  $cache = _uc_file_get_cache();
 
   if (!isset($cache[$fid])) {
     $cache[$fid] = db_fetch_object(db_query("SELECT * FROM {uc_files} WHERE fid = %d", $fid));
@@ -1603,7 +1610,7 @@ function &uc_file_get_by_id($fid) {
  *   A uc_file object.
  */
 function &uc_file_get_by_key($key) {
-  global $cache;
+  $cache = _uc_file_get_cache();
 
   if (!isset($cache[$key])) {
     $cache[$key] = db_fetch_object(db_query("SELECT * FROM {uc_file_users} ufu ".
@@ -1690,10 +1697,10 @@ function uc_file_user_renew($fid, $user, $pfid, $file_limits, $force_overwrite) 
     drupal_write_record('uc_file_users', $file_user, $key);
 
     if ($key) {
-      drupal_set_message(t('%user has had download privileges of %file renewed.', array('%user' => $user->name, '%file' => $file_user['filename'])));
+      watchdog('uc_file', '%user has had download privileges of %file renewed.', array('%user' => $user->name, '%file' => $file_user['filename']));
     }
     else {
-      drupal_set_message(t('%user has been allowed to download %file.', array('%user' => $user->name, '%file' => $file_user['filename'])));
+      watchdog('uc_file', '%user has been allowed to download %file.', array('%user' => $user->name, '%file' => $file_user['filename']));
     }
 
     $result[] = (object)$file_user;

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.module,v 1.12.2.11 2009/02/27 22:41:33 islandusurper Exp $
+// $Id: uc_stock.module,v 1.12.2.12 2009/05/07 20:52:30 islandusurper Exp $
 
 /**
  * @file
@@ -25,7 +25,7 @@ require_once('uc_stock.ca.inc');
  */
 function uc_stock_help($path, $arg) {
   switch ($path) {
-    case 'node/%/edit/uc-stock':
+    case 'node/%/edit/stock':
       return t('To keep track of stock for a particular product SKU, make sure it is marked as active and enter a stock value. When the stock level drops below the threshold value, you can be notified based on your stock settings.');
     case 'admin/store/reports/stock':
     case 'admin/store/reports/stock/threshold':
@@ -56,16 +56,25 @@ function uc_stock_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'uc_stock.admin.inc',
   );
-  $items['node/%node/edit/uc-stock'] = array(
+  $items['node/%node/edit/stock'] = array(
     'title' => 'Stock',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('uc_stock_edit_form', 1),
-    'access arguments' => array('administer product stock'),
+    'access callback' => 'uc_stock_product_access',
+    'access arguments' => array(1),
     'weight' => 10,
     'type' => MENU_LOCAL_TASK,
     'file' => 'uc_stock.admin.inc',
   );
   return $items;
+}
+
+function uc_stock_product_access($node) {
+  if ($node->type == 'product_kit') {
+    return FALSE;
+  }
+
+  return uc_product_is_product($node) && node_access('update', $node) && user_access('administer product stock');
 }
 
 function uc_stock_perm() {

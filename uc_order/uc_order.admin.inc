@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.16 2009/04/28 21:03:15 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.17 2009/05/07 20:52:30 islandusurper Exp $
 
 /**
  * @file
@@ -986,7 +986,7 @@ function uc_order_history($user) {
 function uc_order_view($order, $view = 'view') {
   if ($view == 'customer') {
     $breadcrumb = drupal_get_breadcrumb();
-    $breadcrumb[2] = l(t('Order history'), 'user/'. arg(1) .'/uc-orders');
+    $breadcrumb[2] = l(t('Order history'), 'user/'. arg(1) .'/orders');
     drupal_set_breadcrumb($breadcrumb);
   }
 
