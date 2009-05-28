@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.26 2009/05/07 20:52:29 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.27 2009/05/28 20:49:19 islandusurper Exp $
 
 /**
  * @file
@@ -386,7 +386,7 @@ function uc_attribute_order_product_alter(&$product, $order) {
     $attributes = array();
     $options = _uc_cart_product_get_options($product);
     foreach ($options as $aid => $option) {
-      $attributes[$option['attribute']] = $option['name'];
+      $attributes[$option['attribute']][] = $option['name'];
     }
     $product->data['attributes'] = $attributes;
   }
@@ -435,7 +435,12 @@ function uc_attribute_cart_item($op, &$item) {
 function uc_attribute_cart_item_description($item) {
   $rows = array();
   foreach (_uc_cart_product_get_options($item) as $option) {
-    $rows[] = t('@attribute: @option', array('@attribute' => $option['attribute'], '@option' => $option['name']));
+    if (!isset($rows[$option['aid']])) {
+      $rows[$option['aid']] = t('@attribute: @option', array('@attribute' => $option['attribute'], '@option' => $option['name']));
+    }
+    else {
+      $rows[$option['aid']] .= t(', @option', array('@option' => $option['name']));
+    }
   }
 
   if (count($rows)) {
@@ -546,24 +551,33 @@ function _uc_cart_product_get_options($item) {
   $data = $item->data;
   $node = node_load($item->nid);
 
+  $index = 0;
   if (!empty($data['attributes']) && is_array($data['attributes'])) {
-    foreach ($data['attributes'] as $aid => $oid) {
+    foreach ($data['attributes'] as $aid => $selected) {
       $attribute = $node->attributes[$aid];
       // Only discrete options can affect the price of an item.
       if ($attribute->display && count($attribute->options)) {
-        $options[$aid] = (array)$attribute->options[$oid];
-        $options[$aid]['attribute'] = _uc_attribute_get_name($attribute);
+        // There may be many selected options, or just one.
+        foreach ((array)$selected as $oid) {
+          if ($oid > 0) {
+            $options[$index] = (array)$attribute->options[$oid];
+            $options[$index]['attribute'] = _uc_attribute_get_name($attribute);
+            $index++;
+          }
+        }
       }
       else {
-        $options[$aid] = array(
+        // Handle textfield attributes.
+        $options[$index] = array(
           'attribute' => _uc_attribute_get_name($attribute),
           'oid' => 0,
-          'name' => $oid,
+          'name' => $selected,
           'cost' => 0,
           'price' => 0,
           'weight' => 0,
         );
       }
+      $index++;
     }
   }
   else {
@@ -617,7 +631,7 @@ function _uc_attribute_alter_form($product) {
             'qty' => $qty,
           );
           $display_price = in_array($attribute->aid, $priced_attributes) ? ', '. uc_price($price_info, $context) : '';
-          if (count($priced_attributes) == 1) {
+          if (count($priced_attributes) == 1 && $attribute->display != 3) {
             break;
           }
         case 'adjustment':
@@ -647,10 +661,21 @@ function _uc_attribute_alter_form($product) {
         }
         unset($attribute->default_option);
       }
+      switch ($attribute->display) {
+        case 1:
+          $attr_type = 'select';
+          break;
+        case 2:
+          $attr_type = 'radios';
+          break;
+        case 3:
+          $attr_type = 'checkboxes';
+          break;
+      }
       $form_attributes[$attribute->aid] = array(
-        '#type' => $attribute->display == 1 ? 'select' : 'radios',
+        '#type' => $attr_type,
         '#description' => check_markup($attribute->description),
-        '#default_value' => $attribute->default_option,
+        '#default_value' => ($attr_type == "checkboxes" ? array() : $attribute->default_option),
         '#options' => $options,
         '#required' => $attribute->required,
       );
@@ -680,6 +705,7 @@ function _uc_attribute_display_types() {
     0 => t('Text field'),
     1 => t('Select box'),
     2 => t('Radio buttons'),
+    3 => t('Checkboxes'),
   );
 }
 

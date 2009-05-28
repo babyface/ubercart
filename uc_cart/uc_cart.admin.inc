@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.admin.inc,v 1.1.2.10 2009/05/06 18:38:03 islandusurper Exp $
+// $Id: uc_cart.admin.inc,v 1.1.2.11 2009/05/28 20:49:19 islandusurper Exp $
 
 /**
  * @file
@@ -99,7 +99,7 @@ function uc_cart_cart_settings_form() {
     '#type' => 'fieldset',
     '#title' => t('Authenticated cart duration'),
     '#description' => t('Set the length of time products remain in the cart for customers who <strong>have</strong> logged in.'),
-    '#summary' => t('Authenticated cart duration is @duration', array('@duration' => variable_get('uc_cart_auth_duration', '1') .' '. variable_get('uc_cart_anon_unit', 'years'))),
+    '#summary' => t('Authenticated cart duration is @duration', array('@duration' => variable_get('uc_cart_auth_duration', '1') .' '. variable_get('uc_cart_auth_unit', 'years'))),
   );
   $form['authenticated']['uc_cart_auth_duration'] = array(
     '#type' => 'select',

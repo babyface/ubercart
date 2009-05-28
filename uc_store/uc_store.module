@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.21 2009/05/07 20:52:28 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.22 2009/05/28 20:49:20 islandusurper Exp $
 
 /**
  * @file
@@ -600,7 +600,7 @@ function theme_uc_admin_dashboard($type, $menus) {
 
   $output = '<table class="uc-store-admin-table" align="center"><tr valign="top">';
 
-  $panels = 0;
+  $panel = 0;
   if (is_array($menus)) {
     foreach ($menus as $menu) {
       $panel++;

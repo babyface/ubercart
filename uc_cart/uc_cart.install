@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.install,v 1.7.2.4 2009/02/24 15:35:49 islandusurper Exp $
+// $Id: uc_cart.install,v 1.7.2.5 2009/05/28 20:49:19 islandusurper Exp $
 
 /**
  * @file
@@ -16,7 +16,7 @@ function uc_cart_schema() {
     'fields' => array(
       'cart_id' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '0',
       ),
@@ -97,4 +97,15 @@ function uc_cart_update_6001() {
   variable_del('uc_checkout_next_button');
 
   return array();
+}
+
+/**
+ * Increase width of cart id to 255.
+ */
+function uc_cart_update_6002() {
+  $ret = array();
+
+  db_change_field($ret, 'uc_cart_products', 'cart_id', 'cart_id', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => 0));
+
+  return $ret;
 }

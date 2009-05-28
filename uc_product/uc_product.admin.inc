@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.admin.inc,v 1.1.2.15 2009/05/07 20:52:29 islandusurper Exp $
+// $Id: uc_product.admin.inc,v 1.1.2.16 2009/05/28 20:49:19 islandusurper Exp $
 
 /**
  * @file
@@ -359,7 +359,7 @@ function _uc_product_features_summarize($form, $titles) {
 }
 
 /**
- * Displays the project features tab on a product node edit form.
+ * Displays the product features tab on a product node edit form.
  */
 function uc_product_features($node) {
   drupal_set_title(check_plain($node->title));
@@ -607,7 +607,7 @@ function uc_product_class_form_submit($form, &$form_state) {
   }
   menu_rebuild();
 
-  $form_state['redirect'] = 'admin/store/products/classes';
+  drupal_set_message(t('Product class saved.'));
 }
 
 /**
@@ -616,34 +616,41 @@ function uc_product_class_form_submit($form, &$form_state) {
  * @see uc_product_class_delete_confirm_submit()
  */
 function uc_product_class_delete_confirm($form_state, $class) {
-  $result = db_query("SELECT COUNT(*) AS number FROM {node} WHERE type = '%s'", $class->pcid);
-  $products = db_fetch_object($result);
-  $form['pcid'] = array('#type' => 'value', '#value' => $class->pcid);
-  $form['#redirect'] = 'admin/store/products/classes';
-  $output = confirm_form($form, t('Be very sure you want to delete the %type product class. It will become a standard node type.', array('%type' => $class->pcid)), 'admin/store/products/classes',
-    format_plural($products->number, 'There is @count node of this type.', 'There are @count nodes of this type.'),
-    t('Continue'), t('Cancel'));
+  $form = array();
 
-  return $output;
+  $form['pcid'] = array(
+    '#type' => 'value',
+    '#value' => $class->pcid,
+  );
+
+  $question = t('Are you sure you want to delete the %type product class?', array('%type' => $class->pcid));
+  $description = t('The node type associated with this product class will revert to a standard node type.');
+
+  // Find out how many nodes of this class exist and add to the description.
+  $count = db_result(db_query("SELECT COUNT(*) FROM {node} WHERE type = '%s'", $class->pcid));
+
+  if ($count > 0) {
+    $description .= '<br />'. format_plural($count, 'There is @count node of this type.', 'There are @count nodes of this type.');
+  }
+
+  return confirm_form($form, $question, 'admin/store/products/classes', $description, t('Delete'), t('Cancel'));
 }
 
-/**
- * Submit handler for uc_product_class_delete_confirm.
- */
+// Submit handler for uc_product_class_delete_confirm.
 function uc_product_class_delete_confirm_submit($form, &$form_state) {
-  if ($form_state['values']['confirm']) {
-    $type = node_get_types('type', $form_state['values']['pcid']);
-    $type->module = 'node';
-    $type->custom = 1;
-    node_type_save($type);
+  $type = node_get_types('type', $form_state['values']['pcid']);
+  $type->module = 'node';
+  $type->custom = 1;
+  node_type_save($type);
 
-    db_query("DELETE FROM {uc_product_classes} WHERE pcid = '%s'", $form_state['values']['pcid']);
-    module_invoke_all('product_class', $form_state['values']['pcid'], 'delete');
-    uc_product_node_info(TRUE);
-    node_types_rebuild();
-    menu_rebuild();
+  db_query("DELETE FROM {uc_product_classes} WHERE pcid = '%s'", $form_state['values']['pcid']);
+  module_invoke_all('product_class', $form_state['values']['pcid'], 'delete');
+  uc_product_node_info(TRUE);
+  node_types_rebuild();
+  menu_rebuild();
 
-    drupal_set_message(t('Product class %type deleted.', array('%type' => $form_state['values']['pcid'])));
-  }
+  drupal_set_message(t('Product class %type deleted.', array('%type' => $form_state['values']['pcid'])));
+
+  $form_state['redirect'] = 'admin/store/products/classes';
 }
 

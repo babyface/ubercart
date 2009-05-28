@@ -233,8 +233,12 @@ function _uc_price_get_handlers($options = array()) {
     );
 
     foreach ($hooks as $hook) {
-      $handlers['alterers'][] = $hook['alter']['callback'];
-      $handlers['formatters'][] = $hook['format']['callback'];
+      if (isset($hook['alter']['callback']) && function_exists($hook['alter']['callback'])) {
+        $handlers['alterers'][] = $hook['alter']['callback'];
+      }
+      if (isset($hook['format']['callback']) && function_exists($hook['format']['callback'])) {
+        $handlers['formatters'][] = $hook['format']['callback'];
+      }
 
       if (is_array($hook['options'])) {
         $handlers['options'] += $hook['options'];

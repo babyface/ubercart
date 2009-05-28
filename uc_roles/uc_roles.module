@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.2.2.16 2009/05/07 20:52:29 islandusurper Exp $
+// $Id: uc_roles.module,v 1.2.2.17 2009/05/28 20:49:20 islandusurper Exp $
 
 /**
  * @file
@@ -300,7 +300,7 @@ function theme_uc_roles_user_expiration($form) {
   $output = '';
 
   $header = array(
-    array('data' => t('Remove'     )),
+    array('data' => t('Make permanent')),
     array('data' => t('Role'     )),
     array('data' => t('Expiration'  )),
     array('data' => t('Add/remove time')),
@@ -332,7 +332,7 @@ function theme_uc_roles_user_expiration($form) {
 
   if (!count($rows)) {
     $rows[] = array(
-      array('data' => t('There are no pending expirations for roles this user.'), 'colspan' => 3),
+      array('data' => t('There are no pending expirations for roles this user.'), 'colspan' => 4),
     );
   }
 
@@ -381,7 +381,7 @@ function uc_roles_user_submit(&$edit, &$account, $category) {
     // Adjust it.
     else {
 
-      if ($value['qty']) {
+      if ($value['qty'] && $edit['roles'][$rid]) {
         $qty = $value['qty'];
         $qty *= $value['polarity'] == 'add' ? 1 : -1;
 
@@ -404,7 +404,6 @@ function uc_roles_user_submit(&$edit, &$account, $category) {
  * Implementation of hook_user_validate().
  */
 function uc_roles_user_validate(&$edit, &$account, $category) {
-
   // Validate the amount of time for the expiration.
   if ($edit['new_role'] && $category == 'account') {
     if (intval($edit['new_role_add_qty']) < 1) {
@@ -415,8 +414,9 @@ function uc_roles_user_validate(&$edit, &$account, $category) {
   // Validate adjusted expirations.
   foreach ((array)$edit['table'] as $rid => $value) {
 
-    // We don't operate if nothing was actually selected.
-    if ($value['qty'] == 0) {
+    // We don't validate if nothing was actually selected, the role, or the
+    // expiration is removed.
+    if ($value['qty'] == 0 || $value['remove'] == 1 || !$edit['roles'][$rid]) {
       continue;
     }
 

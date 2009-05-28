@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.11 2009/05/07 20:52:28 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.12 2009/05/28 20:49:20 islandusurper Exp $
 
 /**
  * @file
@@ -1130,7 +1130,7 @@ function uc_price_settings_form() {
       $description = $data['format']['title'];
 
       if (!empty($data['format']['description'])) {
-        $description .= '<div class="description">'. $data['alter']['description'] .'</div>';
+        $description .= '<div class="description">'. $data['format']['description'] .'</div>';
       }
 
       $options[$data['format']['callback']] = $description;

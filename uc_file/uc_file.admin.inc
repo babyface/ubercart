@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.admin.inc,v 1.1.2.7 2009/04/28 21:03:14 islandusurper Exp $
+// $Id: uc_file.admin.inc,v 1.1.2.8 2009/05/28 20:49:19 islandusurper Exp $
 
 /**
  * @file
@@ -334,7 +334,7 @@ function uc_file_admin_files_form_action($form_state) {
   return $form;
 }
 
-function uc_file_admin_files_form_action_validate($form, &$form_state, $form_id) {
+function uc_file_admin_files_form_action_validate($form, &$form_state) {
 
   switch ($form_state['values']['action']) {
 

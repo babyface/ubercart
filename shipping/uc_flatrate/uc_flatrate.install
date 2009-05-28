@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.install,v 1.5.2.4 2008/12/09 15:20:38 islandusurper Exp $
+// $Id: uc_flatrate.install,v 1.5.2.5 2009/05/28 20:49:19 islandusurper Exp $
 
 /**
  * @file
@@ -217,9 +217,9 @@ function uc_flatrate_update_4() {
   $ret = array();
   switch ($GLOBALS['db_type']) {
     case 'pgsql':
-      db_change_column($ret, 'uc_flatrate_prodcts', 'vid', 'vid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
-      db_change_column($ret, 'uc_flatrate_prodcts', 'nid', 'nid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
-      db_change_column($ret, 'uc_flatrate_prodcts', 'mid', 'mid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
+      db_change_column($ret, 'uc_flatrate_products', 'vid', 'vid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
+      db_change_column($ret, 'uc_flatrate_products', 'nid', 'nid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
+      db_change_column($ret, 'uc_flatrate_products', 'mid', 'mid', 'int_unsigned', array('not null' => TRUE, 'default' => 0));
     break;
   }
   return $ret;

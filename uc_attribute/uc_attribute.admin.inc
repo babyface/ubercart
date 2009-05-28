@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.12 2009/05/07 20:52:29 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.13 2009/05/28 20:49:19 islandusurper Exp $
 
 /**
  * @file
@@ -948,7 +948,7 @@ function uc_product_adjustments_form($form_state, $node) {
   $query_from = " FROM";
   $query_where = " WHERE";
   $query_order = " ORDER BY";
-  $result = db_query("SELECT pa.nid, pa.aid, pa.ordering, a.name, a.ordering, ao.aid, COUNT(po.oid) FROM {uc_product_attributes} AS pa LEFT JOIN {uc_attributes} AS a ON pa.aid = a.aid LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid LEFT JOIN {uc_product_options} AS po ON ao.oid = po.oid AND po.nid = %d WHERE pa.nid = %d GROUP BY ao.aid, pa.aid, a.name, pa.ordering, a.ordering, pa.nid HAVING count(po.oid) > 0 ORDER BY pa.ordering, a.ordering", $nid, $nid);
+  $result = db_query("SELECT pa.nid, pa.aid, pa.ordering, pa.display, a.name, a.ordering, ao.aid, COUNT(po.oid) FROM {uc_product_attributes} AS pa LEFT JOIN {uc_attributes} AS a ON pa.aid = a.aid LEFT JOIN {uc_attribute_options} AS ao ON a.aid = ao.aid LEFT JOIN {uc_product_options} AS po ON ao.oid = po.oid AND po.nid = %d WHERE pa.nid = %d AND pa.display <> 3 GROUP BY ao.aid, pa.aid, a.name, pa.ordering, a.ordering, pa.nid HAVING count(po.oid) > 0 ORDER BY pa.ordering, a.ordering", $nid, $nid);
   $i = 1;
   $attribute_names = '';
   $full_attributes = array();

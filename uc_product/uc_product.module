@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.25 2009/05/07 20:52:29 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.26 2009/05/28 20:49:19 islandusurper Exp $
 
 /**
  * @file
@@ -294,22 +294,25 @@ function uc_product_theme() {
       'file' => 'uc_product.admin.inc',
     ),
     'uc_product_model' => array(
-      'arguments' => array('model' => ''),
+      'arguments' => array('model' => '', 'teaser' => 0, 'page' => 0),
+    ),
+    'uc_product_body' => array(
+      'arguments' => array('body' => '', 'teaser' => 0, 'page' => 0),
     ),
     'uc_product_add_to_cart' => array(
-      'arguments' => array('node' => NULL),
+      'arguments' => array('node' => NULL, 'teaser' => 0, 'page' => 0),
     ),
     'uc_product_price' => array(
-      'arguments' => array('price' => 0, 'class' => ''),
+      'arguments' => array('price' => 0, 'context' => array(), 'options' => array()),
     ),
     'uc_product_weight' => array(
-      'arguments' => array('weight' => 0, 'unit' => NULL),
+      'arguments' => array('weight' => 0, 'unit' => NULL, 'teaser' => 0, 'page' => 0),
     ),
     'uc_product_dimensions' => array(
-      'arguments' => array('length' => 0, 'width' => 0, 'height' => 0, 'units' => NULL),
+      'arguments' => array('length' => 0, 'width' => 0, 'height' => 0, 'units' => NULL, 'teaser' => 0, 'page' => 0),
     ),
     'uc_product_image' => array(
-      'arguments' => array('images'),
+      'arguments' => array('images' => array(), 'teaser' => 0, 'page' => 0),
     ),
     'uc_product_feature_add_form' => array(
       'arguments' => array('form' => NULL),
@@ -724,6 +727,7 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
       '#access' => $enabled['model'],
       '#weight' => $weight['model'],
     );
+    $node->content['body']['#value'] = theme('uc_product_body', $node->body, $teaser, $page);
     $node->content['body']['#weight'] = 1;
 
     $context['class'][1] = 'list';
@@ -741,6 +745,7 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
     );
   }
   else {
+    $node->content['body']['#value'] = theme('uc_product_body', $node->teaser, $teaser, $page);
     $node->content['#attributes'] = array('style' => 'display: inline');
   }
 
@@ -1019,6 +1024,7 @@ function uc_product_product_types() {
  */
 function uc_product_store_status() {
   if (!module_exists('imagefield') || !module_exists('imagecache')) {
+    $status = 'warning';
     $description = t('To automatically configure core image support, <a href="!url">enable</a> the <a href="http://drupal.org/project/cck">Content</a>, <a href="http://drupal.org/project/imagefield">CCK Image field</a>, and <a href="http://drupal.org/project/imagecache">Imagecache</a> modules.', array('!url' => url('admin/build/modules')));
   }
   else {
@@ -1214,7 +1220,7 @@ function uc_product_table_header() {
   if (module_exists('uc_cart') && (arg(0) != 'admin' || $_GET['q'] == 'admin/store/settings/tables/uc_product_table') && $enabled['add_to_cart']) {
     $columns['add_to_cart'] = array(
       'weight' => 10,
-      'cell' => array('data' => t('Add to cart'), 'nowrap' => 'nowrap'),
+      'cell' => array('data' => variable_get('uc_teaser_add_to_cart_text', t('Add to cart')), 'nowrap' => 'nowrap'),
     );
   }
 
@@ -1247,7 +1253,7 @@ function uc_product_table($args = array()) {
       if (module_exists('imagecache')) {
         if (($field = variable_get('uc_image_'. $node->type, '')) && isset($node->$field) && file_exists($node->{$field}[0]['filepath'])) {
           $image = $node->{$field}[0];
-          $data['image'] = array('#value' => l(theme('imagecache', 'product_list', $image['filepath'], $image['data']['alt'], $image['data']['title']), 'node/'. $node->nid, array('html' => TRUE)));
+          $data['image'] = array('#value' => l(theme('imagecache', 'product_list', $image['filepath'], $image['alt'], $image['title']), 'node/'. $node->nid, array('html' => TRUE)));
         }
         else {
           $data['image'] = array('#value' => t('n/a'));
@@ -1262,12 +1268,12 @@ function uc_product_table($args = array()) {
     $context['subject'] = array('node' => $node);
     if ($enabled['list_price']) {
       $context['subject']['field'] = 'list_price';
-      $data['list_price'] = array('#value' => uc_price($node->list_price, $context), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
+      $data['list_price'] = array('#value' => uc_price($node->list_price, $context), '#cell_attributes' => array('nowrap' => 'nowrap'));
     }
     if ($enabled['sell_price']) {
       $context['subject']['field'] = 'sell_price';
       $context['class'] = array('sell-price');
-      $data['price'] = array('#value' => uc_price($node->sell_price, $context, array('label' => FALSE)), '#cell_attriubtes' => array('nowrap' => 'nowrap'));
+      $data['price'] = array('#value' => uc_price($node->sell_price, $context, array('label' => FALSE)), '#cell_attributes' => array('nowrap' => 'nowrap'));
     }
 
     if (module_exists('uc_cart') && arg(0) != 'admin' && $enabled['add_to_cart']) {
@@ -1338,6 +1344,17 @@ function theme_uc_product_model($model, $teaser = 0, $page = 0) {
   return $output;
 }
 
+/**
+ * Format a product's body.
+ *
+ * @ingroup themeable
+ */
+function theme_uc_product_body($body, $teaser = 0, $page = 0) {
+  $output = '<div class="product-body">';
+  $output .= $body;
+  $output .='</div>';
+  return $output;
+}
 /**
  * Wrap the "Add to Cart" form in a <div>.
  *
@@ -1468,7 +1485,7 @@ function theme_uc_product_image($images, $teaser = 0, $page = 0) {
     $output .= $image_widget_func($rel_count);
   }
   $output .= '>';
-  $output .= theme('imagecache', 'product', $first['filepath'], $first['data']['alt'], $first['data']['title']);
+  $output .= theme('imagecache', 'product', $first['filepath'], $first['alt'], $first['title']);
   $output .= '</a></div><div class="more-product-images">';
   foreach ($images as $thumbnail) {
     // Node preview adds extra values to $images that aren't files.
@@ -1480,7 +1497,7 @@ function theme_uc_product_image($images, $teaser = 0, $page = 0) {
       $output .= $image_widget_func($rel_count);
     }
     $output .= '>';
-    $output .= theme('imagecache', 'uc_thumbnail', $thumbnail['filepath'], $thumbnail['data']['alt'], $thumbnail['data']['title']);
+    $output .= theme('imagecache', 'uc_thumbnail', $thumbnail['filepath'], $thumbnail['alt'], $thumbnail['title']);
     $output .= '</a>';
   }
   $output .= '</div></div>';
@@ -1853,6 +1870,10 @@ function uc_product_add_default_image_field($type = NULL) {
       ),
     ),
   );
+  if (module_exists('imagefield_tokens')) {
+    $field['alt'] = '[title]';
+    $field['title'] = '[title]';
+  }
 
   if ($type) {
     // Accept single or multiple types as input.

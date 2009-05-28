@@ -1,5 +1,5 @@
 <?php
-// $Id: united_kingdom_826_1.cif,v 1.5.2.1 2008/11/03 21:33:50 islandusurper Exp $
+// $Id: united_kingdom_826_2.cif,v 1.1.2.1 2009/05/28 20:49:21 islandusurper Exp $
 
 /**
  * First implement hook_install() using the name of the country as the base of
@@ -8,7 +8,7 @@
 function united_kingdom_install() {
   // Make the entry in the country table.
   // VALUES = Country ID, Country Name, 2-digit Code, 3-digit Code, File Version
-  db_query("INSERT INTO {uc_countries} VALUES ('826', 'United Kingdom', 'GB', 'GBR', 1)");
+  db_query("INSERT INTO {uc_countries} VALUES ('826', 'United Kingdom', 'GB', 'GBR', 2)");
 
   // Make the entries in the zones table.
   db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
@@ -17,6 +17,7 @@ function united_kingdom_install() {
           ."(826, 'ANG', 'Anglesey'),"
           ."(826, 'AGS', 'Angus'),"
           ."(826, 'ARY', 'Argyll and Bute'),"
+          ."(826, 'AVON', 'Avon'),"
           ."(826, 'BEDS', 'Bedfordshire'),"
           ."(826, 'BERKS', 'Berkshire'),"
           ."(826, 'BLA', 'Blaenau Gwent'),"
@@ -30,8 +31,15 @@ function united_kingdom_install() {
           ."(826, 'CDGN', 'Ceredigion'),"
           ."(826, 'CHES', 'Cheshire'),"
           ."(826, 'CLACK', 'Clackmannanshire'),"
+          ."(826, 'CLVD', 'Cleveland'),"
           ."(826, 'CON', 'Conwy'),"
           ."(826, 'CORN', 'Cornwall'),"
+          ."(826, 'COAN', 'County Antrim'),"
+          ."(826, 'COAR', 'County Armagh'),"
+          ."(826, 'CODN', 'County Down'),"
+          ."(826, 'COFE', 'County Fermanagh'),"
+          ."(826, 'COLO', 'County Londonderry'),"
+          ."(826, 'COTY', 'County Tyrone'),"
           ."(826, 'CMA', 'Cumbria'),"
           ."(826, 'DNBG', 'Denbighshire'),"
           ."(826, 'DERBY', 'Derbyshire'),"
@@ -53,6 +61,7 @@ function united_kingdom_install() {
           ."(826, 'FLINT', 'Flintshire'),"
           ."(826, 'GLAS', 'Glasgow'),"
           ."(826, 'GLOS', 'Gloucestershire'),"
+          ."(826, 'MAN', 'Greater Manchester'),"
           ."(826, 'GDD', 'Gwynedd'),"
           ."(826, 'HANTS', 'Hampshire'),"
           ."(826, 'HWR', 'Herefordshire'),"
@@ -60,14 +69,15 @@ function united_kingdom_install() {
           ."(826, 'HLD', 'Highlands'),"
           ."(826, 'IVER', 'Inverclyde'),"
           ."(826, 'IOW', 'Isle of Wight'),"
+          ."(826, 'IOS', 'Isles of Scilly'),"
           ."(826, 'KNT', 'Kent'),"
           ."(826, 'LANCS', 'Lancashire'),"
           ."(826, 'LEICS', 'Leicestershire'),"
           ."(826, 'LINCS', 'Lincolnshire'),"
           ."(826, 'LDN', 'London'),"
-          ."(826, 'MAN', 'Manchester'),"
           ."(826, 'MSY', 'Merseyside'),"
           ."(826, 'MERT', 'Merthyr Tydfil'),"
+          ."(826, 'MIDDX', 'Middlesex'),"
           ."(826, 'MLOT', 'Midlothian'),"
           ."(826, 'MMOUTH', 'Monmouthshire'),"
           ."(826, 'MORAY', 'Moray'),"
@@ -120,8 +130,8 @@ function united_kingdom_install() {
   // is available at:
   // http://www.ubercart.org/ubercart_users_guide/country_settings#address_format_docs
   uc_set_address_format(826,
-    "!company\r\n!first_name !last_name\r\n!street1\r\n!street2"
-   ."\r\n!city, !zone_code !postal_code\r\n!country_name_if");
+    "!first_name !last_name\r\n!company\r\n!street1\r\n!street2"
+   ."\r\n!city\r\n!postal_code\r\n!country_name_if");
 }
 
 /**
@@ -130,6 +140,27 @@ function united_kingdom_install() {
  * latest changes in the install function.
  */
 function united_kingdom_update($version) {
+  switch ($version) {
+    case 2:
+      db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
+              ."(826, 'AVON', 'Avon'),"
+              ."(826, 'COAN', 'County Antrim'),"
+              ."(826, 'COAR', 'County Armagh'),"
+              ."(826, 'CODN', 'County Down'),"
+              ."(826, 'COFE', 'County Fermanagh'),"
+              ."(826, 'COLO', 'County Londonderry'),"
+              ."(826, 'COTY', 'County Tyrone'),"
+              ."(826, 'CLVD', 'Cleveland'),"
+              ."(826, 'IOS', 'Isles of Scilly'),"
+              ."(826, 'MIDDX', 'Middlesex')");
+
+      db_query("UPDATE {uc_zones} SET zone_name = 'Greater Manchester' WHERE zone_country_id = 826 AND zone_name = 'Manchester'");
+
+      uc_set_address_format(826,
+        "!first_name !last_name\r\n!company\r\n!street1\r\n!street2"
+        ."\r\n!city\r\n!postal_code\r\n!country_name_if");
+      break;
+  }
 }
 
 /**
