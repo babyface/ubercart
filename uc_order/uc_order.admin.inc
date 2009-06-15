@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.17 2009/05/07 20:52:30 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.18 2009/06/15 19:52:26 islandusurper Exp $
 
 /**
  * @file
@@ -592,11 +592,11 @@ function uc_order_create($customer = NULL) {
 
   drupal_add_js(drupal_get_path('module', 'uc_order') .'/uc_order.js');
 
-  $output = '<div style="position: relative; top: 2px; cursor: pointer;" '
+  $output = '<div id="customer-search-link" style="position: relative; top: 2px; cursor: pointer;" '
            .'onclick="load_customer_search();">'
           . uc_store_get_icon('file:order_view') .' '
           . t('Search for an existing customer.') .'</div>';
-  $output .= '<div style="position: relative; top: 2px; cursor: pointer;" '
+  $output .= '<div id="customer-create-link" style="position: relative; top: 2px; cursor: pointer;" '
             .'onclick="load_new_customer_form();">'
            . uc_store_get_icon('file:menu_customers_small') .' '
            . t('Create a new customer.') .'</div>';
@@ -1141,6 +1141,13 @@ function uc_order_edit_form_submit($form, &$form_state) {
       }
     }
   }
+
+  // Load line items again, since some may have been updated by the form.
+  $order->line_items = uc_order_load_line_items($order, TRUE);
+
+  // Merge it with the defaultish line items.
+  $order->line_items = array_merge($order->line_items, uc_order_load_line_items($order, FALSE));
+  usort($order->line_items, 'uc_weight_sort');
 
   if (variable_get('uc_order_logging', TRUE)) {
     uc_order_log_changes($order->order_id, $log);

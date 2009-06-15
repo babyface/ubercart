@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.22 2009/04/28 21:57:27 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.23 2009/06/15 19:52:26 islandusurper Exp $
 
 /**
  * @file
@@ -582,7 +582,7 @@ function uc_order_condition_count_products($order, $settings) {
   $total = 0;
   foreach ($order->products as $product) {
     $totals['all'] += $product->qty;
-    $totals[$product->nid] = $product->qty;
+    $totals[$product->nid] += $product->qty;
   }
   if (in_array('all', $settings['products'])) {
     $total = $totals['all'];

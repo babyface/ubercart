@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.admin.inc,v 1.1.2.8 2009/05/28 20:49:19 islandusurper Exp $
+// $Id: uc_file.admin.inc,v 1.1.2.9 2009/06/15 19:52:27 islandusurper Exp $
 
 /**
  * @file
@@ -184,13 +184,8 @@ function theme_uc_file_admin_files_form_show($form) {
     );
   }
 
-  if (count($rows) == 0) {
-    $rows[] = array(
-      array(
-        'data' => 'No file downloads are available.',
-        'colspan' => 4,
-      ),
-    );
+  if (empty($rows)) {
+    $rows[] = array(array('data' => t('No file downloads available.'), 'colspan' => 4));
   }
 
   // Render everything.

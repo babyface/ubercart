@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.27 2009/05/28 20:49:19 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.28 2009/06/15 19:52:26 islandusurper Exp $
 
 /**
  * @file
@@ -330,7 +330,7 @@ function uc_attribute_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
         }
         $result = db_query("SELECT model FROM {uc_product_adjustments} WHERE nid = %d", $node->nid);
         while ($adjustment = db_fetch_object($result)) {
-          $output .= '<h2>'. $adjustment->model ."<h2>\n";
+          $output .= '<h2>'. $adjustment->model ."</h2>\n";
         }
         return $output;
     }
@@ -371,6 +371,7 @@ function uc_attribute_add_to_cart_data($form_values) {
       $combination[$aid] = $value;
     }
   }
+  ksort($combination);
   $result = db_query("SELECT model FROM {uc_product_adjustments} WHERE nid = %d AND combination LIKE '%s'", $form_values['nid'], serialize($combination));
   $model = db_result($result);
   // drupal_set_message('Attributes to add to order Array(aid => oid):<pre>'. print_r($form_state['values']['attributes'], TRUE) . $model .'</pre>');

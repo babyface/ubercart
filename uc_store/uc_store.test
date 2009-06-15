@@ -18,7 +18,7 @@ class UCCountriesTestCase extends DrupalWebTestCase {
   }
 
   function testCountry() {
-    $import_file = 'belgium_56_1.cif';
+    $import_file = 'belgium_56_2.cif';
     $country_name = 'Belgium';
     $country_code = 'BEL';
 
@@ -40,7 +40,7 @@ class UCCountriesTestCase extends DrupalWebTestCase {
     $this->assertText(t('@name enabled.', array('@name' => $country_name)), t('Country was enabled.'));
 
     $this->clickLink(t('remove'));
-    $this->assertTitle(t('Are you sure you want to remove @name from the system?', array('@name' => $country_name)), t('Confirm form is displayed.'));
+    $this->assertText(t('Are you sure you want to remove @name from the system?', array('@name' => $country_name)), t('Confirm form is displayed.'));
 
     $this->drupalPost('admin/store/settings/countries/56/remove', array(), t('Remove'));
     $this->assertText(t('@name removed.', array('@name' => $country_name)), t('Country removed.'));

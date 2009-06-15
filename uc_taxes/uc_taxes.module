@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.12.2.12 2009/05/06 18:38:03 islandusurper Exp $
+// $Id: uc_taxes.module,v 1.12.2.13 2009/06/15 19:52:27 islandusurper Exp $
 
 /**
  * @file
@@ -387,6 +387,14 @@ function uc_taxes_calculate_tax($order) {
 
   $order->taxes = array();
 
+  if (isset($order->order_status)) {
+    $state = uc_order_status_data($order->order_status, 'state');
+    $use_same_rates = in_array($state, array('payment_received', 'completed'));
+  }
+  else {
+    $use_same_rates = FALSE;
+  }
+
   $arguments = array(
     'order' => array(
       '#entity' => 'uc_order',
@@ -405,6 +413,15 @@ function uc_taxes_calculate_tax($order) {
     ),
   );
   foreach (uc_taxes_rate_load() as $tax) {
+    if ($use_same_rates) {
+      foreach ((array)$order->line_items as $old_line) {
+        if ($old_line['type'] == 'tax' && $old_line['data']['tax_id'] == $tax->id) {
+          $tax->rate = $old_line['data']['tax_rate'];
+          break;
+        }
+      }
+    }
+
     $arguments['tax']['#data'] = $tax;
     $predicates = ca_load_trigger_predicates('calculate_taxes');
     if (ca_evaluate_conditions($predicates['uc_taxes_'. $tax->id], $arguments)) {
@@ -503,6 +520,7 @@ function uc_taxes_apply_tax($order, $tax) {
   if ($amount) {
     $line_item = (object)array('id' => $tax->id, 'name' => $tax->name, 'amount' => $amount, 'weight' => $tax->weight);
     $line_item->data = array(
+      'tax_id' => $tax->id,
       'tax_rate' => $tax->rate,
       'taxable_amount' => $taxable_amount,
       'tax_jurisdiction' => $tax->name,

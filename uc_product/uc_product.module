@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.26 2009/05/28 20:49:19 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.27 2009/06/15 19:52:26 islandusurper Exp $
 
 /**
  * @file
@@ -1038,7 +1038,7 @@ function uc_product_store_status() {
       $field_check = FALSE;
     }
 
-    $presets = array('product', 'product_list', 'uc_thumbnail');
+    $presets = array('product', 'product_full', 'product_list', 'uc_thumbnail');
     if (module_exists('uc_catalog')) {
       $presets[] = 'uc_category';
     }
@@ -1598,7 +1598,7 @@ function uc_product_get_models($node) {
   // Get any modules' SKUs on this node.
   $models = module_invoke_all('uc_product_models', $node);
   // Add the base SKU of the node.
-  $models[$node->model] = $node->model;
+  $models[] = $node->model;
 
   // Now we map the SKUs to the keys, for form handling, etc.
   $models = drupal_map_assoc($models);

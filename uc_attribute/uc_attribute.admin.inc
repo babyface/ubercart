@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.13 2009/05/28 20:49:19 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.14 2009/06/15 19:52:26 islandusurper Exp $
 
 /**
  * @file
@@ -1015,11 +1015,11 @@ function uc_product_adjustments_form($form_state, $node) {
         $row_title .= check_plain($combo->{'name'. $j}) .', ';
         $comb_array[$combo->{'aid'. $j}] = $combo->{'oid'. $j};
       }
+      ksort($comb_array);
       $row_title = substr($row_title, 0, strlen($row_title) - 2);
-      $serial_array = serialize($comb_array);
       $default_model = $model;
       foreach ($old_vals as $ov) {
-        if (!count(array_diff_assoc(unserialize($ov->combination), unserialize($serial_array)))) {
+        if (!count(array_diff_assoc(unserialize($ov->combination), $comb_array))) {
           $default_model = $ov->model;
           break;
         }
@@ -1034,7 +1034,7 @@ function uc_product_adjustments_form($form_state, $node) {
       );
       $form['table']['body'][$i]['combo_array'] = array(
         '#type' => 'value',
-        '#value' => $serial_array,
+        '#value' => serialize($comb_array),
       );
       $form['table']['body'][$i]['model'] = array(
         '#type' => 'textfield',

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.22 2009/05/28 20:49:20 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.23 2009/06/15 19:52:26 islandusurper Exp $
 
 /**
  * @file
@@ -1939,7 +1939,7 @@ function uc_store_send_report() {
   $response = drupal_http_request('http://www.ubercart.org/statistics/report', array('Content-Type' => 'application/x-www-form-urlencoded'), 'POST', drupal_query_string_encode($data));
 
   // If we got a response, store it as the site ID.
-  if ($response->data) {
+  if ($response->data && strlen($response->data) == 32) {
     variable_set('uc_store_site_id', $response->data);
   }
 

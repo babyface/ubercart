@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.19 2009/05/06 18:38:03 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.20 2009/06/15 19:52:27 islandusurper Exp $
 
 /**
  * @file
@@ -822,26 +822,12 @@ function uc_product_kit_store_status() {
 function uc_product_kit_add_to_cart($nid, $qty, $kit_data) {
   $node = node_load($nid);
   if ($node->type == 'product_kit') {
-    //dpm($kit_data);
     $unique = uniqid('', TRUE);
     foreach ($node->products as $product) {
       $data = array('kit_id' => $node->nid, 'unique_id' => $unique, 'module' => 'uc_product_kit');
       uc_cart_add_item($product->nid, $product->qty * $qty, $data +  module_invoke_all('add_to_cart_data', $kit_data['products'][$product->nid]), NULL, FALSE, FALSE);
     }
-    if ($check_redirect) {
-      if (isset($_GET['destination'])) {
-        drupal_goto();
-      }
 
-      $redirect = variable_get('uc_add_item_redirect', 'cart');
-      if ($redirect != '<none>') {
-        $_SESSION['last_url'] = uc_referer_uri();
-        return $redirect;
-      }
-      else {
-        return uc_referer_uri();
-      }
-    }
     return array(array('success' => FALSE, 'silent' => TRUE, 'message' => ''));
   }
 }

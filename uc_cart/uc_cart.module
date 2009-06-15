@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.21 2009/04/28 21:03:14 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.22 2009/06/15 19:52:27 islandusurper Exp $
 
 /**
  * @file
@@ -250,6 +250,9 @@ function uc_cart_theme() {
     'uc_cart_checkout_review' => array(
       'arguments' => array('help' => NULL, 'panes' => NULL, 'form' => NULL),
       'file' => 'uc_cart.pages.inc',
+    ),
+    'uc_cart_complete_sale' => array(
+      'arguments' => array('message' => ''),
     ),
   );
 }
@@ -1195,7 +1198,8 @@ function uc_cart_complete_sale($order, $login = FALSE) {
                       variable_get('uc_msg_continue_shopping_format', FILTER_FORMAT_DEFAULT),
                       FALSE) .'</p>';
 
-  $output = token_replace_multiple($output, array('global' => NULL, 'order' => $order));
+  $output_message = token_replace_multiple($output, array('global' => NULL, 'order' => $order));
+  $themed_output = theme('uc_cart_complete_sale', $output_message);
 
   // Move an order's status from "In Checkout" to "Pending"
   $status = db_result(db_query("SELECT order_status FROM {uc_orders} WHERE order_id = %d", $order->order_id));
@@ -1211,7 +1215,18 @@ function uc_cart_complete_sale($order, $login = FALSE) {
 
   ca_pull_trigger('uc_checkout_complete', $order, $user->uid == 0 ? $account : $user);
 
-  return $output;
+  return $themed_output;
+}
+
+/**
+ * Theme the sale completion page.
+ *
+ * @param $message
+ *   Message containing order number info, account info, and link to continue shopping.
+ * @ingroup themeable
+ */
+function theme_uc_cart_complete_sale($message) {
+  return $message;
 }
 
 /**

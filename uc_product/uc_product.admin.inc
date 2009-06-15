@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.admin.inc,v 1.1.2.16 2009/05/28 20:49:19 islandusurper Exp $
+// $Id: uc_product.admin.inc,v 1.1.2.17 2009/06/15 19:52:26 islandusurper Exp $
 
 /**
  * @file
@@ -99,10 +99,12 @@ function uc_product_settings_form() {
   }
 
   if (empty($options)) {
-    $options[NULL] = 'No image widgets installed.';
+    $options[NULL] = t('No image widgets installed.');
   }
-
-  $options['none'] = "Don't use any image widgets.";
+  else {
+    // If we have widgets installed, add option to not use any of them
+    $options['none'] = "Don't use any image widgets.";
+  }
 
   $form['uc_product_image_widget'] = array(
     '#type' => 'radios',

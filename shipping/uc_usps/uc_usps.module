@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.6.2.13 2009/05/06 18:38:03 islandusurper Exp $
+// $Id: uc_usps.module,v 1.6.2.14 2009/06/15 19:52:26 islandusurper Exp $
 
 /**
  * @file
@@ -645,7 +645,7 @@ function _uc_usps_package_products($products, &$addresses) {
         $package->machinable = (
           $package->length >= 6 && $package->length <= 34 &&
           $package->width >= 0.25 && $package->width <= 17 &&
-          $package->height >= 3.5 && $package->height >= 17 &&
+          $package->height >= 3.5 && $package->height <= 17 &&
           ($package->pounds == 0 ? $package->ounces >= 6 : TRUE) &&
           $package->pounds <= 35 &&
         ($package->pounds == 35 ? $package->ounces == 0 : TRUE)
@@ -666,6 +666,7 @@ function _uc_usps_pkg_types() {
   return array(
     'VARIABLE' => t('Variable'),
     'FLAT RATE BOX' => t('Flat rate box'),
+    'LG FLAT RATE BOX' => t('Large flat rate box'),
     'FLAT RATE ENVELOPE' => t('Flat rate envelope'),
     'RECTANGULAR' => t('Rectangular'),
     'NONRECTANGULAR' => t('Non-rectangular'),

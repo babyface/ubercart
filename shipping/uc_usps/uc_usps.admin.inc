@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.admin.inc,v 1.1.2.4 2009/02/10 21:58:13 islandusurper Exp $
+// $Id: uc_usps.admin.inc,v 1.1.2.5 2009/06/15 19:52:26 islandusurper Exp $
 
 /**
  * @file
@@ -75,7 +75,7 @@ function uc_usps_admin_settings() {
     '#default_value' => variable_get('uc_usps_markup_type', 'percentage'),
     '#options' => array(
       'percentage' => t('Percentage (%)'),
-      'multiplier' => t('Multiplier (�)'),
+      'multiplier' => t('Multiplier (×)'),
       'currency' => t('Addition (!currency)', array('!currency' => variable_get('uc_currency_sign', '$'))),
     ),
   );

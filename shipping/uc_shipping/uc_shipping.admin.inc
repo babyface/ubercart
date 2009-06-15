@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.admin.inc,v 1.1.2.8 2009/04/28 21:03:15 islandusurper Exp $
+// $Id: uc_shipping.admin.inc,v 1.1.2.9 2009/06/15 19:52:27 islandusurper Exp $
 
 /**
  * @file
@@ -895,7 +895,7 @@ function uc_shipping_make_shipment() {
   }
   else {
     drupal_set_message(t('There is no sense in making a shipment with no packages on it, right?'));
-    drupal_goto('admin/store/orders/'. $args[0]);
+    drupal_goto('admin/store/orders/'. $args[0]->order_id .'/shipments/new');
   }
 }
 

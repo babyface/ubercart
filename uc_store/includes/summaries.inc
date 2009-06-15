@@ -1,5 +1,5 @@
 <?php
-// $Id: summaries.inc,v 1.1.2.8 2009/01/19 20:31:28 islandusurper Exp $
+// $Id: summaries.inc,v 1.1.2.9 2009/06/15 19:52:26 islandusurper Exp $
 
 /**
  * @file
@@ -171,6 +171,10 @@ function summarize_child_form_pages($path, $trim = FALSE, $only_parent = FALSE) 
 
   while ($row = db_fetch_array($result)) {
     $item = menu_get_item($row['path']);
+    // Only allow items the user can access.
+    if ($item['access'] === FALSE) {
+      continue;
+    }
 
     if ($item['page_callback'] == 'drupal_get_form') {
       if ($item['type'] == MENU_DEFAULT_LOCAL_TASK) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.install,v 1.10.2.7 2009/04/18 07:29:19 islandusurper Exp $
+// $Id: uc_attribute.install,v 1.10.2.8 2009/06/15 19:52:26 islandusurper Exp $
 
 /**
  * @file
@@ -671,6 +671,26 @@ function uc_attribute_update_6003() {
   db_add_field($ret, 'uc_product_attributes', 'label', $spec);
 
   $ret[] = array('success' => TRUE, 'query' => 'Added label to product attributes.');
+
+  return $ret;
+}
+
+/**
+ * Sort adjustment combination arrays by attribute id.
+ */
+function uc_attribute_update_6004() {
+  $ret = array();
+
+  $changes = 0;
+  $result = db_query('SELECT * FROM {uc_product_adjustments}');
+  while($row = db_fetch_object($result)) {
+    $combination = unserialize($row->combination);
+    ksort($combination);
+    db_query('UPDATE {uc_product_adjustments} SET combination = "%s" WHERE nid = %d AND model = "%s"', serialize($combination), $row->nid, $row->model);
+    $changes++;
+  }
+
+  $ret[] = array('success' => TRUE, 'query' => 'Sorted adjustment combination arrays by attribute id.');
 
   return $ret;
 }

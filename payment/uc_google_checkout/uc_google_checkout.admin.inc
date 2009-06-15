@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.admin.inc,v 1.1.2.6 2009/04/29 12:32:46 islandusurper Exp $
+// $Id: uc_google_checkout.admin.inc,v 1.1.2.7 2009/06/15 19:52:26 islandusurper Exp $
 
 /**
  * @file
@@ -325,7 +325,7 @@ function uc_google_checkout_terminal($order) {
            . t('Google Checkout total:') .'</strong></td><td>'
            . uc_price($order->gc_total, $context) .'</td></tr><tr><td><strong>'
            . t('Google Checkout balance:') .'</strong></td<td>'
-           . uc_prcie($gc_balance, $context) .'</td></tr></tbody></table>';
+           . uc_price($gc_balance, $context) .'</td></tr></tbody></table>';
 
   if (in_array($order->financial_state, array('REVIEWING', 'CHARGEABLE', 'CHARGED'))) {
     $output .= drupal_get_form('uc_google_checkout_terminal_form', $order, $gc_balance);
