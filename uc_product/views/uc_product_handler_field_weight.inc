@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_handler_field_weight.inc,v 1.1.2.2 2008/11/07 21:13:28 islandusurper Exp $
+// $Id: uc_product_handler_field_weight.inc,v 1.1.2.3 2009/07/08 12:56:50 islandusurper Exp $
 
 /**
  * @file
@@ -11,6 +11,6 @@
  */
 class uc_product_handler_field_weight extends views_handler_field {
   function render($values) {
-    return uc_weight_format($values->{$this->field_alias});
+    return uc_weight_format($values->{$this->field_alias}, $values->{$this->aliases['weight_units']});
   }
 }

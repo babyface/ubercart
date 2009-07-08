@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.5.2.13 2009/04/28 21:03:16 islandusurper Exp $
+// $Id: uc_paypal.module,v 1.5.2.14 2009/07/08 12:56:52 islandusurper Exp $
 
 /**
  * @file
@@ -849,6 +849,9 @@ function uc_paypal_wps_form($form_state, $order) {
     // PayPal command variable
     'cmd' => '_cart',
 
+    // Set the correct codepage
+    'charset' => 'utf-8',
+
     // IPN control notify URL
     'notify_url' => url('uc_paypal/ipn/'. $order->order_id, array('absolute' => TRUE)),
 
@@ -981,7 +984,7 @@ function _uc_paypal_product_details($items) {
       if (!empty($desc)) {
         $desc .= ' / ';
       }
-      $desc .= $item->qty .'x '. $item->title;
+      $desc .= $item->qty .'&times; '. $item->title;
       $subtotal += $item->qty * $item->price;
     }
   }

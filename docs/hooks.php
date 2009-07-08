@@ -1,5 +1,5 @@
 <?php
-// $Id: hooks.php,v 1.1.2.12 2009/04/22 17:45:10 islandusurper Exp $
+// $Id: hooks.php,v 1.1.2.13 2009/07/08 12:56:52 islandusurper Exp $
 
 /**
  * @file
@@ -758,6 +758,23 @@ function hook_order_pane() {
 }
 
 /**
+ * Allows modules to alter ordered products when they're loaded with an order.
+ *
+ * @param &$product
+ *   The product object as found in the $order object.
+ * @param $order
+ *   The order object to which the product belongs.
+ * @return
+ *   Nothing should be returned. Hook implementations should receive the
+ *     $product object by reference and alter it directly.
+ */
+function hook_order_product_alter(&$product, $order) {
+  drupal_set_message('hook_order_product_alter(&$product, $order):');
+  drupal_set_message('&$product: <pre>'. print_r($product, TRUE) .'</pre>');
+  drupal_set_message('$order: <pre>'. print_r($order, TRUE) .'</pre>');
+}
+
+/**
  * Register payment gateway callbacks.
  *
  * @see @link http://www.ubercart.org/docs/api/hook_payment_gateway @endlink
@@ -962,10 +979,10 @@ function hook_shipment($op, &$shipment) {
  *       drupal_to_js() is very useful for this.
  *       @code
  *         return array(
- *           '03' => array('rate' => 15.75, 'format' => uc_currency_format(15.75) 'option_label' => t('UPS Ground'),
+ *           '03' => array('rate' => 15.75, 'format' => uc_price(15.75, $context) 'option_label' => t('UPS Ground'),
  *                         'error' => 'Additional handling charge automatically applied.'),
  *           '14' => array('error' => 'Invalid package type.'),
- *           '59' => array('rate' => 26.03, 'format' => uc_currency_format(26.03), 'option_label' => t('UPS 2nd Day Air A.M.'))
+ *           '59' => array('rate' => 26.03, 'format' => uc_price(26.03, $context), 'option_label' => t('UPS 2nd Day Air A.M.'))
  *         );
  *       @endcode
  *   - "pkg_types": The list of package types that the shipping method can handle.

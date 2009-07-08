@@ -1,4 +1,4 @@
-/* $Id: uc_catalog.css,v 1.6.2.4 2009/01/19 20:31:25 islandusurper Exp $ */
+/* $Id: uc_catalog.css,v 1.6.2.5 2009/07/08 12:56:48 islandusurper Exp $ */
 
 .catalog .trail {
   font-weight: bold;
@@ -6,7 +6,7 @@
 
 img.category {
   float: right;
-  padding-left: 1em;
+  margin-left: 1em;
 }
 table.category-products {
   clear: right;

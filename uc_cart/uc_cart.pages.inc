@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.12 2009/05/06 18:38:03 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.13 2009/07/08 12:56:50 islandusurper Exp $
 
 /**
  * @file
@@ -85,7 +85,9 @@ function uc_cart_checkout() {
   // Send anonymous users to login page when anonymous checkout is disabled.
   if (!$user->uid && !variable_get('uc_checkout_anonymous', TRUE)) {
     drupal_set_message(t('You must login before you can proceed to checkout.'));
-    drupal_set_message(t('If you do not have an account, you can <a href="!url">click here</a> to create one.', array('!url' => url('user/register', array('absolute' =>  TRUE)))));
+    if (variable_get('user_register', 1) != 0) {
+      drupal_set_message(t('If you do not have an account yet, you should <a href="!url">register now</a>.', array('!url' => url('user/register'))));
+    }
     $_SESSION['checkout-redirect'] = TRUE;
     drupal_goto('user');
   }

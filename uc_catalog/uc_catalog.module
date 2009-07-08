@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.17 2009/05/28 20:49:19 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.18 2009/07/08 12:56:48 islandusurper Exp $
 
 /**
  * @file
@@ -62,7 +62,8 @@ function uc_catalog_menu() {
   $items = array();
 
   $items['catalog'] = array(
-    'title' => variable_get('uc_catalog_name', t('Catalog')),
+    'title callback' => 'variable_get',
+    'title arguments' => array('uc_catalog_name', t('Catalog')),
     'page callback' => 'theme',
     'page arguments' => array('uc_catalog_browse'),
     'access arguments' => array('view catalog'),
@@ -337,18 +338,21 @@ function uc_catalog_form_alter(&$form, &$form_state, $form_id) {
       '#weight' => 0,
     );
     $image = uc_catalog_image_load($form['tid']['#value']);
+    $imagecache = module_exists('imagecache');
     if ($image) {
-      if (module_exists('imagecache')) {
+      if ($imagecache) {
         $image_display = theme('imagecache', 'uc_category', $image->filepath);
       }
       else {
-        $image_display = theme('image', $image->filename, t('Term image'));
-        $form['identification']['image']['image']['#description'] = t('The image will not be resized. Consider installing <a href="@url">Image cache</a>.', array('@url' => url('http://drupal.org/project/imagecache')));
+        $image_display = theme('image', $image->filepath, t('Term image'));
       }
       $form['identification']['image']['remove'] = array('#type' => 'checkbox',
         '#title' => t('Remove category image: !image', array('!image' => $image_display)),
         '#weight' => 1,
       );
+    }
+    if (!$imagecache) {
+      $form['identification']['image']['image']['#description'] = t('The image will not be resized. Consider installing <a href="@url">Image cache</a>.', array('@url' => url('http://drupal.org/project/imagecache')));
     }
 
     $form['identification']['description']['#description'] = t('A description of the term. Displayed to customers at the top of catalog pages.');
@@ -621,13 +625,7 @@ function uc_catalog_get_page($tid) {
   $catalog->description = $description;
   $catalog->children = array();
   if ($file = uc_catalog_image_load($catalog->tid)) {
-    if (module_exists('imagecache')) {
-      $file_path =  file_create_url(file_directory_path() .'/imagecache/uc_category/'. $file->filepath);
-    }
-    else {
-      $file_path = $file->filepath;
-    }
-    $info = image_get_info($file_path);
+    $info = image_get_info($file->filepath);
     $catalog->image = $info;
     $catalog->image['filepath'] = $file->filepath;
   }
@@ -642,9 +640,8 @@ function uc_catalog_get_page($tid) {
     }
     $child->nodes = $n;
     // Display child category's image.
-    if (module_exists('imagecache') && $file = uc_catalog_image_load($child->tid)) {
-      $imagecache_path =  file_create_url(file_directory_path() .'/imagecache/uc_category/'. $file->filepath);
-      $info = image_get_info($imagecache_path);
+    if ($file = uc_catalog_image_load($child->tid)) {
+      $info = image_get_info($file->filepath);
       $child->image = $info;
       $child->image['filepath'] = $file->filepath;
     }

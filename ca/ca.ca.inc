@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.ca.inc,v 1.1.2.8 2009/04/28 21:03:16 islandusurper Exp $
+// $Id: ca.ca.inc,v 1.1.2.9 2009/07/08 12:56:50 islandusurper Exp $
 
 /**
  * @file: This file includes some generic conditions and actions.
@@ -257,7 +257,7 @@ function ca_condition_node_field_comparison_form($form_state, $settings = array(
     '#type' => 'select',
     '#title' => t('Node field'),
     '#options' => $options,
-    '#default_values' => $settings['field'],
+    '#default_value' => $settings['field'],
   );
 
   // Define the operators for the fields.

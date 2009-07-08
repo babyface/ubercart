@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.12 2009/05/28 20:49:20 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.13 2009/07/08 12:56:49 islandusurper Exp $
 
 /**
  * @file
@@ -626,7 +626,7 @@ function uc_store_display_settings_form() {
 
   $form['uc_store_admin_page_display'] = array(
     '#type' => 'radios',
-    '#title' => t('Display type for the main store admininstration page'),
+    '#title' => t('Display type for the main store administration page'),
     '#description' => t('Some options are better suited for different themes, so feel free to try them all out!'),
     '#options' => $display_options,
     '#summary' => t('Store admin page is displaying: <br />@display', array('@display' => $display_options[variable_get('uc_store_admin_page_display', 1)])),

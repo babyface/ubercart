@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.27 2009/06/15 19:52:26 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.28 2009/07/08 12:56:51 islandusurper Exp $
 
 /**
  * @file
@@ -882,7 +882,7 @@ function uc_product_form_node_type_form_alter(&$form, &$form_state) {
 
     $options = array('' => t('None'));
     foreach ($fields as $field_name => $field) {
-      if ($field['widget']['type'] == 'imagefield_widget') {
+      if (strpos($field['widget']['type'], 'image') !== FALSE) {
         $options[$field_name] = $field['widget']['label'];
       }
     }
@@ -1245,7 +1245,10 @@ function uc_product_table($args = array()) {
 
   $context = array(
     'location' => 'product-tapir-table',
+    'class' => array('product'),
   );
+  $options = array('label' => FALSE);
+
   foreach ($args as $nid) {
     $data = array();
     $node = node_load($nid);
@@ -1267,13 +1270,14 @@ function uc_product_table($args = array()) {
 
     $context['subject'] = array('node' => $node);
     if ($enabled['list_price']) {
+      $context['class'][1] = 'list';
       $context['subject']['field'] = 'list_price';
-      $data['list_price'] = array('#value' => uc_price($node->list_price, $context), '#cell_attributes' => array('nowrap' => 'nowrap'));
+      $data['list_price'] = array('#value' => uc_price($node->list_price, $context, $options), '#cell_attributes' => array('nowrap' => 'nowrap'));
     }
     if ($enabled['sell_price']) {
+      $context['class'][1] = 'sell';
       $context['subject']['field'] = 'sell_price';
-      $context['class'] = array('sell-price');
-      $data['price'] = array('#value' => uc_price($node->sell_price, $context, array('label' => FALSE)), '#cell_attributes' => array('nowrap' => 'nowrap'));
+      $data['price'] = array('#value' => uc_price($node->sell_price, $context, $options), '#cell_attributes' => array('nowrap' => 'nowrap'));
     }
 
     if (module_exists('uc_cart') && arg(0) != 'admin' && $enabled['add_to_cart']) {

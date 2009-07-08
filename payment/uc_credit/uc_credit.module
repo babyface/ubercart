@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_credit.module,v 1.5.2.14 2009/04/02 21:01:46 islandusurper Exp $
+// $Id: uc_credit.module,v 1.5.2.15 2009/07/08 12:56:52 islandusurper Exp $
 
 /**
  * @file
@@ -527,7 +527,8 @@ function uc_payment_method_credit($op, &$arg1, $silent = FALSE) {
       }
       $review[] = array('title' => t('Card Number'), 'data' => uc_credit_display_number($arg1->payment_details['cc_number']));
       if (variable_get('uc_credit_start_enabled', FALSE)) {
-        $review[] = array('title' => t('Start Date'), 'data' => $arg1->payment_details['cc_start_month'] .'/'. $arg1->payment_details['cc_start_year']);
+        $start = $arg1->payment_details['cc_start_month'] .'/'. $arg1->payment_details['cc_start_year'];
+        $review[] = array('title' => t('Start Date'), 'data' => strlen($start) > 1 ? $start : '');
       }
       $review[] = array('title' => t('Expiration'), 'data' => $arg1->payment_details['cc_exp_month'] .'/'. $arg1->payment_details['cc_exp_year']);
       if (variable_get('uc_credit_issue_enabled', FALSE)) {
@@ -881,7 +882,7 @@ function uc_credit_settings_form_submit($form, &$form_state) {
         if (!$file = fopen($dir .'/uc_credit.key', 'wb')) {
           $message = t('Credit card encryption key file creation failed. Check your filepath settings and directory permissions.');
           drupal_set_message($message, 'error');
-          watchdog('uc_credit', $message, WATCHDOG_ERROR);
+          watchdog('uc_credit', $message, NULL, WATCHDOG_ERROR);
         }
         else {
           // Replacement key generation suggested by Barry Jaspan for increased security.
@@ -970,8 +971,8 @@ function uc_payment_method_credit_form($form_state, $order) {
   );
 
   if (variable_get('uc_credit_start_enabled', FALSE)) {
-    $form['cc_start_month'] = uc_select_month(t('Start Month'), $order->payment_details['cc_start_month']);
-    $form['cc_start_year'] = uc_select_year(t('Start Year'), $order->payment_details['cc_start_year'], date('Y') - 10, date('Y'));
+    $form['cc_start_month'] = uc_select_month(t('Start Month'), $order->payment_details['cc_start_month'], TRUE);
+    $form['cc_start_year'] = uc_select_year(t('Start Year'), $order->payment_details['cc_start_year'], date('Y') - 10, date('Y'), TRUE);
   }
 
   $form['cc_exp_month'] = uc_select_month(t('Expiration Month'), $order->payment_details['cc_exp_month']);
@@ -1286,9 +1287,14 @@ function _valid_card_number($number) {
  * @param $year
  *   The 4-digit numeric representation of the year, i.e. 2008.
  * @return
- *   TRUE for cards whose start date is in the past, FALSE otherwise.
+ *   TRUE for cards whose start date is blank (both month and year) or in the
+ *   past, FALSE otherwise.
  */
 function _valid_card_start($month, $year) {
+  if (empty($month) && empty($year)) {
+    return TRUE;
+  }
+
   if (empty($month) || empty($year)) {
     return FALSE;
   }

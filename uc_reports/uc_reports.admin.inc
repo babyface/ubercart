@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_reports.admin.inc,v 1.1.2.8 2009/04/18 07:29:17 islandusurper Exp $
+// $Id: uc_reports.admin.inc,v 1.1.2.9 2009/07/08 12:56:50 islandusurper Exp $
 
 /**
  * @file
@@ -257,8 +257,8 @@ function uc_reports_products() {
         $csv_rows[] = $csv_row;
 
       }
-      $row_cell++;
     }
+    $row_cell++;
   }
   if (empty($rows)) {
     $rows[] = array(array('data' => t('No products found'), 'colspan' => count($header)));

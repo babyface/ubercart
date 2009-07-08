@@ -1,5 +1,5 @@
 <?php
-// $Id: ca.install,v 1.1.2.6 2009/04/14 13:51:16 islandusurper Exp $
+// $Id: ca.install,v 1.1.2.7 2009/07/08 12:56:50 islandusurper Exp $
 
 /**
  * @file
@@ -60,10 +60,12 @@ function ca_schema() {
       'conditions' => array(
         'type' => 'text',
         'size' => 'big',
+        'serialize' => TRUE,
       ),
       'actions' => array(
         'type' => 'text',
         'size' => 'big',
+        'serialize' => TRUE,
       ),
       'created' => array(
         'type' => 'int',

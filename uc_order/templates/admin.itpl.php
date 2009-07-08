@@ -1,5 +1,5 @@
 <?php
-// $Id: admin.itpl.php,v 1.4.4.3 2009/04/18 07:29:18 islandusurper Exp $
+// $Id: admin.itpl.php,v 1.4.4.4 2009/07/08 12:56:50 islandusurper Exp $
 
 /**
  * This file is the default admin notification template for Ubercart.
@@ -31,8 +31,8 @@ foreach ($products as $product) {
 - <?php echo $product->qty; ?> x <?php echo $product->title .' - '. uc_price($price_info, $context); ?><br />
 &nbsp;&nbsp;<?php echo t('SKU: ') . $product->model; ?><br />
     <?php if (is_array($product->data['attributes']) && count($product->data['attributes']) > 0) {?>
-    <?php foreach ($product->data['attributes'] as $key => $value) {
-      echo '&nbsp;&nbsp;'. $key .': '. $value .'<br />';
+    <?php foreach ($product->data['attributes'] as $attribute => $option) {
+      echo '&nbsp;&nbsp;'. t('@attribute: @options', array('@attribute' => $attribute, '@options' => implode(', ', (array)$option))) .'<br />';
     } ?>
     <?php } ?>
 <br />

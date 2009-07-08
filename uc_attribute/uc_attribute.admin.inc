@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.14 2009/06/15 19:52:26 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.15 2009/07/08 12:56:50 islandusurper Exp $
 
 /**
  * @file
@@ -118,15 +118,14 @@ function uc_attribute_form($form_state, $attribute = NULL) {
   return $form;
 }
 
-/**
- * Submit function for uc_attribute_add_form().
- */
+// Submit function for uc_attribute_form().
 function uc_attribute_form_submit($form, &$form_state) {
   if (!empty($form_state['values']['aid'])) {
     db_query("UPDATE {uc_attributes} SET name = '%s', label = '%s', ordering = %d, required = %d, display = %d, description = '%s' WHERE aid = %d", $form_state['values']['name'], $form_state['values']['label'], $form_state['values']['ordering'], $form_state['values']['required'], $form_state['values']['display'], $form_state['values']['description'], $form_state['values']['aid']);
   }
   else {
     db_query("INSERT INTO {uc_attributes} (name, label, ordering, required, display, description) VALUES ('%s', '%s', %d, %d, %d, '%s')", $form_state['values']['name'], $form_state['values']['label'], $form_state['values']['ordering'], $form_state['values']['required'], $form_state['values']['display'], $form_state['values']['description']);
+    $form_state['values']['aid'] = db_last_insert_id('uc_attributes', 'aid');
   }
 
   $form_state['redirect'] = 'admin/store/attributes';
@@ -870,6 +869,21 @@ function theme_uc_object_options_form($form) {
   $output .= drupal_render($form);
 
   return $output;
+}
+
+/**
+ * Returns a themed set of attribute options for use in order displays.
+ *
+ * @param $product Product
+ * @return Themed set of attribute options.
+ */
+function theme_uc_order_attributes(&$product) {
+  $option_rows = array();
+  foreach ((array)$product->data['attributes'] as $attribute => $option) {
+    $option_rows[] = t('@attribute: @option', array('@attribute' => $attribute, '@option' => implode(', ', (array)$option)));
+  }
+
+  return theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-description'));
 }
 
 function uc_object_options_form_validate($form, &$form_state) {

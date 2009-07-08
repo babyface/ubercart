@@ -1,0 +1,9 @@
+<?php
+
+function oman_install() {
+  db_query("INSERT INTO {uc_countries} VALUES ('512', 'Oman', 'OM', 'OMN', 1)");
+
+   variable_set('uc_address_format_388',
+    "!company\r\n!first_name !last_name\r\n!street1\r\n!street2"
+   ."\r\n!city - !postal_code\r\n !country_name_if");
+}

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.views.inc,v 1.1.2.3 2009/02/10 21:58:14 islandusurper Exp $
+// $Id: uc_product.views.inc,v 1.1.2.4 2009/07/08 12:56:50 islandusurper Exp $
 
 /**
  * @file
@@ -90,6 +90,9 @@ function uc_product_views_data() {
     'title' => t('Weight'),
     'help' => t('The physical weight.'),
     'field' => array(
+      'additional fields' => array(
+        'field' => 'weight_units',
+      ),
       'handler' => 'uc_product_handler_field_weight',
       'click sortable' => TRUE,
     ),

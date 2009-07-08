@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_links.pages.inc,v 1.1.2.3 2009/02/24 15:35:52 islandusurper Exp $
+// $Id: uc_cart_links.pages.inc,v 1.1.2.4 2009/07/08 12:56:49 islandusurper Exp $
 
 /**
  * @file
@@ -73,6 +73,17 @@ function uc_cart_links_process($arg1) {
 
         // Add the item to the cart, suppressing the default redirect.
         if ($p['nid'] > 0 && $p['qty'] > 0) {
+          // If it's a product kit, we need black magic to make everything work
+          // right. In other words, we have to simulate FAPI's form values.
+          $node = node_load(array('nid' => $p['nid']));
+          if (is_array($node->products)) {
+            foreach ($node->products as $nid => $product) {
+              $p['data']['products'][$nid] = array(
+                'nid' => $nid,
+                'qty' => $product->qty,
+              );
+            }
+          }
           uc_cart_add_item($p['nid'], $p['qty'], $p['data'] + module_invoke_all('add_to_cart_data', $p), NULL, $msg, FALSE);
         }
         break;
@@ -113,6 +124,8 @@ function uc_cart_links_process($arg1) {
       db_query("UPDATE {uc_cart_link_clicks} SET clicks = clicks + 1, last_click = %d WHERE cart_link_id = '%s'", time(), $id);
     }
   }
+
+  $_SESSION['uc_cart_last_url'] = uc_referer_uri();
 
   drupal_goto();
 }

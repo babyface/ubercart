@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.module,v 1.2.2.16 2009/05/07 20:52:29 islandusurper Exp $
+// $Id: uc_file.module,v 1.2.2.17 2009/07/08 12:56:49 islandusurper Exp $
 
 /**
  * @file
@@ -1668,7 +1668,7 @@ function uc_file_user_renew($fid, $user, $pfid, $file_limits, $force_overwrite) 
       $file_user = array(
         'granted' => time(),
         'accessed' => 0,
-        'addresses' => serialize(array()),
+        'addresses' => array(),
       );
 
       $force_overwrite = TRUE;
@@ -1710,7 +1710,10 @@ function uc_file_user_renew($fid, $user, $pfid, $file_limits, $force_overwrite) 
 
 // Retrieve a file_user object by user and fid.
 function _uc_file_user_get($user, $fid) {
-  return db_fetch_object(db_query("SELECT * FROM {uc_file_users} WHERE uid = %d AND fid = %d", $user->uid, $fid));
+  $file_user = db_fetch_object(db_query("SELECT * FROM {uc_file_users} WHERE uid = %d AND fid = %d", $user->uid, $fid));
+  $file_user->addresses = unserialize($file_user->addresses);
+
+  return $file_user;
 }
 
 /**

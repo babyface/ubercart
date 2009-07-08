@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.module,v 1.12.2.13 2009/06/15 19:52:27 islandusurper Exp $
+// $Id: uc_taxes.module,v 1.12.2.14 2009/07/08 12:56:51 islandusurper Exp $
 
 /**
  * @file
@@ -275,16 +275,12 @@ function uc_line_item_tax_subtotal($op, $order) {
  *   The saved tax rate object including the rate ID for new rates.
  */
 function uc_taxes_rate_save($rate) {
-  // Prepare the arrays for saving.
-  $rate->taxed_product_types = serialize($rate->taxed_product_types);
-  $rate->taxed_line_items = serialize($rate->taxed_line_items);
-
   // Save it as a new rate if no ID is specified.
   if (!$rate->id) {
     drupal_write_record('uc_taxes', $rate);
   }
+  // Otherwise update the existing tax rate's data.
   else {
-    // Otherwise update the existing tax rate's data.
     drupal_write_record('uc_taxes', $rate, array('id'));
   }
 
@@ -322,8 +318,8 @@ function uc_taxes_rate_load($rate_id = NULL) {
   if ($rate_id) {
     return $rates[$rate_id];
   }
+  // Or return the whole shebang.
   else {
-    // Or return the whole shebang.
     return $rates;
   }
 }

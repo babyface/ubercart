@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.5.2.6 2009/05/06 18:38:03 islandusurper Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.5.2.7 2009/07/08 12:56:50 islandusurper Exp $
 
 /**
  * @file
@@ -48,7 +48,7 @@ function uc_checkout_pane_cart($op) {
         $context['extras'] = array(
           'node' => node_load($item->nid),
         );
-        $output .= '<tr valign="top"><td>'. $item->qty .'x</td><td width="100%">'. $desc
+        $output .= '<tr valign="top"><td>'. $item->qty .'&times;</td><td width="100%">'. $desc
                   .'</td><td nowrap="nowrap">'. uc_price($price_info, $context) .'</td></tr>';
       }
       $output .= '</table>';
@@ -178,7 +178,7 @@ function uc_checkout_pane_customer($op, &$arg1, $arg2) {
           }
           // Validate the password.
           if (variable_get('uc_cart_new_account_password', FALSE)) {
-            if ($arg2['new_account']['pass'] != $arg2['new_account']['pass_confirm']) {
+            if (strcmp($arg2['new_account']['pass'], $arg2['new_account']['pass_confirm'])) {
               drupal_set_message(t('The passwords you entered did not match. Please try again.'), 'error');
               return FALSE;
             }

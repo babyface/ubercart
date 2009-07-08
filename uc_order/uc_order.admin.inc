@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.18 2009/06/15 19:52:26 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.19 2009/07/08 12:56:49 islandusurper Exp $
 
 /**
  * @file
@@ -33,13 +33,10 @@ function uc_order_settings_form() {
     '#collapsed' => FALSE,
   );
 
-  for ($i = 10; $i <= 100; $i += 10) {
-    $options[$i] = $i;
-  }
   $form['admin']['uc_order_number_displayed'] = array(
     '#type' => 'select',
     '#title' => t('Number of orders on overview screen'),
-    '#options' => $options,
+    '#options' => drupal_map_assoc(range(10, 100, 10)),
     '#summary' => t('Displaying @orders orders at a time on the admin overview', array('@orders' => variable_get('uc_order_number_displayed', 30))),
     '#default_value' => variable_get('uc_order_number_displayed', 30),
   );
@@ -1192,6 +1189,24 @@ function uc_order_edit_products($order) {
       $product->data = module_invoke_all('add_to_cart_data', $form_state['values']);
 
       module_invoke_all('cart_item', 'load', $product);
+
+      $price_info = array(
+        'price' => $product->price,
+        'qty' => 1,
+      );
+      $context = array(
+        'location' => 'order-product-add',
+        'revision' => 'altered',
+        'subject' => array(
+          'cart_item' => $product,
+          'field' => 'price',
+        ),
+        'extras' => array(
+          'node' => clone $product,
+        ),
+      );
+      $product->price = uc_price($price_info, $context);
+
       drupal_alter('order_product', $product, $order);
       uc_order_product_save($order->order_id, $product);
 
@@ -1563,7 +1578,7 @@ function uc_order_log($order) {
     $output = theme('table', $header, $rows);
   }
   else {
-    $output = 'No changes have been logged for this order.';
+    $output = t('No changes have been logged for this order.');
   }
 
   return $output;

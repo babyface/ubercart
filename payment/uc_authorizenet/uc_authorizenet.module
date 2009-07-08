@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_authorizenet.module,v 1.4.2.8 2009/04/28 21:03:15 islandusurper Exp $
+// $Id: uc_authorizenet.module,v 1.4.2.9 2009/07/08 12:56:52 islandusurper Exp $
 
 /**
  * @file
@@ -130,6 +130,12 @@ function uc_authorizenet_settings_form() {
     '#title' => t('Tell Authorize.net to e-mail the customer a receipt based on your account settings.'),
     '#default_value' => variable_get('uc_authnet_aim_email_customer', FALSE),
   );
+  $form['aim_settings']['uc_authnet_response_debug'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Log full API response messages from Authorize.net for debugging.'),
+    '#default_value' => variable_get('uc_authnet_response_debug', FALSE),
+  );
+
 
   $form['arb_settings'] = array(
     '#type' => 'fieldset',
@@ -534,6 +540,10 @@ function _uc_authorizenet_charge($order, $amount, $data) {
   curl_close($ch);
 
   $response = explode('|', $result);
+
+  if (variable_get('uc_authnet_response_debug', FALSE)) {
+    watchdog('uc_authorizenet', t('Debug response: !data', array('!data' => '<pre>'. check_plain(print_r($response, TRUE)) .'</pre>')));
+  }
 
   // Trim off the encapsulating character from the results.
   for ($i = 0; $i < count($response); $i++) {

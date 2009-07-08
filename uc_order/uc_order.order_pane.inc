@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.13 2009/05/28 20:49:19 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.14 2009/07/08 12:56:49 islandusurper Exp $
 
 /**
  * @file
@@ -749,7 +749,7 @@ function op_products_view_table($products) {
     foreach ($products as $product) {
       $data = array();
       $data['qty'] = array(
-        '#value' => $product->qty .'x',
+        '#value' => $product->qty .'&times;',
         '#cell_attributes' => array('align' => 'right'),
       );
       $options = $product->data['attributes'];
@@ -865,18 +865,11 @@ function op_products_customer_table($products) {
     foreach ($products as $product) {
       $data = array();
       $data['qty'] = array(
-        '#value' => $product->qty .'x',
+        '#value' => $product->qty .'&times;',
         '#cell_attributes' => array('align' => 'right'),
       );
-      $options = $product->data['attributes'];
-      $option_rows = array();
-      if (module_exists('uc_attribute') && is_array($options)) {
-        foreach ($options as $attribute => $option) {
-          $option_rows[] = t('@attribute: @options', array('@attribute' => $attribute, '@options' => implode(', ', (array)$option)));
-        }
-      }
       $data['product'] = array(
-        '#value' => check_plain($product->title) . theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-description')),
+        '#value' => check_plain($product->title) . theme('uc_order_attributes', $product),
       );
       $data['model'] = array(
         '#value' => check_plain($product->model),

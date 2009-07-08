@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.23 2009/06/15 19:52:26 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.24 2009/07/08 12:56:49 islandusurper Exp $
 
 /**
  * @file
@@ -439,6 +439,7 @@ function uc_store_token_values($type, $object = NULL) {
       $values['store-owner'] = variable_get('uc_store_owner', '');
       $values['store-email'] = variable_get('uc_store_email', '');
       $values['store-phone'] = variable_get('uc_store_phone', '');
+      $values['store-fax'] = variable_get('uc_store_fax', '');
       $values['store-address'] = uc_store_address();
       $values['store-help-url'] = url(variable_get('uc_store_help_page', ''), array('absolute' => TRUE));
       break;
@@ -1311,15 +1312,17 @@ function uc_select_day($title = NULL, $default = NULL) {
 /**
  * Create a month select box for a form.
  */
-function uc_select_month($title = NULL, $default = NULL) {
+function uc_select_month($title = NULL, $default = NULL, $allow_empty = FALSE) {
+  $options = $allow_empty ? array('' => '') : array();
+
   $select = array(
     '#type' => 'select',
     '#title' => (is_null($title) ? t('Month') : $title),
-    '#options' => array(1 => t('01 - January'), 2 => t('02 - February'), 3 => t('03 - March'),
+    '#options' => $options + array(1 => t('01 - January'), 2 => t('02 - February'), 3 => t('03 - March'),
                         4 => t('04 - April'), 5 => t('05 - May'), 6 => t('06 - June'),
                         7 => t('07 - July'), 8 => t('08 - August'), 9 => t('09 - September'),
                         10 => t('10 - October'), 11 => t('11 - November'), 12 => t('12 - December')),
-    '#default_value' => (is_null($default) ? 1 : $default),
+    '#default_value' => (is_null($default) ? 0 : $default),
   );
 
   return $select;
@@ -1328,14 +1331,15 @@ function uc_select_month($title = NULL, $default = NULL) {
 /**
  * Create a year select box for a form.
  */
-function uc_select_year($title = NULL, $default = NULL, $min = NULL, $max = NULL) {
+function uc_select_year($title = NULL, $default = NULL, $min = NULL, $max = NULL, $allow_empty = FALSE) {
   $min = is_null($min) ? intval(date('Y')) : $min;
   $max = is_null($max) ? intval(date('Y')) + 20 : $max;
+  $options = $allow_empty ? array('' => '') : array();
 
   $select = array(
     '#type' => 'select',
     '#title' => (is_null($title) ? t('Year') : $title),
-    '#options' => drupal_map_assoc(range($min, $max)),
+    '#options' => $options + drupal_map_assoc(range($min, $max)),
     '#default_value' => (is_null($default) ? 0 : $default),
   );
 
@@ -1650,6 +1654,9 @@ function uc_store_email_from() {
 function uc_store_email_to_username($email) {
   // Default to the first part of the e-mail address.
   $name = substr($email, 0, strpos($email, '@'));
+
+  // Remove possible illegal characters.
+  $name = preg_replace('/[^A-Za-z0-9_.-]/', '', $name);
 
   // Trim that value for spaces and length.
   $name = trim(substr($name, 0, USERNAME_MAX_LENGTH - 4));
