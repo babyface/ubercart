@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.28 2009/07/08 12:56:51 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.29 2009/07/11 21:13:31 islandusurper Exp $
 
 /**
  * @file
@@ -269,7 +269,7 @@ function uc_product_enable() {
     variable_set('uc_product_enable_nodes', FALSE);
   }
 
-  if (module_exists('filefield')) {
+  if (module_exists('imagefield')) {
     uc_product_add_default_image_field();
   }
 
@@ -1189,39 +1189,44 @@ function uc_product_product_class($pcid, $op) {
  ******************************************************************************/
 
 function uc_product_table_header() {
-  $enabled = uc_product_field_enabled();
-  $columns = array();
+  static $columns = array();
 
-  if (module_exists('imagecache') && $enabled['image']) {
-    $columns['image'] = array(
-      'weight' => -5,
-      'cell' => array('data' => t('Image')),
-    );
-  }
-  $columns['name'] = array(
-    'weight' => 0,
-    'cell' => array('data' => t('Name'), 'field' => 'n.title'),
-  );
+  if (empty($columns)) {
+    $enabled = uc_product_field_enabled();
 
-  if ($enabled['list_price']) {
-    $columns['list_price'] = array(
-      'weight' => 3,
-      'cell' => array('data' => t('List price'), 'field' => 'p.list_price'),
+    if (module_exists('imagecache') && $enabled['image']) {
+      $columns['image'] = array(
+        'weight' => -5,
+        'cell' => array('data' => t('Image')),
+      );
+    }
+    $columns['name'] = array(
+      'weight' => 0,
+      'cell' => array('data' => t('Name'), 'field' => 'n.title'),
     );
-  }
 
-  if ($enabled['sell_price']) {
-    $columns['price'] = array(
-      'weight' => 5,
-      'cell' => array('data' => t('Price'), 'field' => 'p.sell_price'),
-    );
-  }
+    if ($enabled['list_price']) {
+      $columns['list_price'] = array(
+        'weight' => 3,
+        'cell' => array('data' => t('List price'), 'field' => 'p.list_price'),
+      );
+    }
 
-  if (module_exists('uc_cart') && (arg(0) != 'admin' || $_GET['q'] == 'admin/store/settings/tables/uc_product_table') && $enabled['add_to_cart']) {
-    $columns['add_to_cart'] = array(
-      'weight' => 10,
-      'cell' => array('data' => variable_get('uc_teaser_add_to_cart_text', t('Add to cart')), 'nowrap' => 'nowrap'),
-    );
+    if ($enabled['sell_price']) {
+      $columns['price'] = array(
+        'weight' => 5,
+        'cell' => array('data' => t('Price'), 'field' => 'p.sell_price'),
+      );
+    }
+
+    if (module_exists('uc_cart') && (arg(0) != 'admin' || $_GET['q'] == 'admin/store/settings/tables/uc_product_table') && $enabled['add_to_cart']) {
+      $columns['add_to_cart'] = array(
+        'weight' => 10,
+        'cell' => array('data' => variable_get('uc_teaser_add_to_cart_text', t('Add to cart')), 'nowrap' => 'nowrap'),
+      );
+    }
+
+    drupal_alter('tapir_table_header', $columns, 'uc_product_table');
   }
 
   return $columns;
@@ -1825,6 +1830,8 @@ function uc_product_feature_save($data) {
 }
 
 function uc_product_add_default_image_field($type = NULL) {
+  module_load_include('inc', 'imagefield', 'imagefield_widget');
+  module_load_include('inc', 'filefield', 'filefield_widget');
   module_load_include('inc', 'content', 'includes/content.crud');
 
   $label = t('Image');

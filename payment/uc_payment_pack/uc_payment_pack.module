@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_pack.module,v 1.6.2.7 2009/04/18 07:29:15 islandusurper Exp $
+// $Id: uc_payment_pack.module,v 1.6.2.8 2009/07/11 21:13:31 islandusurper Exp $
 
 /**
  * @file Provides the check/money order, COD, and "other" payment methods.
@@ -350,12 +350,12 @@ function uc_payment_method_check($op, &$arg1) {
       $form['uc_check_mailing_street1'] = uc_textfield(uc_get_field_name('street1'), variable_get('uc_check_mailing_street1', ''), FALSE, NULL, 128);
       $form['uc_check_mailing_street2'] = uc_textfield(uc_get_field_name('street2'), variable_get('uc_check_mailing_street2', ''), FALSE, NULL, 128);
       $form['uc_check_mailing_city'] = uc_textfield(uc_get_field_name('city'), variable_get('uc_check_mailing_city', ''), FALSE);
-      $form['uc_check_mailing_country'] = uc_country_select(uc_get_field_name('country'), variable_get('uc_check_mailing_country', 840));
+      $form['uc_check_mailing_country'] = uc_country_select(uc_get_field_name('country'), variable_get('uc_check_mailing_country', uc_store_default_country()));
       if (isset($_POST['uc_check_mailing_country'])) {
         $country_id = intval($_POST['uc_check_mailing_country']);
       }
       else {
-        $country_id = variable_get('uc_check_mailing_country', 840);
+        $country_id = variable_get('uc_check_mailing_country', uc_store_default_country());
       }
       $form['uc_check_mailing_zone'] = uc_zone_select(uc_get_field_name('zone'), variable_get('uc_check_mailing_zone', ''), FALSE, $country_id);
       $form['uc_check_mailing_postal_code'] = uc_textfield(uc_get_field_name('postal_code'), variable_get('uc_check_mailing_postal_code', ''), FALSE, NULL, 10, 10);
