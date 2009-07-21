@@ -1,11 +1,14 @@
 <?php
-// $Id: uc_store.install,v 1.9.2.6 2009/05/07 20:52:28 islandusurper Exp $
+// $Id: uc_store.install,v 1.9.2.7 2009/07/21 14:37:21 islandusurper Exp $
 
 /**
  * @file
  * Install hooks for uc_store.module.
  */
 
+/**
+ * Implementation of hook_schema().
+ */
 function uc_store_schema() {
   $schema = array();
 
@@ -105,6 +108,9 @@ function uc_store_schema() {
   return $schema;
 }
 
+/**
+ * Implementation of hook_install().
+ */
 function uc_store_install() {
   drupal_install_schema('uc_store');
   // Install United States and Canada by default.
@@ -115,6 +121,9 @@ function uc_store_install() {
   canada_install();
 }
 
+/**
+ * Implementation of hook_uninstall().
+ */
 function uc_store_uninstall() {
   drupal_uninstall_schema('uc_store');
 
@@ -249,6 +258,9 @@ function uc_store_update_6001() {
   return $ret;
 }
 
+/**
+ * Disable uc_recurring.
+ */
 function uc_store_update_6002() {
   $ret = array();
 
@@ -271,6 +283,21 @@ function uc_store_update_6003() {
   variable_del('uc_notify_store_help_page');
 
   $ret[] = array('success' => TRUE, 'query' => t("'uc_notify_store_help_page' renamed to 'uc_store_help_page' in variable table"));
+  return $ret;
+}
+
+/**
+ * Remove broken statistics reporting.
+ */
+function uc_store_update_6004() {
+  $ret = array();
+
+  variable_del('uc_store_last_report');
+  variable_del('uc_store_report');
+  variable_del('uc_store_site_id');
+
+  $ret[] = array('success' => TRUE, 'query' => 'Removed broken statistics reporting.');
+
   return $ret;
 }
 

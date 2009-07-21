@@ -1,10 +1,9 @@
 <?php
-// $Id: uc_cart_links.pages.inc,v 1.1.2.4 2009/07/08 12:56:49 islandusurper Exp $
+// $Id: uc_cart_links.pages.inc,v 1.1.2.5 2009/07/21 14:37:19 islandusurper Exp $
 
 /**
  * @file
  * Cart links menu items.
- *
  */
 
 /**

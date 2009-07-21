@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.15 2009/07/08 12:56:50 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.16 2009/07/21 14:37:21 islandusurper Exp $
 
 /**
  * @file
@@ -7,7 +7,9 @@
  *
  */
 
-// Displays a paged list and overview of existing product attributes.
+/**
+ * Display a paged list and overview of existing product attributes.
+ */
 function uc_attribute_admin() {
   $header = array(
     array('data' => t('Name'), 'field' => 'a.name', 'sort' => 'asc'),
@@ -58,7 +60,6 @@ function uc_attribute_admin() {
  * Form builder for product attributes.
  *
  * @ingroup forms
- * @see uc_attribute_form_validate()
  * @see uc_attribute_form_submit()
  */
 function uc_attribute_form($form_state, $attribute = NULL) {
@@ -118,7 +119,9 @@ function uc_attribute_form($form_state, $attribute = NULL) {
   return $form;
 }
 
-// Submit function for uc_attribute_form().
+/**
+ * @see uc_attribute_add_form()
+ */
 function uc_attribute_form_submit($form, &$form_state) {
   if (!empty($form_state['values']['aid'])) {
     db_query("UPDATE {uc_attributes} SET name = '%s', label = '%s', ordering = %d, required = %d, display = %d, description = '%s' WHERE aid = %d", $form_state['values']['name'], $form_state['values']['label'], $form_state['values']['ordering'], $form_state['values']['required'], $form_state['values']['display'], $form_state['values']['description'], $form_state['values']['aid']);
@@ -131,7 +134,11 @@ function uc_attribute_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/store/attributes';
 }
 
-// Confirms the deletion of the given attribute.
+/**
+ * Confirm the deletion of the given attribute.
+ *
+ * @see uc_attribute_delete_confirm_submit()
+ */
 function uc_attribute_delete_confirm($form_state, $attribute) {
   // If we got a bunk attribute, kick out an error message.
   if (empty($attribute)) {
@@ -149,6 +156,22 @@ function uc_attribute_delete_confirm($form_state, $attribute) {
               t('Delete'), t('Cancel'));
 
   return $output;
+}
+
+/**
+ * @see uc_attribute_delete_confirm()
+ */
+function uc_attribute_delete_confirm_submit($form, &$form_state) {
+  if ($form_state['values']['confirm']) {
+    db_query("DELETE FROM {uc_class_attribute_options} WHERE EXISTS (SELECT * FROM {uc_attribute_options} AS ao WHERE {uc_class_attribute_options}.oid = ao.oid AND ao.aid = %d)", $form_state['values']['aid']);
+    db_query("DELETE FROM {uc_class_attributes} WHERE aid = %d", $form_state['values']['aid']);
+    db_query("DELETE FROM {uc_product_options} WHERE EXISTS (SELECT * FROM {uc_attribute_options} AS ao WHERE {uc_product_options}.oid = ao.oid AND ao.aid = %d)", $form_state['values']['aid']);
+    db_query("DELETE FROM {uc_product_adjustments} WHERE EXISTS (SELECT * FROM {uc_product_attributes} AS pa WHERE {uc_product_adjustments}.nid = pa.nid AND pa.aid = %d)", $form_state['values']['aid']);
+    db_query("DELETE FROM {uc_product_attributes} WHERE aid = %d", $form_state['values']['aid']);
+    db_query("DELETE FROM {uc_attribute_options} WHERE aid = %d", $form_state['values']['aid']);
+    db_query("DELETE FROM {uc_attributes} WHERE aid = %d", $form_state['values']['aid']);
+    drupal_set_message(t('Product attribute deleted.'));
+  }
 }
 
 /**
@@ -172,20 +195,14 @@ function uc_attribute_admin_settings() {
   return system_settings_form($form);
 }
 
-function uc_attribute_delete_confirm_submit($form, &$form_state) {
-  if ($form_state['values']['confirm']) {
-    db_query("DELETE FROM {uc_class_attribute_options} WHERE EXISTS (SELECT * FROM {uc_attribute_options} AS ao WHERE {uc_class_attribute_options}.oid = ao.oid AND ao.aid = %d)", $form_state['values']['aid']);
-    db_query("DELETE FROM {uc_class_attributes} WHERE aid = %d", $form_state['values']['aid']);
-    db_query("DELETE FROM {uc_product_options} WHERE EXISTS (SELECT * FROM {uc_attribute_options} AS ao WHERE {uc_product_options}.oid = ao.oid AND ao.aid = %d)", $form_state['values']['aid']);
-    db_query("DELETE FROM {uc_product_adjustments} WHERE EXISTS (SELECT * FROM {uc_product_attributes} AS pa WHERE {uc_product_adjustments}.nid = pa.nid AND pa.aid = %d)", $form_state['values']['aid']);
-    db_query("DELETE FROM {uc_product_attributes} WHERE aid = %d", $form_state['values']['aid']);
-    db_query("DELETE FROM {uc_attribute_options} WHERE aid = %d", $form_state['values']['aid']);
-    db_query("DELETE FROM {uc_attributes} WHERE aid = %d", $form_state['values']['aid']);
-    drupal_set_message(t('Product attribute deleted.'));
-  }
-}
-
-// Display options and the modifications to products they represent.
+/**
+ * Display options and the modifications to products they represent.
+ *
+ * @ingroup forms
+ * @see
+ *   uc_attribute_options_form_validate()
+ *   uc_attribute_options_form_submit()
+ */
 function uc_attribute_options_form($form_state, $attribute) {
   $form = array();
 
@@ -383,6 +400,8 @@ function uc_attribute_option_form($form_state, $attribute, $option = NULL) {
 
 /**
  * Validate number formats.
+ *
+ * @see uc_attribute_option_form()
  */
 function uc_attribute_option_form_validate($form, &$form_state) {
   $pattern = '/^-?\d*(\.\d*)?$/';
@@ -399,7 +418,7 @@ function uc_attribute_option_form_validate($form, &$form_state) {
 }
 
 /**
- * Submit function for uc_attribute_option_form().
+ * @see uc_attribute_option_form().
  */
 function uc_attribute_option_form_submit($form, &$form_state) {
   if (!isset($form_state['values']['oid'])) {
@@ -418,7 +437,11 @@ function uc_attribute_option_form_submit($form, &$form_state) {
   }
 }
 
-// Confirms deletion of the given attribute option.
+/**
+ * Confirm deletion of the given attribute option.
+ *
+ * @see uc_attribute_option_delete_confirm_submit()
+ */
 function uc_attribute_option_delete_confirm($form_state, $attribute, $option) {
   if (empty($option)) {
     drupal_set_message(t('There is no option with that ID.'), 'error');
@@ -438,7 +461,7 @@ function uc_attribute_option_delete_confirm($form_state, $attribute, $option) {
 }
 
 /**
- * Submit function for uc_attribute_option_delete_confirm().
+ * @see uc_attribute_option_delete_confirm().
  */
 function uc_attribute_option_delete_confirm_submit($form, &$form_state) {
   if ($form_state['values']['confirm']) {
@@ -449,7 +472,14 @@ function uc_attribute_option_delete_confirm_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/store/attributes/'. $form_state['values']['aid'] .'/options';
 }
 
-// Form to associate attributes with products or classes.
+/**
+ * Form to associate attributes with products or classes.
+ *
+ * @ingroup forms
+ * @see
+ *   theme_uc_object_attributes_form()
+ *   uc_object_attributes_form_submit()
+ */
 function uc_object_attributes_form($form_state, $object, $type, $view = 'overview') {
   switch ($type) {
     case 'class':
@@ -584,6 +614,7 @@ function uc_object_attributes_form($form_state, $object, $type, $view = 'overvie
  * Display the formatted attribute form.
  *
  * @ingroup themeable
+ * @see uc_object_attributes_form()
  */
 function theme_uc_object_attributes_form($form) {
   if ($form['view']['#value'] == 'overview') {
@@ -622,6 +653,9 @@ function theme_uc_object_attributes_form($form) {
   return $output;
 }
 
+/**
+ * @see uc_object_attributes_form()
+ */
 function uc_object_attributes_form_submit($form, &$form_state) {
   if ($form_state['values']['type'] == 'product') {
     $attr_table = '{uc_product_attributes}';
@@ -697,7 +731,15 @@ function uc_object_attributes_form_submit($form, &$form_state) {
   }
 }
 
-// Form to assign and modify attribute options on products or classes.
+/**
+ * Form to assign and modify attribute options on products or classes.
+ *
+ * @ingroup forms
+ * @see
+ *   theme_uc_object_options_form()
+ *   uc_object_options_form_validate()
+ *   uc_object_options_form_submit()
+ */
 function uc_object_options_form($form_state, $object, $type) {
   if ($type == 'product') {
     $product = $object;
@@ -810,6 +852,7 @@ function uc_object_options_form($form_state, $object, $type) {
  * Display the option form.
  *
  * @ingroup themeable
+ * @see uc_object_options_form()
  */
 function theme_uc_object_options_form($form) {
   $header = array(t('Options'), t('Default'), t('Cost'), t('Price'), t('Weight'), t('List position'));
@@ -886,6 +929,11 @@ function theme_uc_order_attributes(&$product) {
   return theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-description'));
 }
 
+/**
+ * Make sure that all selected default options are enabled.
+ *
+ * @see uc_object_options_form()
+ */
 function uc_object_options_form_validate($form, &$form_state) {
   if (isset($form_state['values']['attributes'])) {
     foreach ($form_state['values']['attributes'] as $aid => $attribute) {
@@ -909,6 +957,9 @@ function uc_object_options_form_validate($form, &$form_state) {
   }
 }
 
+/**
+ * @see uc_object_options_form()
+ */
 function uc_object_options_form_submit($form, &$form_state) {
   if ($form_state['values']['type'] == 'product') {
     $attr_table = '{uc_product_attributes}';
@@ -1081,6 +1132,9 @@ function uc_product_adjustments_form($form_state, $node) {
   return $form;
 }
 
+/**
+ * @see uc_product_adjustments_form()
+ */
 function uc_product_adjustments_form_submit($form, &$form_state) {
   foreach ($form_state['values']['body'] as $value) {
     if (!empty($value['model']) && $value['model'] != $form_state['values']['default']) {

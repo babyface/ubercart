@@ -1,4 +1,9 @@
-// $Id: uc_country_select.js,v 1.6.2.1 2008/10/15 14:47:39 islandusurper Exp $
+// $Id: uc_country_select.js,v 1.6.2.2 2009/07/21 14:37:21 islandusurper Exp $
+
+/**
+ * @file
+ * Switches the zones list when a country is chosen for an address.
+ */
 
 /**
  * Set the select box change behavior for the country selector
@@ -11,6 +16,9 @@ Drupal.behaviors.ucCountrySelect = function(context) {
   );
 }
 
+/**
+ * Update the zone select element with new options.
+ */
 function uc_update_zone_select(country_select, default_zone) {
   var zone_select = country_select.substr(0, country_select.length - 8) + '-zone';
 

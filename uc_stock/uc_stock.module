@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.module,v 1.12.2.12 2009/05/07 20:52:30 islandusurper Exp $
+// $Id: uc_stock.module,v 1.12.2.13 2009/07/21 14:37:17 islandusurper Exp $
 
 /**
  * @file
@@ -11,7 +11,7 @@
  * current stock level. Store admins can view all stock levels in the reports
  * section of Ubercart.
  *
- * Development sponsored by the Ubercart project.  http://www.ubercart.org
+ * Development sponsored by the Ubercart project. http://www.ubercart.org
  */
 
 require_once('uc_stock.ca.inc');
@@ -69,6 +69,9 @@ function uc_stock_menu() {
   return $items;
 }
 
+/**
+ * Access callback for node/%node/edit/stock.
+ */
 function uc_stock_product_access($node) {
   if ($node->type == 'product_kit') {
     return FALSE;
@@ -77,10 +80,16 @@ function uc_stock_product_access($node) {
   return uc_product_is_product($node) && node_access('update', $node) && user_access('administer product stock');
 }
 
+/**
+ * Implementation of hook_perm().
+ */
 function uc_stock_perm() {
   return array('administer product stock');
 }
 
+/**
+ * Implementation of hook_theme().
+ */
 function uc_stock_theme() {
   return array(
     'uc_stock_edit_form' => array(
@@ -143,12 +152,6 @@ function uc_stock_uc_message() {
   return $messages;
 }
 
-
-/******************************************************************************
- * Callback Functions, Forms, and Tables                                      *
- ******************************************************************************/
-
-
 /******************************************************************************
  *  Module and Helper Functions                                               *
  ******************************************************************************/
@@ -166,7 +169,8 @@ function uc_stock_adjust($sku, $qty) {
 }
 
 /**
- * Get the stock level of a particular product SKU
+ * Get the stock level of a particular product SKU.
+ *
  * @param $sku
  *   The Ubercart product SKU of the stock level to return.
  * @return:

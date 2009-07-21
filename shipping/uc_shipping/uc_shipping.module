@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.6.2.10 2009/04/28 21:03:15 islandusurper Exp $
+// $Id: uc_shipping.module,v 1.6.2.11 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
  * @file
@@ -129,10 +129,16 @@ function uc_shipping_menu() {
   return $items;
 }
 
+/**
+ * Title callback for admin/store/orders/%uc_order/shipments/%uc_shipping_shipment.
+ */
 function uc_shipping_shipment_page_title($shipment) {
   return t('Shipment !id', array('!id' => $shipment->sid));
 }
 
+/**
+ * Ensure access to the Shipments tab.
+ */
 function uc_shipping_order_access($order) {
   return user_access('fulfill orders') && uc_order_is_shippable($order);
 }
@@ -144,6 +150,9 @@ function uc_shipping_perm() {
   return array('fulfill orders');
 }
 
+/**
+ * Implementation of hook_theme().
+ */
 function uc_shipping_theme() {
   return array(
     'uc_shipping_new_package_fieldset' => array(
@@ -168,9 +177,12 @@ function uc_shipping_theme() {
 }
 
 /******************************************************************************
- * Übercart hooks                                                             *
+ * Ubercart hooks                                                             *
  ******************************************************************************/
 
+/**
+ * Implementation of hook_order_pane().
+ */
 function uc_shipping_order_pane() {
   $panes[] = array(
     'id' => 'packages',
@@ -185,6 +197,9 @@ function uc_shipping_order_pane() {
   return $panes;
 }
 
+/**
+ * Implemenation of hook_order_actions().
+ */
 function uc_shipping_order_actions($order) {
   $actions = array();
   $module_path = base_path() . drupal_get_path('module', 'uc_shipping');
@@ -430,7 +445,7 @@ function uc_shipping_package_delete($package_id) {
 }
 
 /**
- * Load a shipment and it's packages.
+ * Load a shipment and its packages.
  */
 function uc_shipping_shipment_load($shipment_id) {
   $shipment = db_fetch_object(db_query("SELECT * FROM {uc_shipments} WHERE sid = %d", $shipment_id));
@@ -509,6 +524,11 @@ function uc_shipping_shipment_delete($shipment_id) {
   module_invoke_all('shipment', 'delete', $shipment);
 }
 
+/**
+ * Shipping order pane callback.
+ *
+ * @see uc_shipping_order_pane()
+ */
 function uc_shipping_order_pane_packages($op, $arg1) {
   switch ($op) {
     case 'view':
@@ -577,6 +597,11 @@ function uc_shipping_select_address($addresses, $onchange = '', $title = NULL, $
   return $select;
 }
 
+/**
+ * Helper function for addresses in forms.
+ *
+ * @ingroup forms
+ */
 function uc_shipping_address_form($form_state, $addresses, $order) {
   drupal_add_js(drupal_get_path('module', 'uc_shipping') .'/uc_shipping.js');
   $form = array();

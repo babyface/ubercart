@@ -1,11 +1,14 @@
 <?php
-// $Id: uc_weightquote.install,v 1.5.2.4 2008/11/07 21:13:28 islandusurper Exp $
+// $Id: uc_weightquote.install,v 1.5.2.5 2009/07/21 14:37:22 islandusurper Exp $
 
 /**
  * @file
  * Install modules for uc_weightquote.module.
  */
 
+/**
+ * Implementation of hook_schema().
+ */
 function uc_weightquote_schema() {
   $schema = array();
 
@@ -35,10 +38,16 @@ function uc_weightquote_schema() {
   return $schema;
 }
 
+/**
+ * Implementation of hook_install().
+ */
 function uc_weightquote_install() {
   drupal_install_schema('uc_weightquote');
 }
 
+/**
+ * Implementation of hook_uninstall().
+ */
 function uc_weightquote_uninstall() {
   drupal_uninstall_schema('uc_weightquote');
 

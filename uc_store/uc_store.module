@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.24 2009/07/08 12:56:49 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.25 2009/07/21 14:37:20 islandusurper Exp $
 
 /**
  * @file
@@ -65,6 +65,7 @@ define('MM_TO_CM', 0.1);
  */
 function uc_store_menu() {
   $items = array();
+
   $items['admin/store'] = array(
     'title' => 'Store administration',
     'description' => 'Administer store settings, products, orders, and more.',
@@ -232,16 +233,6 @@ function uc_store_menu() {
     'page arguments' => array('uc_store_format_settings_form'),
     'access arguments' => array('administer store'),
     'weight' => 0,
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'uc_store.admin.inc',
-  );
-  $items['admin/store/settings/store/edit/report'] = array(
-    'title' => 'Reporting settings',
-    'description' => 'Report version information to Ubercart.org.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('uc_store_report_settings'),
-    'access arguments' => array('administer store'),
-    'weight' => 10,
     'type' => MENU_LOCAL_TASK,
     'file' => 'uc_store.admin.inc',
   );
@@ -466,20 +457,13 @@ function uc_store_token_list($type = 'all') {
   return $tokens;
 }
 
+/**
+ * Implementation of hook_help().
+ */
 function uc_store_help($path, $arg) {
   switch ($path) {
     case 'admin/store/settings/store/edit/report':
       return t("Reporting to Ubercart.org happens once a week during a normal cron run and is logged in your site's watchdog. Reporting lets Ubercart.org calculate the total number of Ubercart installations and aggregate version information for use in development. Your site's data is never shared with anyone, and aggregate statistics displayed through Ubercart.org will be in the form of anonymous group statistics. Reporting will also allow Ubercart.org to report security notices back to your site if needed.");
-  }
-}
-
-/**
- * Implementation of hook_cron().
- */
-function uc_store_cron() {
-  // Report version information into Ubercart.org once a week if enabled.
-  if (variable_get('uc_store_report', TRUE) && variable_get('uc_store_last_report', 0) <= time() - 604800) {
-    uc_store_send_report();
   }
 }
 
@@ -561,11 +545,24 @@ function uc_store_exit() {
   // $_SESSION['uc_last_access'] = time();
 }
 
+/**
+ * Implementation of hook_form_alter().
+ */
+function uc_store_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'uc_product_table') {
+    unset($form['table']['#value']['columns']['list_price']);
+  }
+}
+
 /******************************************************************************
  * Callback Functions, Forms, and Tables
  ******************************************************************************/
 
-// Theme a formatted price for display.
+/**
+ * Theme a formatted price for display.
+ *
+ * @ingroup themeable
+ */
 function theme_uc_price($value, $context, $options) {
   // Fixup class names.
   if (!is_array($context['class'])) {
@@ -592,7 +589,11 @@ function theme_uc_price($value, $context, $options) {
   return $output;
 }
 
-// Themes the dashboard on the admin/store page.
+/**
+ * Theme the dashboard on the admin/store page.
+ *
+ * @ingroup themeable
+ */
 function theme_uc_admin_dashboard($type, $menus) {
   if ($type == 1) {
     drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js', 'module');
@@ -643,7 +644,9 @@ function theme_uc_admin_dashboard($type, $menus) {
   return $output;
 }
 
-// Return the default store footer options.
+/**
+ * Return the default store footer options.
+ */
 function _store_footer_options() {
   $url = array('!url' => 'http://www.ubercart.org/');
   return array(
@@ -655,11 +658,24 @@ function _store_footer_options() {
   );
 }
 
-// Wrap the footer in a div so it can be re-styled.
+/**
+ * Wrap the footer in a div so it can be re-styled.
+ *
+ * @ingroup themeable
+ */
 function theme_uc_store_footer($message) {
   return '<div id="store-footer">'. $message .'</div>';
 }
 
+/**
+ * Form to configure address fields.
+ *
+ * @ingroup forms
+ * @see
+ *   theme_uc_store_address_fields_form()
+ *   uc_store_address_fields_form_submit()
+ *   uc_store_address_fields_form_reset()
+ */
 function uc_store_address_fields_form() {
   $form['fields'] = array(
     '#tree' => TRUE,
@@ -728,6 +744,10 @@ function uc_store_address_fields_form() {
   return $form;
 }
 
+/**
+ * @ingroup themeable
+ * @see uc_store_address_fields_form()
+ */
 function theme_uc_store_address_fields_form($form) {
   $header = array(t('Enabled'), t('Field'), t('Title'), t('Required'));
 
@@ -745,6 +765,11 @@ function theme_uc_store_address_fields_form($form) {
   return $output;
 }
 
+/**
+ * Save the address fields settings.
+ *
+ * @see uc_store_address_fields_form()
+ */
 function uc_store_address_fields_form_submit($form, &$form_state) {
   $fields = array();
   $required = array();
@@ -762,6 +787,11 @@ function uc_store_address_fields_form_submit($form, &$form_state) {
   drupal_set_message(t('The configuration options have been saved.'));
 }
 
+/**
+ * Reset the address fields settings to their default values.
+ *
+ * @see uc_store_address_fields_form()
+ */
 function uc_store_address_fields_form_reset($form_id, &$form_state) {
   foreach ($form_state['values']['fields'] as $field => $data) {
     variable_del('uc_field_'. $field);
@@ -797,7 +827,6 @@ function uc_store_js_util($func) {
   print $output;
   exit();
 }
-
 
 /*******************************************************************************
  * Module and Helper Functions
@@ -926,6 +955,9 @@ function uc_weight_format($value, $unit = NULL) {
   return $format;
 }
 
+/**
+ * Get the conversion ratio from one unit of weight to another.
+ */
 function uc_weight_conversion($from_units, $to_units = NULL) {
   if (is_null($to_units)) {
     $to_units = variable_get('uc_weight_unit', 'lb');
@@ -966,6 +998,9 @@ function uc_length_format($value, $unit = NULL) {
   return $format;
 }
 
+/**
+ * Get the conversion ratio from one unit of length to another.
+ */
 function uc_length_conversion($from_units, $to_units = NULL) {
   if (is_null($to_units)) {
     $to_units = variable_get('uc_length_unit', 'in');
@@ -1151,7 +1186,7 @@ function uc_get_field_name($field) {
 }
 
 /**
- * Return TRUE if a field is enabled.
+ * Return TRUE if the address field is enabled.
  */
 function uc_address_field_enabled($field) {
   $fields = variable_get('uc_address_fields', drupal_map_assoc(array('first_name', 'last_name', 'phone', 'company', 'street1', 'street2', 'city', 'zone', 'postal_code', 'country')));
@@ -1165,7 +1200,7 @@ function uc_address_field_enabled($field) {
 }
 
 /**
- * Return TRUE if a field is required.
+ * Return TRUE if the address field field is required.
  */
 function uc_address_field_required($field) {
   $fields = variable_get('uc_address_fields_required', drupal_map_assoc(array('first_name', 'last_name', 'street1', 'city', 'zone', 'postal_code', 'country')));
@@ -1212,7 +1247,9 @@ function uc_zone_get_by_id($id) {
 
 /**
  * Create a zone select box for a form.
- * $display can be 'code' or 'name'.
+ *
+ * @param $display
+ *   Can be 'code' or 'name'.
  */
 function uc_zone_select($title, $default = NULL, $description = NULL, $country_id = NULL, $display = 'name', $required = FALSE) {
   if (empty($country_id)) {
@@ -1377,6 +1414,9 @@ function uc_select_address($uid, $type = 'billing', $onchange = '', $title = NUL
   return $select;
 }
 
+/**
+ * Load a customer's previously given addresses.
+ */
 function uc_get_addresses($uid, $type = 'billing') {
   if ($uid == 0) {
     return NULL;
@@ -1437,7 +1477,9 @@ function uc_strip_form($html) {
   return $html;
 }
 
-// Return the initials for a user account.
+/**
+ * Return the initials for a user account.
+ */
 function uc_get_initials($uid) {
   if ($uid == 0 || $uid == NULL) {
     return '-';
@@ -1539,7 +1581,9 @@ function _country_import_include($country_id, $version) {
   return FALSE;
 }
 
-// Sort an array of arrays having a weight key to determine their order.
+/**
+ * Sort an array of arrays having a weight key to determine their order.
+ */
 function uc_weight_sort($a, $b) {
   if ($a['weight'] == $b['weight']) {
     return 0;
@@ -1562,7 +1606,9 @@ function uc_get_message($message_id) {
 }
 
 /**
- * Theme a pane sorting form into a table!
+ * Theme a pane sorting form into a table.
+ *
+ * @ingroup themeable
  */
 function theme_uc_pane_sort_table($form) {
   $prefix = $form['#pane_prefix'];
@@ -1613,6 +1659,9 @@ function uc_range($low, $high, $step = 1) {
   return $arr;
 }
 
+/**
+ * Return the user-defined store address.
+ */
 function uc_store_address() {
   $store_address = uc_address_format(NULL, NULL, variable_get('uc_store_name', NULL),
     variable_get('uc_store_street1', NULL), variable_get('uc_store_street2', NULL),
@@ -1622,7 +1671,9 @@ function uc_store_address() {
   return $store_address;
 }
 
-// Returns the e-mail from string in the format of Store Name <store@email.com>.
+/**
+ * Return the e-mail from string in the format of Store Name <store@email.com>.
+ */
 function uc_store_email_from() {
   $email_from = variable_get('uc_store_email', '');
   if (empty($email_from)) {
@@ -1676,6 +1727,8 @@ function uc_store_email_to_username($email) {
 }
 
 /**
+ * Handle credit-card encryption.
+ *
  * Trimmed down version of GPL class by Tony Marston.  Details available at
  * http://www.tonymarston.co.uk/php-mysql/encryption.html
  *
@@ -1875,7 +1928,7 @@ class uc_encryption_class {
 }
 
 /**
- * Logs encryption errors to watchdog.
+ * Log encryption errors to watchdog.
  *
  * @param $crypt
  *   The object used to perform your encryption/decryption.
@@ -1891,7 +1944,9 @@ function uc_store_encryption_errors(&$crypt, $module) {
   }
 }
 
-// Returns a default store country value.
+/**
+ * Return a default store country value.
+ */
 function uc_store_default_country() {
   static $default;
 
@@ -1909,51 +1964,19 @@ function uc_store_default_country() {
   return $default;
 }
 
-// Wrapper for drupal_add_js() to cache .js files based on their timestamp.
-// Deprecated! Use drupal_add_js() instead.
+/**
+ * Wrapper for drupal_add_js() to cache .js files based on their timestamp.
+ *
+ * Deprecated! Use drupal_add_js() instead.
+ */
 function uc_add_js($data = NULL, $type = 'module', $scope = 'header', $defer = FALSE, $cache = TRUE) {
   watchdog('uc_store', 'uc_add_js() has been deprecated. Use drupal_add_js() in your code.', array(), WATCHDOG_ERROR);
   drupal_add_js($data, $type, $scope, $defer, $cache);
 }
 
-// Builds the version info reported to Ubercart.org.
-function uc_store_report_data() {
-  // Build the data array.
-  $data = array(
-    'site_id' => variable_get('uc_store_site_id', ''),
-    'server_name' => $_SERVER['SERVER_NAME'],
-    'php_version' => PHP_VERSION,
-    'drupal_version' => VERSION,
-    'db_type' => $GLOBALS['db_type'],
-    'db_version' => db_version(),
-  );
-
-  // Grab the Ubercart version from uc_store.info.
-  $info = drupal_parse_info_file(drupal_get_path('module', 'uc_store') .'/uc_store.info');
-  $data['ubercart_version'] = $info['version'] ? $info['version'] : 'bzr';
-
-  return $data;
-}
-
-function uc_store_send_report() {
-  // Load the version data array.
-  $data = uc_store_report_data();
-
-  // Set the time of our report.
-  variable_set('uc_store_last_report', time());
-
-  // Send the data off to Ubercart.org.
-  $response = drupal_http_request('http://www.ubercart.org/statistics/report', array('Content-Type' => 'application/x-www-form-urlencoded'), 'POST', drupal_query_string_encode($data));
-
-  // If we got a response, store it as the site ID.
-  if ($response->data && strlen($response->data) == 32) {
-    variable_set('uc_store_site_id', $response->data);
-  }
-
-  watchdog('uc_store', 'Reported the following version info to Ubercart.org: !data', array('!data' => '<pre>'. print_r($data, TRUE) .'</pre>'));
-}
-
-// Checks referers to see if they are in the allowed list.
+/**
+ * Check referers to see if they are in the allowed list.
+ */
 function uc_referer_check($urls) {
   $http_referer = uc_referer_uri();
 
@@ -1980,7 +2003,9 @@ function uc_referer_check($urls) {
   return FALSE;
 }
 
-// Provides a more reliable referrer for Ubercart.
+/**
+ * Provide a more reliable referrer for Ubercart.
+ */
 function uc_referer_uri() {
   if (referer_uri() == '') {
     return $_SESSION['uc_referer_uri'];
@@ -1990,19 +2015,23 @@ function uc_referer_uri() {
   }
 }
 
-// Returns the current version of Ubercart.
+/**
+ * Returns the current version of Ubercart.
+ */
 function uc_version() {
   return '2.0-beta1';
 }
 
 /**
- * Get image widgets defined by various modules. (including the built-in thickbox & lightbox2 support)
+ * Get image widgets defined by various modules.
  */
 function uc_store_get_image_widgets() {
   return module_invoke_all('uc_image_widget');
 }
 
 /**
+ * Implementation of hook_uc_image_widget().
+ *
  * Built-in support for thickbox and lightbox2.
  */
 function uc_store_uc_image_widget() {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_usps.module,v 1.6.2.15 2009/07/08 12:56:52 islandusurper Exp $
+// $Id: uc_usps.module,v 1.6.2.16 2009/07/21 14:37:17 islandusurper Exp $
 
 /**
  * @file
@@ -220,7 +220,7 @@ function uc_usps_ca_predicate() {
  ******************************************************************************/
 
 /**
- * Implementation of Ubercart's hook_shipping_type().
+ * Implementation of hook_shipping_type().
  */
 function uc_usps_shipping_type() {
   $weight = variable_get('uc_quote_type_weight', array('envelope' => -1, 'small_package' => 0));
@@ -242,7 +242,7 @@ function uc_usps_shipping_type() {
 }
 
 /**
- * Implementation of Ubercart's hook_shipping_method().
+ * Implementation of hook_shipping_method().
  */
 function uc_usps_shipping_method() {
   $enabled = variable_get('uc_quote_enabled', array());
@@ -314,6 +314,8 @@ function uc_usps_shipping_method() {
  *   Array of cart contents.
  * @param $details
  *   Order details other than product information.
+ * @param $method
+ *   The shipping method to create the quote.
  * @return
  *   JSON object containing rate, error, and debugging information.
  */
@@ -420,7 +422,7 @@ function uc_usps_quote($products, $details, $method) {
 }
 
 /**
- * Construct an XML quote request.
+ * Construct a quote request for domestic shipments.
  *
  * @param $packages
  *   Array of packages received from the cart.
@@ -458,9 +460,17 @@ function uc_usps_rate_request($packages, $origin, $destination) {
 }
 
 /**
- * uc_usps_intl_rate_request function (added by Erik - feel free to improve)
+ * Construct a quote request for international shipments.
+ *
+ * @param $packages
+ *   Array of packages received from the cart.
+ * @param $origin
+ *   Delivery origin address information.
+ * @param $destination
+ *   Delivery destination address information.
+ * @return
+ *   IntlRateRequest XML document to send to USPS
  */
-
 function uc_usps_intl_rate_request($packages, $origin, $destination) {
   $request  = '<IntlRateRequest USERID="'. variable_get('uc_usps_user_id', '') .'">';
   $services_count = 0;
@@ -508,6 +518,19 @@ function uc_usps_markup($rate) {
   }
 }
 
+/**
+ * Organize products into packages for shipment.
+ *
+ * @param $products
+ *   An array of product objects as they are represented in the cart or order.
+ * @param &$addresses
+ *   Reference to an array of addresses which are the pickup locations of each
+ *   package. They are determined from the shipping addresses of their
+ *   component products.
+ * @return
+ *   Array of packaged products. Packages are separated by shipping address and
+ *   weight or quantity limits imposed by the shipping method or the products.
+ */
 function _uc_usps_package_products($products, &$addresses) {
   $last_key = 0;
   $packages = array();
@@ -673,6 +696,9 @@ function _uc_usps_pkg_types() {
   );
 }
 
+/**
+ * Map envelope shipment services to their IDs.
+ */
 function _uc_usps_env_services() {
   return array(
     'zero' => t('U.S.P.S. First-Class Mail'),
@@ -688,7 +714,7 @@ function _uc_usps_env_services() {
 }
 
 /**
- * Convenience function for select form elements.
+ * Map parcel shipment services to their IDs.
  */
 function _uc_usps_services() {
   return array(
@@ -707,6 +733,9 @@ function _uc_usps_services() {
   );
 }
 
+/**
+ * Map international envelope services to their IDs.
+ */
 function _uc_usps_intl_env_services() {
   return array(
     13 => t('First Class Mail International Letter'),
@@ -720,6 +749,9 @@ function _uc_usps_intl_env_services() {
   );
 }
 
+/**
+ * Map international parcel services to their IDs.
+ */
 function _uc_usps_intl_services() {
   return array(
     15 => t('First Class Mail International Package'),

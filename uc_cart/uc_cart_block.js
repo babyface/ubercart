@@ -1,4 +1,9 @@
-// $Id: uc_cart_block.js,v 1.8.2.3 2009/02/24 15:35:49 islandusurper Exp $
+// $Id: uc_cart_block.js,v 1.8.2.4 2009/07/21 14:37:20 islandusurper Exp $
+
+/**
+ * @file
+ * Adds effects and behaviors to the cart block.
+ */
 
 /**
  * Set the behavior to (un)collapse the cart block on a click

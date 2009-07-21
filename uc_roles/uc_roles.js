@@ -1,3 +1,13 @@
+// $Id: uc_roles.js,v 1.1.2.4 2009/07/21 14:37:19 islandusurper Exp $
+
+/**
+ * @file
+ * Enable and disable expiration fields to prevent invalid configurations.
+ */
+
+/**
+ * Disable duration amount when its type is "never".
+ */
 function _uc_role_expiration_disable_check(granularity, quantity) {
   // 'never' means there's no point in setting a duration.
   if ($(granularity).val() == 'never') {
@@ -9,6 +19,9 @@ function _uc_role_expiration_disable_check(granularity, quantity) {
   }
 }
 
+/**
+ * Switch between relative and absolute expiration durations.
+ */
 function expiration_switcher() {
   if ($('#edit-expiration').val() == 'abs') {
     $("#edit-uc-roles-expire-relative-duration-wrapper").hide();
@@ -24,6 +37,9 @@ function expiration_switcher() {
   }
 }
 
+/**
+ * Set the default state for expiration duration.
+ */
 function expiration_switcher_default() {
   if ($('#edit-uc-roles-default-end-expiration').val() == 'abs') {
     $("#edit-uc-roles-default-length-wrapper").attr('style', 'display:none;');
@@ -39,6 +55,9 @@ function expiration_switcher_default() {
   }
 }
 
+/**
+ * Override the expiration duration default state.
+ */
 function uc_roles_expiration_default_override() {
   if ($('#edit-end-override').length == 0) {
     return;

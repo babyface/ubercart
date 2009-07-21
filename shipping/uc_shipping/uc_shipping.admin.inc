@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.admin.inc,v 1.1.2.9 2009/06/15 19:52:27 islandusurper Exp $
+// $Id: uc_shipping.admin.inc,v 1.1.2.10 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
  * @file
@@ -56,9 +56,10 @@ function uc_shipping_order_packages($order) {
  * Put ordered products into a package.
  *
  * @ingroup forms
- * @see theme_uc_shipping_new_package_fieldset()
- * @see uc_shipping_new_package_validate()
- * @see uc_shipping_new_package_submit()
+ * @see
+ *   theme_uc_shipping_new_package_fieldset()
+ *   uc_shipping_new_package_validate()
+ *   uc_shipping_new_package_submit()
  */
 function uc_shipping_new_package($form_state, $order) {
   $breadcrumb = drupal_get_breadcrumb();
@@ -326,6 +327,11 @@ function uc_shipping_package_edit_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/store/orders/'. $package->order_id .'/packages';
 }
 
+/**
+ * Confirm cancellation of a package's shipment.
+ *
+ * @see uc_shipping_package_cancel_confirm_submit()
+ */
 function uc_shipping_package_cancel_confirm($form_state, $order, $package) {
   $form = array();
   $form['order_id'] = array('#type' => 'value', '#value' => $order->order_id);
@@ -335,6 +341,9 @@ function uc_shipping_package_cancel_confirm($form_state, $order, $package) {
   return $output;
 }
 
+/**
+ * @see uc_shipping_package_cancel_confirm()
+ */
 function uc_shipping_package_cancel_confirm_submit($form, &$form_state) {
   $package = uc_shipping_package_load($form_state['values']['package_id']);
   $shipment = uc_shipping_shipment_load($package->sid);
@@ -771,6 +780,11 @@ function uc_shipping_shipment_edit($form_state, $order, $shipment) {
   return $form;
 }
 
+/**
+ * Ensure the package dimensions are positive numbers.
+ *
+ * @see uc_shipping_shipment_edit()
+ */
 function uc_shipping_shipment_edit_validate($form, &$form_state) {
   foreach ($form_state['values']['packages'] as $key => $package) {
     foreach (array('length', 'width', 'height') as $property) {
@@ -833,7 +847,6 @@ function uc_shipping_shipment_edit_submit($form, &$form_state) {
 /**
  * Decide to release packages to be put on another shipment.
  *
- * @ingroup forms
  * @see uc_shipping_shipment_delete_confirm_submit()
  */
 function uc_shipping_shipment_delete_confirm($form_state, $order, $shipment) {

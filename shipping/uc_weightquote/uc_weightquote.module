@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.module,v 1.5.2.9 2009/05/06 18:38:03 islandusurper Exp $
+// $Id: uc_weightquote.module,v 1.5.2.10 2009/07/21 14:37:22 islandusurper Exp $
 
 /**
  * @file
@@ -133,7 +133,7 @@ function uc_weightquote_ca_predicate() {
  ******************************************************************************/
 
 /**
- * Implementation of Ubercart's hook_shipping_method().
+ * Implementation of hook_shipping_method().
  */
 function uc_weightquote_shipping_method() {
   $methods = array();

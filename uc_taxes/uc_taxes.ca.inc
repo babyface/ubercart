@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.ca.inc,v 1.1.2.11 2009/04/14 13:51:19 islandusurper Exp $
+// $Id: uc_taxes.ca.inc,v 1.1.2.12 2009/07/21 14:37:19 islandusurper Exp $
 
 /**
  * @file
@@ -66,7 +66,7 @@ function uc_taxes_ca_action() {
 }
 
 /**
- * Workflow-ng action callback to calculate a tax.
+ * Action callback to calculate a tax.
  *
  * @param $order
  *   The order object being considered.

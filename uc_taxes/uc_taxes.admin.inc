@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.admin.inc,v 1.1.2.9 2009/03/17 19:19:27 islandusurper Exp $
+// $Id: uc_taxes.admin.inc,v 1.1.2.10 2009/07/21 14:37:19 islandusurper Exp $
 
 /**
  * @file
@@ -53,6 +53,10 @@ function uc_taxes_admin_settings() {
  *
  * @param $rate_id
  *   The ID of the tax rate to edit; leave NULL to add a new rate.
+ * @ingroup forms
+ * @see
+ *   uc_taxes_form_validate()
+ *   uc_taxes_form_submit()
  */
 function uc_taxes_form($form_state, $rate_id = NULL) {
   $form = array();
@@ -138,18 +142,26 @@ function uc_taxes_form($form_state, $rate_id = NULL) {
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
-    '#suffix' => l('Cancel', 'admin/store/settings/taxes'),
+    '#suffix' => l(t('Cancel'), 'admin/store/settings/taxes'),
   );
 
   return $form;
 }
 
+/**
+ * Ensure that tax rates are positive numbers.
+ *
+ * @see uc_taxes_form()
+ */
 function uc_taxes_form_validate($form, &$form_state) {
   if (!empty($form_state['values']['rate']) && (floatval($form_state['values']['rate']) < 0)) {
     form_set_error('rate', t('Rate must be a positive number. No commas and only one decimal point.'));
   }
 }
 
+/**
+ * @see uc_taxes_form()
+ */
 function uc_taxes_form_submit($form, &$form_state) {
   // Determine the decimal rate value.
   if (strpos($form_state['values']['rate'], '%')) {
@@ -180,7 +192,9 @@ function uc_taxes_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/store/settings/taxes';
 }
 
-// Clone a tax rate.
+/**
+ * Clone a tax rate.
+ */
 function uc_taxes_clone($rate_id) {
   // Load the source rate object.
   $rate = uc_taxes_rate_load($rate_id);
@@ -232,6 +246,9 @@ function uc_taxes_delete_form($form_state, $rate_id) {
   return confirm_form($form, t('Are you sure you want to delete @name?', array('@name' => $rate->name)), 'admin/store/settings/taxes', t('This action cannot be undone. Any orders that have been charged this tax may lose tax if you proceed.<br />If you just want this tax to no longer be applied to orders, consider disabling its predicate instead.'), t('Delete'), t('Cancel'));
 }
 
+/**
+ * @see uc_taxes_delete_form()
+ */
 function uc_taxes_delete_form_submit($form, &$form_state) {
   // Delete the tax rate.
   uc_taxes_rate_delete($form_state['values']['rate_id']);

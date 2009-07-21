@@ -1,10 +1,17 @@
-// -*- js-var: set_line_item, getTax; -*-
-// $Id: uc_quote.js,v 1.5.2.5 2009/02/13 22:01:12 islandusurper Exp $
+// $Id: uc_quote.js,v 1.5.2.6 2009/07/21 14:37:21 islandusurper Exp $
+
+/**
+ * @file
+ * Handle asynchronous calls on checkout page to retrieve shipping quotes.
+ */
 
 var page;
 var details;
 var methods;
 
+/**
+ * Set event handlers on address fields.
+ */
 function setQuoteCallbacks(products, context) {
   triggerQuoteCallback = function() {
     quoteCallback(products);
@@ -34,6 +41,9 @@ function setQuoteCallbacks(products, context) {
   });
 }
 
+/**
+ * Refresh line item list when a shipping method is selected.
+ */
 function setTaxCallbacks() {
   // Choosing to use click because of IE's bloody stupid bug not to
   // trigger onChange until focus is lost. Click is better than doing
@@ -47,6 +57,13 @@ function setTaxCallbacks() {
   }).end();
 }
 
+/**
+ * Retrieve a list of available shipping quotes.
+ *
+ * @param products
+ *   Pipe- and carat-delimited values string representing the current contents
+ *   of the shopping cart. Products are separated by | and product data by ^.
+ */
 function quoteCallback(products) {
   var updateCallback = function (progress, status, pb) {
     if (progress == 100) {
@@ -109,6 +126,9 @@ function quoteCallback(products) {
   return false;
 }
 
+/**
+ * Parse and render the returned shipping quotes.
+ */
 function displayQuote(data) {
   var quoteDiv = $("#quote").empty()/* .append("<input type=\"hidden\" name=\"method-quoted\" value=\"" + details["method"] + "\" />") */;
   var numQuotes = 0;

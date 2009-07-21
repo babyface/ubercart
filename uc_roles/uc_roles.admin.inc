@@ -1,15 +1,15 @@
 <?php
-// $Id: uc_roles.admin.inc,v 1.1.2.4 2009/01/02 20:18:43 islandusurper Exp $
+// $Id: uc_roles.admin.inc,v 1.1.2.5 2009/07/21 14:37:19 islandusurper Exp $
 
 /**
  * @file
  * Roles administration menu items.
- *
  */
 
+/**
+ * Create the header for the table/pager.
+ */
 function _uc_roles_expiration_header() {
-
-  // Create the header for the table/pager.
   return array(
     array('data' => t('Username'), 'field' => 'u.name'),
     array('data' => t('Role'), 'field' => 'e.rid'),
@@ -22,7 +22,6 @@ function _uc_roles_expiration_header() {
  * Menu callback for viewing expirations.
  */
 function uc_roles_expiration() {
-
   // Create the header for the pager.
   $header = _uc_roles_expiration_header();
 
@@ -44,9 +43,10 @@ function uc_roles_expiration() {
 
 /**
  * Theme user role expiration page.
+ *
+ * @ingroup themeable
  */
 function theme_uc_roles_expiration($form) {
-
   $header = _uc_roles_expiration_header();
 
   if (is_array($form['name'])) {
@@ -73,9 +73,11 @@ function theme_uc_roles_expiration($form) {
 
 /**
  * Form builder for role expirations.
+ *
+ * @ingroup forms
+ * @see uc_roles_deletion_form_submit()
  */
 function uc_roles_deletion_form($form_id, $account, $rid) {
-
   $expiration = db_result(db_query("SELECT expiration FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d", $account->uid, $rid));
   if ($expiration) {
 
@@ -104,7 +106,7 @@ function uc_roles_deletion_form($form_id, $account, $rid) {
 }
 
 /**
- * Form submit handler for role expirations.
+ * @see uc_roles_deletion_form()
  */
 function uc_roles_deletion_form_submit($form, &$form_state) {
   uc_roles_delete(user_load($form_state['values']['uid']), $form_state['values']['rid']);

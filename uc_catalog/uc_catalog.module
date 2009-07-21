@@ -1,9 +1,9 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.18 2009/07/08 12:56:48 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.19 2009/07/21 14:37:21 islandusurper Exp $
 
 /**
  * @file
- * Übercart Catalog module.
+ * Ubercart Catalog module.
  *
  * Provides classification and navigation product nodes using taxonomy. When
  * installed, this module creates a vocabulary named "Product Catalog" and stores
@@ -168,6 +168,9 @@ function uc_catalog_enable() {
   }
 }
 
+/**
+ * Implementation of hook_theme().
+ */
 function uc_catalog_theme() {
   return array(
     'uc_catalog_block' => array(
@@ -325,6 +328,8 @@ function uc_catalog_taxonomy($op, $type, $object = NULL) {
 }
 
 /**
+ * Implementation of hook_form_alter().
+ *
  * Add an image field to the catalog's taxonomy term form.
  */
 function uc_catalog_form_alter(&$form, &$form_state, $form_id) {
@@ -450,6 +455,9 @@ function theme_uc_catalog_block($menu_tree) {
  * Module Hooks                                                             *
  ******************************************************************************/
 
+/**
+ * Implementation of hook_pathauto().
+ */
 function uc_catalog_pathauto($op) {
   switch ($op) {
     case 'settings':
@@ -476,8 +484,9 @@ function uc_catalog_pathauto($op) {
 }
 
 /**
- * Generate aliases for all categories without aliases
+ * Implementation of hook_pathauto_bulkupdate().
  *
+ * Generate aliases for all categories without aliases
  */
 function uc_catalog_pathauto_bulkupdate() {
   $catalog_vid = variable_get('uc_catalog_vid', 0);
@@ -496,11 +505,10 @@ function uc_catalog_pathauto_bulkupdate() {
 }
 
 /**
+ * Create aliases for taxonomy objects
  *
- * Function to create aliases for taxonomy objects
- *
- * @param object $category a taxonomy object
- *
+ * @param $category
+ *   A taxonomy object
  */
 function _uc_catalog_pathauto_alias($category, $op) {
   _pathauto_include();
@@ -518,18 +526,22 @@ function _uc_catalog_pathauto_alias($category, $op) {
   return $count;
 }
 
+/**
+ * Implementation of hook_path_alias_types().
+ */
 function uc_catalog_path_alias_types() {
   return array('catalog/' => t('catalog pages'));
 }
 
 /******************************************************************************
- * Übercart Hooks                                                             *
+ * Ubercart Hooks                                                             *
  ******************************************************************************/
 
 /**
- * Implementation of Übercart's hook_store_status().
+ * Implementation of hook_store_status().
  *
- * Provide status information about the "Product Catalog" and products not listed in the catalog.
+ * Provide status information about the "Product Catalog" and products not
+ * listed in the catalog.
  */
 function uc_catalog_store_status() {
   $statuses = array();
@@ -570,10 +582,10 @@ function uc_catalog_store_status() {
 }
 
 /**
- * Implementation of Übercart's hook_product_class.
+ * Implementation of hook_product_class().
  *
  * Add and remove product node types to the catalog vocabulary as they are
- *   created and deleted.
+ * created and deleted.
  */
 function uc_catalog_product_class($type, $op) {
   $vid = variable_get('uc_catalog_vid', 0);
@@ -660,8 +672,6 @@ function uc_catalog_get_page($tid) {
  *
  * @param $products
  *   An array of product nids.
- * @return
- *   A TAPIr table.
  * @ingroup themeable
  */
 function theme_uc_catalog_products($products) {
@@ -680,6 +690,11 @@ function theme_uc_catalog_products($products) {
   }
 }
 
+/**
+ * Display a list of products in grid format().
+ *
+ * @ingroup themeable
+ */
 function theme_uc_catalog_product_grid($products) {
   $product_table = '<div class="category-grid-products"><table>';
   $count = 0;
@@ -737,7 +752,7 @@ function theme_uc_catalog_product_grid($products) {
  ******************************************************************************/
 
 /**
- * Summarizes the catalog's block settings.
+ * Summarize the catalog's block settings.
  *
  * @param $form
  *   The form passed from the summarizer
@@ -760,7 +775,7 @@ function _uc_catalog_block_summarize($form) {
 }
 
 /**
- * Formats the breadcrumb to the current term's ancestry.
+ * Format the breadcrumb to the current term's ancestry.
  *
  * @param $tid
  *   The currently viewed catalog term's id.
@@ -806,7 +821,7 @@ function uc_catalog_set_breadcrumb($tid) {
 }
 
 /**
- * Emulates Drupal's menu system, but based soley on the structure of "Product Catalog".
+ * Emulate Drupal's menu system, but based soley on the structure of "Product Catalog".
  *
  * @param $branch
  *   A treeNode object. Determines if the URL points to itself,
@@ -896,8 +911,6 @@ function _uc_catalog_navigation($branch) {
  * Display a formatted link in the catalog block.
  *
  * @ingroup themeable
- * @see theme_uc_catalog_block_start()
- * @see theme_uc_catalog_block_end()
  */
 function theme_uc_catalog_item($here, $link, $lis, $expand, $inpath, $count_children ) {
   $output = '';

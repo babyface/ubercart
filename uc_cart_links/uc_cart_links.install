@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_links.install,v 1.2.2.5 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: uc_cart_links.install,v 1.2.2.6 2009/07/21 14:37:19 islandusurper Exp $
 
 /**
  * @file
@@ -7,10 +7,7 @@
  */
 
 /**
- * Define the table structures.
- *
- * @return
- *   The schema which contains the structure for the uc_cart_links module's tables.
+ * Implementation of hook_schema().
  */
 function uc_cart_links_schema() {
   $schema['uc_cart_link_clicks'] = array(
@@ -47,8 +44,6 @@ function uc_cart_links_schema() {
 
 /**
  * Implementation of hook_install().
- *
- * Inserts the uc_cart_links module's schema in the SQL database.
  */
 function uc_cart_links_install() {
   drupal_install_schema('uc_cart_links');
@@ -56,8 +51,6 @@ function uc_cart_links_install() {
 
 /**
  * Implementation of hook_uninstall().
- *
- * Remove the variables and schema corresponding to the uc_cart_links module.
  */
 function uc_cart_links_uninstall() {
   drupal_uninstall_schema('uc_cart_links');

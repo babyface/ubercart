@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.install,v 1.7.2.6 2009/07/08 12:56:50 islandusurper Exp $
+// $Id: uc_cart.install,v 1.7.2.7 2009/07/21 14:37:20 islandusurper Exp $
 
 /**
  * @file
@@ -7,7 +7,7 @@
  */
 
 /**
- * Ubercart uc_cart.module schema
+ * Implementation of hook_schema().
  */
 function uc_cart_schema() {
   $schema = array();
@@ -51,10 +51,16 @@ function uc_cart_schema() {
   return $schema;
 }
 
+/**
+ * Implementation of hook_install().
+ */
 function uc_cart_install() {
   drupal_install_schema('uc_cart');
 }
 
+/**
+ * Implementation of hook_uninstall().
+ */
 function uc_cart_uninstall() {
   drupal_uninstall_schema('uc_cart');
 
@@ -77,22 +83,26 @@ function uc_cart_uninstall() {
   variable_del('uc_ce_submit_disable');
 }
 
+/**
+ * Standardize database definitions during upgrade to Drupal 6.
+ *
+ * ID fields are unsigned, regular-sized ints. "Boolean" flags are unsigned
+ * tiny ints. Postgres tables will have the necessary default values, and MySQL
+ * doesn't need them, so the schema can just be mismatched for that.
+ */
 function uc_cart_update_6000() {
   $ret = array();
 
-  // Standardize database definitions during upgrade to Drupal 6.
-  // ID fields are unsigned, regular-sized ints.
-  // "Boolean" flags are unsigned tiny ints.
-  // Postgres tables will have the necessary default values, and MySQL
-  // doesn't need them, so the schema can just be mismatched for that.
   db_change_field($ret, 'uc_cart_products', 'nid', 'nid', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_cart_products', 'qty', 'qty', array('type' => 'int', 'unsigned' => TRUE, 'size' => 'small', 'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }
 
+/**
+ * Remove unused variables.
+ */
 function uc_cart_update_6001() {
-  // Remove unused variables.
   variable_del('uc_checkout_review_button');
   variable_del('uc_checkout_submit_button');
   variable_del('uc_checkout_next_button');

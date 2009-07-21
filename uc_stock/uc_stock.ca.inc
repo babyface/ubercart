@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.ca.inc,v 1.1.2.5 2008/11/07 21:13:29 islandusurper Exp $
+// $Id: uc_stock.ca.inc,v 1.1.2.6 2009/07/21 14:37:17 islandusurper Exp $
 
 /**
  * @file
@@ -7,13 +7,12 @@
  * integeration with the uc_stock module
  */
 
-
 /******************************************************************************
  * Conditional Action Hooks                                                   *
  ******************************************************************************/
 
 /**
- * Implementation of hook_configuration().
+ * Implementation of hook_ca_predicate().
  */
 function uc_stock_ca_predicate() {
   $predicates['uc_stock_decrement_on_order'] = array(
@@ -36,7 +35,7 @@ function uc_stock_ca_predicate() {
 }
 
 /**
- * Implementation of hook_action_info().
+ * Implementation of hook_action().
  */
 function uc_stock_ca_action() {
   $actions['uc_stock_action_decrement_stock'] = array(
@@ -55,6 +54,9 @@ function uc_stock_ca_action() {
  * Conditional Action Callbacks and Forms                                     *
  ******************************************************************************/
 
+/**
+ * Decrease the stock of ordered products.
+ */
 function uc_stock_action_decrement_stock($order, $settings) {
   if (is_array($order->products)) {
     $stock_warnings = array();

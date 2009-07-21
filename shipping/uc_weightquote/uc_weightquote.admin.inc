@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_weightquote.admin.inc,v 1.1.2.4 2009/02/10 21:58:15 islandusurper Exp $
+// $Id: uc_weightquote.admin.inc,v 1.1.2.5 2009/07/21 14:37:22 islandusurper Exp $
 
 /**
  * @file
@@ -8,6 +8,8 @@
 
 /**
  * Configure the store default shipping rate.
+ *
+ * @ingroup forms
  */
 function uc_weightquote_admin_settings() {
   $form['uc_weightquote_conditions'] = array(

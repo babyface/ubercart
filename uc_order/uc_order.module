@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.module,v 1.12.2.25 2009/07/08 12:56:49 islandusurper Exp $
+// $Id: uc_order.module,v 1.12.2.26 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
  * @file
@@ -298,6 +298,9 @@ function uc_order_menu() {
   return $items;
 }
 
+/**
+ * Title callback for admin/store/orders/%uc_order.
+ */
 function uc_order_page_title($order) {
   return t('Order @order_id', array('@order_id' => $order->order_id));
 }
@@ -466,6 +469,9 @@ function uc_order_perm() {
   return array('view own orders', 'view all orders', 'create orders', 'edit orders', 'delete orders', 'unconditionally delete orders', 'administer order workflow');
 }
 
+/**
+ * Access callback for user/%user/orders*.
+ */
 function uc_order_can_view_order($order_user, $order = NULL) {
   global $user;
 
@@ -478,6 +484,9 @@ function uc_order_can_view_order($order_user, $order = NULL) {
   return $access;
 }
 
+/**
+ * Access callback for admin/store/orders/%uc_order/log.
+ */
 function uc_order_access_order_log() {
   return user_access('view all orders') && variable_get('uc_order_logging', TRUE);
 }
@@ -709,9 +718,11 @@ function uc_order_uc_message() {
  * Callback Functions, Forms, and Tables
  ******************************************************************************/
 
-
-
-// Theme the order state table in the order workflow settings.
+/**
+ * Theme the order state table in the order workflow settings.
+ *
+ * @ingroup themeable
+ */
 function theme_uc_order_state_table($form) {
   $header = array(t('State'), t('Default order status'));
 
@@ -725,7 +736,9 @@ function theme_uc_order_state_table($form) {
   return theme('table', $header, $rows);
 }
 
-// Theme the order state table in the order workflow settings.
+/**
+ * Theme the order state table in the order workflow settings.
+ */
 function theme_uc_order_status_table($form) {
   $header = array(t('ID'), t('Title'), t('List position'), t('State'), t('Remove'));
 
@@ -780,6 +793,12 @@ function _uc_order_panes_summarize($form, $panes, $parent_name, $parent_id) {
   return $items;
 }
 
+/**
+ * Form to input search parameters for orders.
+ *
+ * @ingroup forms
+ * @see uc_order_search_form_submit()
+ */
 function uc_order_search_form() {
   $form['search'] = array(
     '#type' => 'fieldset',
@@ -893,6 +912,9 @@ function uc_order_search_form() {
   return $form;
 }
 
+/**
+ * @see uc_order_search_form()
+ */
 function uc_order_search_form_submit($form, &$form_state) {
   $keys = array(
     'billing_first_name',
@@ -924,6 +946,11 @@ function uc_order_search_form_submit($form, &$form_state) {
   drupal_goto('admin/store/orders/search/results/'. implode('/', $args));
 }
 
+/**
+ * TAPIr table for products pane on the order edit page.
+ *
+ * @see uc_order_edit_products_form()
+ */
 function op_products_edit_table() {
   $table = array(
     '#type' => 'tapir_table',
@@ -1401,6 +1428,9 @@ function uc_order_get_total($order, $products_only = FALSE) {
   return $total;
 }
 
+/**
+ * An order can be shipped if any of its products can be shipped.
+ */
 function uc_order_is_shippable($order) {
   if (!is_array($order->products) || empty($order->products)) {
     return FALSE;
@@ -1427,6 +1457,9 @@ function uc_order_is_shippable($order) {
   return in_array(TRUE, $results);
 }
 
+/**
+ * Helper function for order page local tasks.
+ */
 function _get_order_screen_titles() {
   $titles = array(
     'view' => t('View'),
@@ -1438,6 +1471,9 @@ function _get_order_screen_titles() {
   return $titles;
 }
 
+/**
+ * Load a formatted invoice with an order's data.
+ */
 function uc_order_load_invoice($order, $op = 'view', $template = 'customer') {
   static $invoice;
 
@@ -1504,7 +1540,9 @@ function uc_order_load_invoice($order, $op = 'view', $template = 'customer') {
   return $output;
 }
 
-// Return an array of invoice templates found in ubercart/uc_order/templates.
+/**
+ * Return an array of invoice templates found in ubercart/uc_order/templates.
+ */
 function uc_invoice_template_list() {
   static $templates = array();
 
@@ -1526,7 +1564,9 @@ function uc_invoice_template_list() {
   return $templates;
 }
 
-// Returns a list of options for a template select box.
+/**
+ * Return a list of options for a template select box.
+ */
 function uc_order_template_options($custom = FALSE) {
   $templates = drupal_map_assoc(uc_invoice_template_list());
 
@@ -1777,6 +1817,8 @@ function uc_order_actions($order, $icon_html = FALSE) {
 
 /**
  * Return TRUE if an order can be deleted by the current user.
+ *
+ * Access callback for admin/store/orders/%uc_order/delete.
  */
 function uc_order_can_delete($order) {
   $can_delete = FALSE;

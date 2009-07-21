@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.pages.inc,v 1.1.2.5 2009/04/02 21:01:45 islandusurper Exp $
+// $Id: uc_quote.pages.inc,v 1.1.2.6 2009/07/21 14:37:21 islandusurper Exp $
 
 /**
  * @file
@@ -73,6 +73,9 @@ function uc_quote_request_quotes() {
   exit();
 }
 
+/**
+ * Pull the get_quote_from_* triggers and assemble their returned data.
+ */
 function _uc_quote_assemble_quotes($order) {
   global $user;
   $account = user_load($order->uid);

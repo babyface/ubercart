@@ -1,4 +1,10 @@
 <?php
+// $Id: uc_cart.test,v 1.1.2.2 2009/07/21 14:37:20 islandusurper Exp $
+
+/**
+ * @file
+ * Shopping cart and checkout tests.
+ */
 
 class UbercartTestCase extends DrupalWebTestCase {
   //Perform the initial setup

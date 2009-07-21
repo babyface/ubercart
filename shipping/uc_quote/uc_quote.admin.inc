@@ -1,12 +1,14 @@
 <?php
-// $Id: uc_quote.admin.inc,v 1.1.2.8 2009/02/10 21:58:13 islandusurper Exp $
+// $Id: uc_quote.admin.inc,v 1.1.2.9 2009/07/21 14:37:21 islandusurper Exp $
 
 /**
  * @file
  * Shipping quotes administration menu items.
  */
 
-// Displays an overview of the shipping quote settings.
+/**
+ * Display an overview of the shipping quote settings.
+ */
 function uc_quote_overview() {
   $summaries = array();
 
@@ -136,7 +138,7 @@ function uc_quote_admin_settings() {
 }
 
 /**
- * Submit function for uc_quote_admin_settings() in lieu of system_settings_form().
+ * @see uc_quote_admin_settings()
  */
 function uc_quote_admin_settings_submit($form, &$form_state) {
   $address = new stdClass();
@@ -169,9 +171,10 @@ function uc_quote_admin_settings_submit($form, &$form_state) {
  * Enable and reorder shipping quote methods. Set the default shipping type.
  *
  * @ingroup forms
- * @see theme_uc_quote_method_settings()
- * @see uc_quote_method_settings_validate()
- * @see uc_quote_method_settings_submit()
+ * @see
+ *   theme_uc_quote_method_settings()
+ *   uc_quote_method_settings_validate()
+ *   uc_quote_method_settings_submit()
  */
 function uc_quote_method_settings() {
   $form = array();
@@ -266,9 +269,9 @@ function theme_uc_quote_method_settings($form) {
 }
 
 /**
- * Validation handler for uc_quote_method_settings().
+ * Require at least one enabled shipping method.
  *
- * Must enable at least one shipping method.
+ * @see uc_quote_method_settings()
  */
 function uc_quote_method_settings_validate($form, &$form_state) {
   $none_enabled = TRUE;
@@ -285,7 +288,7 @@ function uc_quote_method_settings_validate($form, &$form_state) {
 }
 
 /**
- * Submit handler for uc_quote_method_settings().
+ * @see uc_quote_method_settings()
  */
 function uc_quote_method_settings_submit($form, &$form_state) {
   $enabled = array();

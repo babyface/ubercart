@@ -1,13 +1,16 @@
 <?php
-// $Id: uc_reports.admin.inc,v 1.1.2.9 2009/07/08 12:56:50 islandusurper Exp $
+// $Id: uc_reports.admin.inc,v 1.1.2.10 2009/07/21 14:37:22 islandusurper Exp $
 
 /**
  * @file
  * Reports administration menu items.
- *
  */
 
-// Form builder for the admin settings.
+/**
+ * Form builder for the admin settings.
+ *
+ * @ingroup forms
+ */
 function uc_reports_settings_form() {
   $form['uc_reports_table_size'] = array(
     '#type' => 'textfield',
@@ -305,6 +308,8 @@ function _uc_reports_product_get_skus($nid) {
  * Return a themed table for product reports.
  *
  * Straight duplication of theme_table, but our row handling is different.
+ *
+ * @ingroup themeable
  */
 function theme_uc_reports_product_table($header, $rows, $attributes = array(), $caption = NULL) {
 
@@ -390,7 +395,9 @@ function theme_uc_reports_product_table($header, $rows, $attributes = array(), $
   return $output;
 }
 
-// Displays the sales summary report.
+/**
+ * Display the sales summary report.
+ */
 function uc_reports_sales_summary() {
   $timezone_offset = time() + _uc_reports_timezone_offset();
   $order_statuses = _uc_reports_order_statuses();
@@ -528,7 +535,9 @@ function uc_reports_sales_summary() {
   return $output;
 }
 
-// Displays the yearly sales report form and table.
+/**
+ * Display the yearly sales report form and table.
+ */
 function uc_reports_sales_year() {
   $timezone_offset = time() + _uc_reports_timezone_offset();
   $order_statuses = _uc_reports_order_statuses();
@@ -628,7 +637,12 @@ function uc_reports_sales_year() {
   return $output;
 }
 
-// Form to specify a year for the yearly sales report.
+/**
+ * Form to specify a year for the yearly sales report.
+ *
+ * @ingroup forms
+ * @see uc_reports_sales_year_form_submit()
+ */
 function uc_reports_sales_year_form($form_state, $year) {
   $form['year'] = array(
     '#type' => 'textfield',
@@ -650,11 +664,16 @@ function uc_reports_sales_year_form($form_state, $year) {
   return $form;
 }
 
+/**
+ * @see uc_reports_sales_year_form()
+ */
 function uc_reports_sales_year_form_submit($form, &$form_state) {
   drupal_goto('admin/store/reports/sales/year/'. $form_state['values']['year']);
 }
 
-// Displays the custom sales report form and table.
+/**
+ * Display the custom sales report form and table.
+ */
 function uc_reports_sales_custom() {
   $timezone = _uc_reports_timezone_offset();
   $timezone_offset = time() + $timezone;
@@ -796,7 +815,14 @@ function uc_reports_sales_custom() {
   return $output;
 }
 
-// Form builder for the custom sales report.
+/**
+ * Form builder for the custom sales report.
+ *
+ * @ingroup forms
+ * @see
+ *   uc_reports_sales_custom_form_validate()
+ *   uc_reports_sales_custom_form_submit()
+ */
 function uc_reports_sales_custom_form($form_state, $values, $statuses) {
   $form['search'] = array(
     '#type' => 'fieldset',
@@ -871,12 +897,20 @@ function uc_reports_sales_custom_form($form_state, $values, $statuses) {
   return $form;
 }
 
+/**
+ * Ensure an order status was selected.
+ *
+ * @see uc_reports_sales_custom_form()
+ */
 function uc_reports_sales_custom_form_validate($form, &$form_state) {
   if (empty($form_state['values']['status'])) {
     form_set_error('status', t('You must select at least one order status.'));
   }
 }
 
+/**
+ * @see uc_reports_sales_custom_form()
+ */
 function uc_reports_sales_custom_form_submit($form, &$form_state) {
   $timezone_offset = _uc_reports_timezone_offset();
 

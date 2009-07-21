@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_flatrate.module,v 1.5.2.10 2009/05/06 18:38:03 islandusurper Exp $
+// $Id: uc_flatrate.module,v 1.5.2.11 2009/07/21 14:37:17 islandusurper Exp $
 
 /**
  * @file
@@ -201,8 +201,10 @@ function uc_flatrate_shipping_method() {
  *   The order's products.
  * @param $details
  *   Other order details including a shipping address.
+ * @param $method
+ *   The shipping method to create the quote.
  * @return
- *   A JSON object containing the shipping quote for the order.
+ *   An array containing the shipping quote for the order.
  */
 function uc_flatrate_quote($products, $details, $method) {
   $method = explode('_', $method['id']);

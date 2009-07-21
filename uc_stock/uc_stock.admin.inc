@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.admin.inc,v 1.1.2.5 2009/05/07 20:52:30 islandusurper Exp $
+// $Id: uc_stock.admin.inc,v 1.1.2.6 2009/07/21 14:37:17 islandusurper Exp $
 
 /**
  * @file
@@ -7,7 +7,11 @@
  *
  */
 
-// Form builder for stock settings form.
+/**
+ * Form builder for stock settings form.
+ *
+ * @ingroup forms
+ */
 function uc_stock_settings_form() {
   $form['uc_stock_threshold_notification'] = array(
     '#type' => 'checkbox',
@@ -40,7 +44,9 @@ function uc_stock_settings_form() {
   return system_settings_form($form);
 }
 
-// Displays a stock report for products with stock tracking enabled.
+/**
+ * Display a stock report for products with stock tracking enabled.
+ */
 function uc_stock_report() {
   drupal_add_css(drupal_get_path('module', 'uc_stock') .'/uc_stock.css');
 
@@ -95,7 +101,12 @@ function uc_stock_report() {
   return $output;
 }
 
-// Form builder for stock report threshold filter.
+/**
+ * Form builder for stock report threshold filter.
+ *
+ * @ingroup forms
+ * @see uc_stock_report_form_submit()
+ */
 function uc_stock_report_form() {
   $form['threshold'] = array(
     '#type' => 'checkbox',
@@ -113,6 +124,9 @@ function uc_stock_report_form() {
   return $form;
 }
 
+/**
+ * @see uc_stock_report_form()
+ */
 function uc_stock_report_form_submit($form, &$form_state) {
   if ($form_state['values']['threshold']) {
     drupal_goto('admin/store/reports/stock/threshold');
@@ -122,7 +136,14 @@ function uc_stock_report_form_submit($form, &$form_state) {
   }
 }
 
-// Form builder for product stock edit form.
+/**
+ * Form builder for product stock edit form.
+ *
+ * @ingroup forms
+ * @see
+ *   theme_uc_stock_edit_form()
+ *   uc_stock_edit_form_submit()
+ */
 function uc_stock_edit_form($form_state, $node) {
   drupal_set_title(check_plain($node->title));
 
@@ -188,6 +209,10 @@ function uc_stock_edit_form($form_state, $node) {
   return $form;
 }
 
+/**
+ * @ingroup themeable
+ * @see uc_stock_edit_form()
+ */
 function theme_uc_stock_edit_form($form) {
   $header = array(
     array('data' => t('Active')),
@@ -208,6 +233,9 @@ function theme_uc_stock_edit_form($form) {
   return theme('table', $header, $rows) . drupal_render($form);
 }
 
+/**
+ * @see uc_stock_edit_form()
+ */
 function uc_stock_edit_form_submit($form, &$form_state) {
   foreach (element_children($form_state['values']['stock']) as $id) {
     db_query("UPDATE {uc_product_stock} SET active = %d, stock = %d, threshold = %d WHERE sku = '%s'",

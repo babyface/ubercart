@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.admin.inc,v 1.1.2.8 2009/04/28 21:03:16 islandusurper Exp $
+// $Id: uc_ups.admin.inc,v 1.1.2.9 2009/07/21 14:37:19 islandusurper Exp $
 
 /**
  * @file
@@ -141,6 +141,8 @@ function uc_ups_admin_settings() {
  * Validation handler for uc_ups_admin_settings.
  *
  * Require password only if it hasn't been set.
+ *
+ * @see uc_ups_admin_settings()
  */
 function uc_ups_admin_settings_validate($form, &$form_state) {
   $old_password = variable_get('uc_ups_password', '');
@@ -170,6 +172,9 @@ function uc_ups_confirm_shipment($order) {
 
 /**
  * Display final shipment information for review.
+ *
+ * @ingroup themeable
+ * @see uc_ups_confirm_shipment()
  */
 function theme_uc_ups_confirm_shipment($form) {
   $output = '';
@@ -224,9 +229,9 @@ function theme_uc_ups_confirm_shipment($form) {
 }
 
 /**
- * Submit handler for uc_ups_confirm_shipment().
- *
  * Generate label and schedule pickup of the shipment.
+ *
+ * @see uc_ups_confirm_shipment()
  */
 function uc_ups_confirm_shipment_submit($form, &$form_state) {
   // Request pickup using parameters in form.

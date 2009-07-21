@@ -1,10 +1,9 @@
 <?php
-// $Id: uc_flatrate.admin.inc,v 1.1.2.12 2009/05/06 18:38:03 islandusurper Exp $
+// $Id: uc_flatrate.admin.inc,v 1.1.2.13 2009/07/21 14:37:17 islandusurper Exp $
 
 /**
  * @file
  * Flat rate shipping method administration menu items.
- *
  */
 
 /**
@@ -44,6 +43,12 @@ function uc_flatrate_admin_methods() {
 
 /**
  * Configure the store default product shipping rates.
+ *
+ * @ingroup forms
+ * @see
+ *   uc_flatrate_admin_method_edit_form_validate()
+ *   uc_flatrate_admin_method_edit_form_delete()
+ *   uc_flatrate_admin_method_edit_form_submit()
  */
 function uc_flatrate_admin_method_edit_form($form_state, $mid = 0) {
   $form = array();
@@ -92,6 +97,9 @@ function uc_flatrate_admin_method_edit_form($form_state, $mid = 0) {
   return $form;
 }
 
+/**
+ * @see uc_flatrate_admin_method_edit_form()
+ */
 function uc_flatrate_admin_method_edit_form_validate($form, &$form_state) {
   if ($form_state['values']['op'] == t('Submit')) {
     if (!empty($form_state['values']['base_rate']) && !is_numeric($form_state['values']['base_rate'])) {
@@ -103,10 +111,16 @@ function uc_flatrate_admin_method_edit_form_validate($form, &$form_state) {
   }
 }
 
+/**
+ * @see uc_flatrate_admin_method_edit_form()
+ */
 function uc_flatrate_admin_method_edit_form_delete($form, &$form_state) {
   drupal_goto('admin/store/settings/quotes/flatrate/'. $form_state['values']['mid'] .'/delete');
 }
 
+/**
+ * @see uc_flatrate_admin_method_edit_form()
+ */
 function uc_flatrate_admin_method_edit_form_submit($form, &$form_state) {
   if ($form_state['values']['mid']) {
     db_query("UPDATE {uc_flatrate_methods} SET title = '%s', label = '%s', base_rate = %f, product_rate = %f WHERE mid = %d",
@@ -132,6 +146,11 @@ function uc_flatrate_admin_method_edit_form_submit($form, &$form_state) {
  * Menu Callbacks                                                             *
  ******************************************************************************/
 
+/**
+ * Confirm deletion of a flat rate shipping method.
+ *
+ * @see uc_flatrate_admin_method_confirm_delete_submit()
+ */
 function uc_flatrate_admin_method_confirm_delete($form_state, $mid) {
   $form = array();
   $form['mid'] = array('#type' => 'value', '#value' => $mid);
@@ -143,6 +162,9 @@ function uc_flatrate_admin_method_confirm_delete($form_state, $mid) {
     t('Delete'));
 }
 
+/**
+ * @see uc_flatrate_admin_method_confirm_delete()
+ */
 function uc_flatrate_admin_method_confirm_delete_submit($form, &$form_state) {
   db_query("DELETE FROM {uc_flatrate_methods} WHERE mid = %d", $form_state['values']['mid']);
   db_query("DELETE FROM {uc_flatrate_products} WHERE mid = %d", $form_state['values']['mid']);

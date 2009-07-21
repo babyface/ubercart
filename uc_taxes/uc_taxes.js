@@ -1,4 +1,9 @@
-// $Id: uc_taxes.js,v 1.10.2.8 2009/04/14 13:51:19 islandusurper Exp $
+// $Id: uc_taxes.js,v 1.10.2.9 2009/07/21 14:37:19 islandusurper Exp $
+
+/**
+ * @file
+ * Handle asynchronous requests to calculate taxes.
+ */
 
 /**
  * Calculate the number of bytes of a Unicode string.
@@ -38,6 +43,9 @@ $(document).ready(function() {
   $('#edit-panes-payment-current-total').click(getTax);
 });
 
+/**
+ * Get tax calculations for the current cart and line items.
+ */
 function getTax() {
   var products = $("[@name=cart_contents]").val();
 

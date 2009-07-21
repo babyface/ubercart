@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_2checkout.module,v 1.6.2.7 2009/05/28 20:49:18 islandusurper Exp $
+// $Id: uc_2checkout.module,v 1.6.2.8 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
  * @file
@@ -11,6 +11,8 @@
  * Implementation of hook_menu().
  */
 function uc_2checkout_menu() {
+  $items = array();
+
   $items['cart/2checkout/complete'] = array(
     'title' => 'Order complete',
     'page callback' => 'uc_2checkout_complete',
@@ -29,7 +31,9 @@ function uc_2checkout_menu() {
   return $items;
 }
 
-// Make sure anyone can complete their 2Checkout orders.
+/**
+ * Make sure anyone can complete their 2Checkout orders.
+ */
 function uc_2checkout_completion_access() {
   return TRUE;
 }
@@ -62,6 +66,8 @@ function uc_2checkout_form_alter(&$form, &$form_state, $form_id) {
 
 /**
  * Implementation of hook_payment_method().
+ *
+ * @see uc_payment_method_2checkout()
  */
 function uc_2checkout_payment_method() {
   $path = base_path() . drupal_get_path('module', 'uc_2checkout');
@@ -84,7 +90,11 @@ function uc_2checkout_payment_method() {
 }
 
 
-// Adds 2Checkout settings to the payment method settings form.
+/**
+ * Add 2Checkout settings to the payment method settings form.
+ *
+ * @see uc_2checkout_payment_method()
+ */
 function uc_payment_method_2checkout($op, &$arg1) {
   switch ($op) {
     case 'cart-details':
@@ -172,7 +182,9 @@ function uc_payment_method_2checkout($op, &$arg1) {
   }
 }
 
-// Form to build the submission to 2Checkout.com.
+/**
+ * Form to build the submission to 2Checkout.com.
+ */
 function uc_2checkout_form($form_state, $order) {
   $country = uc_get_country_data(array('country_id' => $order->billing_country));
   if ($country === FALSE) {

@@ -1,10 +1,9 @@
 <?php
-// $Id: uc_catalog.pages.inc,v 1.1.2.11 2009/07/08 12:56:48 islandusurper Exp $
+// $Id: uc_catalog.pages.inc,v 1.1.2.12 2009/07/21 14:37:21 islandusurper Exp $
 
 /**
  * @file
  * Catalog menu items.
- *
  */
 
 /**
@@ -18,6 +17,7 @@
  *   Catalog term id from URL.
  * @return
  *   Formatted HTML of the catalog page.
+ * @ingroup themeable
  */
 function theme_uc_catalog_browse($tid = 0) {
   drupal_add_css(drupal_get_path('module', 'uc_catalog') .'/uc_catalog.css');

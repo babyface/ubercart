@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.5.2.7 2009/07/08 12:56:50 islandusurper Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.5.2.8 2009/07/21 14:37:20 islandusurper Exp $
 
 /**
  * @file
@@ -438,7 +438,14 @@ function uc_checkout_pane_comments($op, &$arg1, $arg2) {
   }
 }
 
-// Theme the delivery/billing address forms in tables.
+/**
+ * Theme the delivery/billing address forms in tables.
+ *
+ * @ingroup themeable
+ * @see
+ *   uc_checkout_pane_delivery()
+ *   uc_checkout_pane_billing()
+ */
 function theme_address_pane($form) {
   $req = '<span class="form-required">*</span>';
 

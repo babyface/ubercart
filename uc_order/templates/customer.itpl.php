@@ -1,7 +1,8 @@
 <?php
-// $Id: customer.itpl.php,v 1.5.2.6 2009/07/08 12:56:50 islandusurper Exp $
+// $Id: customer.itpl.php,v 1.5.2.7 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
+ * @file
  * This file is the default customer invoice template for Ubercart.
  */
 ?>

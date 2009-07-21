@@ -1,11 +1,14 @@
 <?php
-// $Id: uc_attribute.install,v 1.10.2.8 2009/06/15 19:52:26 islandusurper Exp $
+// $Id: uc_attribute.install,v 1.10.2.9 2009/07/21 14:37:21 islandusurper Exp $
 
 /**
  * @file
  * Install hooks for uc_attribute.module.
  */
 
+/**
+ * Implemenation of hook_schema()
+ */
 function uc_attribute_schema() {
   $schema = array();
 
@@ -371,10 +374,16 @@ function uc_attribute_schema() {
   return $schema;
 }
 
+/**
+ * Implmentation of hook_install().
+ */
 function uc_attribute_install() {
   drupal_install_schema('uc_attribute');
 }
 
+/**
+ * Implementation of hook_uninstall().
+ */
 function uc_attribute_uninstall() {
   drupal_uninstall_schema('uc_attribute');
 

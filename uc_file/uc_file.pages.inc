@@ -1,19 +1,24 @@
 <?php
-// $Id: uc_file.pages.inc,v 1.1.2.9 2009/05/07 20:52:29 islandusurper Exp $
+// $Id: uc_file.pages.inc,v 1.1.2.10 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
  * @file
  * File menu items.
- *
  */
 
-// The number of bogus requests one IP address can make before being banned.
+/**
+ * The number of bogus requests one IP address can make before being banned.
+ */
 define('UC_FILE_REQUEST_LIMIT', 50);
 
-// Download file chunk.
+/**
+ * Download file chunk.
+ */
 define('UC_FILE_BYTE_SIZE', 8192);
 
-// Download statuses.
+/**
+ * Download statuses.
+ */
 define('UC_FILE_ERROR_OK'                     , 0);
 define('UC_FILE_ERROR_NOT_A_FILE'             , 1);
 define('UC_FILE_ERROR_TOO_MANY_BOGUS_REQUESTS', 2);
@@ -101,7 +106,7 @@ function uc_file_user_downloads($account) {
 }
 
 /**
- * Handles file downloading and error states.
+ * Handle file downloading and error states.
  *
  * @see _uc_file_download_validate()
  *
@@ -319,7 +324,9 @@ function _uc_file_download_transfer($file_user, $ip) {
 
 }
 
-// Process a file download.
+/**
+ * Process a file download.
+ */
 function _uc_file_log_download($file_user, $ip) {
 
   // Add the address if it doesn't exist.
@@ -338,7 +345,9 @@ function _uc_file_log_download($file_user, $ip) {
   drupal_write_record('uc_file_users', $file_user, 'fuid');
 }
 
-// Send 'em packin...
+/**
+ * Send 'em packin.
+ */
 function _uc_file_download_redirect($uid = NULL) {
 
   // Shoo away anonymous users.

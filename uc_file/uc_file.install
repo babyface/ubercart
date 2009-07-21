@@ -1,15 +1,17 @@
 <?php
-// $Id: uc_file.install,v 1.2.2.12 2009/07/08 12:56:49 islandusurper Exp $
+// $Id: uc_file.install,v 1.2.2.13 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
  * @file
  * DB Schema and upgrade path for uc_file.
- *
  */
 
 // -1 is the UC_FILE_LIMIT_SENTINEL constant in uc_file.module, but
 // it might not be available (like when upgrading from 5 -> 6.
 
+/**
+ * Implementation of hook_schema().
+ */
 function uc_file_schema() {
   $schema = array();
 
@@ -168,10 +170,16 @@ function uc_file_schema() {
   return $schema;
 }
 
+/**
+ * Implementation of hook_install().
+ */
 function uc_file_install() {
   drupal_install_schema('uc_file');
 }
 
+/**
+ * Implementation of hook_uninstall().
+ */
 function uc_file_uninstall() {
   drupal_uninstall_schema('uc_file');
   db_query("DELETE FROM {uc_product_features} WHERE fid = 'file'");
@@ -228,7 +236,9 @@ function uc_file_update_6001() {
   return $ret;
 }
 
-// Add primary keys to file_products and file_users
+/**
+ * Add primary keys to file_products and file_users.
+ */
 function uc_file_update_6002() {
   $ret = array();
 
@@ -244,7 +254,9 @@ function uc_file_update_6002() {
   return $ret;
 }
 
-// Make sure the quantity is validated.
+/**
+ * Make sure the quantity is validated.
+ */
 function uc_file_update_6003() {
 
   if (variable_get('uc_file_download_limit_duration_granularity', 'never') != 'never' &&
@@ -255,7 +267,9 @@ function uc_file_update_6003() {
   return array();
 }
 
-// Add per-file limits.
+/**
+ * Add per-file limits.
+ */
 function uc_file_update_6004() {
   $ret = array();
 
@@ -292,10 +306,10 @@ function uc_file_update_6004() {
   return $ret;
 }
 
-// Iterate over all the existing file_user objects and replace them with the
-// defaults for their product feature. This gets us off depending on global
-// settings and also allows users to accumulate time. We also calculate the expiration
-// time here, and store it as 'expiration'. We now do this in a batch.
+/**
+ * Iterate over all the existing file_user objects and replace them with the
+ * defaults for their product feature.
+ */
 function uc_file_update_6005(&$sandbox) {
   $ret = array();
 

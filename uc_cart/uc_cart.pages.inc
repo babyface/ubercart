@@ -1,13 +1,17 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.13 2009/07/08 12:56:50 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.14 2009/07/21 14:37:20 islandusurper Exp $
 
 /**
  * @file
  * Cart menu items.
- *
  */
 
-// Displays cart view page with form to adjust cart contents or go to checkout.
+/**
+ * Display the cart view page.
+ *
+ * Show the products in the cart with a form to adjust cart contents or go to
+ * checkout.
+ */
 function uc_cart_view() {
   // Failsafe so that this function only works when called with no arguments.
   // This prevents the accidental wiping of the cart_order session variable.
@@ -108,6 +112,16 @@ function uc_cart_checkout() {
   return $output;
 }
 
+/**
+ * The checkout form built up from the enabled checkout panes.
+ *
+ * @ingroup forms
+ * @see
+ *   theme_uc_cart_checkout_form()
+ *   uc_cart_checkout_form_validate()
+ *   uc_cart_checkout_form_review()
+ *   uc_cart_checkout_review()
+ */
 function uc_cart_checkout_form() {
   global $user;
 
@@ -242,6 +256,12 @@ function uc_cart_checkout_form() {
   return $form;
 }
 
+/**
+ * Add markup and styling to the checkout panes.
+ *
+ * @ingroup themeable
+ * @see uc_cart_checkout_form()
+ */
 function theme_uc_cart_checkout_form($form) {
   drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart.css');
 
@@ -268,6 +288,9 @@ function theme_uc_cart_checkout_form($form) {
   return $output;
 }
 
+/**
+ * @see uc_cart_checkout_form()
+ */
 function uc_cart_checkout_form_validate($form, &$form_state) {
   global $user;
 
@@ -302,6 +325,9 @@ function uc_cart_checkout_form_validate($form, &$form_state) {
   uc_order_save($order);
 }
 
+/**
+ * @see uc_cart_checkout_form()
+ */
 function uc_cart_checkout_form_submit($form, &$form_state) {
   if ($_SESSION['checkout_valid'] === FALSE) {
     $url = 'cart/checkout';
@@ -318,6 +344,8 @@ function uc_cart_checkout_form_submit($form, &$form_state) {
 
 /**
  * Allow a customer to review their order before finally submitting it.
+ *
+ * @see uc_cart_checkout_form()
  */
 function uc_cart_checkout_review() {
   drupal_add_js(drupal_get_path('module', 'uc_cart') .'/uc_cart.js');
@@ -411,6 +439,14 @@ function theme_uc_cart_checkout_review($panes, $form) {
   return $output;
 }
 
+/**
+ * Give customers the option to finish checkout or go revise their information.
+ *
+ * @ingroup forms
+ * @see
+ *   uc_cart_checkout_review_form_back()
+ *   uc-cart_checkout_review_form_submit()
+ */
 function uc_cart_checkout_review_form() {
   // Set the session variable to pass the redirect check on the pageload.
   if ($_POST['op'] == t('Back')) {
@@ -430,11 +466,21 @@ function uc_cart_checkout_review_form() {
   return $form;
 }
 
+/**
+ * Returns the customer to the checkout page to edit their information.
+ *
+ * @see uc_cart_checkout_review_form()
+ */
 function uc_cart_checkout_review_form_back($form, &$form_state) {
   unset($_SESSION['do_review']);
   $form_state['redirect'] = 'cart/checkout';
 }
 
+/**
+ * Final checks to make sure the order can be completed.
+ *
+ * @see uc_cart_checkout_review_form()
+ */
 function uc_cart_checkout_review_form_submit($form, &$form_state) {
   // Invoke hook_order($op = 'submit') to test to make sure the order can
   // be completed... used for auto payment in uc_credit.module.
@@ -470,6 +516,9 @@ function uc_cart_checkout_review_form_submit($form, &$form_state) {
   }
 }
 
+/**
+ * Completes the sale and finishes checkout.
+ */
 function uc_cart_checkout_complete() {
   if (!$_SESSION['do_complete']) {
     drupal_goto('cart');

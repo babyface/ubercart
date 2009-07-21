@@ -1,14 +1,23 @@
-// $Id: uc_cart.js,v 1.8.2.5 2009/04/14 13:51:12 islandusurper Exp $
+// $Id: uc_cart.js,v 1.8.2.6 2009/07/21 14:37:20 islandusurper Exp $
+
+/**
+ * @file
+ * Adds effects and behaviors to elements on the checkout page.
+ */
 
 var copy_box_checked = false;
 var uc_ce_submit_disable = false;
 
-// Scans the DOM and displays the cancel and continue buttons.
+/**
+ * Scan the DOM and displays the cancel and continue buttons.
+ */
 Drupal.behaviors.ucShowOnLoad = function(context) {
   $('.show-onload:not(.ucShowOnLoad-processed)', context).addClass('ucShowOnLoad-processed').show();
 }
 
-// Adds a throbber to the submit order button on the review order form.
+/**
+ * Add a throbber to the submit order button on the review order form.
+ */
 Drupal.behaviors.ucSubmitOrderThrobber = function(context) {
   $('form#uc-cart-checkout-review-form input#edit-submit:not(.ucSubmitOrderThrobber-processed)', context).addClass('ucSubmitOrderThrobber-processed').click(function() {
     $(this).clone().insertAfter(this).attr('disabled', true).after('<span class="ubercart-throbber">&nbsp;&nbsp;&nbsp;&nbsp;</span>').end().hide();
@@ -17,6 +26,8 @@ Drupal.behaviors.ucSubmitOrderThrobber = function(context) {
 }
 
 /**
+ * Behavior for hte Next buttons.
+ *
  * When a customer clicks a Next button, expand the next pane, remove the
  * button, and don't let it collapse again.
  */
@@ -36,6 +47,8 @@ function uc_cart_next_button_click(button, pane_id, current) {
 }
 
 /**
+ * Behavior for the copy address checkbox.
+ *
  * Copy the delivery information to the payment information on the checkout
  * screen if corresponding fields exist.
  */
@@ -81,6 +94,9 @@ function uc_cart_copy_address(checked, source, target) {
   return false;
 }
 
+/**
+ * Copy a value from the delivery address to the billing address.
+ */
 function update_billing_field(field) {
   if (copy_box_checked) {
     if (field.id.substring(29) == 'zone') {
@@ -92,6 +108,9 @@ function update_billing_field(field) {
   }
 }
 
+/**
+ * Copy a value from the billing address to the delivery address.
+ */
 function update_delivery_field(field) {
   if (copy_box_checked) {
     if (field.id.substring(27) == 'zone') {
@@ -134,7 +153,10 @@ function apply_address(type, address_str) {
   $('#edit-panes-' + temp + '-zone').val(address.zone).trigger('change');
 }
 
-/* This function adds a cloned, disabled submit button, and appends a throbber
+/**
+ * Behavior for the Review Order button.
+ *
+ * This function adds a cloned, disabled submit button, and appends a throbber
  * after it. This prevents multiple clicks on the submit button, and also gives
  * it that slick Web 2.0 feel :). The back button is also disabled upon submission.
  * This code was improved by quicksketch.

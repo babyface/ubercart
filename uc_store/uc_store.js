@@ -1,4 +1,9 @@
-// $Id: uc_store.js,v 1.9.2.1 2008/10/15 14:47:39 islandusurper Exp $
+// $Id: uc_store.js,v 1.9.2.2 2009/07/21 14:37:21 islandusurper Exp $
+
+/**
+ * @file
+ * Add click events to the orders table and administration dashboard.
+ */
 
 /**
  * Add the "show links" click behavior on the store admin display.

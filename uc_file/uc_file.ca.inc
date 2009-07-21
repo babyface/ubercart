@@ -1,12 +1,11 @@
 <?php
-// $Id: uc_file.ca.inc,v 1.1.2.5 2009/04/14 13:51:17 islandusurper Exp $
+// $Id: uc_file.ca.inc,v 1.1.2.6 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
  * @file
- * This file contains the Conditional Actions hooks and functions necessary to make the
- * file-related entity, conditions, events, and actions work.
+ * This file contains the Conditional Actions hooks and functions necessary to
+ * make the file-related entity, conditions, events, and actions work.
  */
-
 
 /******************************************************************************
  * Conditional Actions Hooks                                                  *
@@ -164,6 +163,8 @@ function uc_file_ca_trigger() {
  * Send an email with order and file replacement tokens.
  *
  * The recipients, subject, and message fields take order token replacements.
+ *
+ * @see uc_file_action_order_email_form()
  */
 function uc_file_action_order_email($order, $file_expiration, $settings) {
 
@@ -195,13 +196,15 @@ function uc_file_action_order_email($order, $file_expiration, $settings) {
   }
 }
 
-// Email settings form
+/**
+ * @see uc_file_action_order_email()
+ */
 function uc_file_action_order_email_form($form_state, $settings = array()) {
   return uc_file_build_email_form($form_state, $settings, array('global', 'uc_file'));
 }
 
 /**
- * Builds an email settings form.
+ * Build an email action settings form.
  */
 function uc_file_build_email_form($form_state, $settings, $token_filters) {
   $form = array();

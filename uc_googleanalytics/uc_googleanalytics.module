@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_googleanalytics.module,v 1.6.2.7 2009/02/04 13:44:33 islandusurper Exp $
+// $Id: uc_googleanalytics.module,v 1.6.2.8 2009/07/21 14:37:20 islandusurper Exp $
 
 /**
  * @file
@@ -10,7 +10,6 @@
  * for documentation on the functions used to submit e-commerce statistics to
  * Google Analytics.
  */
-
 
 /**
  * Implementation of hook_enable().
@@ -56,8 +55,7 @@ function uc_googleanalytics_order($op, &$arg1, $arg2) {
 }
 
 /**
- * Determines whether or not to display the e-commerce related JS through GA on
- * the current page.
+ * Determine whether or not to display the e-commerce related JS through GA.
  *
  * @return
  *   TRUE or FALSE indicating whether or not to display the GA e-commerce JS.
@@ -87,7 +85,7 @@ function uc_googleanalytics_display() {
 }
 
 /**
- * Builds the e-commerce JS passed to Google Analytics for order tracking.
+ * Build the e-commerce JS passed to Google Analytics for order tracking.
  *
  * @param $order
  *   The fully loaded order object to convert into GA JS.

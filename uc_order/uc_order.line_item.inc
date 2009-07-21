@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.line_item.inc,v 1.1.2.6 2009/05/06 18:38:02 islandusurper Exp $
+// $Id: uc_order.line_item.inc,v 1.1.2.7 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
  * @file
@@ -110,6 +110,9 @@ function uc_order_delete_line_item($id, $order = FALSE) {
   return TRUE;
 }
 
+/**
+ * Add a line item to an order.
+ */
 function uc_order_line_item_add($order_id, $type, $title, $amount, $weight = NULL, $data = NULL) {
   if (is_null($weight)) {
     $weight = _line_item_data($type, 'weight');

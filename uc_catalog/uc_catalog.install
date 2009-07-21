@@ -1,11 +1,14 @@
 <?php
-// $Id: uc_catalog.install,v 1.9.2.8 2009/02/04 13:44:30 islandusurper Exp $
+// $Id: uc_catalog.install,v 1.9.2.9 2009/07/21 14:37:21 islandusurper Exp $
 
 /**
  * @file
  * Install hooks for uc_catalog.module.
  */
 
+/**
+ * Implementation of hook_schema().
+ */
 function uc_catalog_schema() {
   $schema = array();
 
@@ -54,6 +57,11 @@ function uc_catalog_schema() {
   return $schema;
 }
 
+/**
+ * Implementation of hook_install().
+ *
+ * Creates a Catalog vocabulary or uses one by that name that may already exist.
+ */
 function uc_catalog_install() {
   $t = get_t();
   //Find possible Product Catalog vocabulary.
@@ -72,6 +80,9 @@ function uc_catalog_install() {
   drupal_install_schema('uc_catalog');
 }
 
+/**
+ * Implementation of hook_uninstall().
+ */
 function uc_catalog_uninstall() {
   drupal_uninstall_schema('uc_catalog');
   if ($vid = variable_get('uc_catalog_vid', 0)) {

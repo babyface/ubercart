@@ -1,12 +1,14 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.13 2009/07/08 12:56:49 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.14 2009/07/21 14:37:20 islandusurper Exp $
 
 /**
  * @file
  * Store administration menu items.
- *
  */
 
+/**
+ * Display dashboard to other admin pages for the store.
+ */
 function uc_store_admin() {
   $tree = menu_navigation_links('navigation', 2);
 
@@ -212,6 +214,12 @@ function uc_store_customer_search() {
   return $output;
 }
 
+/**
+ * The customer search form.
+ *
+ * @ingroup forms
+ * @see uc_store_customer_search_form_submit()
+ */
 function uc_store_customer_search_form() {
   $form['search'] = array(
     '#type' => 'fieldset',
@@ -268,6 +276,9 @@ function uc_store_customer_search_form() {
   return $form;
 }
 
+/**
+ * @see uc_store_customer_search_form()
+ */
 function uc_store_customer_search_form_submit($form, &$form_state) {
   if (strlen(trim($form_state['values']['first_name'])) == 0) {
     $first_name = '0';
@@ -344,13 +355,21 @@ function uc_store_ubercart_help_tokens() {
   return $output;
 }
 
-// Displays an overview of the country settings.
+/**
+ * Display an overview of the country settings.
+ */
 function uc_country_settings_overview() {
   // Theme all the pages beneath this path into summary overviews.
   return theme('summary_overview', summarize_child_form_pages('admin/store/settings/countries/edit'));
 
 }
 
+/**
+ * Import settings from a country file.
+ *
+ * @ingroup forms
+ * @see uc_country_import_form_submit()
+ */
 function uc_country_import_form() {
   $result = db_query("SELECT * FROM {uc_countries} ORDER BY country_name ASC");
   while ($country = db_fetch_object($result)) {
@@ -430,8 +449,12 @@ function uc_country_import_form() {
   return $form;
 }
 
+/**
+ * Summary callback for country settings.
+ *
+ * @see uc_coutnry_settings_overview()
+ */
 function _uc_country_summarize() {
-
   $items = array();
 
   $result = db_query("SELECT * FROM {uc_countries} ORDER BY country_name ASC");
@@ -451,6 +474,9 @@ function _uc_country_summarize() {
   return $items;
 }
 
+/**
+ * @see uc_country_import_form()
+ */
 function uc_country_import_form_submit($form, &$form_state) {
   $files = $form_state['values']['import_file'];
 
@@ -464,6 +490,12 @@ function uc_country_import_form_submit($form, &$form_state) {
   }
 }
 
+/**
+ * Form to set country address formats.
+ *
+ * @ingroup forms
+ * @see uc_country_formats_form_submit()
+ */
 function uc_country_formats_form() {
   $form['instructions'] = array(
     '#type' => 'fieldset',
@@ -528,6 +560,9 @@ function uc_country_formats_form() {
   return $form;
 }
 
+/**
+ * @see uc_country_formats_form()
+ */
 function uc_country_formats_form_submit($form, &$form_state) {
   foreach ($form_state['values']['countries'] as $country_id => $data) {
     variable_set('uc_address_format_'. $country_id, $data['address_format']);
@@ -535,14 +570,16 @@ function uc_country_formats_form_submit($form, &$form_state) {
   drupal_set_message(t('Country settings saved.'));
 }
 
-// Displays an overview of the store settings.
+/**
+ * Display an overview of the store settings.
+ */
 function uc_store_store_settings_overview() {
   // Theme all the pages beneath this path into summary overviews.
   return theme('summary_overview', summarize_child_form_pages('admin/store/settings/store/edit'));
 }
 
 /**
- * Summarizes the store's address settings.
+ * Summarize the store's address settings.
  *
  * @param $form
  *   The form passed from the summarizer
@@ -557,7 +594,11 @@ function _uc_store_address_summarize($form) {
   );
 }
 
-// Displays the form for store settings.
+/**
+ * Display the form for store settings.
+ *
+ * @ingroup forms
+ */
 function uc_store_store_settings_form() {
   $form['uc_store_name'] = uc_textfield(t('Store name'), variable_get('uc_store_name', NULL), FALSE, NULL, 64);
   $form['uc_store_owner'] = uc_textfield(t('Store owner'), variable_get('uc_store_owner', NULL), FALSE, NULL, 64);
@@ -615,8 +656,12 @@ function uc_store_store_settings_form() {
   return system_settings_form($form);
 }
 
+/**
+ * Settings for how miscellaneous store components are displayed.
+ *
+ * @ingroup forms
+ */
 function uc_store_display_settings_form() {
-
   $display_options = array(
     1 => t('Dashboard with collapsed submenu links'),
     2 => t('Dashboard with expanded submenu links'),
@@ -676,6 +721,11 @@ function uc_store_display_settings_form() {
   return system_settings_form($form);
 }
 
+/**
+ * Display the form for format settings.
+ *
+ * @ingroup forms
+ */
 function uc_store_format_settings_form() {
   $form['currency'] = array(
     '#type' => 'fieldset',
@@ -814,32 +864,11 @@ function uc_store_format_settings_form() {
   return system_settings_form($form);
 }
 
-function uc_store_report_settings() {
-  $form['uc_store_report'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Report version information to Ubercart.org as shown below.'),
-    '#summary callback' => 'summarize_checkbox',
-    '#summary arguments' => array(
-      t('Version information is being reported to Ubercart.org.'),
-      t('Version information is not being reported to Ubercart.org.'),
-    ),
-    '#default_value' => variable_get('uc_store_report', TRUE),
-  );
-
-  $form['data'] = array(
-    '#type' => 'fieldset',
-    '#summary callback' => 'summarize_null',
-    '#title' => t('Report preview'),
-  );
-  $form['data']['preview'] = array(
-    '#value' => '<pre>'. print_r(uc_store_report_data(), TRUE) .'</pre>',
-  );
-
-  return system_settings_form($form);
-}
-
 /**
  * Form to enter initials for an administrative user.
+ *
+ * @ingroup forms
+ * @see uc_store_initials_submit()
  */
 function uc_store_initials() {
   $form['username'] = array(
@@ -865,6 +894,9 @@ function uc_store_initials() {
   return $form;
 }
 
+/**
+ * @see uc_store_initials()
+ */
 function uc_store_initials_submit($form, &$form_state) {
   $result = db_query("SELECT uid FROM {users} WHERE name = '%s'", $form_state['values']['username']);
   if ($user = db_fetch_object($result)) {
@@ -891,6 +923,9 @@ function uc_store_tables() {
   return $output;
 }
 
+/**
+ * Display a list of orders made by a customer.
+ */
 function uc_store_customer_orders($uid) {
   $result = pager_query("SELECT * FROM {uc_orders} WHERE uid = %d AND "
                        ."order_status IN ". uc_order_status_list('general', TRUE)
@@ -1010,7 +1045,12 @@ function uc_country_enable($country_id) {
   drupal_goto('admin/store/settings/countries/edit');
 }
 
-// Form to completely remove a country.
+/**
+ * Form to completely remove a country.
+ *
+ * @ingroup forms
+ * @see uc_country_remove_form_submit()
+ */
 function uc_country_remove_form($form_state, $country_id) {
   // Fetch the country name from the database.
   $country = db_result(db_query("SELECT country_name FROM {uc_countries} WHERE country_id = %d", $country_id));
@@ -1032,6 +1072,9 @@ function uc_country_remove_form($form_state, $country_id) {
   return confirm_form($form, t('Are you sure you want to remove @country from the system?', array('@country' => $country)), 'admin/store/settings/countries/edit', NULL, t('Remove'));
 }
 
+/**
+ * @see uc_country_remove_form()
+ */
 function uc_country_remove_form_submit($form, &$form_state) {
   $country_id = $form_state['values']['country_id'];
 
@@ -1090,7 +1133,14 @@ function uc_country_update($country_id, $version) {
   drupal_goto('admin/store/settings/countries/edit/import');
 }
 
-// Form for enabling/weighting price alterers and selecting a price formatter.
+/**
+ * Form for enabling/weighting price alterers and selecting a price formatter.
+ *
+ * @ingroup forms
+ * @see
+ *   theme_uc_price_settings_form()
+ *   uc_price_settings_form_submit()
+ */
 function uc_price_settings_form() {
   $options = array();
   $form = array();
@@ -1171,6 +1221,7 @@ function uc_price_settings_form() {
  * Render the price handler form, adding tabledrag.
  *
  * @ingroup themeable
+ * @see uc_price_settings_form()
  */
 function theme_uc_price_settings_form($form) {
   // Add the tabledrag to the alterer table.
@@ -1199,6 +1250,9 @@ function theme_uc_price_settings_form($form) {
   return $output;
 }
 
+/**
+ * @see uc_price_settings_form()
+ */
 function uc_price_settings_form_submit($form, &$form_state) {
   // Save the selected price formatter and price caching setting.
   variable_set('uc_price_format_callback', $form_state['values']['uc_price_format_callback']);

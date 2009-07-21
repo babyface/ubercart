@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.23 2009/07/08 12:56:50 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.24 2009/07/21 14:37:20 islandusurper Exp $
 
 /**
  * @file
@@ -504,7 +504,12 @@ function uc_cart_block($op = 'list', $delta = 0, $edit = array()) {
   }
 }
 
-// Build the settings form used by the shopping cart block.
+/**
+ * Build the settings form used by the shopping cart block.
+ *
+ * @ingroup forms
+ * @see uc_cart_block_settings_form_submit()
+ */
 function uc_cart_block_settings_form() {
   $form = array();
 
@@ -550,7 +555,11 @@ function uc_cart_block_settings_form() {
   return $form;
 }
 
-// Save the shopping cart block settings.
+/**
+ * Save the shopping cart block settings.
+ *
+ * @see uc_cart_block_settings_form()
+ */
 function uc_cart_block_settings_form_submit($edit = array()) {
   variable_set('uc_cart_block_empty_hide', $edit['uc_cart_block_empty_hide']);
   variable_set('uc_cart_block_image', $edit['uc_cart_block_image']);
@@ -826,13 +835,17 @@ function uc_cart_checkout_pane() {
  * Callback Functions, Forms, and Tables
  ******************************************************************************/
 
-// When a user logs in, update their cart items before the session changes.
+/**
+ * When a user logs in, update their cart items before the session changes.
+ */
 function uc_cart_user_login_form_submit($form, &$form_state) {
   global $user;
   uc_cart_login_update($user->uid);
 }
 
-// Updates a user's cart to include items from their anonymous session.
+/**
+ * Update a user's cart to include items from their anonymous session.
+ */
 function uc_cart_login_update($uid) {
   // Get the current contents of the cart.
   $items = uc_cart_get_contents($uid);
@@ -860,7 +873,11 @@ function uc_cart_login_update($uid) {
   }
 }
 
-// Returns the text displayed for an empty shopping cart.
+/**
+ * Return the text displayed for an empty shopping cart.
+ *
+ * @ingroup themeable
+ */
 function theme_uc_empty_cart() {
   return '<p>'. t('There are no products in your shopping cart.') .'</p>';
 }
@@ -871,6 +888,13 @@ function theme_uc_empty_cart() {
  * Handles simple or complex objects. Some cart items may have a list of products
  * that they represent. These are displayed but are not able to be changed by the
  * customer.
+ *
+ * @ingroup forms
+ * @see
+ *   uc_cart_view_form_submit()
+ *   theme_uc_cart_view_form()
+ *   theme_uc_cart_view_price()
+ *   uc_cart_view_table()
  */
 function uc_cart_view_form($form_state, $items = NULL) {
   $form['items'] = array(
@@ -952,6 +976,9 @@ function uc_cart_view_form($form_state, $items = NULL) {
   return $form;
 }
 
+/**
+ * @see uc_cart_view_form()
+ */
 function uc_cart_view_form_submit($form, &$form_state) {
   // Remove the cart order variable if the customer came here during checkout.
   if (isset($_SESSION['cart_order'])) {
@@ -981,6 +1008,10 @@ function uc_cart_view_form_submit($form, &$form_state) {
   }
 }
 
+/**
+ * @ingroup themeable
+ * @see uc_cart_view_form()
+ */
 function theme_uc_cart_view_form($form) {
   drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart.css');
 
@@ -1017,10 +1048,19 @@ function theme_uc_cart_view_form($form) {
   return $output;
 }
 
+/**
+ * Dumb wrapper function, as the price has been themed by uc_price() already.
+ *
+ * @ingroup themeable
+ * @see uc_cart_view_form()
+ */
 function theme_uc_cart_view_price($form) {
   return $form['#value'];
 }
 
+/**
+ * List the products in the cart in a TAPIr table.
+ */
 function uc_cart_view_table($table) {
   $table['#attributes'] = array('width' => '100%');
 
@@ -1082,9 +1122,8 @@ function uc_cart_view_table($table) {
  * Module and Helper Functions
  ******************************************************************************/
 
-
 /**
- * Returns the URL redirect for the continue shopping element on the cart page.
+ * Return the URL redirect for the continue shopping element on the cart page.
  *
  * @param $unset
  *   TRUE or FALSE indicating whether or not to unset the last URL variable.
@@ -1113,7 +1152,7 @@ function uc_cart_continue_shopping_url($unset = TRUE) {
 }
 
 /**
- * Completes a sale, including adjusting order status and creating user account.
+ * Complete a sale, including adjusting order status and creating user account.
  *
  * @param $order
  *   The order object that has just been completed.
@@ -1301,7 +1340,7 @@ function uc_cart_get_contents($cid = NULL, $action = NULL) {
 }
 
 /**
- * Adds an item to a user's cart.
+ * Add an item to a user's cart.
  */
 function uc_cart_add_item($nid, $qty = 1, $data = NULL, $cid = NULL, $msg = TRUE, $check_redirect = TRUE) {
   if (isset($_SESSION['cart_order'])) {
@@ -1413,7 +1452,7 @@ function uc_cart_remove_item($nid, $cid = NULL, $data = array()) {
 }
 
 /**
- * Updates the quantity of all the items in a cart object
+ * Update the quantity of all the items in a cart object
  */
 function uc_cart_update_item_object($cart) {
   if (is_object($cart)) {
@@ -1429,7 +1468,7 @@ function uc_cart_update_item_object($cart) {
 }
 
 /**
- * Empties a cart of its contents.
+ * Empty a cart of its contents.
  */
 function uc_cart_empty($cart_id) {
   if (is_null($cart_id) || empty($cart_id)) {
@@ -1449,6 +1488,14 @@ function uc_cart_empty($cart_id) {
   uc_cart_get_contents($cart_id, 'rebuild');
 }
 
+/**
+ * Get all of the enabled, sorted cart panes.
+ *
+ * @param $items
+ *   The contents of the cart.
+ * @param $action
+ *   If 'rebuild' is passed, the static pane cache is cleared.
+ */
 function uc_cart_cart_pane_list($items, $action = NULL) {
   static $panes;
 
@@ -1469,7 +1516,9 @@ function uc_cart_cart_pane_list($items, $action = NULL) {
   return $panes;
 }
 
-// Returns TRUE or FALSE for whether a cart contains shippable items or not.
+/**
+ * Determine whether a cart contains shippable items or not.
+ */
 function uc_cart_is_shippable($cart_id = NULL, $action = '') {
   static $shippable;
 
@@ -1498,7 +1547,9 @@ function uc_cart_is_shippable($cart_id = NULL, $action = '') {
   return FALSE;
 }
 
-// Return TRUE or FALSE for whether a product is shippable or not.
+/**
+ * Determine whether a product is shippable or not.
+ */
 function uc_cart_product_is_shippable($product) {
   // Return FALSE if the product form specifies this as not shippable.
   if ($product->data['shippable'] == FALSE) {
@@ -1516,8 +1567,12 @@ function uc_cart_product_is_shippable($product) {
   return FALSE;
 }
 
-// Returns a checkout pane array with panes filtered out that have key values
-// matching the combinations in the $remove array.
+/**
+ * Remove panes from the list that match the given conditions.
+ *
+ * Return a checkout pane array with panes filtered out that have key values
+ * matching the combinations in the $remove array.
+ */
 function uc_cart_filter_checkout_panes($panes, $remove = NULL) {
   if (is_array($remove)) {
     for ($i = 0, $j = count($panes); $i < $j; $i++) {

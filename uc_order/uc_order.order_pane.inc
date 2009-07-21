@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.14 2009/07/08 12:56:49 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.15 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
  * @file
@@ -586,6 +586,14 @@ function uc_order_pane_update($op, $arg1) {
   }
 }
 
+/**
+ * Form to save order comments and update the order status.
+ *
+ * @ingroup forms
+ * @see
+ *   theme_uc_order_view_update_controls()
+ *   uc_order_view_update_form_submit()
+ */
 function uc_order_view_update_form($form_state, $order) {
   $form['order_comment_field'] = array(
     '#type' => 'fieldset',
@@ -654,10 +662,17 @@ function uc_order_view_update_form($form_state, $order) {
   return $form;
 }
 
+/**
+ * @ingroup themeable
+ * @see uc_order_view_update_form()
+ */
 function theme_uc_order_view_update_controls($form) {
   return '<div class="update-controls">'. drupal_render($form) .'</div>';
 }
 
+/**
+ * @see uc_order_view_update_form()
+ */
 function uc_order_view_update_form_submit($form, &$form_state) {
   global $user;
 
@@ -805,6 +820,9 @@ function op_products_view_table($products) {
   return $table;
 }
 
+/**
+ * Build the order customer's view products table.
+ */
 function op_products_customer_table($products) {
   $table = array(
     '#type' => 'tapir_table',
@@ -914,6 +932,9 @@ function op_products_customer_table($products) {
   return $table;
 }
 
+/**
+ * Build the order comments table.
+ */
 function op_order_comments_view_table($comments) {
   $table = array(
     '#type' => 'tapir_table',
@@ -979,6 +1000,9 @@ function op_order_comments_view_table($comments) {
   return $table;
 }
 
+/**
+ * Build the order admin comments table.
+ */
 function op_admin_comments_view_table($comments) {
   $table = array(
     '#type' => 'tapir_table',

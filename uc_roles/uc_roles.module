@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.2.2.17 2009/05/28 20:49:20 islandusurper Exp $
+// $Id: uc_roles.module,v 1.2.2.18 2009/07/21 14:37:19 islandusurper Exp $
 
 /**
  * @file
@@ -15,9 +15,9 @@
 
 require_once 'uc_roles.ca.inc';
 
-/* ************************************************************************* *
- *  Hook Functions (Drupal)                                                  *
- * ************************************************************************* */
+/******************************************************************************
+ * Hook Functions (Drupal)                                                    *
+ ******************************************************************************/
 
 /**
  * Implementation of hook_help().
@@ -36,13 +36,11 @@ function uc_roles_help($path, $arg) {
  * Implementation of hook_cron().
  */
 function uc_roles_cron() {
-
   $reminder_granularity = variable_get('uc_roles_reminder_granularity', 'never');
   $reminder_qty = variable_get('uc_roles_reminder_length', NULL);
 
   $result = db_query("SELECT * FROM {uc_roles_expirations}");
   while ($expiration = db_fetch_object($result)) {
-
     $account = user_load($expiration->uid);
 
     // User has to contain roles to manage.
@@ -63,7 +61,6 @@ function uc_roles_cron() {
 
     // Remind the user about an upcoming expiration.
     elseif ($reminder_granularity != 'never') {
-
       // Only if not already notified.
       if (intval($expiration->notified) >= 1) {
         continue;
@@ -83,6 +80,8 @@ function uc_roles_cron() {
  * Implementation of hook_menu().
  */
 function uc_roles_menu() {
+  $items = array();
+
   $items['admin/user/user/expiration'] = array(
     'title' => 'Role expiration',
     'description' => 'Edit and view role expirations set by Ubercart',
@@ -148,9 +147,7 @@ function uc_roles_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
       if (uc_product_is_product($node->type)) {
         uc_roles_node_delete($node->nid);
       }
-
       break;
-
     default:
       break;
   }
@@ -167,7 +164,6 @@ function uc_roles_user_delete(&$account) {
  * Implementation of hook_user_form().
  */
 function uc_roles_user_form(&$edit, &$account, $category = NULL) {
-
   if (!user_access('administer users') || $category != 'account') {
     return;
   }
@@ -220,17 +216,14 @@ function uc_roles_user_form(&$edit, &$account, $category = NULL) {
   // Create the expirations table.
   $expirations = db_query("SELECT * FROM {uc_roles_expirations} WHERE uid = %d", $account->uid);
   while ($expiration = db_fetch_object($expirations)) {
-
     $form['uc_roles']['expirations']['table'][$expiration->rid] = array(
       'name' => array(
         '#type' => 'value',
         '#value' => _uc_roles_get_name($expiration->rid),
       ),
-
       'remove' => array(
         '#type' => 'checkbox',
       ),
-
       'expiration' => array(
         '#type' => 'value',
         '#value' => $expiration->expiration,
@@ -243,7 +236,6 @@ function uc_roles_user_form(&$edit, &$account, $category = NULL) {
 
   // Option to allow temporary roles.
   if (!empty($role_choices)) {
-
     $form['uc_roles']['new_role'] = array(
       '#type' => 'checkbox',
       '#title' => t('Add role'),
@@ -275,7 +267,6 @@ function uc_roles_user_form(&$edit, &$account, $category = NULL) {
  * Theme the roles dialog on the account edit page.
  */
 function theme_uc_roles_user_new($form) {
-
   $output = '';
 
   // Render the expiration tables first.
@@ -294,9 +285,10 @@ function theme_uc_roles_user_new($form) {
 
 /**
  * Theme the role expiration table within the roles dialog on the account edit page.
+ *
+ * @ingroup themeable
  */
 function theme_uc_roles_user_expiration($form) {
-
   $output = '';
 
   $header = array(
@@ -308,7 +300,6 @@ function theme_uc_roles_user_expiration($form) {
 
   // The expiration table.
   foreach ((array)$form['table'] as $rid => $expiration) {
-
     // We only want numeric rid's
     if (!is_numeric($rid)) {
       continue;
@@ -346,7 +337,6 @@ function theme_uc_roles_user_expiration($form) {
  * Implementation of hook_user_submit().
  */
 function uc_roles_user_submit(&$edit, &$account, $category) {
-
   if (!user_access('administer users') || $category != 'account') {
     return;
   }
@@ -354,7 +344,6 @@ function uc_roles_user_submit(&$edit, &$account, $category) {
   // If a new temporary role is added.
   // Grant a new role.
   if ($edit['new_role'] && $category == 'account') {
-
     // Save our role info, but don't save the user; user.module will do it.
     uc_roles_grant(
       $account,
@@ -372,7 +361,6 @@ function uc_roles_user_submit(&$edit, &$account, $category) {
 
   // Check if any temporary role actions were taken.
   foreach ((array)$edit['table'] as $rid => $value) {
-
     // Remove this expiration.
     if ($value['remove']) {
       uc_roles_delete($account, $rid);
@@ -380,7 +368,6 @@ function uc_roles_user_submit(&$edit, &$account, $category) {
 
     // Adjust it.
     else {
-
       if ($value['qty'] && $edit['roles'][$rid]) {
         $qty = $value['qty'];
         $qty *= $value['polarity'] == 'add' ? 1 : -1;
@@ -413,7 +400,6 @@ function uc_roles_user_validate(&$edit, &$account, $category) {
 
   // Validate adjusted expirations.
   foreach ((array)$edit['table'] as $rid => $value) {
-
     // We don't validate if nothing was actually selected, the role, or the
     // expiration is removed.
     if ($value['qty'] == 0 || $value['remove'] == 1 || !$edit['roles'][$rid]) {
@@ -438,7 +424,7 @@ function uc_roles_user_validate(&$edit, &$account, $category) {
 function uc_roles_user_view(&$edit, &$account) {
   global $user;
 
-  // Kick out anon.
+  // Kick out anonymous.
   if (!$user->uid) {
     return;
   }
@@ -474,50 +460,38 @@ function uc_roles_user_view(&$edit, &$account) {
     '#title' => variable_get('uc_roles_default_expiration_header', uc_get_message('uc_roles_user_expiration_header')),
   );
   $account->content['uc_roles'] = $item + $form;
-
 }
 
 /**
  * Implementation of hook_user().
  */
 function uc_roles_user($op, &$edit, &$account, $category = NULL) {
-
   switch ($op) {
-
     case 'delete':
       return uc_roles_user_delete($account);
-
     case 'form':
       return uc_roles_user_form($edit, $account, $category);
-
     case 'submit':
       return uc_roles_user_submit($edit, $account, $category);
-
     case 'validate':
       return uc_roles_user_validate($edit, $account, $category);
-
     case 'view':
       return uc_roles_user_view($edit, $account);
-
   }
 }
 
-/* ************************************************************************* *
- *  Übercart Hooks                                                           *
- * ************************************************************************* */
+/******************************************************************************
+ * Ubercart Hooks                                                             *
+ ******************************************************************************/
 
 /**
  * Implementation of hook_cart_item().
  */
 function uc_roles_cart_item($op, &$item) {
-
   switch ($op) {
-
     case 'can_ship':
-
       $roles = db_query("SELECT * FROM {uc_roles_products} WHERE nid = %d", $item->nid);
       while ($role = db_fetch_object($roles)) {
-
         // If the model is empty, keep looking. (Everyone needs a role model...)
         if (empty($role->model)) {
           continue;
@@ -556,7 +530,6 @@ function uc_roles_product_feature() {
  * Implementation of hook_store_status().
  */
 function uc_roles_store_status() {
-
   $message = array();
   $role_choices = _uc_roles_get_choices();
   if (empty($role_choices)) {
@@ -625,12 +598,17 @@ function uc_roles_uc_message() {
   return $messages;
 }
 
-/* ************************************************************************* *
- *  Callback Functions, Forms, and Tables                                    *
- * ************************************************************************* */
+/******************************************************************************
+ * Callback Functions, Forms, and Tables                                      *
+ ******************************************************************************/
 
 /**
  * Form builder for hook_product_feature.
+ *
+ * @ingroup forms
+ * @see
+ *   uc_roles_feature_form_validate()
+ *   uc_roles_feature_form_submit()
  */
 function uc_roles_feature_form($form_state, $node, $feature) {
   $models = uc_product_get_models($node);
@@ -765,9 +743,10 @@ function uc_roles_feature_form($form_state, $node, $feature) {
 
 /**
  * Validation function for the roles feature form.
+ *
+ * @see uc_roles_feature_form()
  */
 function uc_roles_feature_form_validate($form, &$form_state) {
-
   // Invalid quantity?
   if ($form_state['values']['expiration'] === 'abs') {
     $form_state['values']['uc_roles_expire_absolute'] = mktime(0, 0, 0,
@@ -775,6 +754,7 @@ function uc_roles_feature_form_validate($form, &$form_state) {
       $form_state['values']['uc_roles_expire_absolute']['day'],
       $form_state['values']['uc_roles_expire_absolute']['year']
     );
+
     if ($form_state['values']['uc_roles_expire_absolute'] <= time()) {
       form_set_error('uc_roles_expire_absolute', t('The specified date !date has already occurred. Please choose another.', array('!date' => format_date($form_state['values']['uc_roles_expire_absolute']))));
     }
@@ -809,14 +789,14 @@ function uc_roles_product_write_record($product_role) {
   if ($product_role['rpid']) {
     $key = 'rpid';
   }
+
   drupal_write_record('uc_roles_products', $product_role, $key);
 }
 
 /**
- * Form submit handler for the roles feature form.
+ * @see uc_roles_feature_form()
  */
 function uc_roles_feature_form_submit($form, &$form_state) {
-
   $product_role = array(
     'pfid'        => $form_state['values']['pfid'],
     'rpid'        => $form_state['values']['rpid'],
@@ -887,9 +867,10 @@ function uc_roles_feature_form_submit($form, &$form_state) {
 
 /**
  * Form builder for role settings.
+ *
+ * @ingroup forms
  */
 function uc_roles_feature_settings() {
-
   $default_role_choices = user_roles(TRUE);
   unset($default_role_choices[DRUPAL_AUTHENTICATED_RID]);
 
@@ -1026,12 +1007,12 @@ function uc_roles_feature_settings() {
   return $form;
 }
 
-/* ************************************************************************* *
- *  Module and Helper Functions                                              *
- * ************************************************************************* */
+/******************************************************************************
+ * Module and Helper Functions                                                *
+ ******************************************************************************/
 
 /**
- * Function gets role name
+ * Get role name
  *
  * @param $rid
  *   The Drupal role id number
@@ -1044,7 +1025,7 @@ function _uc_roles_get_name($rid) {
 }
 
 /**
- * Function gets available roles for granting on product purcahse
+ * Get available roles for granting on product purchase
  *
  * @param $exclude
  *   A list of role ids to exclude from the list
@@ -1052,7 +1033,6 @@ function _uc_roles_get_name($rid) {
  *   An assoc array with key = rid and value = role name
  */
 function _uc_roles_get_choices($exclude = array()) {
-
   $output = array();
 
   // Get roles from Drupal, excluding Anonymous and Authenticated.
@@ -1073,9 +1053,9 @@ function _uc_roles_get_choices($exclude = array()) {
   return $output;
 }
 
-/* ************************************************************************* *
- *  Actions                                                                  *
- * ************************************************************************* */
+/******************************************************************************
+ * Actions                                                                    *
+ ******************************************************************************/
 
 /**
  * Delete all data associated with a given node.
@@ -1113,7 +1093,6 @@ function uc_roles_feature_delete($pfid) {
  * menu items may have been lost in the process.
  */
 function uc_roles_delete($account, $rid = NULL) {
-
   $condition_list = 'uid = '. (integer)$account->uid;
 
   if ($rid) {
@@ -1146,7 +1125,6 @@ function uc_roles_delete($account, $rid = NULL) {
  * The function notifies the user of revocation.
  */
 function uc_roles_revoke($account, $rid) {
-
   // Remove this role from the user's list.
   $roles_list = &$account->roles;
   unset($roles_list[$rid]);
@@ -1180,7 +1158,6 @@ function uc_roles_revoke($account, $rid) {
  * new role is granted. The function notifies the user of the role grant.
  */
 function uc_roles_grant(&$account, $rid, $timestamp, $save_user = TRUE) {
-
   // First, delete any previous record of this user/role association.
   uc_roles_delete($account, $rid);
 
@@ -1223,7 +1200,6 @@ function uc_roles_grant(&$account, $rid, $timestamp, $save_user = TRUE) {
  * expiration time, and the user is notified of the change.
  */
 function uc_roles_renew($account, $rid, $timestamp) {
-
   // If it doesn't expire, we'll remove our data associated with it.
   // After that, Drupal will take care of it.
   if (is_null($timestamp)) {
@@ -1255,7 +1231,6 @@ function _uc_roles_flush_menu_cache($account) {
   cache_clear_all($account->uid .':', 'cache_menu', TRUE);
 }
 
-//
 /**
  * Calculates the expiration time using a role_product object.
  *
@@ -1267,7 +1242,6 @@ function _uc_roles_flush_menu_cache($account) {
  *   The current time to use as a starting point for relative expiration calculation
  */
 function _uc_roles_product_get_expiration($role_product, $quantity, $time) {
-
   // Override the end expiration?
   if ($role_product->end_override) {
 
@@ -1308,7 +1282,6 @@ function _uc_roles_product_get_expiration($role_product, $quantity, $time) {
  *   A UNIX timestamp representing the second that expiration takes place
  */
 function _uc_roles_get_expiration($duration, $granularity, $start_time = NULL) {
-
   // Never expires?
   if ($granularity == 'never') {
     return NULL;
@@ -1316,5 +1289,6 @@ function _uc_roles_get_expiration($duration, $granularity, $start_time = NULL) {
 
   $start_time = (!is_null($start_time)) ? $start_time : time();
   $operator = ($duration < 0) ? '' : '+';
+
   return strtotime($operator . $duration .' '. $granularity, $start_time);
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_reports.module,v 1.11.2.10 2009/02/13 22:01:14 islandusurper Exp $
+// $Id: uc_reports.module,v 1.11.2.11 2009/07/21 14:37:22 islandusurper Exp $
 
 /**
  * @file
@@ -11,6 +11,9 @@
  * number sold, and revenue produced.
  */
 
+/**
+ * The maximum number of records.
+ */
 define('UC_REPORTS_MAX_RECORDS', PHP_INT_MAX);
 
 /*******************************************************************************
@@ -50,16 +53,16 @@ function uc_reports_help($path, $arg) {
     switch ($path) {
       case 'admin/store/reports/customers':
         $output .= t("The following are total orders, products, sales, and average order totals for each store customer. Clicking on the header links will toggle a descending or ascending order for that column. Clicking on a customer's name will take you to a detailed list of orders that customer has made. Clicking on a customers username will take you to their account page.");
-  break;
+        break;
       case 'admin/store/reports/products':
         $output .= t('The table lists each product listed in the store, its amount sold, how many times it has been viewed, revenue it has produced, and gross profit it has generated. If you do not see the number of views you must enable the Statistics module on the <a href="!url">module administration page</a>.', array('!url' => url('admin/build/modules')));
-  break;
+        break;
       case 'admin/store/reports/sales':
         $output .= t('These are the sales for the last two days, average sales for the month, and the projected sales for the rest of the month. Further down the list you will see other sales statistics.');
-  break;
+        break;
       case 'admin/store/reports/sales/custom':
         $output .= t('Expand the fieldset below to customize the date range of this report, the statuses of orders displayed, and product display options.');
-  break;
+        break;
     }
     if (strpos($path, 'admin/store/reports/sales/year') === 0) {
       $year = (is_null($_GET['year'])) ? format_date(time(), 'custom', "Y") : $_GET['year'];
@@ -186,10 +189,6 @@ function uc_reports_perm() {
   return array('view reports');
 }
 
-/* ************************************************************************* *
- *  Callback Functions, Forms, and Tables                                    *
- * ************************************************************************* */
-
 /******************************************************************************
  * Module and Helper Functions                                                *
  ******************************************************************************/
@@ -310,21 +309,27 @@ function _uc_reports_get_sales($time, $period = 'day') {
   return $output;
 }
 
-// Returns a SQL friendly array of order statuses for orders used in reports.
+/**
+ * Return a SQL friendly array of order statuses for orders used in reports.
+ */
 function _uc_reports_order_statuses() {
   $statuses = variable_get('uc_reports_reported_statuses', array('completed'));
 
   return "('". implode("', '", $statuses) ."')";
 }
 
-// Returns the sitewide timezone offset for use in reports.
+/**
+ * Return the sitewide timezone offset for use in reports.
+ */
 function _uc_reports_timezone_offset() {
   return variable_get('date_default_timezone', 0);
 }
 
 /**
- * With a given time span for a report and specified interval for subreports,
- * return a list of timespans for subreports over that report's time span.
+ * Return a list of timespans for subreports over that report's time span.
+ *
+ * To be used with a given time span for a report and specified interval for
+ * subreports.
  *
  * @param $start
  *   A UNIX time stamp representing the time to start the report.
@@ -352,12 +357,13 @@ function _uc_reports_subreport_intervals($report_start, $report_end, $interval) 
 
 /**
  * Given a timestamp and a length of time, return the offset timestamp
+ *
  * @param $time
  *   A UNIX timestamp
  * @param $interval
  *   The text representing the amount of time (e.g. 'day', 'week')
  * @return:
- * The offset UNIX timestamp
+ *   The offset UNIX timestamp
  */
 function _uc_reports_end_interval($time, $interval = 'month') {
   if (empty($time)) {

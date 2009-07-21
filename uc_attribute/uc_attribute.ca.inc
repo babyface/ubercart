@@ -1,10 +1,14 @@
 <?php
+// $Id: uc_attribute.ca.inc,v 1.1.2.2 2009/07/21 14:37:21 islandusurper Exp $
 
 /**
  * @file
  * Conditional Actions file for Ubercart attributes.
  */
 
+/**
+ * Implementation of hook_ca_condition().
+ */
 function uc_attribute_ca_condition() {
   $conditions = array();
 
@@ -21,6 +25,11 @@ function uc_attribute_ca_condition() {
   return $conditions;
 }
 
+/**
+ * Return TRUE if a product in the given order has the selected option.
+ *
+ * @see uc_attribute_condition_ordered_product_option_form()
+ */
 function uc_attribute_condition_ordered_product_option($order, $settings) {
   $result = FALSE;
 
@@ -61,6 +70,9 @@ function uc_attribute_condition_ordered_product_option($order, $settings) {
   return $result;
 }
 
+/**
+ * @see uc_attribute_condition_ordered_product_option()
+ */
 function uc_attribute_condition_ordered_product_option_form($form_state, $settings = array()) {
   $form = array();
 

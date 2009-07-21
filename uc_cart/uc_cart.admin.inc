@@ -1,13 +1,14 @@
 <?php
-// $Id: uc_cart.admin.inc,v 1.1.2.11 2009/05/28 20:49:19 islandusurper Exp $
+// $Id: uc_cart.admin.inc,v 1.1.2.12 2009/07/21 14:37:20 islandusurper Exp $
 
 /**
  * @file
  * Cart administration menu items.
- *
  */
 
-// Displays an overview of the cart settings.
+/**
+ * Display an overview of the cart settings.
+ */
 function uc_cart_cart_settings_overview() {
   // Load the form summaries for pages beneath this path.
   $summaries = summarize_child_form_pages('admin/store/settings/cart/edit');
@@ -35,6 +36,12 @@ function uc_cart_cart_settings_overview() {
   return theme('summary_overview', $summaries);
 }
 
+/**
+ * General settings for the shopping cart.
+ *
+ * @ingroup forms
+ * @see uc_cart_cart_settings_form_validate()
+ */
 function uc_cart_cart_settings_form() {
   $form['general'] = array(
     '#type' => 'fieldset',
@@ -184,12 +191,20 @@ function uc_cart_cart_settings_form() {
   return system_settings_form($form);
 }
 
+/**
+ * @see uc_cart_cart_settings_form()
+ */
 function uc_cart_cart_settings_form_validate($form, &$form_state) {
   if (!is_numeric($form_state['values']['uc_minimum_subtotal']) || $form_state['values']['uc_minimum_subtotal'] < 0 || $form_state['values']['uc_minimum_subtotal'] === '-0') {
     form_set_error('uc_minimum_subtotal', t('Minimum order subtotal should be a non-negative number.'));
   }
 }
 
+/**
+ * Settings for panes on the cart page.
+ *
+ * @ingroup forms
+ */
 function uc_cart_cart_panes_form() {
   $panes = uc_cart_cart_pane_list(NULL);
 
@@ -217,6 +232,9 @@ function uc_cart_cart_panes_form() {
   return system_settings_form($form);
 }
 
+/**
+ * Helpful message redirecting users to the block settings.
+ */
 function uc_cart_block_edit_info() {
   $output = t('Drupal handles all the block settings forms automatically.') .'<p>'
           . t('<a href="!url">Click here</a> to goto the shopping cart block configuration page.',
@@ -225,12 +243,19 @@ function uc_cart_block_edit_info() {
   return $output;
 }
 
-// Displays an overview of the checkout settings.
+/**
+ * Display an overview of the checkout settings.
+ */
 function uc_cart_checkout_settings_overview() {
   // Theme all the pages beneath this path into summary overviews.
   return theme('summary_overview', summarize_child_form_pages('admin/store/settings/checkout/edit'));
 }
 
+/**
+ * General checkout settings.
+ *
+ * @ingroup forms
+ */
 function uc_cart_checkout_settings_form() {
   $form['general'] = array(
     '#type' => 'fieldset',
@@ -340,7 +365,7 @@ function uc_cart_checkout_settings_form() {
 }
 
 /**
- * Summarizes cart and checkout panes.
+ * Summarize cart and checkout panes.
  *
  * @param $form
  *   The form passed from the summarizer
@@ -362,6 +387,11 @@ function _uc_cart_panes_summarize($form, $panes) {
   return $items;
 }
 
+/**
+ * Settings for panes on the checkout page.
+ *
+ * @ingroup forms
+ */
 function uc_cart_checkout_panes_form() {
   $panes = _checkout_pane_list();
 
@@ -401,6 +431,11 @@ function uc_cart_checkout_panes_form() {
   return system_settings_form($form);
 }
 
+/**
+ * Settings for help messages displayed on the checkout page.
+ *
+ * @ingroup forms
+ */
 function uc_cart_checkout_messages_form() {
   $form['uc_checkout_instructions'] = array(
     '#type' => 'textarea',

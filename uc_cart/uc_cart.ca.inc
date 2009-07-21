@@ -1,12 +1,11 @@
 <?php
-// $Id: uc_cart.ca.inc,v 1.1.2.13 2009/04/28 21:03:14 islandusurper Exp $
+// $Id: uc_cart.ca.inc,v 1.1.2.14 2009/07/21 14:37:20 islandusurper Exp $
 
 /**
  * @file
- * This file contains the Conditional Actions hooks and functions necessary to make the
- * cart related entity, conditions, events, and actions work.
+ * This file contains the Conditional Actions hooks and functions necessary to
+ * make the cart related entity, conditions, events, and actions work.
  */
-
 
 /******************************************************************************
  * Conditional Actions Hooks                                                  *
@@ -116,6 +115,11 @@ function uc_cart_ca_predicate() {
  * Condition Callbacks and Forms                                              *
  ******************************************************************************/
 
+/**
+ * Check that an order has a product of the selected class.
+ *
+ * @see uc_cart_condition_product_class_form()
+ */
 function uc_cart_condition_product_class($order, $settings) {
   $result = FALSE;
   $types = array();
@@ -141,6 +145,9 @@ function uc_cart_condition_product_class($order, $settings) {
   return $result;
 }
 
+/**
+ * @see uc_cart_condition_product_class()
+ */
 function uc_cart_condition_product_class_form($form_state, $settings = array()) {
   $form = array();
 

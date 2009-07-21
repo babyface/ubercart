@@ -1,18 +1,24 @@
 <?php
-// $Id: uc_file.admin.inc,v 1.1.2.9 2009/06/15 19:52:27 islandusurper Exp $
+// $Id: uc_file.admin.inc,v 1.1.2.10 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
  * @file
  * File administration menu items.
- *
  */
 
-// Form step values.
+/**
+ * Form step values.
+ */
 define('UC_FILE_FORM_FILES' , NULL);
 define('UC_FILE_FORM_ACTION', 1   );
 
 /**
- * Form builder for file products admin
+ * Form builder for file products admin.
+ *
+ * @ingroup forms
+ * @see
+ *   uc_file_admin_files_form_show_files()
+ *   uc_file_admin_files_form_action()
  */
 function uc_file_admin_files_form($form_state) {
 
@@ -39,15 +45,25 @@ function uc_file_admin_files_form($form_state) {
   }
 }
 
+/**
+ * Display all files that may be purchased and downloaded for administration.
+ *
+ * @ingroup forms
+ * @see
+ *   uc_file_admin_files_form()
+ *   uc_file_admin_files_form_show_validate()
+ *   uc_file_admin_files_form_show_submit()
+ *   theme_uc_file_admin_files_form_show()
+ */
 function uc_file_admin_files_form_show_files($form_state) {
 
   $form['#tree'] = TRUE;
 
   $form['#header'] = array(
     array(),
-    array('data' => t('File'     ), 'field' => 'f.filename', 'sort' => 'asc'),
-    array('data' => t('Product'  ), 'field' => 'n.title'                    ),
-    array('data' => t('SKU'), 'field' => 'fp.model'                   )
+    array('data' => t('File'), 'field' => 'f.filename', 'sort' => 'asc'),
+    array('data' => t('Product'), 'field' => 'n.title'),
+    array('data' => t('SKU'), 'field' => 'fp.model')
   );
 
   // Create pager.
@@ -123,39 +139,48 @@ function uc_file_admin_files_form_show_files($form_state) {
   return $form;
 }
 
+/**
+ * Ensure at least one file is selected when deleting.
+ *
+ * @see uc_file_admin_files_form_show_files()
+ */
 function uc_file_admin_files_form_show_validate($form, &$form_state) {
 
   switch ($form_state['values']['uc_file_action']['action']) {
 
     case 'uc_file_delete':
-     $file_ids = array();
-     if (is_array($form_state['values']['file_select'])) {
-       foreach ($form_state['values']['file_select'] as $fid => $value) {
-         if ($value) {
-           $file_ids[] = $fid;
-         }
-       }
-     }
+      $file_ids = array();
+      if (is_array($form_state['values']['file_select'])) {
+        foreach ($form_state['values']['file_select'] as $fid => $value) {
+          if ($value) {
+            $file_ids[] = $fid;
+          }
+        }
+      }
 
-    if (count($file_ids) == 0) {
-      form_set_error('', t('You must select at least one file to delete.'));
-    }
+      if (count($file_ids) == 0) {
+        form_set_error('', t('You must select at least one file to delete.'));
+      }
 
-    break;
+      break;
   }
 
 }
 
+/**
+ * Move to the next step of the administration form.
+ *
+ * @see uc_file_admin_files_form_show_files()
+ */
 function uc_file_admin_files_form_show_submit($form, &$form_state) {
-
   // Increment the form step.
   $form_state['storage']['step'] = UC_FILE_FORM_ACTION;
   $form_state['rebuild'] = TRUE;
-
 }
 
 /**
- * Implementation of theme_form($form)
+ * @ingroup themeable
+ * @see uc_file_admin_files_form_show_files()
  */
 function theme_uc_file_admin_files_form_show($form) {
   $output = '';
@@ -199,9 +224,16 @@ function theme_uc_file_admin_files_form_show($form) {
   return $output;
 }
 
+/**
+ * Perform file action (upload, delete, hooked in actions).
+ *
+ * @ingroup forms
+ * @see
+ *   uc_file_admin_files_form()
+ *   uc_file_admin_files_form_action_validate()
+ *   uc_file_admin_files_form_action_submit()
+ */
 function uc_file_admin_files_form_action($form_state) {
-
-  // Perform File Action (Upload, Delete, hooked in actions)
   $file_ids = array();
   foreach ((array)$form_state['values']['file_select'] as $fid => $value) {
     $value = $value['check'];
@@ -329,6 +361,9 @@ function uc_file_admin_files_form_action($form_state) {
   return $form;
 }
 
+/**
+ * @see uc_file_admin_files_form_action()
+ */
 function uc_file_admin_files_form_action_validate($form, &$form_state) {
 
   switch ($form_state['values']['action']) {
@@ -365,6 +400,9 @@ function uc_file_admin_files_form_action_validate($form, &$form_state) {
   }
 }
 
+/**
+ * @see uc_file_admin_files_action()
+ */
 function uc_file_admin_files_form_action_submit($form, &$form_state) {
 
   switch ($form_state['values']['action']) {
@@ -436,6 +474,9 @@ function uc_file_admin_files_form_action_submit($form, &$form_state) {
   drupal_goto('admin/store/products/files');
 }
 
+/**
+ * TODO: Replace with == operator?
+ */
 function _uc_file_display_arrays_equivalent($recur, $no_recur) {
 
   // Different sizes.
@@ -453,6 +494,9 @@ function _uc_file_display_arrays_equivalent($recur, $no_recur) {
   return TRUE;
 }
 
+/**
+ * Show all possible files in selectable list.
+ */
 function _uc_file_build_js_file_display($file_ids) {
 
   // Gather the files if recursion is selected. Get 'em all ready to be punched into

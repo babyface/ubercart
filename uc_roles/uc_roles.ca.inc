@@ -1,12 +1,11 @@
 <?php
-// $Id: uc_roles.ca.inc,v 1.1.2.7 2009/05/07 20:52:29 islandusurper Exp $
+// $Id: uc_roles.ca.inc,v 1.1.2.8 2009/07/21 14:37:19 islandusurper Exp $
 
 /**
  * @file
  * This file contains the Conditional Actions hooks and functions necessary to make the
  * roles-related entity, conditions, events, and actions work.
  */
-
 
 /******************************************************************************
  * Conditional Actions Hooks                                                  *
@@ -19,7 +18,6 @@
  * to token in the email.
  */
 function uc_roles_ca_entity() {
-
   // CA entity for a role expiration object.
   $entities['uc_roles_expiration'] = array(
     '#title' => t('Ubercart role expiration'),
@@ -33,7 +31,6 @@ function uc_roles_ca_entity() {
  * Implementation of hook_ca_predicate().
  */
 function uc_roles_ca_predicate() {
-
   // Renew all the roles on an order when the status matches what's set in the roles admin settings.
   $configurations['uc_role_renewal'] = array(
     '#title' => t('Renew purchased roles'),
@@ -176,7 +173,6 @@ function uc_roles_ca_predicate() {
  * Implementation of hook_ca_action().
  */
 function uc_roles_ca_action() {
-
   // Renew a role expiration.
   $actions['uc_roles_order_renew'] = array(
     '#title' => t('Renew the roles on an order.'),
@@ -231,7 +227,6 @@ function uc_roles_ca_action() {
  * Implementation of hook_ca_trigger().
  */
 function uc_roles_ca_trigger() {
-
   $order = array(
     '#entity' => 'uc_order',
     '#title' => t('Order'),
@@ -288,6 +283,8 @@ function uc_roles_ca_trigger() {
  * Send an email with order and role replacement tokens.
  *
  * The recipients, subject, and message fields take order token replacements.
+ *
+ * @see uc_roles_action_order_email_form()
  */
 function uc_roles_action_order_email($order, $role_expiration, $settings) {
   $account = user_load(array('uid' => $order->uid));
@@ -318,7 +315,11 @@ function uc_roles_action_order_email($order, $role_expiration, $settings) {
   }
 }
 
-// Email settings form
+/**
+ * Email settings form.
+ *
+ * @see uc_roles_action_order_email()
+ */
 function uc_roles_action_order_email_form($form_state, $settings = array()) {
   return ca_build_email_form($form_state, $settings, array('global', 'uc_roles', 'user'));
 }
@@ -327,6 +328,8 @@ function uc_roles_action_order_email_form($form_state, $settings = array()) {
  * Send an email with order and role replacement tokens.
  *
  * The recipients, subject, and message fields take order token replacements.
+ *
+ * @see uc_roles_action_user_email_form()
  */
 function uc_roles_action_user_email($account, $role_expiration, $settings) {
   $language = language_default();
@@ -355,13 +358,17 @@ function uc_roles_action_user_email($account, $role_expiration, $settings) {
   }
 }
 
-// Email settings form
+/**
+ * Email settings form.
+ *
+ * @see uc_roles_action_user_email()
+ */
 function uc_roles_action_user_email_form($form_state, $settings = array()) {
   return ca_build_email_form($form_state, $settings, array('global', 'uc_roles', 'user'));
 }
 
 /**
- * Builds an email settings form.
+ * Build an email settings form.
  */
 function ca_build_email_form($form_state, $settings, $token_filters) {
   $form = array();
@@ -420,19 +427,19 @@ function ca_build_email_form($form_state, $settings, $token_filters) {
 /**
  * Renew an orders product roles.
  *
- * @param $order
- *   An Ubercart order object.
- *
  * This function updates expiration time on all roles found on all products
  * on a given order. First, the order user is loaded, then the order's products
  * are scanned for role product features. If any are found, the expiration time
  * of the role is set using the feature settings to determine the new length of
- * time the new expiration will last. An order comment is saved, and the user is
- * notified in Drupal, as well as through the email address associated with the
- * order.
+ * time the new expiration will last. An order comment is saved, and the user
+ * is notified in Drupal, as well as through the email address associated with
+ * the order.
+ *
+ * @param $order
+ *   An Ubercart order object.
+ * @see uc_roles_action_order_renew_form()
  */
 function uc_roles_action_order_renew($order) {
-
   global $user;
 
   // Load the order's user.
@@ -477,7 +484,11 @@ function uc_roles_action_order_renew($order) {
   }
 }
 
-// Borrow the order form for role renewal order state configuration.
+/**
+ * Borrow the order form for role renewal order state configuration.
+ *
+ * @see uc_roles_action_order_renew()
+ */
 function uc_roles_action_order_renew_form($form_state, $settings = array()) {
   return uc_order_action_update_status_form($form_state, $settings);
 }

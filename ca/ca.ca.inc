@@ -1,10 +1,10 @@
 <?php
-// $Id: ca.ca.inc,v 1.1.2.9 2009/07/08 12:56:50 islandusurper Exp $
+// $Id: ca.ca.inc,v 1.1.2.10 2009/07/21 14:37:19 islandusurper Exp $
 
 /**
- * @file: This file includes some generic conditions and actions.
+ * @file
+ * This file includes some generic conditions and actions.
  */
-
 
 /*******************************************************************************
  * Conditional Actions Hooks
@@ -113,6 +113,11 @@ function ca_ca_action() {
   return $actions;
 }
 
+/**
+ * Check that the current time is within a specified range.
+ *
+ * @see ca_condition_date_form()
+ */
 function ca_condition_date($settings) {
   $set_date_start = gmmktime(0, 0, 0, $settings['date']['month'], $settings['date']['day'], $settings['date']['year']);
   $set_date_end = gmmktime(23, 59, 59, $settings['date']['month'], $settings['date']['day'], $settings['date']['year']);
@@ -131,6 +136,9 @@ function ca_condition_date($settings) {
   }
 }
 
+/**
+ * @see ca_condition_date()
+ */
 function ca_condition_date_form($form_state, $settings = array()) {
   $form = array();
 
@@ -156,7 +164,11 @@ function ca_condition_date_form($form_state, $settings = array()) {
   return $form;
 }
 
-// Compare a node field to a specified value using an operator list.
+/**
+ * Compare a node field to a specified value using an operator list.
+ *
+ * @see ca_condition_node_field_comparison_form()
+ */
 function ca_condition_node_field_comparison($node, $settings) {
   // Convert the node to an array.
   $node_array = (array) $node;
@@ -236,6 +248,9 @@ function ca_condition_node_field_comparison($node, $settings) {
   return FALSE;
 }
 
+/**
+ * @see ca_condition_node_field_comparision()
+ */
 function ca_condition_node_field_comparison_form($form_state, $settings = array()) {
   $form = array();
 
@@ -299,7 +314,11 @@ function ca_condition_node_field_comparison_form($form_state, $settings = array(
   return $form;
 }
 
-// Display a message to the user.
+/**
+ * Display a message to the user.
+ *
+ * @see ca_action_drupal_set_message_form()
+ */
 function ca_action_drupal_set_message($settings) {
   // Filter the text using the default format.
   $message = check_markup($settings['message_text'], FILTER_FORMAT_DEFAULT, FALSE);
@@ -321,6 +340,9 @@ function ca_action_drupal_set_message($settings) {
   drupal_set_message($message, $type);
 }
 
+/**
+ * @see ca_action_drupal_set_message()
+ */
 function ca_action_drupal_set_message_form($form_state, $settings = array()) {
   $form = array();
 
@@ -349,11 +371,18 @@ function ca_action_drupal_set_message_form($form_state, $settings = array()) {
   return $form;
 }
 
-// Evaluate a custom PHP condition.
+/**
+ * Evaluate a custom PHP condition.
+ *
+ * @see ca_condition_custom_php_form()
+ */
 function ca_condition_custom_php($arguments, $settings) {
   return _ca_custom_php_eval($settings['php'], $arguments);
 }
 
+/**
+ * @see ca_condition_custom_php()
+ */
 function ca_condition_custom_php_form($form_state, $settings = array(), $arguments = array()) {
   $form['variables'] = _ca_custom_php_variables_table($arguments);
 
@@ -367,7 +396,11 @@ function ca_condition_custom_php_form($form_state, $settings = array(), $argumen
   return $form;
 }
 
-// Check a user's roles.
+/**
+ * Check a user's roles.
+ *
+ * @see ca_condition_user_roles_form()
+ */
 function ca_condition_user_roles($account, $settings) {
   $settings['roles'] = array_filter($settings['roles']);
 
@@ -389,6 +422,9 @@ function ca_condition_user_roles($account, $settings) {
   }
 }
 
+/**
+ * @see ca_condition_user_roles()
+ */
 function ca_condition_user_roles_form($form_state, $settings = array()) {
   $form['operator'] = array(
     '#type' => 'radios',
@@ -410,11 +446,18 @@ function ca_condition_user_roles_form($form_state, $settings = array()) {
   return $form;
 }
 
-// Perform a custom PHP action.
+/**
+ * Perform a custom PHP action.
+ *
+ * @see ca_action_custom_php_form()
+ */
 function ca_action_custom_php($arguments, $settings) {
   _ca_custom_php_eval($settings['php'], $arguments);
 }
 
+/**
+ * @see ca_action_custom_php()
+ */
 function ca_action_custom_php_form($form_state, $settings = array(), $arguments = array()) {
   $form['variables'] = _ca_custom_php_variables_table($arguments);
 
@@ -429,8 +472,8 @@ function ca_action_custom_php_form($form_state, $settings = array(), $arguments 
 }
 
 /**
- * Returns a fieldset used to display available variables for custom PHP
- *   conditions and actions.
+ * Return a fieldset used to display available variables for custom PHP
+ * conditions and actions.
  */
 function _ca_custom_php_variables_table($arguments) {
   $rows = array();
@@ -458,8 +501,8 @@ function _ca_custom_php_variables_table($arguments) {
 }
 
 /**
- * Evaluates a custom PHP condition or action with trigger arguments available
- *   as variables.
+ * Evaluate a custom PHP condition or action with trigger arguments available
+ * as variables.
  */
 function _ca_custom_php_eval($php, $arguments) {
   $argument_data = array();

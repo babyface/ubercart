@@ -1,12 +1,14 @@
 <?php
-// $Id: ca.admin.inc,v 1.1.2.15 2009/04/14 13:51:16 islandusurper Exp $
+// $Id: ca.admin.inc,v 1.1.2.16 2009/07/21 14:37:19 islandusurper Exp $
 
 /**
  * @file
  * Conditional actions overview UI.
  */
 
-// Displays the administration page that lets you add and modify predicates.
+/**
+ * Display the administration page that lets you add and modify predicates.
+ */
 function ca_admin($groupby = 'trigger') {
   drupal_add_css(drupal_get_path('module', 'ca') .'/ca.css');
 
@@ -127,7 +129,9 @@ function ca_admin($groupby = 'trigger') {
   return $output;
 }
 
-// Form to allow the creation and editing of conditional action predicates.
+/**
+ * Form to allow the creation and editing of conditional action predicates.
+ */
 function ca_predicate_meta_form($form_state, $pid) {
   // Load the predicate if an ID is passed in.
   if (!empty($pid) && $pid !== 0) {
@@ -227,6 +231,9 @@ function ca_predicate_meta_form($form_state, $pid) {
   return $form;
 }
 
+/**
+ * @see ca_predicate_meta_form()
+ */
 function ca_predicate_meta_form_submit($form, &$form_state) {
   $form_state['redirect'] = CA_UI_PATH;
   $save = FALSE;
@@ -267,7 +274,9 @@ function ca_predicate_meta_form_submit($form, &$form_state) {
   drupal_set_message(t('Predicate meta data saved.'));
 }
 
-// Form to reset a modified module defined predicate to its original state.
+/**
+ * Form to reset a modified module defined predicate to its original state.
+ */
 function ca_predicate_delete_form($form_state, $pid) {
   $predicate = ca_load_predicate($pid);
 
@@ -294,6 +303,9 @@ function ca_predicate_delete_form($form_state, $pid) {
   return confirm_form($form, t('Are you sure you want to !op this predicate?', array('!op' => is_numeric($pid) ? t('delete') : t('reset'))), CA_UI_PATH, $description);
 }
 
+/**
+ * @see ca_predicate_delete_form()
+ */
 function ca_predicate_delete_form_submit($form, &$form_state) {
   ca_delete_predicate($form_state['values']['predicate_pid']);
 
@@ -303,7 +315,7 @@ function ca_predicate_delete_form_submit($form, &$form_state) {
 }
 
 /**
- * Builds a form for adding and editing actions on a predicate.
+ * Build a form for adding and editing actions on a predicate.
  *
  * @param $form_state
  *   Used by FAPI; the current state of the form as it processes.
@@ -314,6 +326,12 @@ function ca_predicate_delete_form_submit($form, &$form_state) {
  *     the title of the page.
  * @return
  *   The form array for the actions form.
+ *
+ * @ingroup forms
+ * @see
+ *   ca_actions_form_add_action_submit()
+ *   ca_actions_form_add_action_submit()
+ *   ca_actions_form_save_changes_submit()
  */
 function ca_actions_form($form_state, $pid, $title = TRUE) {
   // Locate the specified predicate.
@@ -452,7 +470,11 @@ function ca_actions_form($form_state, $pid, $title = TRUE) {
   return $form;
 }
 
-// Remove action submit handler.
+/**
+ * Remove action submit handler.
+ *
+ * @see ca_actions_form()
+ */
 function ca_actions_form_remove_action_submit($form, &$form_state) {
   // Save the existing actions to preserve any changes.
   ca_actions_form_update_actions($form_state['values']['pid'], $form_state['values']['actions']);
@@ -463,7 +485,11 @@ function ca_actions_form_remove_action_submit($form, &$form_state) {
   drupal_set_message(t('Action removed.'));
 }
 
-// Add action submit handler.
+/**
+ * Add action submit handler.
+ *
+ * @see ca_actions_form()
+ */
 function ca_actions_form_add_action_submit($form, &$form_state) {
   // Save the existing actions to preserve any changes.
   $predicate = ca_actions_form_update_actions($form_state['values']['pid'], $form_state['values']['actions']);
@@ -477,7 +503,11 @@ function ca_actions_form_add_action_submit($form, &$form_state) {
   drupal_set_message(t('Action added.'));
 }
 
-// Save changes submit handler for the actions form.
+/**
+ * Save changes submit handler for the actions form.
+ *
+ * @see ca_actions_form()
+ */
 function ca_actions_form_save_changes_submit($form, &$form_state) {
   // Save the existing actions to preserve any changes.
   ca_actions_form_update_actions($form_state['values']['pid'], $form_state['values']['actions']);
@@ -522,7 +552,17 @@ function ca_actions_form_update_actions($pid, $data) {
   return $predicate;
 }
 
-// Builds a form for adding and editing conditions on a predicate.
+/**
+ * Build a form for adding and editing conditions on a predicate.
+ *
+ * @ingroup forms
+ * @see
+ *   ca_conditions_form_add_condition_group_submit()
+ *   ca_conditions_form_remove_condition_group_submit()
+ *   ca_conditions_form_add_condition_submit()
+ *   ca_conditions_form_remove_condition_submit()
+ *   ca_conditions_form_save_changes_submit()
+ */
 function ca_conditions_form($form_state, $pid, $title = TRUE) {
   // Locate the specified predicate.
   $predicate = ca_load_predicate($pid);
@@ -618,7 +658,18 @@ function ca_conditions_form($form_state, $pid, $title = TRUE) {
   return $form;
 }
 
-// Recursively adds logical groups to the conditions form as fieldsets.
+/**
+ * Recursively add logical groups to the conditions form as fieldsets.
+ *
+ * @param $condition
+ *   An array consisting of an #operator and another array of #conditions, or
+ *   a condition array with data pertaining to its callback function.
+ * @param $trigger
+ *   The trigger name and data concerning the arguments that are passed in to
+ *   the condition.
+ * @return
+ *   A form array representing the tree of conditions.
+ */
 function _ca_conditions_form_tree($condition, $trigger) {
   // We need an index so condition group fieldsets have unique keys.
   static $index = 0;
@@ -699,7 +750,17 @@ function _ca_conditions_form_tree($condition, $trigger) {
   }
 }
 
-// Adds a single condition's fieldset to the conditions form.
+/**
+ * Add a single condition's fieldset to the conditions form.
+ *
+ * @param $condition
+ *   The condition data array.
+ * @param $trigger
+ *   The trigger name and data concerning the arguments that are passed in to
+ *   the condition.
+ * @return
+ *   A form array representing the condition.
+ */
 function _ca_conditions_form_condition($condition, $trigger) {
   static $identifier = 0;
 
@@ -780,7 +841,11 @@ function _ca_conditions_form_condition($condition, $trigger) {
   return $form;
 }
 
-// Submit handler for button to add a condition group.
+/**
+ * Submit handler for button to add a condition group.
+ *
+ * @see ca_conditions_form()
+ */
 function ca_conditions_form_add_condition_group_submit($form, &$form_state) {
   // Save the existing conditions to preserve any changes.
   ca_conditions_form_update_conditions($form_state['values']['pid'], $form_state['values']['conditions']);
@@ -792,6 +857,11 @@ function ca_conditions_form_add_condition_group_submit($form, &$form_state) {
   drupal_set_message(t('Condition group added.'));
 }
 
+/**
+ * Submit handler for button to remove a condition grou.
+ *
+ * @see ca_conditions_form()
+ */
 function ca_conditions_form_remove_condition_group_submit($form, &$form_state) {
   $group_key = FALSE;
 
@@ -822,7 +892,11 @@ function ca_conditions_form_remove_condition_group_submit($form, &$form_state) {
   }
 }
 
-// Submit handler for button to add a condition to a condition group.
+/**
+ * Submit handler for button to add a condition to a condition group.
+ *
+ * @see ca_conditions_form()
+ */
 function ca_conditions_form_add_condition_submit($form, &$form_state) {
   $group_key = FALSE;
 
@@ -856,7 +930,11 @@ function ca_conditions_form_add_condition_submit($form, &$form_state) {
   }
 }
 
-// Submit handler for button to remove a condition from a condition group.
+/**
+ * Submit handler for button to remove a condition from a condition group.
+ *
+ * @see ca_conditions_form()
+ */
 function ca_conditions_form_remove_condition_submit($form, &$form_state) {
   $group_key = FALSE;
   $cond_key = FALSE;
@@ -898,7 +976,11 @@ function ca_conditions_form_remove_condition_submit($form, &$form_state) {
   }
 }
 
-// Save changes submit handler for the conditions form.
+/**
+ * Save changes submit handler for the conditions form.
+ *
+ * @see ca_conditions_form()
+ */
 function ca_conditions_form_save_changes_submit($form, &$form_state) {
   // Save the existing conditions to preserve any changes.
   ca_conditions_form_update_conditions($form_state['values']['pid'], $form_state['values']['conditions']);
@@ -907,7 +989,7 @@ function ca_conditions_form_save_changes_submit($form, &$form_state) {
 }
 
 /**
- * Updates a predicate's conditions based on the values from a conditions form.
+ * Update a predicate's conditions based on the values from a conditions form.
  *
  * @param $pid
  *   The ID of the predicate whose conditions should be updated.
@@ -972,6 +1054,9 @@ function ca_conditions_form_update_conditions($pid, $data) {
  *
  * From this page, the user can begin the batch processing of any Workflow-ng
  * configurations in the site's database into Conditional Actions predicates.
+ *
+ * @ingroup forms
+ * @see ca_conversion_form_submit()
  */
 function ca_conversion_form() {
   $form = array();
@@ -988,6 +1073,9 @@ function ca_conversion_form() {
   return $form;
 }
 
+/**
+ * @see ca_conversion_form_submit()
+ */
 function ca_conversion_form_submit($form, &$form_state) {
   // Convert workflow-ng configurations in a batch process because there may be
   // a lot of them.
@@ -1005,7 +1093,9 @@ function ca_conversion_form_submit($form, &$form_state) {
   batch_set($batch);
 }
 
-// Batch API callback for Workflow-ng configuration conversion.
+/**
+ * Batch API callback for Workflow-ng configuration conversion.
+ */
 function _ca_convert_configurations(&$context) {
   global $user;
 
@@ -1107,7 +1197,9 @@ function _ca_convert_configurations(&$context) {
   }
 }
 
-// Helper function for converting Ubercart's Workflow-ng conditions.
+/**
+ * Helper function for converting Ubercart's Workflow-ng conditions.
+ */
 function _ca_convert_conditions($condition_tree) {
   static $condition_data;
   $ca_condition = array();
@@ -1176,7 +1268,9 @@ function _ca_convert_conditions($condition_tree) {
   return $ca_condition;
 }
 
-// Helper function for converting Ubercart's Workflow-ng actions.
+/**
+ * Helper function for converting Ubercart's Workflow-ng actions.
+ */
 function _ca_convert_actions($wf_action, $tax_id = NULL) {
   static $action_data;
   $action = $wf_action;
@@ -1209,7 +1303,9 @@ function _ca_convert_actions($wf_action, $tax_id = NULL) {
   return $action;
 }
 
-// Finalization function to hide the conversion tab.
+/**
+ * Batch finalization function to hide the conversion tab.
+ */
 function _ca_conversion_finished() {
   // Set a variable to hide the conversion tab.
   variable_set('ca_show_conversion_tab', FALSE);

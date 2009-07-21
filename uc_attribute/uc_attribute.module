@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.29 2009/07/08 12:56:49 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.30 2009/07/21 14:37:21 islandusurper Exp $
 
 /**
  * @file
@@ -202,10 +202,16 @@ function uc_attribute_menu() {
   return $items;
 }
 
+/**
+ * Access callback for editing a product class's attributes and options.
+ */
 function uc_attribute_product_class_access() {
   return user_access('administer product classes') && user_access('administer attributes');
 }
 
+/**
+ * Access callback for editing a product's attributes.
+ */
 function uc_attribute_product_access($node) {
   if ($node->type == 'product_kit') {
     return FALSE;
@@ -214,6 +220,9 @@ function uc_attribute_product_access($node) {
   return uc_product_is_product($node) && node_access('update', $node) && (user_access('administer attributes') || user_access('administer product attributes'));
 }
 
+/**
+ * Access callback for editing a product's options.
+ */
 function uc_attribute_product_option_access($node) {
   if ($node->type == 'product_kit') {
     return FALSE;
@@ -222,15 +231,21 @@ function uc_attribute_product_option_access($node) {
   return uc_product_is_product($node) && node_access('update', $node) && (user_access('administer attributes') || user_access('administer product attributes') || user_access('administer product options'));
 }
 
+/**
+ * Implementation of hook_perm().
+ */
 function uc_attribute_perm() {
   return array('administer attributes', 'administer product attributes', 'administer product options');
 }
 
+/**
+ * Implementation of hook_init().
+ */
 function uc_attribute_init() {
   drupal_add_css(drupal_get_path('module', 'uc_attribute') .'/uc_attribute.css');
 }
 
-/*
+/**
  * Implementation of hook_theme().
  */
 function uc_attribute_theme() {
@@ -363,7 +378,7 @@ function uc_attribute_uc_product_models($node) {
 }
 
 /**
- * Stores the customer's choices in the cart.
+ * Store the customer's choices in the cart.
  */
 function uc_attribute_add_to_cart_data($form_values) {
   if (!isset($form_values['attributes'])) {
@@ -388,6 +403,9 @@ function uc_attribute_add_to_cart_data($form_values) {
   return array('attributes' => $form_values['attributes'], 'model' => $model);
 }
 
+/**
+ * Implemenation of hook_order_product_alter().
+ */
 function uc_attribute_order_product_alter(&$product, $order) {
   // Convert the attribute and option ids to their current names. This
   // preserves the important data in case the attributes or options are
@@ -442,6 +460,9 @@ function uc_attribute_cart_item($op, &$item) {
   }
 }
 
+/**
+ * Implementation of hook_cart_item_description().
+ */
 function uc_attribute_cart_item_description($item) {
   $rows = array();
   foreach (_uc_cart_product_get_options($item) as $option) {
@@ -470,8 +491,13 @@ function uc_attribute_cart_item_description($item) {
  * @param $attr_id
  *   The id of the attribute.
  * @param $nid
- *   Node id. If given, the attribute will have the options that have been
- *   assigned to that node for the attribute.
+ *   If given, the attribute will have the options that have been assigned to
+ *   that $type for the attribute.
+ * @param $type
+ *   Determines whether $nid refers to a node or product class. $nid is ignored
+ *   if $type is not 'product' or 'class'.
+ * @return
+ *   An attribute object with its options.
  */
 function uc_attribute_load($attr_id, $nid = NULL, $type = '') {
   if ($nid) {
@@ -518,12 +544,16 @@ function uc_attribute_load($attr_id, $nid = NULL, $type = '') {
   return $attribute;
 }
 
-// Loads the option identified by $oid.
+/**
+ * Load the option identified by $oid.
+ */
 function uc_attribute_option_load($oid) {
   return db_fetch_object(db_query("SELECT * FROM {uc_attribute_options} WHERE oid = %d", $oid));
 }
 
-// Loads all attributes associated with a product node.
+/**
+ * Load all attributes associated with a product node.
+ */
 function uc_product_get_attributes($nid) {
   $attributes = array();
 
@@ -535,7 +565,9 @@ function uc_product_get_attributes($nid) {
   return $attributes;
 }
 
-// Loads all attributes associated with a product class.
+/**
+ * Load all attributes associated with a product class.
+ */
 function uc_class_get_attributes($pcid) {
   $attributes = array();
 
@@ -597,7 +629,9 @@ function _uc_cart_product_get_options($item) {
 }
 
 /**
- * Helper function for uc_attribute_form_alter()
+ * Helper function for uc_attribute_form_alter().
+ *
+ * @see theme_uc_attribute_add_to_cart()
  */
 function _uc_attribute_alter_form($product) {
   // If the product doesn't have attributes, return the form as it is.
@@ -709,7 +743,9 @@ function _uc_attribute_alter_form($product) {
   return $form_attributes;
 }
 
-// Returns an array of display types used as options when creating attributes.
+/**
+ * Return an array of display types used as options when creating attributes.
+ */
 function _uc_attribute_display_types() {
   return array(
     0 => t('Text field'),
@@ -736,6 +772,12 @@ function uc_attribute_priced_attributes($nid) {
   return $aids;
 }
 
+/**
+ * Display the attribute selection form elements.
+ *
+ * @ingroup themeable
+ * @see _uc_attribute_alter_form()
+ */
 function theme_uc_attribute_add_to_cart($form) {
   $output = '<div class="attributes">';
   $stripes = array('even' => 'odd', 'odd' => 'even');

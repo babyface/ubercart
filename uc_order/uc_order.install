@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.9.2.13 2009/07/08 12:56:49 islandusurper Exp $
+// $Id: uc_order.install,v 1.9.2.14 2009/07/21 14:37:18 islandusurper Exp $
 
 /**
  * @file
@@ -834,17 +834,22 @@ function uc_order_update_6000() {
   return $ret;
 }
 
+/**
+ * Make sure that those who had the faulty 6000 update have the right precision
+ * and scale.
+ */
 function uc_order_update_6001() {
   $ret = array();
 
-  // Make sure that those who had the faulty 6000 update have the right
-  // precision and scale.
   db_change_field($ret, 'uc_order_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_order_products', 'price', 'price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2,'not null' => TRUE, 'default' => 0));
 
   return $ret;
 }
 
+/**
+ * Add the ability to log IPs with each order taken.
+ */
 function uc_order_update_6002() {
   $ret = array();
 
@@ -857,17 +862,18 @@ function uc_order_update_6002() {
   );
 
   if (!db_column_exists('uc_orders', 'host')) {
-    // Add the ability to log IPs with each order taken
     db_add_field($ret, 'uc_orders', 'host', $host_schema);
   }
 
   return $ret;
 }
 
+/**
+ * Make the numeric fields signed for Postgres compatibility.
+ */
 function uc_order_update_6003() {
   $ret = array();
 
-  // Make the numeric fields signed for Postgres compatibility.
   db_change_field($ret, 'uc_order_products', 'cost', 'cost', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
   db_change_field($ret, 'uc_order_products', 'price', 'price', array('type' => 'numeric', 'precision' => 10, 'scale' => 2, 'not null' => TRUE, 'default' => 0));
 
@@ -885,6 +891,9 @@ function uc_order_update_6004() {
   return $ret;
 }
 
+/**
+ * Replace all instances of 'delete any order' with 'unconditionally delete orders' in the permissions table.
+ */
 function uc_order_update_6005() {
   $ret = array();
 
@@ -898,7 +907,9 @@ function uc_order_update_6005() {
   return $ret;
 }
 
-// Change to signed floats...
+/**
+ * Change to signed floats.
+ */
 function uc_order_update_6006() {
   $ret = array();
 
@@ -915,7 +926,9 @@ function uc_order_update_6006() {
   return $ret;
 }
 
-// add data field to uc_order_line_items
+/**
+ * Add data field to uc_order_line_items.
+ */
 function uc_order_update_6007() {
 
   $ret = array();
@@ -927,9 +940,10 @@ function uc_order_update_6007() {
   return $ret;
 }
 
+/**
+ * Moved to 6010 to take care of a broken release.
+ */
 function uc_order_update_6008() {
-  // Moved to 6010 to take care of a broken release.
-
   return array();
 }
 
@@ -959,7 +973,9 @@ function uc_order_update_6009() {
   return $ret;
 }
 
-// Remove new users' passwords from order data.
+/**
+ * Remove new users' passwords from order data.
+ */
 function uc_order_update_6010(&$sandbox) {
   $ret = array();
 

@@ -1,4 +1,10 @@
 <?php
+// $Id: uc_price.inc,v 1.1.2.3 2009/07/21 14:37:21 islandusurper Exp $
+
+/**
+ * @file
+ * Price handling functions and hooks.
+ */
 
 /**
  * The heart of the price modification/displaying system,

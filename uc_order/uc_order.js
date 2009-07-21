@@ -1,4 +1,9 @@
-// $Id: uc_order.js,v 1.9.2.6 2009/06/15 19:52:26 islandusurper Exp $
+// $Id: uc_order.js,v 1.9.2.7 2009/07/21 14:37:18 islandusurper Exp $
+
+/**
+ * @file
+ * Handles asynchronous requests for order editing forms.
+ */
 
 var customer_select = '';
 var add_product_browser = '';
@@ -150,6 +155,9 @@ function load_customer_search() {
   return false;
 }
 
+/**
+ * Display the results of the customer search.
+ */
 function load_customer_search_results() {
   var first_name = $('#customer-select #edit-first-name').val();
   var last_name = $('#customer-select #edit-last-name').val();
@@ -174,6 +182,9 @@ function load_customer_search_results() {
   return false;
 }
 
+/**
+ * Set customer values from search selection.
+ */
 function select_customer_search() {
   var data = $('#edit-cust-select').val();
   $('#edit-uid').val(data.substr(0, data.indexOf(':')));
@@ -188,6 +199,9 @@ function select_customer_search() {
   return close_customer_select();
 }
 
+/**
+ * Display the new customer form.
+ */
 function load_new_customer_form() {
   if (customer_select == 'new') {
     return close_customer_select();
@@ -202,6 +216,9 @@ function load_new_customer_form() {
   return false;
 }
 
+/**
+ * Validate the customer's email address.
+ */
 function check_new_customer_address() {
   var options = {
     'email' : $('#customer-select #edit-email').val(),
@@ -215,6 +232,9 @@ function check_new_customer_address() {
   return false;
 }
 
+/**
+ * Load existing customer as new order's customer.
+ */
 function select_existing_customer(uid, email) {
   $('#edit-uid').val(uid);
   $('#edit-uid-text').val(uid);
@@ -228,6 +248,9 @@ function select_existing_customer(uid, email) {
   return close_customer_select();
 }
 
+/**
+ * Hide the customer selection form.
+ */
 function close_customer_select() {
   $('#customer-select').empty().removeClass('customer-select-box');
   customer_select = '';
@@ -257,6 +280,9 @@ function uc_order_load_product_edit_div(order_id) {
   );
 }
 
+/**
+ * Load the product selection form.
+ */
 function load_product_select(order_id, search) {
   if (search == true) {
     options = {'search' : $('#edit-product-search').val()};
@@ -277,16 +303,25 @@ function load_product_select(order_id, search) {
   return false;
 }
 
+/**
+ * Deprecated?
+ */
 function select_product() {
   add_product_form();
   return false;
 }
 
+/**
+ * Hide product selection form.
+ */
 function close_product_select() {
   $('#products-selector').empty().removeClass('product-select-box2');
   return false;
 }
 
+/**
+ * Load the quantity and other extra product fields.
+ */
 function add_product_form() {
   add_product_browser = $('#products-selector').html();
 
@@ -302,6 +337,9 @@ function add_product_form() {
   }
 }
 
+/**
+ * Add the selected product to the order.
+ */
 function add_product_to_order(order_id, node_id) {
   var post_vars = fetch_product_data();
   post_vars['action'] = 'add';
@@ -330,6 +368,9 @@ function add_product_to_order(order_id, node_id) {
   return false;
 }
 
+/**
+ * Gather all of the products' data fields into one array.
+ */
 function fetch_product_data() {
   var pdata = { };
 
@@ -347,6 +388,9 @@ function fetch_product_data() {
   return pdata;
 }
 
+/**
+ * Button to create a new row of empty data fields.
+ */
 function add_blank_line_button(order_id) {
   var post_vars = fetch_product_data();
   post_vars['action'] = 'add_blank';
@@ -364,6 +408,9 @@ function add_blank_line_button(order_id) {
   );
 }
 
+/**
+ * Button to remove product from the order.
+ */
 function remove_product_button(message, opid) {
   if (confirm(message)) {
     var post_vars = fetch_product_data();
@@ -384,6 +431,9 @@ function remove_product_button(message, opid) {
   }
 }
 
+/**
+ * Prevent mistakes by confirming deletion.
+ */
 function confirm_line_item_delete(message, img_id) {
   if (confirm(message)) {
     var li_id = img_id.substring(3);
@@ -392,13 +442,17 @@ function confirm_line_item_delete(message, img_id) {
   }
 }
 
-// Disable order submit button while parts of the page are still loading.
+/**
+ * Disable order submit button while parts of the page are still loading.
+ */
 function add_order_save_hold() {
   order_save_holds++;
   $('#uc-order-edit-form input.save-button').attr('disabled', 'disabled');
 }
 
-// Remove a hold and enable the save buttons when all holds are gone!
+/**
+ * Remove a hold and enable the save buttons when all holds are gone!
+ */
 function remove_order_save_hold() {
   order_save_holds--;
 
@@ -407,15 +461,23 @@ function remove_order_save_hold() {
   }
 }
 
-// Removes the disable attribute on any input item with the save-button class.
+/**
+ * Remove the disable attribute on any input item with the save-button class.
+ */
 function release_held_buttons() {
   $('#uc-order-edit-form input.save-button').removeAttr('disabled');
 }
 
+/**
+ * User feedback that something is happening.
+ */
 function show_product_throbber() {
   $('#product-div-throbber').attr('style', 'background-image: url(' + Drupal.settings.basePath + 'misc/throbber.gif); background-repeat: no-repeat; background-position: 100% -20px;').html('&nbsp;&nbsp;&nbsp;&nbsp;');
 }
 
+/**
+ * Done loading forms.
+ */
 function hide_product_throbber() {
   $('#product-div-throbber').removeAttr('style').empty();
 }
