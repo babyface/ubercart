@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.14 2009/07/21 14:37:20 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.15 2009/07/21 14:51:20 islandusurper Exp $
 
 /**
  * @file
@@ -404,8 +404,8 @@ function uc_cart_checkout_review() {
 function theme_uc_cart_checkout_review($panes, $form) {
   drupal_add_css(drupal_get_path('module', 'uc_cart') .'/uc_cart.css');
 
-  $output = '<p>'. check_markup(variable_get('uc_checkout_review_instructions', uc_get_message('review_instructions')), variable_get('uc_checkout_review_instructions_format', FILTER_FORMAT_DEFAULT), FALSE)
-           .'</p><table class="order-review-table">';
+  $output = check_markup(variable_get('uc_checkout_review_instructions', uc_get_message('review_instructions')), variable_get('uc_checkout_review_instructions_format', FILTER_FORMAT_DEFAULT), FALSE)
+           .'<table class="order-review-table">';
 
   foreach ($panes as $title => $data) {
     $output .= '<tr class="pane-title-row"><td colspan="2">'. $title

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_price.inc,v 1.1.2.3 2009/07/21 14:37:21 islandusurper Exp $
+// $Id: uc_price.inc,v 1.1.2.4 2009/07/21 14:51:23 islandusurper Exp $
 
 /**
  * @file
@@ -246,7 +246,7 @@ function _uc_price_get_handlers($options = array()) {
         $handlers['formatters'][] = $hook['format']['callback'];
       }
 
-      if (is_array($hook['options'])) {
+      if (isset($hook['options']) && is_array($hook['options'])) {
         $handlers['options'] += $hook['options'];
       }
     }

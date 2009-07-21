@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_quote.admin.inc,v 1.1.2.9 2009/07/21 14:37:21 islandusurper Exp $
+// $Id: uc_quote.admin.inc,v 1.1.2.10 2009/07/21 14:51:23 islandusurper Exp $
 
 /**
  * @file
@@ -210,7 +210,7 @@ function uc_quote_method_settings() {
   if (is_array($shipping_types)) {
     $form['uc_quote_type_weight'] = array('#type' => 'fieldset',
       '#title' => t('List position'),
-      '#description' => t('Determines which shipping methods are quoted at checkout when products of different shipping types are ordered. Smaller positions are chosen first.'),
+      '#description' => t('Determines which shipping methods are quoted at checkout when products of different shipping types are ordered. Larger values take precedence.'),
       '#collapsible' => TRUE,
       '#summary callback' => 'summarize_null',
       '#tree' => TRUE,
@@ -222,7 +222,8 @@ function uc_quote_method_settings() {
       $method_types[$method['quote']['type']][] = $method['title'];
     }
     if (is_array($method_types['order'])) {
-      $form['uc_quote_type_weight']['#description'] .= t('<br />The %list methods are compatible with any shipping type.', array('%list' => implode(', ', $method_types['order'])));
+      $count = count($method_types['order']);
+      $form['uc_quote_type_weight']['#description'] .= format_plural($count, '<br />The %list method is compatible with any shipping type.', '<br />The %list methods are compatible with any shipping type.', array('%list' => implode(', ', $method_types['order'])));
     }
     foreach ($shipping_types as $id => $title) {
       $form['uc_quote_type_weight'][$id] = array('#type' => 'weight',

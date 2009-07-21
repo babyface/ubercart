@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.25 2009/07/21 14:37:20 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.26 2009/07/21 14:51:21 islandusurper Exp $
 
 /**
  * @file
@@ -78,7 +78,6 @@ function uc_store_menu() {
     'title' => 'Customers',
     'description' => 'View and modify customer information and orders.',
     'page callback' => 'uc_store_customers',
-    'page arguments' => array(NULL, NULL, NULL, '25'),
     'access arguments' => array('view customers'),
     'weight' => -6,
     'type' => MENU_NORMAL_ITEM,
@@ -464,6 +463,10 @@ function uc_store_help($path, $arg) {
   switch ($path) {
     case 'admin/store/settings/store/edit/report':
       return t("Reporting to Ubercart.org happens once a week during a normal cron run and is logged in your site's watchdog. Reporting lets Ubercart.org calculate the total number of Ubercart installations and aggregate version information for use in development. Your site's data is never shared with anyone, and aggregate statistics displayed through Ubercart.org will be in the form of anonymous group statistics. Reporting will also allow Ubercart.org to report security notices back to your site if needed.");
+    case 'admin/store/customers':
+      return t('This table lists out all users on your site who have placed orders.');
+    case 'admin/store/customers/search':
+      return t('Use this page to search through users on your site who have placed orders.');
   }
 }
 
@@ -1399,8 +1402,14 @@ function uc_select_address($uid, $type = 'billing', $onchange = '', $title = NUL
   }
 
   $options = array('0' => t('Select one...'));
-  foreach ($addresses as $address) {
-    $options[drupal_to_js($address)] = check_plain($address['street1']);
+  foreach ($addresses as $key => $address) {
+    $option = $address['street1'];
+    // Check if the address is a duplicate (i.e. same address, but sent to different person)
+    if ((isset($addresses[$key - 1]) && $option == $addresses[$key - 1]['street1']) ||
+        (isset($addresses[$key + 1]) && $option == $addresses[$key + 1]['street1'])) {
+      $option .= ' - ' . $address['first_name'] . ' ' . $address['last_name'];
+    }
+    $options[drupal_to_js($address)] = check_plain($option);
   }
 
   $select = array(

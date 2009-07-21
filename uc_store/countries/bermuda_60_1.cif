@@ -1,5 +1,5 @@
 <?php
-// $Id: bermuda_60_1.cif,v 1.1.4.2 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: bermuda_60_1.cif,v 1.1.4.3 2009/07/21 14:51:20 islandusurper Exp $
 
 /**
  * First implement hook_install() using the name of the country as the base of
@@ -14,18 +14,23 @@ function bermuda_install() {
   // function uc_get_zone_ids($num) as the second argument for db_query() where
   // $num is the number of zones in the INSERT query.
   // VALUES = %d for ID, Parent Country ID, Zone Abbreviation, Zone Name
-  db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
-          ."(60, 'DEV', 'Devonshire'),"
-          ."(60, 'HAM', 'Hamilton'),"
-          ."(60, 'HA', 'Hamilton Municipality'),"
-          ."(60, 'PAG', 'Paget'),"
-          ."(60, 'PEM', 'Pembroke'),"
-          ."(60, 'SG', 'Saint George Municipality'),"
-          ."(60, 'SGE', 'Saint Georges'),"
-          ."(60, 'SAN', 'Sandys'),"
-          ."(60, 'SMI', 'Smiths'),"
-          ."(60, 'SOU', 'Southampton'),"
-          ."(60, 'WAR', 'Warwick')");
+  $zones = array(
+    array(60, 'DEV', 'Devonshire'),
+    array(60, 'HAM', 'Hamilton'),
+    array(60, 'HA', 'Hamilton Municipality'),
+    array(60, 'PAG', 'Paget'),
+    array(60, 'PEM', 'Pembroke'),
+    array(60, 'SG', 'Saint George Municipality'),
+    array(60, 'SGE', 'Saint Georges'),
+    array(60, 'SAN', 'Sandys'),
+    array(60, 'SMI', 'Smiths'),
+    array(60, 'SOU', 'Southampton'),
+    array(60, 'WAR', 'Warwick'),
+  );
+
+  foreach ($zones as $zone) {
+    db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES (%d, '%s', '%s')", $zone);
+  }
 
   // Use uc_set_address_format() with the country ID as the first argument and
   // an address format string as the second.  Documentation on address formats

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_reports.admin.inc,v 1.1.2.10 2009/07/21 14:37:22 islandusurper Exp $
+// $Id: uc_reports.admin.inc,v 1.1.2.11 2009/07/21 14:51:22 islandusurper Exp $
 
 /**
  * @file
@@ -668,7 +668,7 @@ function uc_reports_sales_year_form($form_state, $year) {
  * @see uc_reports_sales_year_form()
  */
 function uc_reports_sales_year_form_submit($form, &$form_state) {
-  drupal_goto('admin/store/reports/sales/year/'. $form_state['values']['year']);
+  $form_state['redirect'] = 'admin/store/reports/sales/year/'. $form_state['values']['year'];
 }
 
 /**
@@ -926,6 +926,6 @@ function uc_reports_sales_custom_form_submit($form, &$form_state) {
     $form_state['values']['detail'],
   );
 
-  drupal_goto('admin/store/reports/sales/custom/'. implode('/', $args));
+  $form_state['redirect'] = 'admin/store/reports/sales/custom/'. implode('/', $args);
 }
 

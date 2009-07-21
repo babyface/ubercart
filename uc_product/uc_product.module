@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.30 2009/07/21 14:37:17 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.31 2009/07/21 14:51:20 islandusurper Exp $
 
 /**
  * @file
@@ -526,17 +526,17 @@ function uc_product_form(&$node) {
     ),
     '#default_value' => isset($node->length_units) ? $node->length_units : variable_get('uc_length_unit', 'in'),
   );
-  $form['base']['dimensions']['length'] = array('#type' => 'textfield',
+  $form['base']['dimensions']['dim_length'] = array('#type' => 'textfield',
     '#title' => t('Length'),
     '#default_value' => isset($node->length) ? $node->length : '',
     '#size' => 10,
   );
-  $form['base']['dimensions']['width'] = array('#type' => 'textfield',
+ $form['base']['dimensions']['dim_width'] = array('#type' => 'textfield',
     '#title' => t('Width'),
     '#default_value' => isset($node->width) ? $node->width : '',
     '#size' => 10,
   );
-  $form['base']['dimensions']['height'] = array('#type' => 'textfield',
+  $form['base']['dimensions']['dim_height'] = array('#type' => 'textfield',
     '#title' => t('Height'),
     '#default_value' => isset($node->height) ? $node->height : '',
     '#size' => 10,
@@ -636,10 +636,10 @@ function uc_product_validate($node) {
  */
 function uc_product_insert($node) {
   if (!isset($node->unique_hash)) {
-    $node->unique_hash = md5($node->vid . $node->nid . $node->model . $node->list_price . $node->cost . $node->sell_price . $node->weight . $node->weight_units . $node->length . $node->width . $node->height . $node->length_units . $node->pkg_qty . $node->default_qty . $node->shippable . time());
+    $node->unique_hash = md5($node->vid . $node->nid . $node->model . $node->list_price . $node->cost . $node->sell_price . $node->weight . $node->weight_units . $node->dim_length . $node->dim_width . $node->dim_height . $node->length_units . $node->pkg_qty . $node->default_qty . $node->shippable . time());
   }
   db_query("INSERT INTO {uc_products} (vid, nid, model, list_price, cost, sell_price, weight, weight_units, length, width, height, length_units, pkg_qty, default_qty, unique_hash, ordering, shippable) VALUES (%d, %d, '%s', %f, %f, %f, %f, '%s', %f, %f, %f, '%s', %d, %d, '%s', %d, %d)",
-    $node->vid, $node->nid, $node->model, $node->list_price, $node->cost, $node->sell_price, $node->weight, $node->weight_units, $node->length, $node->width, $node->height, $node->length_units, $node->pkg_qty, $node->default_qty, $node->unique_hash, $node->ordering, $node->shippable
+    $node->vid, $node->nid, $node->model, $node->list_price, $node->cost, $node->sell_price, $node->weight, $node->weight_units, $node->dim_length, $node->dim_width, $node->dim_height, $node->length_units, $node->pkg_qty, $node->default_qty, $node->unique_hash, $node->ordering, $node->shippable
   );
 }
 
@@ -649,13 +649,13 @@ function uc_product_insert($node) {
 function uc_product_update($node) {
   if ($node->revision) {
     db_query("INSERT INTO {uc_products} (vid, nid, model, list_price, cost, sell_price, weight, weight_units, length, width, height, length_units, pkg_qty, default_qty, unique_hash, ordering, shippable) VALUES (%d, %d, '%s', %f, %f, %f, %f, '%s', %f, %f, %f, '%s', %d, %d, '%s', %d, %d)",
-      $node->vid, $node->nid, $node->model, $node->list_price, $node->cost, $node->sell_price, $node->weight, $node->weight_units, $node->length, $node->width, $node->height, $node->length_units, $node->pkg_qty, $node->default_qty, $node->unique_hash, $node->ordering, $node->shippable
+      $node->vid, $node->nid, $node->model, $node->list_price, $node->cost, $node->sell_price, $node->weight, $node->weight_units, $node->dim_length, $node->dim_width, $node->dim_height, $node->length_units, $node->pkg_qty, $node->default_qty, $node->unique_hash, $node->ordering, $node->shippable
     );
   }
   else {
     //drupal_set_message('<pre>'. print_r($node, TRUE) .'</pre>');drupal_set_message('<pre>'. print_r($node, TRUE) .'</pre>');
     db_query("UPDATE {uc_products} SET model = '%s', list_price = %f, cost = %f, sell_price = %f, weight = %f, weight_units = '%s', length = %f, width = %f, height = %f, length_units = '%s', pkg_qty = %d, default_qty = %d, ordering = %d, shippable = %d WHERE vid = %d",
-      $node->model, $node->list_price, $node->cost, $node->sell_price, $node->weight, $node->weight_units, $node->length, $node->width, $node->height, $node->length_units, $node->pkg_qty, $node->default_qty, $node->ordering, $node->shippable, $node->vid);
+      $node->model, $node->list_price, $node->cost, $node->sell_price, $node->weight, $node->weight_units, $node->dim_length, $node->dim_width, $node->dim_height, $node->length_units, $node->pkg_qty, $node->default_qty, $node->ordering, $node->shippable, $node->vid);
   }
 }
 

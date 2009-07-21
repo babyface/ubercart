@@ -1,5 +1,5 @@
 <?php
-// $Id: zimbabwe_716_1.cif,v 1.1.4.3 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: zimbabwe_716_1.cif,v 1.1.4.4 2009/07/21 14:51:20 islandusurper Exp $
 
 /**
  * First implement hook_install() using the name of the country as the base of
@@ -14,17 +14,22 @@ function zimbabwe_install() {
   // function uc_get_zone_ids($num) as the second argument for db_query() where
   // $num is the number of zones in the INSERT query.
   // VALUES = %d for ID, Parent Country ID, Zone Abbreviation, Zone Name
-  db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
-          ."(716, 'BW', 'Bulawayo'),"
-          ."(716, 'HR', 'Harare'),"
-          ."(716, 'MC', 'Manicaland'),"
-          ."(716, 'MSC', 'Mashonaland Central'),"
-          ."(716, 'MSE', 'Mashonaland East'),"
-          ."(716, 'MSW', 'Mashonaland West'),"
-          ."(716, 'MV', 'Masvingo'),"
-          ."(716, 'MBN', 'Matabeleland North'),"
-          ."(716, 'MBS', 'Matabeleland South'),"
-          ."(716, 'ML', 'Midlands');");
+  $zones = array(
+    array(716, 'BW', 'Bulawayo'),
+    array(716, 'HR', 'Harare'),
+    array(716, 'MC', 'Manicaland'),
+    array(716, 'MSC', 'Mashonaland Central'),
+    array(716, 'MSE', 'Mashonaland East'),
+    array(716, 'MSW', 'Mashonaland West'),
+    array(716, 'MV', 'Masvingo'),
+    array(716, 'MBN', 'Matabeleland North'),
+    array(716, 'MBS', 'Matabeleland South'),
+    array(716, 'ML', 'Midlands'),
+  );
+
+  foreach ($zones as $zone) {
+    db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES (%d, '%s', '%s')", $zone);
+  }
 
   // Use uc_set_address_format() with the country ID as the first argument and
   // an address format string as the second.  Documentation on address formats

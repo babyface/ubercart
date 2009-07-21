@@ -1,5 +1,5 @@
 <?php
-// $Id: china_156_1.cif,v 1.1.4.3 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: china_156_1.cif,v 1.1.4.4 2009/07/21 14:51:20 islandusurper Exp $
 
 /**
 * First implement hook_install() using the name of the country as the base of
@@ -14,41 +14,46 @@ function china_install() {
   // function uc_get_zone_ids($num) as the second argument for db_query() where
   // $num is the number of zones in the INSERT query.
   // VALUES = %d for ID, Parent Country ID, Zone Abbreviation, Zone Name
-  db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
-          ."(156, '京', '北京'),"
-          ."(156, '沪', '上海'),"
-          ."(156, '津', '天津'),"
-          ."(156, '渝', '重庆'),"
-          ."(156, '冀', '河北'),"
-          ."(156, '豫', '河南'),"
-          ."(156, '鄂', '湖北'),"
-          ."(156, '湘', '湖南'),"
-          ."(156, '苏', '江苏'),"
-          ."(156, '赣', '江西'),"
-          ."(156, '辽', '辽宁'),"
-          ."(156, '吉', '吉林'),"
-          ."(156, '黑', '黑龙江'),"
-          ."(156, '陕', '陕西'),"
-          ."(156, '鲁', '山东'),"
-          ."(156, '晋', '山西'),"
-          ."(156, '川', '四川'),"
-          ."(156, '青', '青海'),"
-          ."(156, '皖', '安徽'),"
-          ."(156, '琼', '海南'),"
-          ."(156, '粤', '广东'),"
-          ."(156, '桂', '广西'),"
-          ."(156, '贵', '贵州'),"
-          ."(156, '浙', '浙江'),"
-          ."(156, '闽', '福建'),"
-          ."(156, '甘', '甘肃'),"
-          ."(156, '云', '云南'),"
-          ."(156, '蒙', '内蒙古'),"
-          ."(156, '宁', '宁夏'),"
-          ."(156, '新', '新疆'),"
-          ."(156, '藏', '西藏'),"
-          ."(156, '港', '香港'),"
-          ."(156, '澳', '澳门'),"
-          ."(156, '台', '台湾');");
+  $zones = array(
+    array(156, '京', '北京'),
+    array(156, '沪', '上海'),
+    array(156, '津', '天津'),
+    array(156, '渝', '重庆'),
+    array(156, '冀', '河北'),
+    array(156, '豫', '河南'),
+    array(156, '鄂', '湖北'),
+    array(156, '湘', '湖南'),
+    array(156, '苏', '江苏'),
+    array(156, '赣', '江西'),
+    array(156, '辽', '辽宁'),
+    array(156, '吉', '吉林'),
+    array(156, '黑', '黑龙江'),
+    array(156, '陕', '陕西'),
+    array(156, '鲁', '山东'),
+    array(156, '晋', '山西'),
+    array(156, '川', '四川'),
+    array(156, '青', '青海'),
+    array(156, '皖', '安徽'),
+    array(156, '琼', '海南'),
+    array(156, '粤', '广东'),
+    array(156, '桂', '广西'),
+    array(156, '贵', '贵州'),
+    array(156, '浙', '浙江'),
+    array(156, '闽', '福建'),
+    array(156, '甘', '甘肃'),
+    array(156, '云', '云南'),
+    array(156, '蒙', '内蒙古'),
+    array(156, '宁', '宁夏'),
+    array(156, '新', '新疆'),
+    array(156, '藏', '西藏'),
+    array(156, '港', '香港'),
+    array(156, '澳', '澳门'),
+    array(156, '台', '台湾'),
+  );
+
+  foreach ($zones as $zone) {
+    db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES (%d, '%s', '%s')", $zone);
+  }
 
   uc_set_address_format(156,
     "!company\r\n!last_name !first_name\r\n!street1\r\n!street2\r\n"

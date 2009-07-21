@@ -1,5 +1,5 @@
 <?php
-// $Id: slovak_703_1.cif,v 1.1.4.2 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: slovak_703_1.cif,v 1.1.4.3 2009/07/21 14:51:20 islandusurper Exp $
 // SLOVAKIA (Slovak Republic)                      SK      SVK     703
 function slovak_install() {
   // VALUES = Country ID, Country Name, 2-digit Code, 3-digit Code, File Version
@@ -23,15 +23,20 @@ function slovak_install() {
   //  SK-TC Trenčín Region
   //  SK-ZI Žilina Region
 
-  db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
-          ."(703, 'SK-BC', 'Banskobystrický kraj'),"
-          ."(703, 'SK-BL', 'Bratislavský kraj'),"
-          ."(703, 'SK-KI', 'Košický kraj'),"
-          ."(703, 'SK-NJ', 'Nitriansky kraj'),"
-          ."(703, 'SK-PV', 'Prešovský kraj'),"
-          ."(703, 'SK-TA', 'Trenčiansky kraj'),"
-          ."(703, 'SK-TC', 'Trnavský kraj'),"
-          ."(703, 'SK-ZI', 'Žilinský kraj')");
+  $zones = array(
+    array(703, 'SK-BC', 'Banskobystrický kraj'),
+    array(703, 'SK-BL', 'Bratislavský kraj'),
+    array(703, 'SK-KI', 'Košický kraj'),
+    array(703, 'SK-NJ', 'Nitriansky kraj'),
+    array(703, 'SK-PV', 'Prešovský kraj'),
+    array(703, 'SK-TA', 'Trenčiansky kraj'),
+    array(703, 'SK-TC', 'Trnavský kraj'),
+    array(703, 'SK-ZI', 'Žilinský kraj'),
+  );
+
+  foreach ($zones as $zone) {
+    db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES (%d, '%s', '%s')", $zone);
+  }
 
   uc_set_address_format(703,
     "!company\r\n!first_name !last_name\r\n!street1\r\n!street2"

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.14 2009/07/21 14:37:20 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.15 2009/07/21 14:51:21 islandusurper Exp $
 
 /**
  * @file
@@ -84,8 +84,6 @@ function uc_store_customers($message = NULL, $query = NULL, $count_query = NULL,
                       ." GROUP BY o.uid, o.billing_last_name, o.billing_first_name ";
         break;
     }
-
-    $message = t('The following users on your site have placed orders:');
   }
 
   $header = array(
@@ -148,11 +146,8 @@ function uc_store_customers($message = NULL, $query = NULL, $count_query = NULL,
 
   drupal_add_js(drupal_get_path('module', 'uc_store') .'/uc_store.js');
 
-  $output = '<p>'. $message .'</p>'
-          . theme('table', $header, $rows, array('width' => '100%', 'class' => 'uc-customer-table'))
-           .'<br />'. theme_pager(NULL, $page_length);
-
-  return $output;
+  return theme('table', $header, $rows, array('width' => '100%', 'class' => 'uc-customer-table'))
+       . theme('pager');
 }
 
 /**
@@ -221,20 +216,17 @@ function uc_store_customer_search() {
  * @see uc_store_customer_search_form_submit()
  */
 function uc_store_customer_search_form() {
+  $form = array();
+
   $form['search'] = array(
     '#type' => 'fieldset',
     '#title' => t('Search options'),
+    '#description' => t('Search for customers based on any of the following fields. Use * as a wildcard to match any character.') .'<br />'. t("For example, searching by last name for 's*' will return all customers whose last name starts with an s.") .'<br />'. t('(<em>Leave a field empty to ignore it in the search.</em>)'),
     '#collapsible' => TRUE,
     '#collapsed' => arg(4) == 'results' ? TRUE : FALSE,
   );
 
-  $form['search']['table1'] = array('#value' => '<table><tbody style="border: 0px;"><tr><td colspan="4">');
-
-  $form['search']['desc'] = array(
-    '#value' => '<div>'. t("Search for customers based on any of the following fields. Use * as a wildcard to match any character.<br/>For example, searching by last name for 's*' will return all customers whose last name starts with an s.<br/>(<em>Leave a field empty to ignore it in the search.</em>)") .'</div>',
-  );
-
-  $form['search']['table2'] = array('#value' => '</td></tr><tr><td>');
+  $form['search']['table1'] = array('#value' => '<table><tbody style="border: 0px;"><tr><td>');
 
   $form['search']['first_name'] = array(
     '#type' => 'textfield',
@@ -244,7 +236,7 @@ function uc_store_customer_search_form() {
     '#maxlength' => 32,
   );
 
-  $form['search']['table3'] = array('#value' => '</td><td>');
+  $form['search']['table2'] = array('#value' => '</td><td>');
 
   $form['search']['last_name'] = array(
     '#type' => 'textfield',
@@ -254,7 +246,7 @@ function uc_store_customer_search_form() {
     '#maxlength' => 32,
   );
 
-  $form['search']['table4'] = array('#value' => '</td><td>');
+  $form['search']['table3'] = array('#value' => '</td><td>');
 
   $form['search']['email'] = array(
     '#type' => 'textfield',
@@ -264,14 +256,14 @@ function uc_store_customer_search_form() {
     '#maxlength' => 96,
   );
 
-  $form['search']['table5'] = array('#value' => '</td><td>');
+  $form['search']['table4'] = array('#value' => '</td><td>');
 
   $form['search']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Search'),
   );
 
-  $form['search']['table6'] = array('#value' => '</td></tr></tbody></table>');
+  $form['search']['table5'] = array('#value' => '</td></tr></tbody></table>');
 
   return $form;
 }

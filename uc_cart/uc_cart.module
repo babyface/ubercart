@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.24 2009/07/21 14:37:20 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.25 2009/07/21 14:51:20 islandusurper Exp $
 
 /**
  * @file
@@ -330,18 +330,41 @@ function uc_cart_user($op, &$edit, &$user, $category = NULL) {
 function uc_cart_form_alter(&$form, $form_state, $form_id) {
   // Redirect shopper back to checkout page if they go to login from there.
   if ($form_id == 'user_login' || $form_id == 'user_edit' || $form_id == 'user_register') {
+    // Parse the existing #action url.
+    $p = parse_url($form['#action']);
+    $query = array();
+    if ($p['query']) {
+      parse_str($p['query'], $query);
+    }
+    if ($p['scheme']) {
+      // Path is an absolute URL.
+      $path = $p['scheme'] .'://'
+        . ($p['user'] ? $p['user'] . ($p['pass'] ? ':'. $p['pass'] : '') .'@' : '')
+        . ($p['host'] ? $p['host'] : '')
+        . ($p['path'] ? $p['path'] : '');
+    }
+    else {
+      // Path needs to be an internal path so we can pass it to url() later.
+      // Strip off the base path.
+      $path = substr($p['path'], drupal_strlen(base_path()));
+    }
+
+    // Figure out the destination.
     if ($_SESSION['checkout-redirect'] == TRUE) {
-      $form['#action'] = url($_GET['q'], array('query' => 'destination=cart/checkout'));
+      $query['destination'] = 'cart/checkout';
     }
     else {
       // Compare the referer to checkout page URLs.
       if (uc_referer_check('cart/checkout') && uc_referer_uri() != '') {
-        $form['#action'] = url($_GET['q'], array('query' => 'destination=cart/checkout'));
+        $query['destination'] = 'cart/checkout';
       }
       elseif (uc_referer_check(array('cart/checkout/review', 'cart/checkout/complete')) && uc_referer_uri() != '') {
-        $form['#action'] = url($_GET['q'], array('query' => 'destination=user'));
+        $query['destination'] = 'user';
       }
     }
+
+    // Build the new #action url.
+    $form['#action'] = url($path, array('query' => $query, 'fragment' => $p['fragment']));
   }
 
   if ($form_id == 'user_login' || $form_id == 'user_login_block') {
@@ -460,6 +483,7 @@ function uc_cart_block($op = 'list', $delta = 0, $edit = array()) {
 
               if (!empty($display_item)) {
                 $items[] = array(
+                  'nid' => $display_item['nid']['#value'],
                   'qty' => t('@qty&times;', array('@qty' => $display_item['qty']['#default_value'])),
                   'title' => $display_item['title']['#value'],
                   'price' => $display_item['#total'],
@@ -592,9 +616,7 @@ function theme_uc_cart_block_title($title, $icon_class = 'cart-empty', $collapsi
   // Add the main title span and text, with or without the arrow based on the
   // cart block collapsibility settings.
   if ($collapsible) {
-    $output .= '<span class="cart-block-title-bar" alt="'. t('Show/hide shopping cart contents.')
-              .'" title="'. t('Show/hide shopping cart contents.') .'">'
-             . $title .'<span class="cart-block-arrow"></span></span>';
+    $output .= '<span class="cart-block-title-bar" title="'. t('Show/hide shopping cart contents.') .'">'. $title .'<span class="cart-block-arrow"></span></span>';
   }
   else {
     $output .= '<span class="cart-block-title-bar">'. $title .'</span>';
@@ -1092,9 +1114,9 @@ function uc_cart_view_table($table) {
 
     $table[$i]['remove']['#cell_attributes'] = array('align' => 'center', 'class' => 'remove');
     $table[$i]['image']['#cell_attributes'] = array('class' => 'image');
-    $table[$i]['desc']['#cell_attributes'] = array('width' => '100%', 'class' => 'desc');
+    $table[$i]['desc']['#cell_attributes'] = array('class' => 'desc');
     $table[$i]['qty']['#cell_attributes'] = array('class' => 'qty');
-    $table[$i]['total']['#cell_attributes'] = array('nowrap' => 'nowrap', 'class' => 'price');
+    $table[$i]['total']['#cell_attributes'] = array('class' => 'price');
     $table[$i]['#attributes'] = array('valign' => 'top');
   }
 
@@ -1108,7 +1130,6 @@ function uc_cart_view_table($table) {
       '#cell_attributes' => array(
         'colspan' => 'full',
         'align' => 'right',
-        'nowrap' => 'nowrap',
         'class' => 'subtotal',
       ),
     ),

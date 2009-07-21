@@ -14,50 +14,55 @@ function lithuania_install() {
   // function uc_get_zone_ids($num) as the second argument for db_query() where
   // $num is the number of zones in the INSERT query.
   // VALUES = %d for ID, Parent Country ID, Zone Abbreviation, Zone Name
-  db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
-    ."(440, 'AK', 'Akmenės rajonas'),"
-    ."(440, 'AL', 'Alytaus rajonas'),"
-    ."(440, 'AN', 'Anykščių rajonas'),"
-    ."(440, 'BIR', 'Biržų rajonas'),"
-    ."(440, 'IG', 'Ignalinos rajonas'),"
-    ."(440, 'JON', 'Jonavos rajonas'),"
-    ."(440, 'JO', 'Joniškio rajonas'),"
-    ."(440, 'JUR', 'Jurbarko rajonas'),"
-    ."(440, 'KAI', 'Kaišiadorių rajonas'),"
-    ."(440, 'KA', 'Kauno rajonas'),"
-    ."(440, 'KE', 'Kėdainių rajonas'),"
-    ."(440, 'KEL', 'Kelmės rajonas'),"
-    ."(440, 'KLA', 'Klaipėdos rajonas'),"
-    ."(440, 'KR', 'Kretingos rajonas'),"
-    ."(440, 'KU', 'Kupiškio rajonas'),"
-    ."(440, 'LA', 'Lazdijų rajonas'),"
-    ."(440, 'MA', 'Mažeikių rajonas'),"
-    ."(440, 'MO', 'Molėtų rajonas'),"
-    ."(440, 'PA', 'Pakruojo rajonas'),"
-    ."(440, 'PAN', 'Panevėžio rajonas'),"
-    ."(440, 'PAS', 'Pasvalio rajonas'),"
-    ."(440, 'PLU', 'Plungės rajonas'),"
-    ."(440, 'PR', 'Prienų rajonas'),"
-    ."(440, 'RA', 'Radviliškio rajonas'),"
-    ."(440, 'RAS', 'Raseinių rajonas'),"
-    ."(440, 'RO', 'Rokiškio rajonas'),"
-    ."(440, 'SK', 'Skuodo rajonas'),"
-    ."(440, 'SA', 'Šakių rajonas'),"
-    ."(440, 'SAL', 'Šalčininkų rajonas'),"
-    ."(440, 'SIA', 'Šiaulių rajonas'),"
-    ."(440, 'SI', 'Šilalės rajonas'),"
-    ."(440, 'SIL', 'Šilutės rajonas'),"
-    ."(440, 'SIR', 'Širvintų rajonas'),"
-    ."(440, 'SV', 'Švenčionių rajonas'),"
-    ."(440, 'TA', 'Tauragės rajonas'),"
-    ."(440, 'TE', 'Telšių rajonas'),"
-    ."(440, 'TR', 'Trakų rajonas'),"
-    ."(440, 'UK', 'Ukmergės rajonas'),"
-    ."(440, 'UT', 'Utenos rajonas'),"
-    ."(440, 'VA', 'Varėnos rajonas'),"
-    ."(440, 'VI', 'Vilkaviškio rajonas'),"
-    ."(440, 'VIL', 'Vilniaus rajonas'),"
-    ."(440, 'ZAR', 'Zarasų rajonas');");
+  $zones = array(
+    array(440, 'AK', 'Akmenės rajonas'),
+    array(440, 'AL', 'Alytaus rajonas'),
+    array(440, 'AN', 'Anykščių rajonas'),
+    array(440, 'BIR', 'Biržų rajonas'),
+    array(440, 'IG', 'Ignalinos rajonas'),
+    array(440, 'JON', 'Jonavos rajonas'),
+    array(440, 'JO', 'Joniškio rajonas'),
+    array(440, 'JUR', 'Jurbarko rajonas'),
+    array(440, 'KAI', 'Kaišiadorių rajonas'),
+    array(440, 'KA', 'Kauno rajonas'),
+    array(440, 'KE', 'Kėdainių rajonas'),
+    array(440, 'KEL', 'Kelmės rajonas'),
+    array(440, 'KLA', 'Klaipėdos rajonas'),
+    array(440, 'KR', 'Kretingos rajonas'),
+    array(440, 'KU', 'Kupiškio rajonas'),
+    array(440, 'LA', 'Lazdijų rajonas'),
+    array(440, 'MA', 'Mažeikių rajonas'),
+    array(440, 'MO', 'Molėtų rajonas'),
+    array(440, 'PA', 'Pakruojo rajonas'),
+    array(440, 'PAN', 'Panevėžio rajonas'),
+    array(440, 'PAS', 'Pasvalio rajonas'),
+    array(440, 'PLU', 'Plungės rajonas'),
+    array(440, 'PR', 'Prienų rajonas'),
+    array(440, 'RA', 'Radviliškio rajonas'),
+    array(440, 'RAS', 'Raseinių rajonas'),
+    array(440, 'RO', 'Rokiškio rajonas'),
+    array(440, 'SK', 'Skuodo rajonas'),
+    array(440, 'SA', 'Šakių rajonas'),
+    array(440, 'SAL', 'Šalčininkų rajonas'),
+    array(440, 'SIA', 'Šiaulių rajonas'),
+    array(440, 'SI', 'Šilalės rajonas'),
+    array(440, 'SIL', 'Šilutės rajonas'),
+    array(440, 'SIR', 'Širvintų rajonas'),
+    array(440, 'SV', 'Švenčionių rajonas'),
+    array(440, 'TA', 'Tauragės rajonas'),
+    array(440, 'TE', 'Telšių rajonas'),
+    array(440, 'TR', 'Trakų rajonas'),
+    array(440, 'UK', 'Ukmergės rajonas'),
+    array(440, 'UT', 'Utenos rajonas'),
+    array(440, 'VA', 'Varėnos rajonas'),
+    array(440, 'VI', 'Vilkaviškio rajonas'),
+    array(440, 'VIL', 'Vilniaus rajonas'),
+    array(440, 'ZAR', 'Zarasų rajonas'),
+  );
+
+  foreach ($zones as $zone) {
+    db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES (%d, '%s', '%s')", $zone);
+  }
 
   // Use uc_set_address_format() with the country ID as the first argument and
   // an address format string as the second.

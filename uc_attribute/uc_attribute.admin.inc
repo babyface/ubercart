@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.16 2009/07/21 14:37:21 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.17 2009/07/21 14:51:23 islandusurper Exp $
 
 /**
  * @file
@@ -239,8 +239,9 @@ function uc_attribute_options_form($form_state, $attribute) {
       ),
       'ordering' => array(
         '#type' => 'weight',
+        '#delta' => 50,
         '#default_value' => $data->ordering,
-        '#attributes' => array('class' => 'uc-attribute-option-table-weight'),
+        '#attributes' => array('class' => 'uc-attribute-option-table-ordering'),
       ),
       'ops' => array(
         '#value' => l(t('edit'), 'admin/store/attributes/'. $attribute->aid .'/options/'. $key .'/edit') .' '.
@@ -311,7 +312,7 @@ function theme_uc_attribute_options_form($form) {
     );
   }
 
-  drupal_add_tabledrag('uc-attribute-option-table', 'order', 'sibling', 'uc-attribute-option-table-weight');
+  drupal_add_tabledrag('uc-attribute-option-table', 'order', 'sibling', 'uc-attribute-option-table-ordering');
 
   $output = theme('table', $header, $rows, array('id' => 'uc-attribute-option-table'));
 
@@ -807,8 +808,9 @@ function uc_object_options_form($form_state, $object, $type) {
         );
         $form['attributes'][$aid]['options'][$oid]['ordering'] = array(
           '#type' => 'weight',
+          '#delta' => 50,
           '#default_value' => is_null($option->ordering) ? $option->default_ordering : $option->ordering,
-          '#attributes' => array('class' => 'uc-attribute-option-table-weight'),
+          '#attributes' => array('class' => 'uc-attribute-option-table-ordering'),
         );
       }
 
@@ -855,7 +857,7 @@ function uc_object_options_form($form_state, $object, $type) {
  * @see uc_object_options_form()
  */
 function theme_uc_object_options_form($form) {
-  $header = array(t('Options'), t('Default'), t('Cost'), t('Price'), t('Weight'), t('List position'));
+  $header = array(array('data' => '&nbsp;&nbsp;'. t('Options')) + theme('table_select_header_cell'), t('Default'), t('Cost'), t('Price'), t('Weight'), t('List position'));
   $table_id_num = $tables = 0;
 
   foreach (element_children($form['attributes']) as $key) {
@@ -880,7 +882,7 @@ function theme_uc_object_options_form($form) {
         );
       }
       $table_id = 'uc-attribute-option-table-'. $table_id_num++;
-      drupal_add_tabledrag($table_id, 'order', 'sibling', 'uc-attribute-option-table-weight');
+      drupal_add_tabledrag($table_id, 'order', 'sibling', 'uc-attribute-option-table-ordering');
     }
     else {
       $row = array();

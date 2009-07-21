@@ -1,5 +1,5 @@
 <?php
-// $Id: greenland_304_1.cif,v 1.1.4.3 2008/11/07 21:13:24 islandusurper Exp $
+// $Id: greenland_304_1.cif,v 1.1.4.4 2009/07/21 14:51:20 islandusurper Exp $
 
 /**
  * First implement hook_install() using the name of the country as the base of
@@ -14,39 +14,44 @@ function greenland_install() {
   // function uc_get_zone_ids($num) as the second argument for db_query() where
   // $num is the number of zones in the INSERT query.
   // VALUES = %d for ID, Parent Country ID, Zone Abbreviation, Zone Name
-  db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES "
-          ."(304, 'NK', 'Nuuk'),"
-          ."(304, 'NQ', 'Nuussuaq'),"
-          ."(304, 'KQ', 'Kangerlussuaq'),"
-          ."(304, 'ST', 'Sisimiut'),"
-          ."(304, 'MQ', 'Maniitsoq'),"
-          ."(304, 'TQ', 'Tasiilaq'),"
-          ."(304, 'KK', 'Kulusuk'),"
-          ."(304, 'AP', 'Alluitsup Paa'),"
-          ."(304, 'QQ', 'Qaqortoq'),"
-          ."(304, 'NA', 'Narsaq'),"
-          ."(304, 'NK', 'Nanortalik'),"
-          ."(304, 'NR', 'Narsarsuaq'),"
-          ."(304, 'IQ', 'Ikerasassuaq'),"
-          ."(304, 'KT', 'Kangilinnguit'),"
-          ."(304, 'AK', 'Arsuk'),"
-          ."(304, 'PT', 'Paamiut'),"
-          ."(304, 'AT', 'Aasiaat'),"
-          ."(304, 'QT', 'Qasigiannguit'),"
-          ."(304, 'IL', 'Ilulissat'),"
-          ."(304, 'QE', 'Qeqertarsuaq'),"
-          ."(304, 'KA', 'Kangaatsiaq'),"
-          ."(304, 'UM', 'Uummannaq'),"
-          ."(304, 'UP', 'Upernavik'),"
-          ."(304, 'QA', 'Qaarsut'),"
-          ."(304, 'PT', 'Pituffik'),"
-          ."(304, 'QN', 'Qaanaaq'),"
-          ."(304, 'SN', 'Station Nord'),"
-          ."(304, 'IT', 'Ittoqqortoormiit'),"
-          ."(304, 'MV', 'Mestersvig'),"
-          ."(304, 'DH', 'Danmarkshavn'),"
-          ."(304, 'CP', 'Constable Pynt'),"
-          ."(304, 'SS', 'Slædepatruljen Sirius');");
+  $zones = array(
+    array(304, 'NK', 'Nuuk'),
+    array(304, 'NQ', 'Nuussuaq'),
+    array(304, 'KQ', 'Kangerlussuaq'),
+    array(304, 'ST', 'Sisimiut'),
+    array(304, 'MQ', 'Maniitsoq'),
+    array(304, 'TQ', 'Tasiilaq'),
+    array(304, 'KK', 'Kulusuk'),
+    array(304, 'AP', 'Alluitsup Paa'),
+    array(304, 'QQ', 'Qaqortoq'),
+    array(304, 'NA', 'Narsaq'),
+    array(304, 'NK', 'Nanortalik'),
+    array(304, 'NR', 'Narsarsuaq'),
+    array(304, 'IQ', 'Ikerasassuaq'),
+    array(304, 'KT', 'Kangilinnguit'),
+    array(304, 'AK', 'Arsuk'),
+    array(304, 'PT', 'Paamiut'),
+    array(304, 'AT', 'Aasiaat'),
+    array(304, 'QT', 'Qasigiannguit'),
+    array(304, 'IL', 'Ilulissat'),
+    array(304, 'QE', 'Qeqertarsuaq'),
+    array(304, 'KA', 'Kangaatsiaq'),
+    array(304, 'UM', 'Uummannaq'),
+    array(304, 'UP', 'Upernavik'),
+    array(304, 'QA', 'Qaarsut'),
+    array(304, 'PT', 'Pituffik'),
+    array(304, 'QN', 'Qaanaaq'),
+    array(304, 'SN', 'Station Nord'),
+    array(304, 'IT', 'Ittoqqortoormiit'),
+    array(304, 'MV', 'Mestersvig'),
+    array(304, 'DH', 'Danmarkshavn'),
+    array(304, 'CP', 'Constable Pynt'),
+    array(304, 'SS', 'Slædepatruljen Sirius'),
+  );
+
+  foreach ($zones as $zone) {
+    db_query("INSERT INTO {uc_zones} (zone_country_id, zone_code, zone_name) VALUES (%d, '%s', '%s')", $zone);
+  }
 
   // Use uc_set_address_format() with the country ID as the first argument and
   // an address format string as the second.  Documentation on address formats
