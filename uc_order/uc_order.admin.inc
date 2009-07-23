@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.20 2009/07/21 14:37:18 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.21 2009/07/23 18:47:07 islandusurper Exp $
 
 /**
  * @file
@@ -1591,8 +1591,8 @@ function uc_order_product_select_form($form_state, $order_id, $options = array()
  * @see uc_order_add_product_form()
  */
 function uc_order_add_product($order, $product) {
-  $output = '<div style="margin: 1em;"><strong>Add '. $product->title .'</strong>'
-          . drupal_get_form('uc_order_add_product_form', $order->order_id, $product->nid) .'</div>';
+  $output = '<div style="margin: 1em;"><strong>Add '. check_plain($product->title) .'</strong>'
+          . drupal_get_form('uc_order_add_product_form', $order, $product) .'</div>';
 
   print $output;
   exit();
@@ -1603,10 +1603,10 @@ function uc_order_add_product($order, $product) {
  *
  * @see uc_order_add_product_form()
  */
-function uc_order_add_product_form($form_state, $order_id, $nid) {
+function uc_order_add_product_form($form_state, $order, $node) {
   $form['nid'] = array(
     '#type' => 'hidden',
-    '#value' => $nid,
+    '#value' => $node->nid,
   );
   $form['add-qty'] = array(
     '#type' => 'textfield',
@@ -1618,13 +1618,19 @@ function uc_order_add_product_form($form_state, $order_id, $nid) {
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Add to order'),
-    '#attributes' => array('onclick' => 'return add_product_to_order('. $order_id .', '. $nid .');')
+    '#attributes' => array('onclick' => 'return add_product_to_order('. $order->order_id .', '. $node->nid .');')
   );
   $form['cancel'] = array(
     '#type' => 'submit',
     '#value' => t('Cancel'),
     '#attributes' => array('onclick' => "\$('#add-product-button').click(); return false;"),
   );
+  $form['node'] = array(
+    '#type' => 'value',
+    '#value' => $node,
+  );
+
+  uc_form_alter($form, $form_state, __FUNCTION__);
 
   return $form;
 }

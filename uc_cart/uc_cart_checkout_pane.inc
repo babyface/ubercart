@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.5.2.8 2009/07/21 14:37:20 islandusurper Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.5.2.9 2009/07/23 18:47:06 islandusurper Exp $
 
 /**
  * @file
@@ -33,10 +33,7 @@ function uc_checkout_pane_cart($op) {
         'extras' => array(),
       );
       foreach ($items as $item) {
-        $desc = check_plain($item->title);
-        foreach (module_implements('cart_item_description') as $module) {
-          $desc .= module_invoke($module, 'cart_item_description', $item);
-        }
+        $desc = check_plain($item->title) . uc_product_get_description($item);
 
         $price_info = array(
           'price' => $item->price,
@@ -601,10 +598,7 @@ function theme_cart_review_table($show_subtotal = TRUE) {
     $total = uc_price($price_info, $context);
     $subtotal += $total;
 
-    $description = check_plain($item->title);
-    foreach (module_implements('cart_item_description') as $module) {
-      $description .= module_invoke($module, 'cart_item_description', $item);
-    }
+    $description = check_plain($item->title) . uc_product_get_description($item);
 
     // Remove node from context to prevent the price from being altered.
     unset($context['subject']);

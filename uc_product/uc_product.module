@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.31 2009/07/21 14:51:20 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.32 2009/07/23 18:47:06 islandusurper Exp $
 
 /**
  * @file
@@ -1172,11 +1172,7 @@ function uc_product_cart_display($item) {
     '#maxlength' => 6
   );
 
-  $description = '';
-  foreach (module_implements('cart_item_description') as $module) {
-    $description .= module_invoke($module, 'cart_item_description', $item);
-  }
-  if ($description) {
+  if ($description = uc_product_get_description($item)) {
     $element['description'] = array('#value' => $description);
   }
 
@@ -1457,6 +1453,7 @@ function uc_product_add_to_cart_form($form_state, $node) {
   $form['#validate'][] = 'uc_product_add_to_cart_form_validate';
   $form['#submit'][] = 'uc_product_add_to_cart_form_submit';
   $form['nid'] = array('#type' => 'value', '#value' => $node->nid);
+
   if ($node->default_qty > 0 && variable_get('uc_product_add_to_cart_qty', FALSE)) {
     $form['qty'] = array('#type' => 'textfield',
       '#title' => t('Quantity'),
@@ -1468,6 +1465,7 @@ function uc_product_add_to_cart_form($form_state, $node) {
   else {
     $form['qty'] = array('#type' => 'hidden', '#value' => 1);
   }
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' =>  variable_get('uc_product_add_to_cart_text', t('Add to cart')),
@@ -1476,6 +1474,14 @@ function uc_product_add_to_cart_form($form_state, $node) {
       'class' => 'node-add-to-cart',
     ),
   );
+
+  $form['node'] = array(
+    '#type' => 'value',
+    '#value' => $node,
+  );
+
+  uc_form_alter($form, $form_state, __FUNCTION__);
+
   return $form;
 }
 
@@ -1776,6 +1782,32 @@ function uc_product_get_image_widget() {
 }
 
 /**
+ * Return HTML for the product description.
+ *
+ * Modules adding information use hook_product_description() and modules
+ * wanting to alter the output before rendering can do so by implementing
+ * hook_product_description_alter(). By default, all descriptions supplied by
+ * modules via hook_product_description() are concatenated together.
+ *
+ * NOTE: hook_product_description() supercedes the deprecated
+ * hook_cart_item_description().
+ *
+ * @param $product
+ *   Product
+ * @return
+ *   HTML rendered product description.
+ */
+function uc_product_get_description($product) {
+  // Run through implementations of hook_product_description()
+  $description = module_invoke_all('product_description', $product);
+
+  // Now allow alterations via hook_product_description_alter()
+  drupal_alter('product_description', $description, $product);
+
+  return drupal_render($description);
+}
+
+/**
  * Load a product class.
  */
 function uc_product_class_load($class_id) {
@@ -1975,13 +2007,8 @@ function uc_product_add_default_image_field($type = NULL) {
 
     if (count($instances) < 1) {
       // Only add the field if it doesn't exist. Don't overwrite any changes.
-      if (content_field_instance_create($field)) {
-        variable_set('uc_image_'. $type, $field_name);
-        drupal_set_message(t('Created field %label.', array('%label' => $label)));
-      }
-      else {
-        drupal_set_message(t('There was a problem creating field %label.', array('%label' => $label)));
-      }
+      content_field_instance_create($field);
+      variable_set('uc_image_'. $type, $field_name);
     }
   }
 }

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.26 2009/07/21 14:51:21 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.27 2009/07/23 18:47:06 islandusurper Exp $
 
 /**
  * @file
@@ -2088,3 +2088,16 @@ function uc_store_image_widget_lightbox2($rel_count) {
   return ' rel="'. $img_index .'"';
 }
 
+/**
+ * Executes hook_uc_form_alter() implementations.
+ *
+ * API function to invoke hook_uc_form_alter() implementations allowing those
+ * modules to alter the form before the Drupal layer hook_form_alter() is
+ * invoked.
+ *
+ * @see hook_uc_form_alter().
+ */
+function uc_form_alter(&$form, &$form_state, $form_id) {
+  $form['__drupal_alter_by_ref'] = array(&$form_state);
+  drupal_alter('uc_form', $form, $form_id);
+}

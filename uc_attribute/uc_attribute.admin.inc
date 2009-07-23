@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.admin.inc,v 1.1.2.17 2009/07/21 14:51:23 islandusurper Exp $
+// $Id: uc_attribute.admin.inc,v 1.1.2.18 2009/07/23 18:47:07 islandusurper Exp $
 
 /**
  * @file
@@ -919,16 +919,36 @@ function theme_uc_object_options_form($form) {
 /**
  * Returns a themed set of attribute options for use in order displays.
  *
- * @param $product Product
+ * @param $element
+ *   Structured array containing the set of attributes with each element
+ *   having a key of attribute ID and the following keys:
+ *     #attribute_name - Attribute name
+ *     #options - Array of option names
  * @return Themed set of attribute options.
  */
-function theme_uc_order_attributes(&$product) {
+function theme_uc_product_attributes(&$element) {
   $option_rows = array();
-  foreach ((array)$product->data['attributes'] as $attribute => $option) {
-    $option_rows[] = t('@attribute: @option', array('@attribute' => $attribute, '@option' => implode(', ', (array)$option)));
+
+  foreach (element_children($element) as $key) {
+    $optionstr = '';
+
+    foreach ($element[$key]['#options'] as $option) {
+      // We only need to allow translation from the second option onward
+      if (empty($optionstr)) {
+        $optionstr .= $option;
+      }
+      else {
+        $optionstr .= t(', !option', array('!option' => $option));
+      }
+    }
+    $option_rows[$key] = t('@attribute: @option', array('@attribute' => $element[$key]['#attribute_name'], '@option' => $optionstr));
   }
 
-  return theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-description'));
+  if (!empty($option_rows)) {
+    return theme('item_list', $option_rows, NULL, 'ul', array('class' => 'product-description'));
+  }
+
+  return '';
 }
 
 /**

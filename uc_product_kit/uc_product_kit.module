@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_kit.module,v 1.11.2.21 2009/07/21 14:37:20 islandusurper Exp $
+// $Id: uc_product_kit.module,v 1.11.2.22 2009/07/23 18:47:07 islandusurper Exp $
 
 /**
  * @file
@@ -726,6 +726,14 @@ function uc_product_kit_add_to_cart_form($form_state, $node) {
       'class' => 'node-add-to-cart',
     ),
   );
+
+  $form['node'] = array(
+    '#type' => 'value',
+    '#value' => $node,
+  );
+
+  uc_form_alter($form, $form_state, __FUNCTION__);
+
   return $form;
 }
 
@@ -926,10 +934,8 @@ function uc_product_kit_cart_display($item) {
       $elements[$unique_id] = $element;
     }
     // Add product specific information
-    $extra = '';
-    foreach (module_implements('cart_item_description') as $module) {
-      $extra .= module_invoke($module, 'cart_item_description', $item);
-    }
+    $extra = uc_product_get_description($item);
+
     if (node_access('view', node_load($item->nid))) {
       $title = l($item->title, 'node/'. $item->nid);
     }

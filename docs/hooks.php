@@ -1,5 +1,5 @@
 <?php
-// $Id: hooks.php,v 1.1.2.15 2009/07/21 14:51:24 islandusurper Exp $
+// $Id: hooks.php,v 1.1.2.16 2009/07/23 18:47:07 islandusurper Exp $
 
 /**
  * @file
@@ -232,32 +232,6 @@ function hook_cart_item($op, &$item) {
       $arg1->manufacturer = $term->name;
       break;
   }
-}
-
-/**
- * Format data added to an item in the cart for display.
- *
- * Modules that add data to cart items when they are selected should display it
- * with this hook. The return values from each implementation will be
- * concatenated.
- *
- * @param $item
- *   One of the values of the array returned by uc_cart_get_contents().
- * @return
- *   A formatted string to be displayed in the shopping cart block and on the
- *   cart page.
- */
-function hook_cart_item_description($item) {
-  $rows = array();
-  foreach (_uc_cart_product_get_options($item) as $option) {
-    $rows[] = t('@attribute: @option', array('@attribute' => $option['attribute'], '@option' => $option['name']));
-  }
-
-  if (count($rows)) {
-    $output = theme('item_list', $rows, NULL, 'ul', array('class' => 'product-description'));
-  }
-
-  return $output;
 }
 
 /**
@@ -855,6 +829,71 @@ function hook_product_class($type, $op) {
 }
 
 /**
+ * Return a structured array representing the given product's description.
+ *
+ * Modules that add data to cart items when they are selected should display it
+ * with this hook. The return values from each implementation will be
+ * sent through to hook_product_description_alter() implementations and then
+ * all descriptions are rendered using drupal_render().
+ *
+ * @param $product
+ *   Product. Usually one of the values of the array returned by
+ *   uc_cart_get_contents().
+ * @return
+ *   A structured array that can be fed into drupal_render().
+ */
+function hook_product_description($product) {
+  $description = array(
+    'attributes' => array(
+      '#product' => array(
+        '#type' => 'value',
+        '#value' => $product,
+      ),
+      '#theme' => 'uc_product_attributes',
+      '#weight' => 1,
+    ),
+  );
+
+  $desc =& $description['attributes'];
+
+  // Cart version of the product has numeric attribute ID => option ID values
+  // so we need to retrieve the right ones
+  if (empty($product->order_id)) {
+    foreach (_uc_cart_product_get_options($product) as $option) {
+      if (!isset($desc[$option['aid']])) {
+        $desc[$option['aid']]['#attribute_name'] = $option['attribute'];
+        $desc[$option['aid']]['#options'] = array($option['name']);
+      }
+      else {
+        $desc[$option['aid']]['#options'][] = $option['name'];
+      }
+    }
+  }
+  else {
+    foreach ((array)$product->data['attributes'] as $attribute => $option) {
+      $desc[] = array(
+        '#attribute_name' => $attribute,
+        '#options' => $option,
+      );
+    }
+  }
+
+  return $description;
+}
+
+/**
+ * Alters the given product description.
+ *
+ * @param $description
+ *   Description array reference.
+ * @param $product
+ *   The product being described.
+ */
+function hook_product_description_alter(&$description, $product) {
+  $description['attributes']['#weight'] = 2;
+}
+
+/**
  * List node types which should be considered products.
  *
  * Trusts the duck philosophy of object identification: if it walks like a duck,
@@ -1155,6 +1194,40 @@ function hook_tapir_table_header_alter(&$header, $table_id) {
     $header['list_price']['cell']['data'] = t('RRP');
     $header['price']['cell']['data'] = t('Sale');
     $header['add_to_cart']['cell']['data'] = '';
+  }
+}
+
+/**
+ * Allow modules to modify forms before Drupal invokes hook_form_alter().
+ *
+ * This hook will normally be used by core modules so any form modifications
+ * they make can be further modified by contrib modules using a normal
+ * hook_form_alter(). At this point, drupal_prepare_form() has not been called,
+ * so none of the automatic form data (e.g.: #parameters, #build_id, etc.) has
+ * been added yet.
+ *
+ * For a description of the hook parameters:
+ * @see hook_form_alter()
+ */
+function hook_uc_form_alter(&$form, &$form_state, $form_id) {
+  // If the node has a product list, add attributes to them
+  if (isset($form['products']) && count(element_children($form['products']))) {
+    foreach (element_children($form['products']) as $key) {
+      $form['products'][$key]['attributes'] = _uc_attribute_alter_form(node_load($key));
+      if (is_array($form['products'][$key]['attributes'])) {
+        $form['products'][$key]['attributes']['#tree'] = TRUE;
+        $form['products'][$key]['#type'] = 'fieldset';
+      }
+    }
+  }
+  // If not, add attributes to the node.
+  else {
+    $form['attributes'] = _uc_attribute_alter_form($node);
+
+    if (is_array($form['attributes'])) {
+      $form['attributes']['#tree'] = TRUE;
+      $form['attributes']['#weight'] = -1;
+    }
   }
 }
 
