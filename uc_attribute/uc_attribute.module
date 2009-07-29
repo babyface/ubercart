@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.31 2009/07/23 18:47:07 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.32 2009/07/29 19:54:20 islandusurper Exp $
 
 /**
  * @file
@@ -630,6 +630,7 @@ function _uc_cart_product_get_options($item) {
         // Handle textfield attributes.
         $options[$index] = array(
           'attribute' => _uc_attribute_get_name($attribute),
+          'aid' => $aid,
           'oid' => 0,
           'name' => $selected,
           'cost' => 0,

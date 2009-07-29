@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.ca.inc,v 1.1.2.8 2009/07/21 14:37:19 islandusurper Exp $
+// $Id: uc_roles.ca.inc,v 1.1.2.9 2009/07/29 19:54:18 islandusurper Exp $
 
 /**
  * @file
@@ -31,10 +31,12 @@ function uc_roles_ca_entity() {
  * Implementation of hook_ca_predicate().
  */
 function uc_roles_ca_predicate() {
+  $predicates = array();
+
   // Renew all the roles on an order when the status matches what's set in the roles admin settings.
-  $configurations['uc_role_renewal'] = array(
-    '#title' => t('Renew purchased roles'),
-    '#description' => t('Renew purchased roles if the order status matches.'),
+  $predicates['uc_role_renewal'] = array(
+    '#title' => t('Grant or renew purchased roles'),
+    '#description' => t('Grant or renew purchased roles if the order status matches.'),
     '#class' => 'renewal',
     '#trigger' => 'uc_order_status_update',
     '#status' => 1,
@@ -43,7 +45,18 @@ function uc_roles_ca_predicate() {
       '#conditions' => array(
         array(
           '#name' => 'uc_order_status_condition',
-          '#title' => t('If the order status is completed.'),
+          '#title' => t('If the original order status was not Completed.'),
+          '#argument_map' => array(
+            'order' => 'order',
+          ),
+          '#settings' => array(
+            'negate' => TRUE,
+            'order_status' => 'completed',
+          ),
+        ),
+        array(
+          '#name' => 'uc_order_status_condition',
+          '#title' => t('If the updated order status is Completed.'),
           '#argument_map' => array(
             'order' => 'updated_order',
           ),
@@ -60,6 +73,9 @@ function uc_roles_ca_predicate() {
         '#argument_map' => array(
           'order' => 'order',
         ),
+        '#settings' => array(
+          'message' => FALSE,
+        ),
       ),
     ),
   );
@@ -75,7 +91,7 @@ function uc_roles_ca_predicate() {
   );
 
   // Notify the user when a role is granted.
-  $configurations['uc_role_notify_grant'] = array(
+  $predicates['uc_role_notify_grant'] = array(
     '#title' => t('Notify customer when a role is granted'),
     '#description' => t('Notify the customer when they have had a role granted on their user.'),
     '#class' => 'notification',
@@ -98,7 +114,7 @@ function uc_roles_ca_predicate() {
   );
 
   // Notify the user when a role is revoked.
-  $configurations['uc_role_notify_revoke'] = array(
+  $predicates['uc_role_notify_revoke'] = array(
     '#title' => t('Notify customer when a role is revoked'),
     '#description' => t('Notify the customer when they have had a role revoked from their user.'),
     '#class' => 'notification',
@@ -111,7 +127,7 @@ function uc_roles_ca_predicate() {
         '#argument_map' => $user_args,
         '#settings' => array(
           'from' => uc_store_email_from(),
-          'addresses' => '[mail]',
+          'addresses' => '[user-mail]',
           'subject' => uc_get_message('uc_roles_revoke_subject'),
           'message' => uc_get_message('uc_roles_revoke_message'),
           'format' => 1,
@@ -121,7 +137,7 @@ function uc_roles_ca_predicate() {
   );
 
   // Notify the user when a role is renewed.
-  $configurations['uc_role_notify_renew'] = array(
+  $predicates['uc_role_notify_renew'] = array(
     '#title' => t('Notify customer when a role is renewed'),
     '#description' => t('Notify the customer when they have had a role renewed on their user.'),
     '#class' => 'notification',
@@ -144,7 +160,7 @@ function uc_roles_ca_predicate() {
   );
 
   // Notify the user when a role is about to expire.
-  $configurations['uc_role_notify_reminder'] = array(
+  $predicates['uc_role_notify_reminder'] = array(
     '#title' => t('Notify customer when a role is about to expire'),
     '#description' => t('Notify the customer when they have had a role that is about to expire.'),
     '#class' => 'notification',
@@ -157,7 +173,7 @@ function uc_roles_ca_predicate() {
         '#argument_map' => $user_args,
         '#settings' => array(
           'from' => uc_store_email_from(),
-          'addresses' => '[mail]',
+          'addresses' => '[user-mail]',
           'subject' => uc_get_message('uc_roles_reminder_subject'),
           'message' => uc_get_message('uc_roles_reminder_message'),
           'format' => 1,
@@ -166,7 +182,7 @@ function uc_roles_ca_predicate() {
     ),
   );
 
-  return $configurations;
+  return $predicates;
 }
 
 /**
@@ -440,25 +456,36 @@ function ca_build_email_form($form_state, $settings, $token_filters) {
  * @see uc_roles_action_order_renew_form()
  */
 function uc_roles_action_order_renew($order) {
-  global $user;
-
-  // Load the order's user.
-  if (!($order_user = user_load($order->uid))) {
+  // Load the order's user and exit if not available.
+  if (!($account = user_load($order->uid))) {
     return;
   }
 
+  // Loop through all the products on the order.
   foreach ($order->products as $product) {
-
+    // Look for any role promotion features assigned to the product.
     $roles = db_query("SELECT * FROM {uc_roles_products} WHERE nid = %d", $product->nid);
-    while ($role = db_fetch_object($roles)) {
 
+    while ($role = db_fetch_object($roles)) {
       // Product model matches, or was 'any'.
       if (!empty($role->model) && $role->model != $product->model) {
         continue;
       }
 
+      // Determine the expiration timestamp for the role.
+      $expiration = _uc_roles_product_get_expiration($role, $product->qty, $existing_role->expiration);
+
+      // Grant the role to the user.
+      uc_roles_grant($account, $role->rid, $expiration, TRUE, !$settings['message']);
+
+      // Get the new expiration (if applicable)
+      $new_expiration = db_fetch_object(db_query("SELECT * FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d", $account->uid, $role->rid));
+
+      // Trigger role email.
+      ca_pull_trigger('uc_roles_notify_'. $op, $order, $new_expiration);
+
       // Leave an order comment.
-      $existing_role = db_fetch_object(db_query("SELECT * FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d", $order_user->uid, $role->rid));
+      $existing_role = db_fetch_object(db_query("SELECT * FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d", $account->uid, $role->rid));
       if (!is_null($existing_role->expiration)) {
         $op = 'renew';
         $comment = t('Customer user role %role renewed.', array('%role' => _uc_roles_get_name($role->rid)));
@@ -467,28 +494,22 @@ function uc_roles_action_order_renew($order) {
         $op = 'grant';
         $comment = t('Customer granted user role %role.', array('%role' => _uc_roles_get_name($role->rid)));
       }
+
       uc_order_comment_save($order->order_id, $user->uid, $comment);
-
-      // Grant the role to the user.
-      $expiration = _uc_roles_product_get_expiration($role, $product->qty, $existing_role->expiration);
-
-      // Grant the role to the user.
-      uc_roles_grant($order_user, $role->rid, $expiration);
-
-      // Get the new expiration (if applicable)
-      $new_expiration = db_fetch_object(db_query("SELECT * FROM {uc_roles_expirations} WHERE uid = %d AND rid = %d", $order_user->uid, $role->rid));
-
-      // Trigger role email.
-      ca_pull_trigger('uc_roles_notify_'. $op, $order, $new_expiration);
     }
   }
 }
 
-/**
- * Borrow the order form for role renewal order state configuration.
- *
- * @see uc_roles_action_order_renew()
- */
+// Borrow the order form for role renewal order state configuration.
 function uc_roles_action_order_renew_form($form_state, $settings = array()) {
-  return uc_order_action_update_status_form($form_state, $settings);
+  $form = array();
+
+  $form['message'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display messages to alert users of any new or updated roles.'),
+    '#default_value' => isset($settings['message']) ? $settings['message'] : FALSE,
+  );
+
+  return $form;
 }
+

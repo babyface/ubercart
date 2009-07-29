@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_stock.module,v 1.12.2.14 2009/07/23 18:47:06 islandusurper Exp $
+// $Id: uc_stock.module,v 1.12.2.15 2009/07/29 19:54:20 islandusurper Exp $
 
 /**
  * @file
@@ -221,121 +221,12 @@ function _uc_stock_send_mail($order, $stock) {
 }
 
 /**
- * Implementation of hook_views_tables().
+ * Implementation of hook_views_api().
  */
-function uc_stock_views_tables() {
-  $tables['uc_product_stock'] = array(
-    'name' => 'uc_product_stock',
-    'join' => array(
-      'left' => array(
-        'table' => 'node',
-        'field' => 'nid'
-      ),
-      'right' => array(
-        'field' => 'nid',
-      ),
-    ),
-    'fields' => array(
-      'sku' => array(
-        'name' => t('Stock: SKU'),
-        'help' => t('The model or SKU of the stock level'),
-        'sortable' => TRUE,
-      ),
-      'active' => array(
-        'name' => t('Stock: Active'),
-        'help' => t('Whether or not the stock level is currently being tracked'),
-        'handler' => 'uc_stock_views_handler_active',
-        'sortable' => TRUE,
-      ),
-      'stock' => array(
-        'name' => t('Stock: Stock Level'),
-        'help' => t('The current stock level'),
-        'sortable' => TRUE,
-      ),
-      'threshold' => array(
-        'name' => t('Stock: Threshold'),
-        'help' => t('The threshold or warning limit of the stock level'),
-        'sortable' => TRUE,
-      ),
-    ),
-    'sorts' => array(
-      'sku' => array(
-        'name' => t('Stock: SKU'),
-      ),
-      'stock' => array(
-        'name' => t('Stock: Stock Level'),
-        'help' => t('The current stock level'),
-      ),
-      'threshold' => array(
-        'name' => t('Stock: Threshold'),
-        'help' => t('The threshold or warning limit of the stock level'),
-      ),
-    ),
-    'filters' => array(
-      'sku' => array(
-        'name' => 'Stock: SKU',
-        'operator' => 'views_handler_operator_like',
-        'handler' => 'views_handler_filter_like',
-        'help' => t('Filter the node based on stock SKU.'),
-      ),
-      'stock' => array(
-        'name' => 'Stock: Stock Level',
-        'operator' => 'views_handler_operator_gtlt',
-        'help' => t('Filter the node based on stock level.'),
-      ),
-      'threshold' => array(
-        'name' => 'Stock: Threshold',
-        'operator' => 'views_handler_operator_gtlt',
-        'help' => t('Filter the node based on threshold level.'),
-      ),
-      'is_active' => array(
-        'name' => 'Stock: Is Active',
-        'operator' => array('=' => 'Equals'),
-        'list' => 'views_handler_operator_yesno',
-        'list-type' => 'select',
-        'handler' => 'uc_stock_views_handler_filter_is_active',
-        'help' => t('Filter the data based on whether or not stock tracking is active for the SKU.'),
-      ),
-      'below_threshold' => array(
-        'name' => 'Stock: Is Below Threshold',
-        'operator' => array('=' => 'Equals'),
-        'list' => 'views_handler_operator_yesno',
-        'list-type' => 'select',
-        'handler' => 'uc_stock_views_handler_filter_below_threshold',
-        'help' => t('Filter the node based on whether it stock level is below the threshold for the SKU.'),
-      ),
-    ),
+function uc_stock_views_api() {
+  return array(
+    'api' => '2.0',
+    'path' => drupal_get_path('module', 'uc_stock') .'/views',
   );
-
-  return $tables;
-}
-
-function uc_stock_views_handler_active($fieldinfo, $fielddata, $value, $data) {
-  return $value ? t('Active') : t('Inactive');
-}
-
-function uc_stock_views_handler_filter_below_threshold($op, $filter, $filterinfo, &$query) {
-  if ($op == 'handler') {
-    if ($filter['value'] == 0) {
-      $operator = '>=';
-    }
-    else {
-      $operator = '<';
-    }
-    $query->add_where('uc_product_stock.stock  '. $operator .' uc_product_stock.threshold');
-  }
-}
-
-function uc_stock_views_handler_filter_is_active($op, $filter, $filterinfo, &$query) {
-  if ($op == 'handler') {
-    if ($filter['value'] == 1) {
-      $active = '1';
-    }
-    else {
-      $active = '0';
-    }
-    $query->ensure_table('uc_product_stock');
-    $query->add_where('uc_product_stock.active = '. $active);
-  }
 }
 

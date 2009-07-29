@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.module,v 1.2.2.18 2009/07/21 14:37:19 islandusurper Exp $
+// $Id: uc_roles.module,v 1.2.2.19 2009/07/29 19:54:17 islandusurper Exp $
 
 /**
  * @file
@@ -1084,6 +1084,8 @@ function uc_roles_feature_delete($pfid) {
  *   A Drupal user object.
  * @param $rid
  *   A Drupal role ID.
+ * @param $silent
+ *   When set to TRUE will suppress any Drupal messages from this function.
  *
  * This function deletes expirations associated with users and roles. If
  * no role ID is passed, the function deletes all role expirations associated
@@ -1092,18 +1094,25 @@ function uc_roles_feature_delete($pfid) {
  * notifies the user. The menu cache is then flushed, as privileges to view
  * menu items may have been lost in the process.
  */
-function uc_roles_delete($account, $rid = NULL) {
-  $condition_list = 'uid = '. (integer)$account->uid;
+function uc_roles_delete($account, $rid = NULL, $silent = FALSE) {
+  global $user;
+
+  $condition_list = 'uid = '. intval($account->uid);
 
   if ($rid) {
-    $condition_list .= ' AND rid = '. (integer)$rid;
+    $condition_list .= ' AND rid = '. intval($rid);
   }
 
   db_query("DELETE FROM {uc_roles_expirations} WHERE ". $condition_list);
 
   // Echo the deletion only if something was actually deleted.
-  if (db_affected_rows()) {
-    drupal_set_message(t('The expiration of %role_name role for the user %user_name has been deleted.', array('%user_name' => $account->name, '%role_name' => _uc_roles_get_name($rid))));
+  if (db_affected_rows() && !$silent) {
+    if ($user->uid == $account->uid) {
+      drupal_set_message(t('The expiration of your %role_name role has been deleted.', array('%role_name' => _uc_roles_get_name($rid))));
+    }
+    else {
+      drupal_set_message(t('The expiration of %role_name role for the user %user_name has been deleted.', array('%user_name' => $account->name, '%role_name' => _uc_roles_get_name($rid))));
+    }
   }
 
   // Flush visible menu items, since our permissions could've changed.
@@ -1119,12 +1128,16 @@ function uc_roles_delete($account, $rid = NULL) {
  *   A Drupal user object.
  * @param $rid
  *   A Drupal role ID.
+ * @param $silent
+ *   When set to TRUE will suppress any Drupal messages from this function.
  *
  * This function deletes a given role from a user's list of roles, as
  * well as removing any expiration data associated with the user/role.
  * The function notifies the user of revocation.
  */
-function uc_roles_revoke($account, $rid) {
+function uc_roles_revoke($account, $rid, $silent = FALSE) {
+  global $user;
+
   // Remove this role from the user's list.
   $roles_list = &$account->roles;
   unset($roles_list[$rid]);
@@ -1135,7 +1148,15 @@ function uc_roles_revoke($account, $rid) {
   uc_roles_delete($account, $rid);
 
   $role_name = db_result(db_query('SELECT name FROM {role} WHERE rid = %d', $rid));
-  drupal_set_message(t('%user has had the %role role revoked.', array('%user' => $account->name, '%role' => $role_name)));
+
+  if (!$silent) {
+    if ($user->uid == $account->uid) {
+      drupal_set_message(t('Your %role role has been revoked.', array('%role' => $role_name)));
+    }
+    else {
+      drupal_set_message(t('%user has had the %role role revoked.', array('%user' => $account->name, '%role' => $role_name)));
+    }
+  }
 }
 
 /**
@@ -1149,6 +1170,8 @@ function uc_roles_revoke($account, $rid) {
  *   When this role will expire.
  * @param $save_user
  *   Optimization to prevent unnecessary user saving when calling from hook_user().
+ * @param $silent
+ *   When set to TRUE will suppress any Drupal messages from this function.
  *
  * This function grants a given role to a user's list of roles. If there
  * is a previous record of this user/role combination, it is first removed.
@@ -1157,14 +1180,16 @@ function uc_roles_revoke($account, $rid) {
  * The menu cache is flushed, as new menu items may be visible after the
  * new role is granted. The function notifies the user of the role grant.
  */
-function uc_roles_grant(&$account, $rid, $timestamp, $save_user = TRUE) {
+function uc_roles_grant(&$account, $rid, $timestamp, $save_user = TRUE, $silent = FALSE) {
+  global $user;
+
   // First, delete any previous record of this user/role association.
-  uc_roles_delete($account, $rid);
+  uc_roles_delete($account, $rid, $silent);
 
   if ($save_user) {
     // Punch the role into the user object.
-    $account->roles = $account->roles + array($rid => _uc_roles_get_name($rid));
-    user_save($account, array('roles' => $account->roles));
+    $roles_list = $account->roles + array($rid => _uc_roles_get_name($rid));
+    user_save($account, array('roles' => $roles_list));
   }
 
   // If the role expires, keep a record.
@@ -1175,12 +1200,23 @@ function uc_roles_grant(&$account, $rid, $timestamp, $save_user = TRUE) {
   // Flush visible menu items, since our permissions could've changed.
   _uc_roles_flush_menu_cache($account);
 
-  $role_name = db_result(db_query('SELECT name FROM {role} WHERE rid = %d', $rid));
-  $message = t('%user has been granted the %role role.', array('%user' => $account->name, '%role' => $role_name));
-  if ($timestamp) {
-    $message .= t(' It will expire on %date', array('%date' => format_date($timestamp, 'small')));
+  // Display the message if appropriate.
+  if (!$silent) {
+    $role_name = db_result(db_query('SELECT name FROM {role} WHERE rid = %d', $rid));
+
+    if ($user->uid == $account->uid) {
+      $message = t('You have been granted the %role role.', array('%role' => $role_name));
+    }
+    else {
+      $message = t('%user has been granted the %role role.', array('%user' => $account->name, '%role' => $role_name));
+    }
+
+    if ($timestamp) {
+      $message .= t(' It will expire on %date', array('%date' => format_date($timestamp, 'small')));
+    }
+
+    drupal_set_message($message);
   }
-  drupal_set_message($message);
 }
 
 /**

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.15 2009/07/21 14:51:20 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.16 2009/07/29 19:54:19 islandusurper Exp $
 
 /**
  * @file
@@ -545,4 +545,3 @@ function uc_cart_checkout_complete() {
 
   return $output;
 }
-

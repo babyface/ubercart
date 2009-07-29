@@ -1,18 +1,23 @@
 <?php
-// $Id: uc_cart.test,v 1.1.2.2 2009/07/21 14:37:20 islandusurper Exp $
+// $Id: uc_cart.test,v 1.1.2.3 2009/07/29 19:54:19 islandusurper Exp $
 
 /**
  * @file
  * Shopping cart and checkout tests.
  */
 
+
+/**
+ * Define our own TestCase class that comes pre-loaded with Ubercart methods.
+ */
 class UbercartTestCase extends DrupalWebTestCase {
-  //Perform the initial setup
+  // Perform the initial setup.
   function setUp() {
-    //Enable the core ubercart modules
+    // Enable the core Ubercart modules and dependencies.
     parent::setUp('uc_store', 'uc_cart', 'ca', 'uc_order', 'uc_product', 'token');
-    //Create a user with the required privileges to perform basic ubercart administration
-    $this->admin_account = $this->drupalCreateUser(array(
+
+    // Create a store administrator user account.
+    $this->user_store_admin = $this->drupalCreateUser(array(
       'administer conditional actions',
       'administer order workflow',
       'create orders',
@@ -27,13 +32,15 @@ class UbercartTestCase extends DrupalWebTestCase {
       'edit all products',
       'administer store',
       'view customers',
-      'view store reports'
+      'view store reports',
     ));
-    $this->basic_account = $this->drupalCreateUser();
+
+    // Create a simple customer user account.
+    $this->user_customer = $this->drupalCreateUser();
   }
 
   /**
-   * function setUpShop() performs the required store configuration
+   * Configure basic Ubercart store components.
    */
   function setUpShop() {
     $this->setupPayment();
@@ -61,19 +68,19 @@ class UbercartTestCase extends DrupalWebTestCase {
    * $this->drupalLogin. The user must also have create product priviliges
    */
   function createProduct($product = array()) {
-    //Set the defaultrequired fields
+    // Set the default required fields.
     $defaults = array(
       'title' => $this->randomName(8),
       'body' => $this->randomName(8),
       'model' => $this->randomName(8),
       'sell_price' => rand(1, 9999),
     );
-    //Merge in any added fields
+    // Merge in any added fields.
     $product += $defaults;
     $this->drupalPost('node/add/product', $product, t('Save'));
     $this->assertRaw(t('Product %title has been created.', array('%title' => $product['title'])), t('"Product %title has been created" was displayed on the node page', array('%title'=> $product['title'])));
 
-    //Find the node id and return the node object.
+    // Find the node id and return the node object.
     if (preg_match('!node/(\d+)!', $this->getUrl(), $matches)) {
       return node_load($matches[1]);
     }
@@ -139,11 +146,11 @@ class ucCartBasicCheckout extends UbercartTestCase {
    * Test the basic ubercart checkout process
    */
   function testBasicCheckout() {
-    $this->drupalLogin($this->admin_account);
+    $this->drupalLogin($this->user_store_admin);
     $product = $this->createProduct();
     $this->drupalLogout();
     $this->pass(t('Testing authenticated checkout.'));
-    $this->drupalLogin($this->basic_account);
+    $this->drupalLogin($this->user_customer);
     $this->drupalPost('node/'.$product->nid, array(), t('Add to cart'));
     $this->assertRaw($product->title, t('The product name has been displayed on the cart page.'));
     $this->assertRaw('added to', t('The product name has been displayed on the cart page.'));
@@ -172,7 +179,7 @@ class ucCartAdminSettings extends UbercartTestCase {
   }
 
   function testCartSettings() {
-    $this->DrupalLogin($this->admin_account);
+    $this->DrupalLogin($this->user_store_admin);
     $this->drupalGet('admin/store/settings/cart/edit');
     $this->assertField('uc_add_item_redirect', t('Add to cart redirect field exists'));
     $this->assertField('uc_minimum_subtotal', t('Minimum order subtotal field exists'));
@@ -228,27 +235,27 @@ class ucCartAdminSettings extends UbercartTestCase {
     $product_price_above_limit = $this->createProduct(array('sell_price' => $sell_price_above_limit));
     $this->DrupalLogout();
 
-    //Check to see if the lower priced product triggers the minimum price logic
+    // Check to see if the lower priced product triggers the minimum price logic
     $this->drupalPost('node/'.$product_price_below_limit->nid, array(), t('Add to cart'));
     $this->drupalPost('cart', array(), t('Checkout'));
     $this->assertRaw('The minimum order subtotal for checkout is', t('Minimum checkout check: Ubercart prevented checkout below the minimum order'));
 
-    //Check the custom breadcrumb text
+    // Check the custom breadcrumb text
     $breadcrumb = $this->xpath("div[@class='". $settings['uc_cart_breadcrumb_url'] . "']/a[@href='/ubertest/asdf'][@text()='". $settings['uc_cart_breadcrumb_text']."']");
     $this->assertTrue(isset($breadcrumb), t('The breadcrumb text and url are properly displayed on the view cart page'));
 
-    //Check the back button to ensure it goes to the proper page
+    // Check the back button to ensure it goes to the proper page
     $this->drupalPost('cart', array(), $settings['uc_continue_shopping_text']);
     $url_pass = ($this->getUrl() == url($settings['uc_continue_shopping_url'], array('absolute' => TRUE)));
     $this->assertTrue($url_pass, t('View cart back button is properly labled, and takes the user to the proper url.'));
 
-    //Add another product to the cart, and verify that we land on the checkout page
+    // Add another product to the cart, and verify that we land on the checkout page
     $this->drupalPost('node/'.$product_price_above_limit->nid, array(), t('Add to cart'));
     $this->drupalPost('cart', array(), t('Checkout'));
     $this->assertText('Enter your billing address and information here.', t('Viewed cart page: Billing pane has been displayed.'));
 
-    //Check the redirect path
-    $this->drupalLogin($this->admin_account);
+    // Check the redirect path
+    $this->drupalLogin($this->user_store_admin);
     $uc_add_item_redirect = $this->randomName(8);
     $this->drupalPost('admin/store/settings/cart/edit', array('uc_add_item_redirect' => $uc_add_item_redirect), t('Save configuration'));
     $this->drupalPost('node/'. $product_price_above_limit->nid, array(), t('Add to cart'));

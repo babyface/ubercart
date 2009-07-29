@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_catalog.module,v 1.15.2.19 2009/07/21 14:37:21 islandusurper Exp $
+// $Id: uc_catalog.module,v 1.15.2.20 2009/07/29 19:54:18 islandusurper Exp $
 
 /**
  * @file
@@ -14,14 +14,17 @@
 /**
  * Data structure to mimic Drupal's menu system.
  */
-class uc_treeNode {
-  var $tid = 0;
-  var $name = 'Catalog';
-  var $children = array();
-  var $depth = -1;
-  var $sequence = 0;
+class UcTreeNode {
+  public $tid = 0;
+  public $name = 'Catalog';
+  public $children = array();
+  public $depth = -1;
+  public $sequence = 0;
 
-  function uc_treeNode($term = NULL) {
+  /**
+   * Constructor.
+   */
+  function __construct($term = NULL) {
     if ($term) {
       $this->tid = $term->tid;
       $this->name = $term->name;
@@ -31,7 +34,7 @@ class uc_treeNode {
   }
 
   /**
-   * Determines if new child is an immediate descendant or not.
+   * Determine if new child is an immediate descendant or not.
    *
    * This function is completely dependent on the structure of the array returned
    * by taxonomy_get_tree(). Each element in the array knows it's depth in the tree
@@ -406,13 +409,13 @@ function uc_catalog_block($op = 'list', $delta = 0, $edit = array()) {
             $tree = taxonomy_get_tree($vid);
             // Then convert it into an actual tree structure.
             $seq = 0;
-            $menu_tree = new uc_treeNode();
+            $menu_tree = new UcTreeNode();
             $level = array();
             $curr_depth = -1;
             foreach ($tree as $knot) {
               $seq++;
               $knot->sequence = $seq;
-              $knothole = new uc_treeNode($knot);
+              $knothole = new UcTreeNode($knot);
               // Begin at the root of the tree and find the proper place.
               $menu_tree->add_child($knothole);
             }
@@ -889,10 +892,10 @@ function _uc_catalog_navigation($branch) {
     $num_text = ' ('. $num .')';
   }
 
+  $lis = array();
   $expand = variable_get('uc_catalog_expand_categories', FALSE);
   $link = l($branch->name . $num_text, $branch_path);
   if ($expand || count($branch->children)) {
-    $lis = array();
     foreach ($branch->children as $twig) {
       // Expand if children are in the menu path. Capture their output.
       list($child_in_path, $lis[]) = _uc_catalog_navigation($twig);
