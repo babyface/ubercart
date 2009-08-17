@@ -1,4 +1,4 @@
-// $Id: uc_country_select.js,v 1.6.2.2 2009/07/21 14:37:21 islandusurper Exp $
+// $Id: uc_country_select.js,v 1.6.2.3 2009/08/17 21:27:54 islandusurper Exp $
 
 /**
  * @file
@@ -9,7 +9,7 @@
  * Set the select box change behavior for the country selector
  */
 Drupal.behaviors.ucCountrySelect = function(context) {
-  $('select[@id$=-country]:not(.ucCountrySelect-processed)', context).addClass('ucCountrySelect-processed').change(
+  $('select[id$=-country]:not(.ucCountrySelect-processed)', context).addClass('ucCountrySelect-processed').change(
     function() {
       uc_update_zone_select(this.id, '');
     }

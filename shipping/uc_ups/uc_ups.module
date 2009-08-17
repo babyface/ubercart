@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_ups.module,v 1.5.2.16 2009/07/21 14:37:19 islandusurper Exp $
+// $Id: uc_ups.module,v 1.5.2.17 2009/08/17 21:27:54 islandusurper Exp $
 
 /**
  * @file
@@ -113,7 +113,7 @@ function uc_ups_form_alter(&$form, &$form_state, $form_id) {
 function uc_ups_product_alter_validate($form, &$form_state) {
   $enabled = variable_get('uc_quote_enabled', array());
   if ($form_state['values']['shippable'] && ($form_state['values']['shipping_type'] == 'small_package' || (empty($form_state['values']['shipping_type']) && variable_get('uc_store_shipping_type', 'small_package') == 'small_package'))) {
-    if ($form_state['values']['ups']['pkg_type'] == '02' && (empty($form_state['values']['length']) || empty($form_state['values']['width']) || empty($form_state['values']['height']))) {
+    if ($form_state['values']['ups']['pkg_type'] == '02' && (empty($form_state['values']['dim_length']) || empty($form_state['values']['dim_width']) || empty($form_state['values']['dim_height']))) {
       form_set_error('base][dimensions', t('Dimensions are required for custom packaging.'));
     }
   }
@@ -555,7 +555,7 @@ function uc_ups_shipment_request($packages, $origin, $destination, $ups_service)
             $conversion = uc_weight_conversion($package->weight_units, 'kg');
             break;
         }
-        $weight = $package->weight * $conversion;
+        $weight = max(1, $package->weight * $conversion);
         $package_schema .= "<PackageWeight>";
           $package_schema .= "<UnitOfMeasurement>";
             $package_schema .= "<Code>$units</Code>";
@@ -839,8 +839,8 @@ function uc_ups_quote($products, $details) {
   }
   uasort($quotes, 'uc_quote_price_sort');
   $context = array(
-    'location' => 'shipping-quote',
-    'subject' => array(),
+    'revision' => 'themed',
+    'type' => 'amount',
   );
   foreach ($quotes as $key => $quote) {
     if (isset($quote['rate'])) {

@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.16 2009/07/23 18:47:07 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.17 2009/08/17 21:27:53 islandusurper Exp $
 
 /**
  * @file
@@ -194,7 +194,7 @@ function uc_order_pane_bill_to($op, $arg1) {
 function uc_order_pane_customer($op, $arg1) {
   switch ($op) {
     case 'view':
-      $output = t('Customer number: !user_link', array('!user_link' => l($arg1->uid, 'user/'. $arg1->uid)))
+      $output = t('Customer number: !user_link', array('!user_link' => $arg1->uid ? l($arg1->uid, 'user/'. $arg1->uid) : '0'))
                .'<br />'. t('Primary e-mail:') .'<br />'
               . check_plain($arg1->primary_email);
       return $output;
@@ -268,10 +268,10 @@ function uc_order_pane_customer($op, $arg1) {
 function uc_order_pane_products($op, $arg1) {
   switch ($op) {
     case 'view':
-      return drupal_render(tapir_get_table('op_products_view_table', $arg1->products));
+      return drupal_render(tapir_get_table('op_products_view_table', $arg1));
 
     case 'customer':
-      return drupal_render(tapir_get_table('op_products_customer_table', $arg1->products));
+      return drupal_render(tapir_get_table('op_products_customer_table', $arg1));
 
     case 'edit-theme':
       drupal_add_js('uc_order_load_product_edit_div('. $arg1['order_id']['#value'] .');', 'inline');
@@ -332,9 +332,9 @@ function uc_order_pane_line_items($op, $arg1) {
       usort($line_items, 'uc_weight_sort');
 
       $context = array(
-        'location' => 'order-line-items',
-        'subject' => array(),
-        'extras' => array(
+        'revision' => 'themed',
+        'type' => 'line_item',
+        'subject' => array(
           'order' => $arg1,
         ),
       );
@@ -404,9 +404,9 @@ function uc_order_pane_line_items($op, $arg1) {
       );
 
       $context = array(
-        'location' => 'order-edit-line-items',
-        'subject' => array(),
-        'extras' => array(
+        'revision' => 'themed',
+        'type' => 'line_item',
+        'subject' => array(
           'order' => $arg1,
         ),
       );
@@ -704,7 +704,7 @@ function uc_order_view_update_form_submit($form, &$form_state) {
 /**
  * Build the order view products table.
  */
-function op_products_view_table($products) {
+function op_products_view_table($order) {
   $table = array(
     '#type' => 'tapir_table',
     '#attributes' => array('class' => 'order-pane-table'),
@@ -757,11 +757,15 @@ function op_products_view_table($products) {
   );
 
   $context = array(
-    'location' => 'order-view-products',
+    'revision' => 'themed',
+    'type' => 'order_product',
+    'subject' => array(
+      'order' => $order,
+    ),
   );
 
-  if (is_array($products)) {
-    foreach ($products as $product) {
+  if (is_array($order->products)) {
+    foreach ($order->products as $product) {
       $data = array();
       $data['qty'] = array(
         '#value' => $product->qty .'&times;',
@@ -775,18 +779,18 @@ function op_products_view_table($products) {
         '#cell_attributes' => array('align' => 'center', 'nowrap' => 'nowrap'),
       );
 
-      $context['subject'] = array(
-        'order_product' => $product,
-        'field' => 'cost',
-      );
+      $context['subject']['product'] = $product;
+      $context['subject']['node'] = node_load($product->nid);
       if (user_access('administer products')) {
+        $context['field'] = 'cost';
+
         $data['cost'] = array(
           '#value' => uc_price($product->cost, $context),
           '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
         );
       }
 
-      $context['subject']['field'] = 'price';
+      $context['field'] = 'price';
       $price_info = array(
         'price' => $product->price,
         'qty' => $product->qty,
@@ -869,11 +873,15 @@ function op_products_customer_table($products) {
   );
 
   $context = array(
-    'location' => 'order-customer-products',
+    'revision' => 'themed',
+    'type' => 'order_product',
+    'subject' => array(
+      'order' => $order,
+    ),
   );
 
-  if (is_array($products)) {
-    foreach ($products as $product) {
+  if (is_array($order->products)) {
+    foreach ($order->products as $product) {
       $data = array();
       $data['qty'] = array(
         '#value' => $product->qty .'&times;',
@@ -887,18 +895,17 @@ function op_products_customer_table($products) {
         '#cell_attributes' => array('align' => 'center', 'nowrap' => 'nowrap'),
       );
 
-      $context['subject'] = array(
-        'order_product' => $product,
-        'field' => 'cost',
-      );
+      $context['subject']['product'] = $product;
+      $context['subject']['node'] = node_load($product->nid);
       if (user_access('administer products')) {
+        $context['field'] = 'cost';
         $data['cost'] = array(
           '#value' => uc_price($product->cost, $context),
           '#cell_attributes' => array('align' => 'right', 'nowrap' => 'nowrap'),
         );
       }
 
-      $context['subject']['field'] = 'price';
+      $context['field'] = 'price';
       $price_info = array(
         'price' => $product->price,
         'qty' => $product->qty,
@@ -1082,4 +1089,3 @@ function _order_pane_data($pane_id, $key) {
 function _call_order_pane_byref($func, $op, &$form) {
   return $func($op, $form);
 }
-

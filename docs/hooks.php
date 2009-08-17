@@ -1,5 +1,5 @@
 <?php
-// $Id: hooks.php,v 1.1.2.16 2009/07/23 18:47:07 islandusurper Exp $
+// $Id: hooks.php,v 1.1.2.17 2009/08/17 21:27:59 islandusurper Exp $
 
 /**
  * @file
@@ -79,7 +79,7 @@ function hook_add_to_cart_data($form_values) {
  * @param $order
  *   An order object or an order id.
  * @return
- *   An array of tax line items keyed by a module-specific id.
+ *   An array of tax line item objects keyed by a module-specific id.
  */
 function hook_calculate_tax($order) {
   global $user;
@@ -87,7 +87,7 @@ function hook_calculate_tax($order) {
     $order = uc_order_load($order);
     $account = user_load(array('uid' => $order->uid));
   }
-  else if ((int)$order->uid) {
+  elseif ((int)$order->uid) {
     $account = user_load(array('uid' => intval($order->uid)));
   }
   else {
@@ -105,23 +105,55 @@ function hook_calculate_tax($order) {
   if (empty($order->delivery_country)) {
     $order->delivery_country = $order->billing_country;
   }
-  if (is_array($order->line_items)) {
-    foreach ($order->line_items as $i => $line) {
-      if (substr($line['type'], 0, 4) == 'tax_' && substr($line['type'], 5) != 'subtotal') {
-        unset($order->line_items[$i]);
+
+  $order->taxes = array();
+
+  if (isset($order->order_status)) {
+    $state = uc_order_status_data($order->order_status, 'state');
+    $use_same_rates = in_array($state, array('payment_received', 'completed'));
+  }
+  else {
+    $use_same_rates = FALSE;
+  }
+
+  $arguments = array(
+    'order' => array(
+      '#entity' => 'uc_order',
+      '#title' => t('Order'),
+      '#data' => $order,
+    ),
+    'tax' => array(
+      '#entity' => 'tax',
+      '#title' => t('Tax rule'),
+      // #data => each $tax in the following foreach() loop;
+    ),
+    'account' => array(
+      '#entity' => 'user',
+      '#title' => t('User'),
+      '#data' => $account,
+    ),
+  );
+
+  $predicates = ca_load_trigger_predicates('calculate_taxes');
+  foreach (uc_taxes_rate_load() as $tax) {
+    if ($use_same_rates) {
+      foreach ((array)$order->line_items as $old_line) {
+        if ($old_line['type'] == 'tax' && $old_line['data']['tax_id'] == $tax->id) {
+          $tax->rate = $old_line['data']['tax_rate'];
+          break;
+        }
+      }
+    }
+
+    $arguments['tax']['#data'] = $tax;
+    if (ca_evaluate_conditions($predicates['uc_taxes_'. $tax->id], $arguments)) {
+      $line_item = uc_taxes_action_apply_tax($order, $tax);
+      if ($line_item) {
+        $order->taxes[$line_item->id] = $line_item;
       }
     }
   }
-  $_SESSION['taxes'] = array();
-  $taxes = uc_taxes_rate_load();
-  foreach ($taxes as $tax) {
-    // Gotta pass a fake line_item entity for the data to be saved to $_SESSION.
-    workflow_ng_invoke_event('calculate_tax_'. $tax->id, $order, $tax, $account, array());
-    //$order->line_items[] = array('type' => 'tax', 'amount' => $_SESSION['taxes'][$tax->id]['amount']);
-  }
-  $order->taxes = $_SESSION['taxes'];
-  unset($_SESSION['taxes']);
-  //array_unshift($order->taxes, array('id' => 'subtotal', 'name' => t('Subtotal excluding taxes'), 'amount' => $amount, 'weight' => -10));
+
   return $order->taxes;
 }
 
@@ -1292,6 +1324,67 @@ function hook_ucga_display() {
   if (arg(0) == 'cart' && arg(1) == '2checkout' && arg(2) == 'complete') {
     return TRUE;
   }
+}
+
+/**
+ * Take action when checkout is completed.
+ *
+ * @param $order
+ *   The resulting order object from the completed checkout.
+ * @param $account
+ *   The customer that completed checkout, either the current user, or the
+ *   account created for an anonymous customer.
+ */
+function hook_uc_checkout_complete($order, $account) {
+  // Get previous records of customer purchases.
+  $nids = array();
+  $result = db_query("SELECT uid, nid, qty FROM {uc_customer_purchases} WHERE uid = %d", $account->uid);
+  while ($record = db_fetch_object($result)) {
+    $nids[$record->nid] = $record->qty;
+  }
+
+  // Update records with new data.
+  $record = array('uid' => $account->uid);
+  foreach ($order->products as $product) {
+    $record['nid'] = $product->nid;
+    if (isset($nids[$product->nid])) {
+      $record['qty'] = $nids[$product->nid] + $product->qty;
+      db_write_record($record, 'uc_customer_purchases', array('uid', 'nid'));
+    }
+    else {
+      $record['qty'] = $product->qty;
+      db_write_record($record, 'uc_customer_purchases');
+    }
+  }
+}
+
+/**
+ * Take action when a payment is entered for an order.
+ *
+ * @param $order
+ *   The order object.
+ * @param $method
+ *   The name of the payment method used.
+ * @param $amount
+ *   The value of the payment.
+ * @param $account
+ *   The user account that entered the order. When the payment is entered
+ *   during checkout, this is probably the order's user. Otherwise, it is
+ *   likely a store administrator.
+ * @param $data
+ *   Extra data associated with the transaction.
+ * @param $comment
+ *   Any comments from the user about the transaction.
+ */
+function hook_uc_payment_entered($order, $method, $amount, $account, $data, $comment) {
+  drupal_set_message(t('User @uid entered a @method payment of @amount for order @order_id.',
+    array(
+      '@uid' => $account->uid,
+      '@method' => $method,
+      '@amount' => uc_price($amount, array('location' => 'hook-payment', 'revision' => 'formatted-original')),
+      '@order_id' => $order->order_id,
+    ))
+  );
 }
 
 /**

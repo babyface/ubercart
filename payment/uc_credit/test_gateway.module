@@ -1,5 +1,5 @@
 <?php
-// $Id: test_gateway.module,v 1.1.2.6 2009/04/18 07:29:17 islandusurper Exp $
+// $Id: test_gateway.module,v 1.1.2.7 2009/08/17 21:27:56 islandusurper Exp $
 
 /**
  * @file
@@ -47,7 +47,7 @@ function test_gateway_charge($order_id, $amount, $data) {
   if ($success) {
     $context = array(
       'revision' => 'formatted-original',
-      'location' => 'test-gateway-charge-comment',
+      'type' => 'amount',
     );
     $message = t('Credit card charged: !amount', array('!amount' => uc_price($amount, $context)));
     uc_order_comment_save($order_id, $user->uid, $message, 'admin');

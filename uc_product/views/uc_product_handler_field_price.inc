@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product_handler_field_price.inc,v 1.1.2.4 2009/07/08 12:56:50 islandusurper Exp $
+// $Id: uc_product_handler_field_price.inc,v 1.1.2.5 2009/08/17 21:27:58 islandusurper Exp $
 
 /**
  * @file
@@ -12,14 +12,15 @@
 class uc_product_handler_field_price extends views_handler_field {
   function render($values) {
     $context = array(
-      'location' => 'views-price-handler',
+      'revision' => 'themed',
+      'type' => 'product',
       'class' => array(
         'product',
         $this->field,
       ),
+      'field' => $this->real_field,
       'subject' => array(
         'node' => $values,
-        'field' => $this->real_field,
       ),
     );
     $options = array('label' => FALSE);

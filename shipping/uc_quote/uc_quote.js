@@ -1,4 +1,4 @@
-// $Id: uc_quote.js,v 1.5.2.6 2009/07/21 14:37:21 islandusurper Exp $
+// $Id: uc_quote.js,v 1.5.2.7 2009/08/17 21:27:58 islandusurper Exp $
 
 /**
  * @file
@@ -16,27 +16,27 @@ function setQuoteCallbacks(products, context) {
   triggerQuoteCallback = function() {
     quoteCallback(products);
   };
-  $("input[@name*=delivery_postal_code]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').change(triggerQuoteCallback);
-  $("input[@id*=quote-button]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').click(function() {
+  $("input[name*=delivery_postal_code]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').change(triggerQuoteCallback);
+  $("input[id*=quote-button]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').click(function() {
     // returns false to prevent default actions and propogation
     return quoteCallback(products);
   });
-  $("input[@name*=quote_method]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').change(function() {
+  $("input[name*=quote_method]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').change(function() {
     // returns false to prevent default actions and propogation
     return quoteCallback(products);
   });
-  $("select[@name*=delivery_address_select]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').change(function() {
-    $("input[@name*=delivery_postal_code]").trigger('change');
+  $("select[name*=delivery_address_select]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').change(function() {
+    $("input[name*=delivery_postal_code]").trigger('change');
   });
-  $("input[@name*=copy_address]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').click(function() {
+  $("input[name*=copy_address]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').click(function() {
     if (copy_box_checked == true) {
-      $("input[@name*=billing_postal_code]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').bind('change', triggerQuoteCallback);
-      $("select[@name*=billing_address_select]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').bind('change', triggerQuoteCallback);
+      $("input[name*=billing_postal_code]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').bind('change', triggerQuoteCallback);
+      $("select[name*=billing_address_select]:not(.getQuotes-processed)", context).addClass('getQuotes-processed').bind('change', triggerQuoteCallback);
       triggerQuoteCallback();
     }
     else {
-      $("input[@name*=billing_postal_code].getQuotes-processed").removeClass('getQuotes-processed').unbind('change', triggerQuoteCallback);
-      $("select[@name*=billing_address_select].getQuotes-processed").removeClass('getQuotes-processed').unbind('change', triggerQuoteCallback);
+      $("input[name*=billing_postal_code].getQuotes-processed").removeClass('getQuotes-processed').unbind('change', triggerQuoteCallback);
+      $("select[name*=billing_address_select].getQuotes-processed").removeClass('getQuotes-processed').unbind('change', triggerQuoteCallback);
     }
   });
 }
@@ -54,7 +54,7 @@ function setTaxCallbacks() {
       var label = $(this).parent().text();
       set_line_item("shipping", label.substr(0, label.indexOf(":")), Math.round($(this).parent().prev().val() * 100) / 100, 1, 1);
     }
-  }).end();
+  });
 }
 
 /**
@@ -71,22 +71,22 @@ function quoteCallback(products) {
     }
   };
 
-  page = $("input:hidden[@name*=page]").val();
+  page = $("input:hidden[name*=page]").val();
   details = new Object();
-  details["uid"] = $("input[@name*=uid]").val();
-  //details["details[zone]"] = $("select[@name*=delivery_zone] option:selected").val();
-  //details["details[country]"] = $("select[@name*=delivery_country] option:selected").val();
+  details["uid"] = $("input[name*=uid]").val();
+  //details["details[zone]"] = $("select[name*=delivery_zone] option:selected").val();
+  //details["details[country]"] = $("select[name*=delivery_country] option:selected").val();
 
-  $("select[@name*=delivery_]").each(function(i) {
+  $("select[name*=delivery_]").each(function(i) {
     details["details[delivery][" + $(this).attr("name").split("delivery_")[1].replace(/]/, "") + "]"] = $(this).val();
   });
-  $("input[@name*=delivery_]").each(function(i) {
+  $("input[name*=delivery_]").each(function(i) {
     details["details[delivery][" + $(this).attr("name").split("delivery_")[1].replace(/]/, "") + "]"] = $(this).val();
   });
-  $("select[@name*=billing_]").each(function(i) {
+  $("select[name*=billing_]").each(function(i) {
     details["details[billing][" + $(this).attr("name").split("billing_")[1].replace(/]/, "") + "]"] = $(this).val();
   });
-  $("input[@name*=billing_]").each(function(i) {
+  $("input[name*=billing_]").each(function(i) {
     details["details[billing][" + $(this).attr("name").split("billing_")[1].replace(/]/, "") + "]"] = $(this).val();
   });
 
@@ -96,16 +96,16 @@ function quoteCallback(products) {
   else {
     products = "";
     var i = 0;
-    while ($("input[@name^='products[" + i + "]']").length) {
-      products += "|" + $("input[@name^='products[" + i + "]']").filter("[@name$='[nid]']").val();
-      products += "^" + $("input[@name^='products[" + i + "]']").filter("[@name$='[title]']").val();
-      products += "^" + $("input[@name^='products[" + i + "]']").filter("[@name$='[model]']").val();
-      products += "^" + $("input[@name^='products[" + i + "]']").filter("[@name$='[manufacturer]']").val();
-      products += "^" + $("input[@name^='products[" + i + "]']").filter("[@name$='[qty]']").val();
-      products += "^" + $("input[@name^='products[" + i + "]']").filter("[@name$='[cost]']").val();
-      products += "^" + $("input[@name^='products[" + i + "]']").filter("[@name$='[price]']").val();
-      products += "^" + $("input[@name^='products[" + i + "]']").filter("[@name$='[weight]']").val();
-      products += "^" + $("input[@name^='products[" + i + "]']").filter("[@name$='[data]']").val();
+    while ($("input[name^='products[" + i + "]']").length) {
+      products += "|" + $("input[name^='products[" + i + "]']").filter("[name$='[nid]']").val();
+      products += "^" + $("input[name^='products[" + i + "]']").filter("[name$='[title]']").val();
+      products += "^" + $("input[name^='products[" + i + "]']").filter("[name$='[model]']").val();
+      products += "^" + $("input[name^='products[" + i + "]']").filter("[name$='[manufacturer]']").val();
+      products += "^" + $("input[name^='products[" + i + "]']").filter("[name$='[qty]']").val();
+      products += "^" + $("input[name^='products[" + i + "]']").filter("[name$='[cost]']").val();
+      products += "^" + $("input[name^='products[" + i + "]']").filter("[name$='[price]']").val();
+      products += "^" + $("input[name^='products[" + i + "]']").filter("[name$='[weight]']").val();
+      products += "^" + $("input[name^='products[" + i + "]']").filter("[name$='[data]']").val();
       i++;
     }
     details["products"] = products.substr(1);
@@ -177,12 +177,12 @@ function displayQuote(data) {
         // Choosing to use click because of IE's bloody stupid bug not to
         // trigger onChange until focus is lost. Click is better than doing
         // set_line_item() and getTax() twice, I believe.
-        quoteDiv.find("input:radio[@value=" + i +"]").click(function() {
+        quoteDiv.find("input:radio[value=" + i +"]").click(function() {
           var i = $(this).val();
           if (window.set_line_item) {
             set_line_item("shipping", data[i].option_label, Math.round(data[i].rate * 100) / 100, 1, 1);
           }
-        }).end();
+        });
       }
     }
     if (data[i].debug != undefined) {
@@ -190,10 +190,10 @@ function displayQuote(data) {
     }
   }
   if (quoteDiv.find("input").length == 0) {
-    quoteDiv.end().append(Drupal.settings.uc_quote.err_msg);
+    quoteDiv.append(Drupal.settings.uc_quote.err_msg);
   }
   else {
-    quoteDiv.find("input:radio").eq(0).click().attr("checked", "checked").end();
+    quoteDiv.find("input:radio").eq(0).click().attr("checked", "checked");
     var quoteForm = quoteDiv.html();
     quoteDiv.append("<input type=\"hidden\" name=\"quote-form\" value=\"" + Drupal.encodeURIComponent(quoteForm) + "\" />");
   }

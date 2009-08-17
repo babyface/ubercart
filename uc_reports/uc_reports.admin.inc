@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_reports.admin.inc,v 1.1.2.11 2009/07/21 14:51:22 islandusurper Exp $
+// $Id: uc_reports.admin.inc,v 1.1.2.12 2009/08/17 21:27:53 islandusurper Exp $
 
 /**
  * @file
@@ -76,7 +76,7 @@ function uc_reports_customers() {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'customer-report',
+    'type' => 'amount',
   );
 
   $customers = pager_query($sql . tablesort_sql($header), $page_size, 0, $sql_count);
@@ -183,7 +183,7 @@ function uc_reports_products() {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'products-report',
+    'type' => 'amount',
   );
 
   $products = pager_query("SELECT $sql_vars FROM $sql_tables WHERE $sql_conditions GROUP BY n.nid, n.title" . tablesort_sql($header), $page_size, 0, $sql_count);
@@ -219,7 +219,6 @@ function uc_reports_products() {
     $csv_rows[] = $csv_row;
 
     if (module_exists('uc_attribute')) {
-      $context['location'] = 'product-attribute-report';
       // Get the SKUs from this product.
       $models = _uc_reports_product_get_skus($product['nid']);
       // Add the product breakdown rows
@@ -422,7 +421,7 @@ function uc_reports_sales_summary() {
 
   $context = array(
     'revision' => 'themed-original',
-    'location' => 'sales-report-summary',
+    'type' => 'amount',
   );
 
   $rows[] = array(
@@ -558,7 +557,7 @@ function uc_reports_sales_year() {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'sales-year-report',
+    'type' => 'amount',
   );
 
   // For each month of the year...
@@ -718,7 +717,7 @@ function uc_reports_sales_custom() {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'sales-custom-report',
+    'type' => 'amount',
   );
 
   // Loop through the subreports and build the report table.

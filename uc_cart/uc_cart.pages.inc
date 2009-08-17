@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.pages.inc,v 1.1.2.16 2009/07/29 19:54:19 islandusurper Exp $
+// $Id: uc_cart.pages.inc,v 1.1.2.17 2009/08/17 21:27:55 islandusurper Exp $
 
 /**
  * @file
@@ -63,7 +63,7 @@ function uc_cart_checkout() {
 
   $context = array(
     'revision' => 'altered',
-    'location' => 'minimum-subtotal',
+    'type' => 'amount',
   );
 
   if (($min = uc_price(variable_get('uc_minimum_subtotal', 0), $context)) > 0) {
@@ -79,7 +79,7 @@ function uc_cart_checkout() {
     if ($subtotal < $min) {
       $context = array(
         'revision' => 'formatted-original',
-        'location' => 'minimum-subtotal-message',
+        'type' => 'amount',
       );
       drupal_set_message(variable_get('uc_minimum_subtotal_text', t('The minimum order subtotal for checkout is !min.', array('!min' => uc_price($min, $context)))), 'error');
       drupal_goto('cart');
@@ -217,7 +217,7 @@ function uc_cart_checkout_form() {
 
   $context = array(
     'revision' => 'altered',
-    'location' => 'cart-checkout-item',
+    'type' => 'cart_item',
   );
   $contents = uc_cart_get_contents();
   foreach ($contents as $key => $item) {
@@ -226,9 +226,8 @@ function uc_cart_checkout_form() {
       'qty' => $item->qty,
     );
     $context['subject'] = array(
+      'cart' => $contents,
       'cart_item' => $item,
-    );
-    $context['extras'] = array(
       'node' => node_load($item->nid),
     );
 

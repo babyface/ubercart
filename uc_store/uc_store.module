@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.module,v 1.14.2.28 2009/07/29 19:54:19 islandusurper Exp $
+// $Id: uc_store.module,v 1.14.2.29 2009/08/17 21:27:54 islandusurper Exp $
 
 /**
  * @file
@@ -811,7 +811,6 @@ function uc_store_js_util($func) {
     case 'currency_format':
       $context = array(
         'revision' => 'formatted-original',
-        'location' => 'js-util-currency-format',
       );
       $amount = is_numeric($_POST['amount']) ? $_POST['amount'] : 0;
       $output = uc_price($amount, $context);
@@ -2086,6 +2085,33 @@ function uc_store_image_widget_lightbox2($rel_count) {
     $img_index = 'lightbox';
   }
   return ' rel="'. $img_index .'"';
+}
+
+/**
+ * Get the preferred language for a user's email address.
+ *
+ * @param $address
+ *   The email address to check.
+ * @return
+ *   The language object to be used in translation, localization, etc. If a
+ *   user account can not be found for $address, language_default() is
+ *   returned.
+ *
+ * @see
+ *   user_preferred_language()
+ *   language_default()
+ */
+function uc_store_mail_recipient_language($address) {
+  // See if any user exists for this address.
+  $account = user_load(array('mail' => trim($address)));
+  if ($account) {
+    $lang_object = user_preferred_language($account);
+  }
+  // If not, site-wide default.
+  else {
+    $lang_object = language_default();
+  }
+  return $lang_object;
 }
 
 /**

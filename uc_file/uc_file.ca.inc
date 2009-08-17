@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_file.ca.inc,v 1.1.2.6 2009/07/21 14:37:18 islandusurper Exp $
+// $Id: uc_file.ca.inc,v 1.1.2.7 2009/08/17 21:27:53 islandusurper Exp $
 
 /**
  * @file
@@ -167,9 +167,7 @@ function uc_file_ca_trigger() {
  * @see uc_file_action_order_email_form()
  */
 function uc_file_action_order_email($order, $file_expiration, $settings) {
-
-  $account = user_load(array('uid' => $order->uid));
-  $language = language_default();
+  $account = uc_order_user_load($order);
 
   // Token replacements for the subject and body
   $settings['replacements'] = array(
@@ -188,7 +186,7 @@ function uc_file_action_order_email($order, $file_expiration, $settings) {
 
   // Send to each recipient.
   foreach ($recipients as $email) {
-    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
+    $sent = drupal_mail('uc_order', 'action-mail', $email, uc_store_mail_recipient_language($email), $settings, $settings['from']);
 
     if (!$sent['result']) {
       watchdog('ca', 'Attempt to e-mail @email concerning order @order_id failed.', array('@email' => $email, '@order_id' => $order->order_id), WATCHDOG_ERROR);

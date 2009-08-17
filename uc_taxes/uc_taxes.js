@@ -1,4 +1,4 @@
-// $Id: uc_taxes.js,v 1.10.2.9 2009/07/21 14:37:19 islandusurper Exp $
+// $Id: uc_taxes.js,v 1.10.2.10 2009/08/17 21:27:54 islandusurper Exp $
 
 /**
  * @file
@@ -22,24 +22,24 @@ String.prototype.bytes = function() {
 };
 
 var pane = '';
-if ($("input[@name*=delivery_]").length) {
+if ($("input[name*=delivery_]").length) {
   pane = 'delivery'
 }
-else if ($("input[@name*=billing_]").length) {
+else if ($("input[name*=billing_]").length) {
   pane = 'billing'
 }
 
 $(document).ready(function() {
   getTax();
-  $("select[@name*=delivery_country], "
-    + "select[@name*=delivery_zone], "
-    + "input[@name*=delivery_city], "
-    + "input[@name*=delivery_postal_code], "
-    + "select[@name*=billing_country], "
-    + "select[@name*=billing_zone], "
-    + "input[@name*=billing_city], "
-    + "input[@name*=billing_postal_code]").change(getTax);
-  $("input[@name*=copy_address]").click(getTax);
+  $("select[name*=delivery_country], "
+    + "select[name*=delivery_zone], "
+    + "input[name*=delivery_city], "
+    + "input[name*=delivery_postal_code], "
+    + "select[name*=billing_country], "
+    + "select[name*=billing_zone], "
+    + "input[name*=billing_city], "
+    + "input[name*=billing_postal_code]").change(getTax);
+  $("input[name*=copy_address]").click(getTax);
   $('#edit-panes-payment-current-total').click(getTax);
 });
 
@@ -47,26 +47,26 @@ $(document).ready(function() {
  * Get tax calculations for the current cart and line items.
  */
 function getTax() {
-  var products = $("[@name=cart_contents]").val();
+  var products = $("[name=cart_contents]").val();
 
-  var p_email = $("input[@name*=primary_email]").val() || '';
-  var s_f_name = $("input[@name*=delivery_first_name]").val() || '';
-  var s_l_name = $("input[@name*=delivery_last_name]").val() || '';
-  var s_street1 = $("input[@name*=delivery_street1]").val() || '';
-  var s_street2 = $("input[@name*=delivery_street2]").val() || '';
-  var s_city = $("input[@name*=delivery_city]").val() || '';
-  var s_zone = $("select[@name*=delivery_zone]").val() || '0';
-  var s_code = $("input[@name*=delivery_postal_code]").val() || '';
-  var s_country = $("select[@name*=delivery_country]").val() || '0';
+  var p_email = $("input[name*=primary_email]").val() || '';
+  var s_f_name = $("input[name*=delivery_first_name]").val() || '';
+  var s_l_name = $("input[name*=delivery_last_name]").val() || '';
+  var s_street1 = $("input[name*=delivery_street1]").val() || '';
+  var s_street2 = $("input[name*=delivery_street2]").val() || '';
+  var s_city = $("input[name*=delivery_city]").val() || '';
+  var s_zone = $("select[name*=delivery_zone]").val() || '0';
+  var s_code = $("input[name*=delivery_postal_code]").val() || '';
+  var s_country = $("select[name*=delivery_country]").val() || '0';
 
-  var b_f_name = $("input[@name*=billing_first_name]").val() || '';
-  var b_l_name = $("input[@name*=billing_last_name]").val() || '';
-  var b_street1 = $("input[@name*=billing_street1]").val() || '';
-  var b_street2 = $("input[@name*=billing_street2]").val() || '';
-  var b_city = $("input[@name*=billing_city]").val() || '';
-  var b_zone = $("select[@name*=billing_zone]").val() || '0';
-  var b_code = $("input[@name*=billing_postal_code]").val() || '';
-  var b_country = $("select[@name*=billing_country]").val() || '0';
+  var b_f_name = $("input[name*=billing_first_name]").val() || '';
+  var b_l_name = $("input[name*=billing_last_name]").val() || '';
+  var b_street1 = $("input[name*=billing_street1]").val() || '';
+  var b_street2 = $("input[name*=billing_street2]").val() || '';
+  var b_city = $("input[name*=billing_city]").val() || '';
+  var b_zone = $("select[name*=billing_zone]").val() || '0';
+  var b_code = $("input[name*=billing_postal_code]").val() || '';
+  var b_country = $("select[name*=billing_country]").val() || '0';
 
   var order_size = 21;
   var line_item = '';

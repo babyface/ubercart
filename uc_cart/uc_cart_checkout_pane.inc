@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart_checkout_pane.inc,v 1.5.2.9 2009/07/23 18:47:06 islandusurper Exp $
+// $Id: uc_cart_checkout_pane.inc,v 1.5.2.10 2009/08/17 21:27:55 islandusurper Exp $
 
 /**
  * @file
@@ -28,9 +28,9 @@ function uc_checkout_pane_cart($op) {
       $items = uc_cart_get_contents();
       $output = '<table>';
       $context = array(
-        'location' => 'cart-review-item',
+        'revision' => 'themed',
+        'type' => 'cart_item',
         'subject' => array(),
-        'extras' => array(),
       );
       foreach ($items as $item) {
         $desc = check_plain($item->title) . uc_product_get_description($item);
@@ -40,9 +40,8 @@ function uc_checkout_pane_cart($op) {
           'qty' => $item->qty,
         );
         $context['subject'] = array(
+          'cart' => $items,
           'cart_item' => $item,
-        );
-        $context['extras'] = array(
           'node' => node_load($item->nid),
         );
         $output .= '<tr valign="top"><td>'. $item->qty .'&times;</td><td width="100%">'. $desc
@@ -577,23 +576,23 @@ function theme_cart_review_table($show_subtotal = TRUE) {
     array('data' => t('Price'), 'class' => 'price'),
   );
 
-  $context = array(
-    'location' => 'cart-checkout-item',
-  );
+  $context = array();
 
   // Set up table rows.
-  foreach (uc_cart_get_contents() as $item) {
+  $contents = uc_cart_get_contents();
+  foreach ($contents as $item) {
     $price_info = array(
       'price' => $item->price,
       'qty' => $item->qty,
     );
+
+    $context['revision'] = 'altered';
+    $context['type'] = 'cart_item';
     $context['subject'] = array(
+      'cart' => $contents,
       'cart_item' => $item,
-    );
-    $context['extras'] = array(
       'node' => node_load($item->nid),
     );
-    $context['revision'] = 'altered';
 
     $total = uc_price($price_info, $context);
     $subtotal += $total;
@@ -601,8 +600,9 @@ function theme_cart_review_table($show_subtotal = TRUE) {
     $description = check_plain($item->title) . uc_product_get_description($item);
 
     // Remove node from context to prevent the price from being altered.
-    unset($context['subject']);
     $context['revision'] = 'themed-original';
+    $context['type'] = 'amount';
+    unset($context['subject']);
     $rows[] = array(
       array('data' => t('@qty&times;', array('@qty' => $item->qty)), 'class' => 'qty'),
       array('data' => $description, 'class' => 'products'),
@@ -614,7 +614,7 @@ function theme_cart_review_table($show_subtotal = TRUE) {
   if ($show_subtotal) {
     $context = array(
       'revision' => 'themed-original',
-      'location' => 'cart-checkout-subtotal',
+      'type' => 'amount',
     );
     $rows[] = array(
       'data' => array(array('data' => '<span id="subtotal-title">' . t('Subtotal:') . '</span> ' . uc_price($subtotal, $context), 'colspan' => 4, 'class' => 'subtotal')),

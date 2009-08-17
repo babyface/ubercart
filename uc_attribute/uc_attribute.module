@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.32 2009/07/29 19:54:20 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.33 2009/08/17 21:27:56 islandusurper Exp $
 
 /**
  * @file
@@ -675,20 +675,19 @@ function _uc_attribute_alter_form($product) {
 
   $context = array(
     'revision' => 'formatted',
-    'location' => 'product-attribute-form-element',
-    'subject' => array(),
-    'extras' => array(),
   );
 
   // Loop through each product attribute and generate its form element.
   foreach ($attributes as $attribute) {
-    $context['extras']['attribute'] = $attribute;
+    $context['subject']['attribute'] = $attribute;
     // Build the attribute's options array.
     $options = array();
     foreach ($attribute->options as $option) {
       $context['subject']['option'] = $option;
       switch (variable_get('uc_attribute_option_price_format', 'adjustment')) {
         case 'total':
+          $context['type'] = 'product';
+          $context['subject']['node'] = $product;
           $price_info = array(
             'price' => $product->sell_price + $option->price,
             'qty' => $qty,
@@ -698,6 +697,7 @@ function _uc_attribute_alter_form($product) {
             break;
           }
         case 'adjustment':
+          $context['type'] = 'attribute_option';
           $price_info = array(
             'price' => $option->price,
             'qty' => $qty,

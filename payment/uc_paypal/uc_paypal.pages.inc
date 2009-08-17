@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.pages.inc,v 1.1.2.8 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_paypal.pages.inc,v 1.1.2.9 2009/08/17 21:27:56 islandusurper Exp $
 
 /**
  * @file
@@ -80,7 +80,7 @@ function uc_paypal_ipn($order_id = 0) {
 
     $context = array(
       'revision' => 'formatted-original',
-      'location' => 'paypal-ipn',
+      'type' => 'amount',
     );
     $options = array(
       'sign' => FALSE,

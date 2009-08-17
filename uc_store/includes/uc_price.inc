@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_price.inc,v 1.1.2.4 2009/07/21 14:51:23 islandusurper Exp $
+// $Id: uc_price.inc,v 1.1.2.5 2009/08/17 21:27:55 islandusurper Exp $
 
 /**
  * @file
@@ -91,7 +91,8 @@ function uc_price($price_info, $context, $options = array()) {
   );
 
   $context += array(
-    'revision' => 'themed'
+    'revision' => 'themed',
+    'type' => 'amount',
   );
 
   // Clamp to allowed revisions.
@@ -116,7 +117,14 @@ function uc_price($price_info, $context, $options = array()) {
   // an array with a limited set of keys that don't change every pageload; the
   // uid, name, mail, and roles of the user account.
   $context_clone = $context;
-  $context_clone['account'] = array_intersect_key((array) $context['account'], drupal_map_assoc(array('uid', 'name', 'mail', 'roles')));
+  // TODO: array_intersect_key() isn't available until PHP 5.1.0. (Drupal 7)
+  //$context_clone['account'] = array_intersect_key((array) $context['account'], drupal_map_assoc(array()));
+  $context_clone['account'] = array(
+    'uid' => $context['account']->uid,
+    'name' => $context['account']->name,
+    'mail' => $context['account']->mail,
+    'roles' => $context['account']->roles,
+  );
 
   $key = md5(serialize($price_info + $context_clone + $options));
 

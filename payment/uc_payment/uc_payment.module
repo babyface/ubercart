@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment.module,v 1.5.2.10 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_payment.module,v 1.5.2.11 2009/08/17 21:27:55 islandusurper Exp $
 
 /**
  * @file
@@ -144,7 +144,7 @@ function uc_payment_token_values($type, $object = NULL) {
 
       $context = array(
         'revision' => 'formatted',
-        'location' => 'payment-balance-token',
+        'type' => 'amount',
       );
       $values['order-payment-balance'] = uc_price(uc_payment_balance($order), $context);
       break;
@@ -332,7 +332,8 @@ function uc_payment_get_totals() {
     $grand_total = 0;
 
     $context = array(
-      'location' => 'checkout-order-total-preview',
+      'revision' => 'themed',
+      'type' => 'line_item',
     );
 
     foreach ($totals as $line) {
@@ -348,6 +349,7 @@ function uc_payment_get_totals() {
       }
     }
 
+    $context['type'] = 'amount';
     $context['subject'] = array(
       'grand_total' => $grand_total,
     );
@@ -583,7 +585,7 @@ function uc_payment_enter($order_id, $method, $amount, $uid, $data, $comment) {
     global $user;
     $context = array(
       'revision' => 'formatted',
-      'location' => 'payment-log',
+      'type' => 'amount',
     );
     $log_message = t('@method payment for @amount entered by @user.', array('@method' => $method_name, '@amount' => uc_price($amount, $context), '@user' => uc_get_initials($user->uid)));
     uc_order_log_changes($order_id, array($log_message));
@@ -592,7 +594,11 @@ function uc_payment_enter($order_id, $method, $amount, $uid, $data, $comment) {
   db_query("INSERT INTO {uc_payment_receipts} (order_id, method, amount, uid, data, comment, received) VALUES (%d, '%s', %f, %d, '%s', '%s', %d)",
     $order_id, $method_name, $amount, $uid, $data, $comment, time());
 
-  ca_pull_trigger('uc_payment_entered', uc_order_load($order_id));
+  $order = uc_order_load($order_id);
+  $account = user_load($uid);
+
+  module_invoke_all('uc_payment_entered', $order, $method, $amount, $account, $data, $comment);
+  ca_pull_trigger('uc_payment_entered', $order, $account);
 }
 
 /**
@@ -608,7 +614,7 @@ function uc_payment_delete($receipt_id) {
     $payment = uc_payment_load($receipt_id);
     $context = array(
       'revision' => 'formatted',
-      'location' => 'payment-delete-log',
+      'type' => 'payment',
       'subject' => array(
         'payment' => $payment,
       ),

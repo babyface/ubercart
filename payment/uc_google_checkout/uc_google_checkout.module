@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_google_checkout.module,v 1.1.2.12 2009/07/21 14:51:22 islandusurper Exp $
+// $Id: uc_google_checkout.module,v 1.1.2.13 2009/08/17 21:27:58 islandusurper Exp $
 
 /**
  * @file
@@ -501,7 +501,7 @@ function uc_google_checkout_cart_request($order) {
           if ($settings['fixed_charge']) {
             $context = array(
               'revision' => 'formatted-original',
-              'location' => 'google-checkout-cart-request',
+              'type' => 'amount',
             );
             $options = array(
               'sign' => FALSE,
@@ -622,13 +622,13 @@ function uc_google_checkout_send_request($api, $request) {
   str_replace(array('&amp;', '&lt;', '&gt;'), array('&#x26;', '&#x3c;', '&#x3e;'), $request);
   $response_obj = drupal_http_request($checkout_url .'/api/checkout/v2/'. $api .'/Merchant/'. $merchant_id, uc_google_checkout_headers(), 'POST', $request);
   if ($response_obj->error) {
-    watchdog('google', check_plain($response_obj->error), NULL, WATCHDOG_ERROR);
+    watchdog('google', '@error', array('@error' => $response_obj->error), WATCHDOG_ERROR);
   }
   $response = new SimpleXMLElement($response_obj->data);
   if ($response->getName() == 'error') {
     $error = (string)$response->{'error-message'};
     drupal_set_message($error, 'error');
-    watchdog('google', check_plain($error), NULL, WATCHDOG_ERROR);
+    watchdog('google', '@error', array('@error' => $error), WATCHDOG_ERROR);
     return NULL;
   }
 
@@ -939,7 +939,7 @@ function uc_google_checkout_charge_order($charge) {
                      '', t('Payment received by Google Checkout'));
     $context = array(
       'revision' => 'formatted-original',
-      'location' => 'google-checkout-charge-comment',
+      'type' => 'amount',
     );
     uc_order_comment_save($order_id, 0, t('Payment of %amount received by Google Checkout.', array('%amount' => uc_price($charge->{'latest-charge-amount'}, $context))), 'admin', 'chargeable');
     uc_google_checkout_notification_acknowledgement($charge['serial-number']);
@@ -974,7 +974,7 @@ function uc_google_checkout_refund_order($refund) {
                      0, '', t('Refund received by Google Checkout'));
     $context = array(
       'revision' => 'formatted-original',
-      'location' => 'google-checkout-refund-comment',
+      'type' => 'amount',
     );
     uc_order_comment_save($order_id, 0, t('Refund of %amount received by Google Checkout.', array('%amount' => uc_price($refund->{'latest-refund-amount'}, $context))),
                           'admin', 'processing');
@@ -999,7 +999,7 @@ function uc_google_checkout_buyer_message_request($order_id, $message) {
   $output .= "\n";
   $output .= '<send-buyer-message xmlns="http://checkout.google.com/schema/2" google-order-number="'. $google_order_number .'">';
   $output .= '<message>'. check_plain($message) .'</message>';
-  $output .= '<send-email>'. (module_exists('uc_notify') && variable_get('uc_notify_order_update_enabled', TRUE) ? 'true' : 'false') .'</send-email>';
+  $output .= '<send-email>true</send-email>';
   $output .= '</send-buyer-message>';
 
   return $output;
@@ -1033,7 +1033,7 @@ function uc_google_checkout_notification_error($message = NULL) {
     $message = t('Unknown order id or malformed XML.');
   }
   drupal_set_header('HTTP/1.1 400 Bad Request');
-  watchdog('google', $message, NULL, WATCHDOG_ERROR);
+  watchdog('google', '!message', array('!message' => $message), WATCHDOG_ERROR);
   exit();
 }
 

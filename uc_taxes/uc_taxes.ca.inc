@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_taxes.ca.inc,v 1.1.2.12 2009/07/21 14:37:19 islandusurper Exp $
+// $Id: uc_taxes.ca.inc,v 1.1.2.13 2009/08/17 21:27:54 islandusurper Exp $
 
 /**
  * @file
@@ -52,7 +52,7 @@ function uc_taxes_ca_action() {
   // Loop through all the defined tax rates.
   foreach (uc_taxes_rate_load() as $rate) {
     $actions['uc_taxes_action_apply_tax_'. $rate->id] = array(
-      '#title' => t('Charge a tax'),
+      '#title' => t('Apply !name', array('!name' => $rate->name)),
       '#category' => t('Taxes'),
       '#callback' => 'uc_taxes_action_apply_tax',
       '#arguments' => array(

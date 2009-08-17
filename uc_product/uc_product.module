@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_product.module,v 1.14.2.32 2009/07/23 18:47:06 islandusurper Exp $
+// $Id: uc_product.module,v 1.14.2.33 2009/08/17 21:27:55 islandusurper Exp $
 
 /**
  * @file
@@ -711,7 +711,8 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
   ));
 
   $context = array(
-    'location' => 'product-view',
+    'revision' => 'themed',
+    'type' => 'product',
     'class' => array(
       'product',
     ),
@@ -728,7 +729,7 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
   }
 
   $context['class'][1] = 'display';
-  $context['subject']['field'] = 'sell_price';
+  $context['field'] = 'sell_price';
   $node->content['display_price'] = array('#value' => theme('uc_product_price', $node->sell_price, $context),
     '#access' => $enabled['display_price'],
     '#weight' => $weight['display_price'],
@@ -743,14 +744,14 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
     $node->content['body']['#weight'] = 1;
 
     $context['class'][1] = 'list';
-    $context['subject']['field'] = 'list_price';
+    $context['field'] = 'list_price';
     $node->content['list_price'] = array('#value' => theme('uc_product_price', $node->list_price, $context),
       '#access' => $enabled['list_price'],
       '#weight' => $weight['list_price'],
     );
 
     $context['class'][1] = 'cost';
-    $context['subject']['field'] = 'cost';
+    $context['field'] = 'cost';
     $node->content['cost'] = array('#value' => theme('uc_product_price', $node->cost, $context),
       '#access' => $enabled['cost'] && user_access('administer products'),
       '#weight' => $weight['cost'],
@@ -762,7 +763,7 @@ function uc_product_view($node, $teaser = 0, $page = 0) {
   }
 
   $context['class'][1] = 'sell';
-  $context['subject']['field'] = 'sell_price';
+  $context['field'] = 'sell_price';
   $node->content['sell_price'] = array('#value' => theme('uc_product_price', $node->sell_price, $context, array('label' => !$teaser)),
     '#access' => $enabled['sell_price'],
     '#weight' => $weight['sell_price'],
@@ -1104,7 +1105,7 @@ function uc_product_store_status() {
       }
       else {
         $actions = imagecache_preset_actions($preset);
-        if (empty($actions)) {
+        if (empty($actions) && $preset_name != 'product_full') {
           $action_check = 0;
           break;
         }
@@ -1150,11 +1151,9 @@ function uc_product_cart_display($item) {
 
   $context = array(
     'revision' => 'altered',
-    'location' => 'cart-item',
+    'type' => 'cart_item',
     'subject' => array(
       'cart_item' => $item,
-    ),
-    'extras' => array(
       'node' => $node,
     ),
   );
@@ -1296,7 +1295,8 @@ function uc_product_table($args = array()) {
   );
 
   $context = array(
-    'location' => 'product-tapir-table',
+    'revision' => 'themed',
+    'type' => 'product',
     'class' => array('product'),
   );
   $options = array('label' => FALSE);
@@ -1323,12 +1323,12 @@ function uc_product_table($args = array()) {
     $context['subject'] = array('node' => $node);
     if ($enabled['list_price']) {
       $context['class'][1] = 'list';
-      $context['subject']['field'] = 'list_price';
+      $context['field'] = 'list_price';
       $data['list_price'] = array('#value' => uc_price($node->list_price, $context, $options), '#cell_attributes' => array('nowrap' => 'nowrap'));
     }
     if ($enabled['sell_price']) {
       $context['class'][1] = 'sell';
-      $context['subject']['field'] = 'sell_price';
+      $context['field'] = 'sell_price';
       $data['price'] = array('#value' => uc_price($node->sell_price, $context, $options), '#cell_attributes' => array('nowrap' => 'nowrap'));
     }
 

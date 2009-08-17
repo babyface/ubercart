@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cybersource.module,v 1.4.2.8 2009/07/08 12:56:51 islandusurper Exp $
+// $Id: uc_cybersource.module,v 1.4.2.9 2009/08/17 21:27:54 islandusurper Exp $
 
 /**
  * @file
@@ -220,7 +220,7 @@ function uc_cybersource_charge($order_id, $amount, $data) {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'cybersource-charge',
+    'type' => 'amount',
   );
   $options = array(
     'sign' => FALSE,
@@ -382,7 +382,7 @@ function _uc_cybersource_post_charge($order, $amount, $data, $cc_type, $country)
     // Create the order and payment ledger comments.
     $context = array(
       'revision' => 'formatted-original',
-      'location' => 'cybersource-post-charge',
+      'type' => 'amount',
     );
     $o_comment = t('<b>Credit card !type:</b> !amount<br /><b>Decision: @decision</b><br /><b>Reason:</b> !reason', array('!type' => variable_get('uc_cybersource_transaction_type', 'sale'), '!amount' => uc_price($nvp['orderAmount'], $context), '@decision' => $nvp['decision'], '!reason' => _parse_cs_reason_code($nvp['reasonCode'])));
     $p_comment = t('!id<br />!decision, Reason: !reason', array('!id' => $nvp['orderPage_serialNumber'], '!decision' => $nvp['decision'], '!reason' => $nvp['reasonCode']));
@@ -609,7 +609,7 @@ function _uc_cybersource_soap_charge($order, $amount, $data, $cc_type, $country)
     // Create the order and payment ledger comments.
     $context = array(
       'revision' => 'formatted-original',
-      'location' => 'cybersource-soap-charge',
+      'type' => 'amount',
     );
     $o_comment = t('<b>@type:</b> @amount<br /><b>Decision: @decision</b><br /><b>Reason:</b> !reason', array('@type' => $types[$data['txn_type']], '@amount' => uc_price($amount, $context), '@decision' => $reply->decision, '!reason' => _parse_cs_reason_code($reply->reasonCode)));
     $p_comment = t('<b>@type:</b><br />@id<br />@decision, Reason: !reason', array('@type' => $types[$data['txn_type']], '@id' => $reply->requestID, '@decision' => $reply->decision, '!reason' => $reply->reasonCode));
@@ -694,7 +694,7 @@ function uc_cybersource_tax_test($order) {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'cybersource-tax-test',
+    'type' => 'line_item',
   );
 
   // Build an item list for the taxes.
@@ -913,7 +913,7 @@ function uc_cybersource_calculate_tax($order) {
       if ($total != floatval($reply->taxReply->totalTaxAmount)) {
         $context = array(
           'revision' => 'formatted-original',
-          'location' => 'cybersource-calculate-tax',
+          'type' => 'amount',
         );
         watchdog('uc_cybersource', 'Tax calculation produced uneven results. Expected a total of @total, received the following: @dump', array('@total' => uc_price($reply->taxReply->totalTaxAmount, $context), '@dump' => '<pre>'. print_r($result, TRUE) .'</pre>'), WATCHDOG_ERROR);
 

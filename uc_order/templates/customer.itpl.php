@@ -1,5 +1,5 @@
 <?php
-// $Id: customer.itpl.php,v 1.5.2.7 2009/07/21 14:37:18 islandusurper Exp $
+// $Id: customer.itpl.php,v 1.5.2.8 2009/08/17 21:27:53 islandusurper Exp $
 
 /**
  * @file
@@ -157,7 +157,7 @@
 
                     <?php
                     $context = array(
-                      'location' => 'order-invoice-line-item',
+                      'revision' => 'themed',
                       'subject' => array(
                         'order' => $order,
                       ),
@@ -214,7 +214,6 @@
                                 'qty' => $product->qty,
                               );
                               $context['subject']['order_product'] = $product;
-                              $context['location'] = 'order-invoice-product';
                               ?>
                           <tr>
                             <td valign="top" nowrap="nowrap">
@@ -223,7 +222,6 @@
                             <td width="98%">
                               <b><?php echo $product->title .' - '. uc_price($price_info, $context); ?></b>
                               <?php if ($product->qty > 1) {
-                                $context['location'] = 'order-invoice-product-each';
                                 $price_info['qty'] = 1;
                                 echo t('(!price each)', array('!price' => uc_price($price_info, $context)));
                               } ?>

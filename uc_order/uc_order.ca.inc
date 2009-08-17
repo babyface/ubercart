@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.ca.inc,v 1.1.2.24 2009/07/21 14:37:18 islandusurper Exp $
+// $Id: uc_order.ca.inc,v 1.1.2.25 2009/08/17 21:27:53 islandusurper Exp $
 
 /**
  * @file
@@ -1136,8 +1136,7 @@ function uc_order_action_add_comment_form($form_state, $settings = array()) {
  * @see uc_order_action_email_form()
  */
 function uc_order_action_email($order, $settings) {
-  $account = user_load(array('uid' => $order->uid));
-  $language = language_default();
+  $account = uc_order_user_load($order);
 
   // Token replacements for the subject and body
   $settings['replacements'] = array(
@@ -1157,7 +1156,7 @@ function uc_order_action_email($order, $settings) {
   }
 
   foreach ($recipients as $email) {
-    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, empty($from) ? uc_store_email_from() : $from);
+    $sent = drupal_mail('uc_order', 'action-mail', $email, uc_store_mail_recipient_language($email), $settings, empty($settings['from']) ? uc_store_email_from() : $settings['from']);
 
     if (!$sent['result']) {
       watchdog('ca', 'Attempt to e-mail @email concerning order @order_id failed.', array('@email' => $email, '@order_id' => $order->order_id), WATCHDOG_ERROR);
@@ -1228,8 +1227,6 @@ function uc_order_action_email_form($form_state, $settings = array()) {
  * @see uc_order_action_email_invoice_form()
  */
 function uc_order_action_email_invoice($order, $settings) {
-  $language = user_preferred_language($account);
-
   // Token replacements for the subject and body
   $settings['replacements'] = array(
     'global' => NULL,
@@ -1251,7 +1248,7 @@ function uc_order_action_email_invoice($order, $settings) {
   }
 
   foreach ($recipients as $email) {
-    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, empty($settings['from']) ? uc_store_email_from() : $settings['from']);
+    $sent = drupal_mail('uc_order', 'action-mail', $email, uc_store_mail_recipient_language($email), $settings, empty($settings['from']) ? uc_store_email_from() : $settings['form']);
 
     if (!$sent['result']) {
       watchdog('ca', 'Attempt to e-mail invoice for order @order_id to @email failed.', array('@email' => $email, '@order_id' => $order->order_id), WATCHDOG_ERROR);

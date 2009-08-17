@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_roles.ca.inc,v 1.1.2.9 2009/07/29 19:54:18 islandusurper Exp $
+// $Id: uc_roles.ca.inc,v 1.1.2.10 2009/08/17 21:27:58 islandusurper Exp $
 
 /**
  * @file
@@ -303,8 +303,7 @@ function uc_roles_ca_trigger() {
  * @see uc_roles_action_order_email_form()
  */
 function uc_roles_action_order_email($order, $role_expiration, $settings) {
-  $account = user_load(array('uid' => $order->uid));
-  $language = language_default();
+  $account = uc_order_user_load($order);
 
   // Token replacements for the subject and body
   $settings['replacements'] = array(
@@ -323,7 +322,7 @@ function uc_roles_action_order_email($order, $role_expiration, $settings) {
 
   // Send to each recipient.
   foreach ($recipients as $email) {
-    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
+    $sent = drupal_mail('uc_order', 'action-mail', $email, uc_store_mail_recipient_language($email), $settings, $settings['from']);
 
     if (!$sent['result']) {
       watchdog('ca', 'Attempt to e-mail @email concerning order @order_id failed.', array('@email' => $email, '@order_id' => $order->order_id), WATCHDOG_ERROR);
@@ -348,7 +347,7 @@ function uc_roles_action_order_email_form($form_state, $settings = array()) {
  * @see uc_roles_action_user_email_form()
  */
 function uc_roles_action_user_email($account, $role_expiration, $settings) {
-  $language = language_default();
+  $account = uc_order_user_load($order);
 
   // Token replacements for the subject and body
   $settings['replacements'] = array(
@@ -366,7 +365,7 @@ function uc_roles_action_user_email($account, $role_expiration, $settings) {
 
   // Send to each recipient.
   foreach ($recipients as $email) {
-    $sent = drupal_mail('uc_order', 'action-mail', $email, $language, $settings, $settings['from']);
+    $sent = drupal_mail('uc_order', 'action-mail', $email, uc_store_mail_recipient_language($email), $settings, $settings['from']);
 
     if (!$sent['result']) {
       watchdog('ca', 'Attempt to e-mail @email concerning order @order_id failed.', array('@email' => $email, '@order_id' => $order->order_id), WATCHDOG_ERROR);

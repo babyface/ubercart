@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.install,v 1.7.2.7 2009/07/21 14:37:20 islandusurper Exp $
+// $Id: uc_cart.install,v 1.7.2.8 2009/08/17 21:27:55 islandusurper Exp $
 
 /**
  * @file
@@ -14,6 +14,12 @@ function uc_cart_schema() {
 
   $schema['uc_cart_products'] = array(
     'fields' => array(
+      'cart_item_id' => array(
+        'description' => 'Unique identifier for cart item.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+
       'cart_id' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -46,6 +52,7 @@ function uc_cart_schema() {
     'indexes' => array(
       'cart_id' => array('cart_id'),
     ),
+    'primary key' => array('cart_item_id'),
   );
 
   return $schema;
@@ -118,5 +125,21 @@ function uc_cart_update_6002() {
 
   db_change_field($ret, 'uc_cart_products', 'cart_id', 'cart_id', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => 0));
 
+  return $ret;
+}
+
+/**
+ * Add an autoincrement primary key to the uc_cart_products table
+ * @return unknown_type
+ */
+function uc_cart_update_6200() {
+  $ret = array();
+  db_add_field($ret, 'uc_cart_products', 'cart_item_id', array(
+        'description' => 'Unique identifier for cart item.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+    array('primary key' => array('cart_item_id'),)
+  );
   return $ret;
 }

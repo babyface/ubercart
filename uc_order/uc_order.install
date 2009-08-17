@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.9.2.14 2009/07/21 14:37:18 islandusurper Exp $
+// $Id: uc_order.install,v 1.9.2.15 2009/08/17 21:27:53 islandusurper Exp $
 
 /**
  * @file
@@ -42,6 +42,13 @@ function uc_order_schema() {
         'scale' => 3,
         'not null' => TRUE,
         'default' => 0.0,
+      ),
+      'product_count' => array(
+        'description' => t('The total product quantity of the order.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
       ),
       'primary_email' => array(
         'description' => t('The email address of the customer.'),
@@ -562,11 +569,11 @@ function uc_order_install() {
   drupal_install_schema('uc_order');
 
   $t = get_t();
-  db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('canceled', '". $t('Canceled') ."', 'canceled', -20, 1);");
-  db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('in_checkout', '". $t('In checkout') ."', 'in_checkout', -10, 1);");
-  db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('pending', '". $t('Pending') ."', 'post_checkout', 0, 1);");
-  db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('processing', '". $t('Processing') ."', 'post_checkout', 5, 1);");
-  db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('completed', '". $t('Completed') ."', 'completed', 20, 1);");
+  db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('canceled', '%s', 'canceled', -20, 1);", $t('Canceled'));
+  db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('in_checkout', '%s', 'in_checkout', -10, 1);", $t('In checkout'));
+  db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('pending', '%s', 'post_checkout', 0, 1);", $t('Pending'));
+  db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('processing', '%s', 'post_checkout', 5, 1);", $t('Processing'));
+  db_query("INSERT INTO {uc_order_statuses} (order_status_id, title, state, weight, locked) VALUES ('completed', '%s', 'completed', 20, 1);", $t('Completed'));
 }
 
 /**
@@ -1006,3 +1013,27 @@ function uc_order_update_6010(&$sandbox) {
 
   return $ret;
 }
+
+/**
+ * Add a total product quantity column to {uc_orders}.
+ */
+function uc_order_update_6011() {
+  $ret = array();
+
+  $spec = array(
+    'description' => t('The total product quantity of the order.'),
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+  );
+  db_add_field($ret, 'uc_orders', 'product_count', $spec);
+
+  $result = db_query("SELECT order_id, SUM(qty) AS product_count FROM {uc_order_products} GROUP BY order_id");
+  while ($row = db_fetch_object($result)) {
+    drupal_write_record('uc_orders', $row, 'order_id');
+  }
+
+  return $ret;
+}
+

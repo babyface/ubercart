@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_authorizenet.module,v 1.4.2.10 2009/07/21 14:37:22 islandusurper Exp $
+// $Id: uc_authorizenet.module,v 1.4.2.11 2009/08/17 21:27:56 islandusurper Exp $
 
 /**
  * @file
@@ -343,7 +343,7 @@ function _uc_authorizenet_cim_profile_charge($order, $amount, $data) {
       $types = uc_credit_transaction_types();
       $context = array(
         'revision' => 'formatted-original',
-        'location' => 'cim-profile-charge',
+        'type' => 'amount',
       );
       $comment[] = t('<b>@type:</b> @amount', array('@type' => $types[$data['txn_type']], '@amount' => uc_price($amount, $context)));
 
@@ -436,7 +436,7 @@ function _uc_authorizenet_charge($order, $amount, $data) {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'authorize.net-charge',
+    'type' => 'amount',
   );
   $options = array(
     'sign' => FALSE,
@@ -610,7 +610,7 @@ function _uc_authorizenet_charge($order, $amount, $data) {
   // Build an admin order comment.
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'authorize.net-charge-comment',
+    'type' => 'amount',
   );
   $comment = t('<b>@type</b><br /><b>@status:</b> @message<br />Amount: @amount<br />AVS response: @avs',
     array('@type' => _uc_authorizenet_txn_type($response[11]), '@status' => $result['success'] ? t('ACCEPTED') : t('REJECTED'), '@message' => $response[3], '@amount' => uc_price($response[9], $context), '@avs' => _uc_authorizenet_avs($response[5])));

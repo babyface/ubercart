@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_store.admin.inc,v 1.1.2.15 2009/07/21 14:51:21 islandusurper Exp $
+// $Id: uc_store.admin.inc,v 1.1.2.16 2009/08/17 21:27:54 islandusurper Exp $
 
 /**
  * @file
@@ -737,7 +737,7 @@ function uc_store_format_settings_form() {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'currency-format-form',
+    'type' => 'amount',
   );
   $form['currency']['example'] = array(
     '#type' => 'textfield',
@@ -929,7 +929,10 @@ function uc_store_customer_orders($uid) {
 
   $context = array(
     'revision' => 'themed-original',
-    'location' => 'customer-orders',
+    'type' => 'order_total',
+    'subject' => array(
+      'order' => $order,
+    ),
   );
   $totals = array('orders' => 0, 'items' => 0, 'total' => 0);
   while ($order = db_fetch_object($result)) {
@@ -959,7 +962,6 @@ function uc_store_customer_orders($uid) {
     $totals['items'] += $item_count['COUNT(*)'];
     $totals['total'] += $order->order_total;
 
-    $context['subject'] = array('order' => $order);
     $rows[] = array(
       'data' => array(
         array('data' => $icons),
@@ -982,7 +984,7 @@ function uc_store_customer_orders($uid) {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'customer-orders-total',
+    'type' => 'amount',
   );
   $output = '<p>'. l(t('Create an order for this customer.'),
                      'admin/store/orders/create/'. $uid) .'</p>';

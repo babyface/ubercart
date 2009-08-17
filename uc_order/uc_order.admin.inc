@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.21 2009/07/23 18:47:07 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.22 2009/08/17 21:27:53 islandusurper Exp $
 
 /**
  * @file
@@ -480,10 +480,7 @@ function uc_order_admin($sql = NULL, $args = NULL, $search = FALSE) {
 
   $context = array(
     'revision' => 'themed-original',
-    'location' => 'orders-admin',
-    'subject' => array(
-      'field' => 'order_total',
-    ),
+    'type' => 'amount',
   );
 
   $result = pager_query($sql, variable_get('uc_order_number_displayed', 30), 0, NULL, $args);
@@ -506,7 +503,6 @@ function uc_order_admin($sql = NULL, $args = NULL, $search = FALSE) {
       }
     }
 
-    $context['subject']['order'] = $order;
     $rows[] = array(
       'data' => array(
         array('data' => uc_order_actions($order, TRUE), 'nowrap' => 'nowrap'),
@@ -1027,7 +1023,7 @@ function uc_order_history($user) {
   $result = pager_query("SELECT o.order_id, o.created, os.title, SUM(op.qty) AS products, o.order_total AS total FROM {uc_orders} AS o LEFT JOIN {uc_order_statuses} AS os ON o.order_status = os.order_status_id LEFT JOIN {uc_order_products} AS op ON o.order_id = op.order_id WHERE o.uid = %d AND o.order_status IN ". uc_order_status_list('general', TRUE) ." GROUP BY o.order_id, o.created, os.title, o.order_total". tablesort_sql($header), 20, 0, "SELECT COUNT(*) FROM {uc_orders} WHERE uid = %d AND order_status NOT IN ". uc_order_status_list('specific', TRUE), $user->uid);
   $context = array(
     'revision' => 'themed-original',
-    'location' => 'order-history',
+    'type' => 'amount',
   );
   // Build a table based on the customer's orders.
   while ($order = db_fetch_object($result)) {
@@ -1289,13 +1285,11 @@ function uc_order_edit_products($order) {
         'qty' => 1,
       );
       $context = array(
-        'location' => 'order-product-add',
         'revision' => 'altered',
+        'type' => 'order_product',
         'subject' => array(
-          'cart_item' => $product,
-          'field' => 'price',
-        ),
-        'extras' => array(
+          'order' => $order,
+          'product' => $product,
           'node' => clone $product,
         ),
       );
@@ -1699,16 +1693,9 @@ function uc_order_mail_invoice_form_submit($form, &$form_state) {
   }
 
   $recipient = check_plain($form_state['values']['email']);
-  $account = user_load(array('uid' => $order->uid));
-  if ($account->mail == $recipient) {
-    $language = user_preferred_language($account);
-  }
-  else {
-    $language = language_default();
-  }
 
   $params = array('order' => $order);
-  $sent = drupal_mail('uc_order', 'invoice', $recipient, $language, $params);
+  $sent = drupal_mail('uc_order', 'invoice', $recipient, uc_store_mail_recipient_language($recipient), $params);
 
   if (!$sent) {
     drupal_set_message(t('E-mail failed.'));

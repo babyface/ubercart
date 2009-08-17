@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.module,v 1.15.2.25 2009/07/21 14:51:20 islandusurper Exp $
+// $Id: uc_cart.module,v 1.15.2.26 2009/08/17 21:27:55 islandusurper Exp $
 
 /**
  * @file
@@ -701,14 +701,15 @@ function theme_uc_cart_block_items($items) {
     $row_class = 'odd';
 
     $context = array(
-      'location' => 'cart-block-item',
+      'revision' => 'themed',
+      'field' => 'price',
     );
 
     // Loop through each item.
     foreach ($items as $item) {
       $context['subject'] = array(
         'cart_item' => $item,
-        'field' => 'price',
+        'node' => node_load($item->nid),
       );
       // Add the basic row with quantity, title, and price.
       $output .= '<tr class="'. $row_class .'"><td class="cart-block-item-qty">'. $item['qty'] .'</td>'
@@ -750,7 +751,7 @@ function theme_uc_cart_block_items($items) {
 function theme_uc_cart_block_summary($item_count, $item_text, $total, $summary_links) {
   $context = array(
     'revision' => 'themed-original',
-    'location' => 'cart-block-total',
+    'type' => 'amount',
   );
   // Build the basic table with the number of items in the cart and total.
   $output = '<table class="cart-block-summary"><tbody><tr>'
@@ -926,7 +927,7 @@ function uc_cart_view_form($form_state, $items = NULL) {
 
   $context = array(
     'revision' => 'themed-original',
-    'location' => 'cart-subtotal',
+    'type' => 'amount',
   );
   $i = 0;
   foreach ($items as $item) {
@@ -1122,7 +1123,7 @@ function uc_cart_view_table($table) {
 
   $context = array(
     'revision' => 'themed-original',
-    'location' => 'cart-table-subtotal',
+    'type' => 'amount',
   );
   $table[] = array(
     'total' => array(
@@ -1279,7 +1280,12 @@ function uc_cart_complete_sale($order, $login = FALSE) {
   // Clear our the session variables used to force the cart workflow.
   unset($_SESSION['cart_order'], $_SESSION['do_complete'], $_SESSION['new_user']);
 
-  ca_pull_trigger('uc_checkout_complete', $order, $user->uid == 0 ? $account : $user);
+  if ($user->uid != 0) {
+    $account = clone $user;
+  }
+
+  module_invoke_all('uc_checkout_complete', $order, $account);
+  ca_pull_trigger('uc_checkout_complete', $order, $account);
 
   return $themed_output;
 }
@@ -1358,6 +1364,47 @@ function uc_cart_get_contents($cid = NULL, $action = NULL) {
   }
 
   return $items[$cid];
+}
+
+/**
+ * Allow us to get one single line item in a cart
+ * @param $cart_item_id
+ *   cart_item_id to fetch
+ * @return
+ *   Fully loaded cart item or NULL if item not found
+ */
+function uc_cart_get_item($cart_item_id) {
+  $result = db_query("SELECT c.*, n.title, n.vid FROM {node} n INNER JOIN {uc_cart_products} c ON n.nid = c.nid WHERE c.cart_item_id = '%d'", $cart_item_id);
+  $item = db_fetch_object($result);
+  if (empty($item)) {
+    return;
+  }
+  $product = node_load($item->nid);
+  $item->cost = $product->cost;
+  $item->price = $product->sell_price;
+  $item->weight = $product->weight;
+  $item->data = unserialize($item->data);
+  $item->module = $item->data['module'];
+  $item->model = $product->model;
+
+  // Invoke hook_cart_item() with $op = 'load' in enabled modules.
+  foreach (module_implements('cart_item') as $module) {
+    $func = $module .'_cart_item';
+    $func('load', $item);
+  }
+  return $item;
+}
+
+/**
+ * Update a cart item.
+ * @param $item
+ *   The loaded cart item
+ * @return unknown_type
+ */
+function uc_cart_update_item($item) {
+  db_query('update {uc_cart_products}
+    set qty=%d, changed=UNIX_TIMESTAMP(), data="%s" WHERE cart_item_id=%d',
+    $item->qty, serialize($item->data), $item->cart_item_id);
 }
 
 /**

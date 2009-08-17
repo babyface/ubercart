@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_shipping.module,v 1.6.2.11 2009/07/21 14:37:18 islandusurper Exp $
+// $Id: uc_shipping.module,v 1.6.2.12 2009/08/17 21:27:56 islandusurper Exp $
 
 /**
  * @file
@@ -7,6 +7,8 @@
  * method modules may add functionality to generate shipping labels and tracking
  * numbers.
  */
+
+require_once('uc_shipping.ca.inc');
 
 /******************************************************************************
  * Drupal hooks                                                               *
@@ -252,11 +254,8 @@ function uc_shipping_package_view($package) {
     $rows[] = array(t('Dimensions:'), t('!l x !w x !h', array('!l' => uc_length_format($package->length), '!w' => uc_length_format($package->width), '!h' => uc_length_format($package->height))));
   }
   $context = array(
-    'location' => 'shipping-package-view',
-    'subject' => array(
-      'package' => $package,
-      'field' => 'value',
-    ),
+    'revision' => 'themed',
+    'type' => 'amount',
   );
   $rows[] = array(t('Insured value:'), uc_price($package->value, $context));
   if ($package->tracking_number) {
@@ -507,6 +506,8 @@ function uc_shipping_shipment_save($shipment) {
   );
 
   module_invoke_all('shipment', 'save', $shipment);
+  $order = uc_order_load($shipment->order_id);
+  ca_pull_trigger('uc_shipment_save', $order, $shipment);
 }
 
 /**

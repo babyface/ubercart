@@ -1,5 +1,5 @@
 <?php
-// $Id: admin.itpl.php,v 1.4.4.5 2009/07/21 14:37:18 islandusurper Exp $
+// $Id: admin.itpl.php,v 1.4.4.6 2009/08/17 21:27:53 islandusurper Exp $
 
 /**
  * @file
@@ -18,7 +18,8 @@
 <?php echo t('Products:'); ?><br />
 <?php
 $context = array(
-  'location' => 'order-invoice-admin',
+  'revision' => 'themed',
+  'type' => 'order_product',
 );
 foreach ($products as $product) {
   $price_info = array(

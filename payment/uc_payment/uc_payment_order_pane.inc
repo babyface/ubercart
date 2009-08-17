@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_payment_order_pane.inc,v 1.5.2.5 2009/04/18 07:29:16 islandusurper Exp $
+// $Id: uc_payment_order_pane.inc,v 1.5.2.6 2009/08/17 21:27:55 islandusurper Exp $
 
 /**
  * @file
@@ -20,10 +20,7 @@ function uc_order_pane_payment($op, $arg1) {
       if (variable_get('uc_payment_tracking', TRUE)) {
         $context = array(
           'revision' => 'formatted-original',
-          'location' => 'payment-balance',
-          'subject' => array(
-            'order' => $arg1,
-          ),
+          'type' => 'amount',
         );
         $output = t('Balance: @balance', array('@balance' => uc_price(uc_payment_balance($arg1), $context)));
         $output .= ' ('. l(t('View'), 'admin/store/orders/'. $arg1->order_id .'/payments') .')<br />';

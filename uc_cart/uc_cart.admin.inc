@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.admin.inc,v 1.1.2.12 2009/07/21 14:37:20 islandusurper Exp $
+// $Id: uc_cart.admin.inc,v 1.1.2.13 2009/08/17 21:27:55 islandusurper Exp $
 
 /**
  * @file
@@ -60,7 +60,7 @@ function uc_cart_cart_settings_form() {
 
   $context = array(
     'revision' => 'formatted',
-    'location' => 'minimum-subtotal-summary'
+    'type' => 'amount',
   );
   $form['general']['uc_minimum_subtotal'] = array(
     '#type' => 'textfield',

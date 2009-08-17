@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_paypal.module,v 1.5.2.14 2009/07/08 12:56:52 islandusurper Exp $
+// $Id: uc_paypal.module,v 1.5.2.15 2009/08/17 21:27:56 islandusurper Exp $
 
 /**
  * @file
@@ -281,7 +281,7 @@ function uc_paypal_wpp_charge($order_id, $amount, $data) {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'paypal-wpp-charge',
+    'type' => 'amount',
   );
   $options = array(
     'sign' => FALSE,
@@ -392,48 +392,70 @@ function uc_paypal_wpp_charge($order_id, $amount, $data) {
   $nvp_response = uc_paypal_api_request($nvp_request, variable_get('uc_paypal_wpp_server', 'https://api-3t.sandbox.paypal.com/nvp'));
   $types = uc_credit_transaction_types();
 
-  if ($nvp_response['ACK'] != 'Success') {
-    $message = t('<b>@type failed.</b><br /><b>@severity:</b> @error', array('@type' => $types[$data['txn_type']], '@severity' => $nvp_response['L_SEVERITYCODE0'], '@error' => $nvp_response['L_ERRORCODE0'] .'. '. $nvp_response['L_LONGMESSAGE0']));
-    if ($data['txn_type'] != UC_CREDIT_PRIOR_AUTH_CAPTURE) {
-      $message .= '<br />'. t('<b>Address:</b> @avscode', array('@avscode' => _uc_paypal_avscode_message($nvp_response['AVSCODE'])));
-      if (variable_get('uc_credit_cvv_enabled', TRUE)) {
-        $message .= '<br />'. t('<b>CVV2:</b> @cvvmatch', array('@cvvmatch' => _uc_paypal_cvvmatch_message($nvp_response['CVV2MATCH'])));
+  switch ($nvp_response['ACK']) {
+    case 'SuccessWithWarning':
+      watchdog('uc_payment', '<b>@type succeeded with a warning.</b>'. _uc_paypal_build_error_messages($nvp_response),
+        array(
+          '@type' => $types[$data['txn_type']],
+        ),
+        WATCHDOG_WARNING,
+        l(t('view order'), 'admin/store/orders/'. $order_id)
+      );
+      // fall through
+    case 'Success':
+      $message = t('<b>@type</b><br /><b>Success: </b>@amount @currency', array('@type' => $types[$data['txn_type']], '@amount' => uc_price($nvp_response['AMT'], $context, array('sign' => FALSE)), '@currency' => $nvp_response['CURRENCYCODE']));
+      if ($data['txn_type'] != UC_CREDIT_PRIOR_AUTH_CAPTURE) {
+        $message .= '<br />'. t('<b>Address:</b> @avscode', array('@avscode' => _uc_paypal_avscode_message($nvp_response['AVSCODE'])));
+        if (variable_get('uc_credit_cvv_enabled', TRUE)) {
+          $message .= '<br />'. t('<b>CVV2:</b> @cvvmatch', array('@cvvmatch' => _uc_paypal_cvvmatch_message($nvp_response['CVV2MATCH'])));
+        }
       }
-    }
-    $result = array(
-      'success' => FALSE,
-      'message' => $message,
-      'uid' => $user->uid,
-    );
-  }
-  else {
-    $message = t('<b>@type</b><br /><b>Success: </b>@amount @currency', array('@type' => $types[$data['txn_type']], '@amount' => uc_price($nvp_response['AMT'], $context, array('sign' => FALSE)), '@currency' => $nvp_response['CURRENCYCODE']));
-    if ($data['txn_type'] != UC_CREDIT_PRIOR_AUTH_CAPTURE) {
-      $message .= '<br />'. t('<b>Address:</b> @avscode', array('@avscode' => _uc_paypal_avscode_message($nvp_response['AVSCODE'])));
-      if (variable_get('uc_credit_cvv_enabled', TRUE)) {
-        $message .= '<br />'. t('<b>CVV2:</b> @cvvmatch', array('@cvvmatch' => _uc_paypal_cvvmatch_message($nvp_response['CVV2MATCH'])));
+      $result = array(
+        'success' => TRUE,
+        'comment' => t('PayPal transaction ID: @transactionid', array('@transactionid' => $nvp_response['TRANSACTIONID'])),
+        'message' => $message,
+        'data' => check_plain($nvp_response['TRANSACTIONID']),
+        'uid' => $user->uid,
+      );
+
+      // If this was an authorization only transaction...
+      if ($data['txn_type'] == UC_CREDIT_AUTH_ONLY) {
+        // Log the authorization to the order.
+        uc_credit_log_authorization($order_id, $nvp_response['TRANSACTIONID'], $nvp_response['AMT']);
       }
-    }
-    $result = array(
-      'success' => TRUE,
-      'comment' => t('PayPal transaction ID: @transactionid', array('@transactionid' => $nvp_response['TRANSACTIONID'])),
-      'message' => $message,
-      'data' => check_plain($nvp_response['TRANSACTIONID']),
-      'uid' => $user->uid,
-    );
+      elseif ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE) {
+        uc_credit_log_prior_auth_capture($order_id, $data['auth_id']);
+      }
 
-    // If this was an authorization only transaction...
-    if ($data['txn_type'] == UC_CREDIT_AUTH_ONLY) {
-      // Log the authorization to the order.
-      uc_credit_log_authorization($order_id, $nvp_response['TRANSACTIONID'], $nvp_response['AMT']);
-    }
-    elseif ($data['txn_type'] == UC_CREDIT_PRIOR_AUTH_CAPTURE) {
-      uc_credit_log_prior_auth_capture($order_id, $data['auth_id']);
-    }
-
-    // Log the IPN to the database.
-    db_query("INSERT INTO {uc_payment_paypal_ipn} (order_id, txn_id, txn_type, mc_gross, status, receiver_email, payer_email, received) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d)",
+      // Log the IPN to the database.
+      db_query("INSERT INTO {uc_payment_paypal_ipn} (order_id, txn_id, txn_type, mc_gross, status, receiver_email, payer_email, received) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', %d)",
       $order->order_id, $nvp_response['TRANSACTIONID'], 'web_accept', $amount, 'Completed', '', $order->primary_email, time());
+
+      break;
+    case 'FailureWithWarning':
+      // fall through
+    case 'Failure':
+      $message = t('<b>@type failed.</b>', array('@type' => $types[$data['txn_type']])) . _uc_paypal_build_error_messages($nvp_response);
+      if ($data['txn_type'] != UC_CREDIT_PRIOR_AUTH_CAPTURE) {
+        $message .= '<br />'. t('<b>Address:</b> @avscode', array('@avscode' => _uc_paypal_avscode_message($nvp_response['AVSCODE'])));
+        if (variable_get('uc_credit_cvv_enabled', TRUE)) {
+          $message .= '<br />'. t('<b>CVV2:</b> @cvvmatch', array('@cvvmatch' => _uc_paypal_cvvmatch_message($nvp_response['CVV2MATCH'])));
+        }
+      }
+      $result = array(
+        'success' => FALSE,
+        'message' => $message,
+        'uid' => $user->uid,
+      );
+      break;
+    default:
+      $message = t('Unexpected acknowledgement status: @status', array('@status' => $nvp_response['ACK']));
+      $result = array(
+        'success' => NULL,
+        'message' => $message,
+        'uid' => $user->uid,
+      );
+      break;
   }
 
   uc_order_comment_save($order_id, $user->uid, $message, 'admin');
@@ -444,6 +466,19 @@ function uc_paypal_wpp_charge($order_id, $amount, $data) {
   }
 
   return $result;
+}
+
+/**
+ * Build error message(s) from PayPal failure responses.
+ */
+function _uc_paypal_build_error_messages($nvp_response) {
+  $code = 0;
+  $message = '';
+  while (array_key_exists('L_SEVERITYCODE'. $code, $nvp_response)) {
+    $message .= '<br /><b>'. $nvp_response['L_SEVERITYCODE'. $code] .':</b> '. $nvp_response['L_ERRORCODE'. $code] .': '. $nvp_response['L_LONGMESSAGE'. $code];
+    $code++;
+  }
+  return $message;
 }
 
 // Handles the Website Payments Standard payment method.
@@ -601,7 +636,10 @@ function uc_paypal_ec_checkout($form, &$form_state) {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'paypal-ec-checkout',
+    'type' => 'order_total',
+    'subject' => array(
+      'order' => $order,
+    ),
   );
   $options = array(
     'sign' => FALSE,
@@ -690,7 +728,7 @@ function uc_paypal_ec_form_submit($form, &$form_state) {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'paypal-ec-form-submit',
+    'type' => 'amount',
   );
   $options = array(
     'sign' => FALSE,
@@ -758,7 +796,10 @@ function uc_paypal_ec_submit_form_submit($form, &$form_state) {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'paypal-ec-submit-form-submit',
+    'type' => 'order_total',
+    'subject' => array(
+      'order' => $order,
+    ),
   );
   $options = array(
     'sign' => FALSE,
@@ -837,7 +878,7 @@ function uc_paypal_wps_form($form_state, $order) {
 
   $context = array(
     'revision' => 'formatted-original',
-    'location' => 'paypal-wps-form',
+    'type' => 'amount',
   );
   $options = array(
     'sign' => FALSE,
@@ -898,11 +939,18 @@ function uc_paypal_wps_form($form_state, $order) {
     $data['paymentaction'] = 'authorization';
   }
 
+  $context['subject'] = array(
+    'order' => $order,
+  );
   if (variable_get('uc_paypal_wps_submit_method', 'single') == 'itemized') {
     // List individual items
+    $context['type'] = 'order_product';
+
     $i = 0;
     foreach ($order->products as $item) {
       $i++;
+      $context['subject']['product'] = $item;
+      $context['subject']['node'] = node_load($item->nid);
       $data['amount_'. $i] = uc_price($item->price, $context, $options);
       $data['item_name_'. $i] = $item->title;
       $data['item_number_'. $i] = $item->model;
@@ -921,6 +969,8 @@ function uc_paypal_wps_form($form_state, $order) {
   }
   else {
     // List the whole cart as a single item to account for fees/discounts
+    $context['type'] = 'order_total';
+
     $data['amount_1'] = uc_price($order->order_total - $shipping - $tax, $context, $options);
     $data['item_name_1'] = t('Order @order_id at !store', array('@order_id' => $order->order_id, '!store' => variable_get('uc_store_name', url('<front>', array('absolute' => TRUE)))));
     $data['on0_1'] = t('Product count');
