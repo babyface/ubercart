@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.install,v 1.9.2.15 2009/08/17 21:27:53 islandusurper Exp $
+// $Id: uc_order.install,v 1.9.2.16 2009/08/18 16:35:10 islandusurper Exp $
 
 /**
  * @file
@@ -1029,9 +1029,37 @@ function uc_order_update_6011() {
   );
   db_add_field($ret, 'uc_orders', 'product_count', $spec);
 
-  $result = db_query("SELECT order_id, SUM(qty) AS product_count FROM {uc_order_products} GROUP BY order_id");
+  return $ret;
+}
+
+/**
+ * Populate the total product quantity.
+ */
+function uc_order_update_6012(&$sandbox) {
+  $ret = array();
+
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_order_id'] = 0;
+    $sandbox['max'] = db_result(db_query("SELECT COUNT(DISTINCT order_id) FROM {uc_order_products} WHERE order_id <> 0"));
+  }
+
+  $limit = 100;
+
+  $result = db_query_range("SELECT order_id, SUM(qty) AS product_count FROM {uc_order_products} WHERE order_id > %d GROUP BY order_id", $sandbox['current_order_id'], 0, $limit);
   while ($row = db_fetch_object($result)) {
-    drupal_write_record('uc_orders', $row, 'order_id');
+    db_query("UPDATE {uc_orders} SET product_count = %d WHERE order_id = %d", $row->product_count, $row->order_id);
+
+    $sandbox['progress']++;
+    $sandbox['current_order_id'] = $row->order_id;
+  }
+
+
+  $ret['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+
+  if ($ret['#finished'] == 1) {
+    $t = get_t();
+    $ret[] = array('success' => TRUE, 'query' => $t("Populated the product count column for {uc_orders}."));
   }
 
   return $ret;
