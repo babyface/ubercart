@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.order_pane.inc,v 1.1.2.17 2009/08/17 21:27:53 islandusurper Exp $
+// $Id: uc_order.order_pane.inc,v 1.1.2.18 2009/08/20 23:40:35 islandusurper Exp $
 
 /**
  * @file
@@ -820,7 +820,7 @@ function op_products_view_table($order) {
 /**
  * Build the order customer's view products table.
  */
-function op_products_customer_table($products) {
+function op_products_customer_table($order) {
   $table = array(
     '#type' => 'tapir_table',
     '#attributes' => array('class' => 'order-pane-table'),

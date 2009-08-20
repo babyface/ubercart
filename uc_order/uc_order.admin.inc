@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_order.admin.inc,v 1.1.2.22 2009/08/17 21:27:53 islandusurper Exp $
+// $Id: uc_order.admin.inc,v 1.1.2.23 2009/08/20 23:40:35 islandusurper Exp $
 
 /**
  * @file
@@ -1041,7 +1041,7 @@ function uc_order_history($user) {
     );
   }
 
-  $output = theme('table', $header, $rows) . theme('pager', NULL, 20, 0);
+  $output = theme('table', $header, $rows, array('class' => 'uc-order-history')) . theme('pager', NULL, 20, 0);
 
   return $output;
 }
@@ -1695,7 +1695,7 @@ function uc_order_mail_invoice_form_submit($form, &$form_state) {
   $recipient = check_plain($form_state['values']['email']);
 
   $params = array('order' => $order);
-  $sent = drupal_mail('uc_order', 'invoice', $recipient, uc_store_mail_recipient_language($recipient), $params);
+  $sent = drupal_mail('uc_order', 'invoice', $recipient, uc_store_mail_recipient_language($recipient), $params, uc_store_email_from());
 
   if (!$sent) {
     drupal_set_message(t('E-mail failed.'));

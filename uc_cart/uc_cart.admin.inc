@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_cart.admin.inc,v 1.1.2.13 2009/08/17 21:27:55 islandusurper Exp $
+// $Id: uc_cart.admin.inc,v 1.1.2.14 2009/08/20 23:40:35 islandusurper Exp $
 
 /**
  * @file
@@ -73,11 +73,28 @@ function uc_cart_cart_settings_form() {
     '#field_suffix' => variable_get('uc_sign_after_amount', FALSE) ? variable_get('uc_currency_sign', '$') : '',
   );
 
+  $durations = array(
+    'singular' => array(
+      'minutes' => t('minute'),
+      'hours' => t('hour'),
+      'days' => t('day'),
+      'weeks' => t('week'),
+      'years' => t('year'),
+    ),
+    'plural' => array(
+      'minutes' => t('minutes'),
+      'hours' => t('hours'),
+      'days' => t('days'),
+      'weeks' => t('weeks'),
+      'years' => t('years'),
+    ),
+  );
+
   $form['anonymous'] = array(
     '#type' => 'fieldset',
     '#title' => t('Anonymous cart duration'),
     '#description' => t('Set the length of time products remain in the cart for customers who <strong>have not</strong> logged in.'),
-    '#summary' => t('Anonymous cart duration is @duration', array('@duration' => variable_get('uc_cart_anon_duration', '4') .' '. variable_get('uc_cart_anon_unit', 'hours'))),
+    '#summary' => format_plural(variable_get('uc_cart_anon_duration', '4'), 'Anonymous cart duration is @count @unit.', 'Anonymous cart duration is @count @units.', array('@unit' => $durations['singular'][variable_get('uc_cart_anon_unit', 'hours')], '@units' => $durations['plural'][variable_get('uc_cart_anon_unit', 'hours')])),
   );
   $form['anonymous']['uc_cart_anon_duration'] = array(
     '#type' => 'select',
@@ -106,7 +123,7 @@ function uc_cart_cart_settings_form() {
     '#type' => 'fieldset',
     '#title' => t('Authenticated cart duration'),
     '#description' => t('Set the length of time products remain in the cart for customers who <strong>have</strong> logged in.'),
-    '#summary' => t('Authenticated cart duration is @duration', array('@duration' => variable_get('uc_cart_auth_duration', '1') .' '. variable_get('uc_cart_auth_unit', 'years'))),
+    '#summary' => format_plural(variable_get('uc_cart_auth_duration', '1'), 'Authenticated cart duration is @count @unit.', 'Authenticated cart duration is @count @units.', array('@unit' => $durations['singular'][variable_get('uc_cart_auth_unit', 'years')], '@units' => $durations['plural'][variable_get('uc_cart_anon_unit', 'years')])),
   );
   $form['authenticated']['uc_cart_auth_duration'] = array(
     '#type' => 'select',

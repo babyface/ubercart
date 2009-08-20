@@ -1,5 +1,5 @@
 <?php
-// $Id: uc_attribute.module,v 1.12.2.33 2009/08/17 21:27:56 islandusurper Exp $
+// $Id: uc_attribute.module,v 1.12.2.34 2009/08/20 23:40:35 islandusurper Exp $
 
 /**
  * @file
@@ -614,31 +614,33 @@ function _uc_cart_product_get_options($item) {
   $index = 0;
   if (!empty($data['attributes']) && is_array($data['attributes'])) {
     foreach ($data['attributes'] as $aid => $selected) {
-      $attribute = $node->attributes[$aid];
-      // Only discrete options can affect the price of an item.
-      if ($attribute->display && count($attribute->options)) {
-        // There may be many selected options, or just one.
-        foreach ((array)$selected as $oid) {
-          if ($oid > 0) {
-            $options[$index] = (array)$attribute->options[$oid];
-            $options[$index]['attribute'] = _uc_attribute_get_name($attribute);
-            $index++;
+      if (isset($node->attributes[$aid])) {
+        $attribute = $node->attributes[$aid];
+        // Only discrete options can affect the price of an item.
+        if ($attribute->display && count($attribute->options)) {
+          // There may be many selected options, or just one.
+          foreach ((array)$selected as $oid) {
+            if ($oid > 0) {
+              $options[$index] = (array)$attribute->options[$oid];
+              $options[$index]['attribute'] = _uc_attribute_get_name($attribute);
+              $index++;
+            }
           }
         }
+        else {
+          // Handle textfield attributes.
+          $options[$index] = array(
+            'attribute' => _uc_attribute_get_name($attribute),
+            'aid' => $aid,
+            'oid' => 0,
+            'name' => $selected,
+            'cost' => 0,
+            'price' => 0,
+            'weight' => 0,
+          );
+        }
+        $index++;
       }
-      else {
-        // Handle textfield attributes.
-        $options[$index] = array(
-          'attribute' => _uc_attribute_get_name($attribute),
-          'aid' => $aid,
-          'oid' => 0,
-          'name' => $selected,
-          'cost' => 0,
-          'price' => 0,
-          'weight' => 0,
-        );
-      }
-      $index++;
     }
   }
   else {
