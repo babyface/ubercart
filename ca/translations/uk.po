@@ -1,4 +1,4 @@
-# $Id: uk.po,v 1.1.2.1 2009/09/05 21:44:20 podarok Exp $
+# $Id: uk.po,v 1.1.2.2 2009/09/05 22:17:56 podarok Exp $
 #
 # Ukrainian translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>
@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ubercart ca\n"
 "POT-Creation-Date: 2009-09-06 00:30+0300\n"
-"PO-Revision-Date: 2009-09-06 00:42+0300\n"
+"PO-Revision-Date: 2009-09-06 01:17+0300\n"
 "Last-Translator: Andriy Podanenko <podarok@ua.fm>\n"
 "Language-Team: Ukrainian <drupalua@googlegroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -89,7 +89,7 @@ msgstr "Введення назви, що використовуватиметь
 
 #: ca.admin.inc:167
 msgid "Select the trigger for this predicate.<br />Cannot be modified if the predicate has conditions or actions."
-msgstr ""
+msgstr "Оберіть тригер для предикату. <br />Неможливо змінювати, якщо предикат має умови або дії"
 
 #: ca.admin.inc:176
 #: ca.ca.inc:438
@@ -98,19 +98,19 @@ msgstr "Опис"
 
 #: ca.admin.inc:177
 msgid "Enter a description that summarizes the use and intent of the predicate."
-msgstr ""
+msgstr "Введення опису, що підсумовує використання і мету предикату"
 
 #: ca.admin.inc:191
 msgid "Classes let you categorize your predicates based on the type of functionality they provide."
-msgstr ""
+msgstr "Класи дозволяють Вам сортувати Ваші предикати, базуючись на типах функціональності, що вони надають."
 
 #: ca.admin.inc:206
 msgid "Disabled predicates will not be processed when their trigger is pulled."
-msgstr ""
+msgstr "Вимкнуні предикати не будуть виконані, якщо їхні тригери спрацювали"
 
 #: ca.admin.inc:217
 msgid "Predicates will be sorted by weight and processed sequentially."
-msgstr ""
+msgstr "Предикати будуть посортовані за вагою і оброблені почергово"
 
 #: ca.admin.inc:223
 msgid "Save predicate"
@@ -147,7 +147,7 @@ msgstr "Події"
 
 #: ca.admin.inc:346
 msgid "These actions will be performed in order when this predicate passes the conditions evaluation."
-msgstr ""
+msgstr "Ці дії будуть виконані в замовленні, якщо предикат пройде виконання умови"
 
 #: ca.admin.inc:360
 msgid "Action: @title"
@@ -161,7 +161,7 @@ msgstr "Аргументи"
 
 #: ca.admin.inc:380
 msgid "Some triggers pass in multiple options for arguments related to a particular action, so you must specify which options to use in the fields below."
-msgstr ""
+msgstr "Деякі тригери проходять багато параметрів для аргументів, що відносяться до певних дій, тому Вам потрібно вказати , які параметри використовувати в полях нижче"
 
 #: ca.admin.inc:419
 msgid "Remove this action"
@@ -197,11 +197,11 @@ msgstr "Умовні групи"
 
 #: ca.admin.inc:587
 msgid "AND. If all of these condition groups are TRUE."
-msgstr ""
+msgstr "І. При умові, якщо всі групи умов є ПРАВДА"
 
 #: ca.admin.inc:588
 msgid "OR. If any of these condition groups are TRUE."
-msgstr ""
+msgstr "АБО. При умові, якщо хоч одна з груп умов є ПРАВДА"
 
 #: ca.admin.inc:606
 msgid "Add condition group"
@@ -218,11 +218,11 @@ msgstr "Оператор"
 
 #: ca.admin.inc:642
 msgid "AND. If all of these conditions are TRUE."
-msgstr ""
+msgstr "І. При умові, якщо ці умови є ПРАВДА"
 
 #: ca.admin.inc:643
 msgid "OR. If any of these conditions are TRUE."
-msgstr ""
+msgstr "АБО. При умові, якщо хоч одна з цих умов є ПРАВДА"
 
 #: ca.admin.inc:661
 msgid "Available conditions"
@@ -246,7 +246,7 @@ msgstr "@description"
 
 #: ca.admin.inc:725
 msgid "Some triggers pass in multiple options for arguments related to a particular condition, so you must specify which options to use in the fields below."
-msgstr ""
+msgstr "Деякі тригери проходять багато параметрів для аргументів, що відносяться до певних умов, тому Вам потрібно вказати , які параметри використовувати в полях нижче"
 
 #: ca.admin.inc:756
 msgid "Negate this condition."
@@ -254,7 +254,7 @@ msgstr "Інверсія умови"
 
 #: ca.admin.inc:757
 msgid "Return FALSE if the condition is TRUE and vice versa."
-msgstr ""
+msgstr "Повернення НІ якщо умова є ПРАВДА"
 
 #: ca.admin.inc:774
 msgid "Remove this condition"
@@ -266,7 +266,7 @@ msgstr "Група умови додана."
 
 #: ca.admin.inc:814;845
 msgid "An error occurred when trying to add the condition.  Please try again."
-msgstr ""
+msgstr "Сталася помилка при додаванні умови. Спробуйте ще"
 
 #: ca.admin.inc:821
 msgid "Condition group removed."
@@ -274,11 +274,11 @@ msgstr "Групу умови видалено"
 
 #: ca.admin.inc:855
 msgid "%title condition added."
-msgstr ""
+msgstr "Додано %title умову."
 
 #: ca.admin.inc:891
 msgid "An error occurred when trying to remove the condition.  Please try again."
-msgstr ""
+msgstr "Сталася помилка при видаленні умови. Спробуйте ще"
 
 #: ca.admin.inc:897
 msgid "Condition removed."
@@ -290,7 +290,7 @@ msgstr "Умови збережено"
 
 #: ca.admin.inc:980
 msgid "Use this form during the update process from Ubercart 1.0 to 2.0 to convert your Workflow-ng configurations to Conditional Actions predicates.  Once your configurations are converted, you should complete your uninstallation of Workflow-ng."
-msgstr ""
+msgstr "Використовуйте цю форму протягом процесу оновлення Уберкарта з версії 1 до 2 для перетворення конфігурацій Workflow-ng до предикатів Умовних Дій. Як тільки конфігурації перетворені, Вам потрібно закінчити деінсталяцію Workflow-ng"
 
 #: ca.admin.inc:985
 #: ca.module:61
@@ -299,7 +299,7 @@ msgstr "Параметри перетворень"
 
 #: ca.admin.inc:999
 msgid "Converting Workflow-ng configurations"
-msgstr ""
+msgstr "Перетворення конфігурацій Workflow-ng"
 
 #: ca.admin.inc:1000
 msgid "Beginning conversion..."
@@ -307,11 +307,11 @@ msgstr "Початок перетворення..."
 
 #: ca.admin.inc:1001
 msgid "@percentage% converted"
-msgstr ""
+msgstr "@percentage% конвертовано"
 
 #: ca.admin.inc:1099
 msgid "Now processing %cfg"
-msgstr ""
+msgstr "Зараз обробляється %cfg"
 
 #: ca.ca.inc:23
 msgid "Drupal user"
@@ -331,7 +331,7 @@ msgstr "Перевірити поточну дату"
 
 #: ca.ca.inc:50
 msgid "Used to determine if the action should be performed on the current date."
-msgstr ""
+msgstr "Використано для визначення дії, що повинна виконатись в теперішню дату"
 
 #: ca.ca.inc:51;99
 msgid "Drupal"
@@ -339,11 +339,11 @@ msgstr "Друпал"
 
 #: ca.ca.inc:57
 msgid "Compare a node field value"
-msgstr ""
+msgstr "Порівняння значення поля матеріалу"
 
 #: ca.ca.inc:58
 msgid "Returns TRUE if the node field selected below compares to the value entered as specified by the operator."
-msgstr ""
+msgstr "Повернення ТАК, якщо поле матеріалу, обране нижче, порівнюється до значення введеного оператором"
 
 #: ca.ca.inc:67;105
 msgid "Execute custom PHP code"
@@ -351,7 +351,7 @@ msgstr "Виконання власного коду PHP"
 
 #: ca.ca.inc:68
 msgid "Returns whatever your custom PHP code returns."
-msgstr ""
+msgstr "Повертає будь-що, що повертає Ваш код PHP"
 
 #: ca.ca.inc:69;106
 msgid "System"
@@ -367,11 +367,11 @@ msgstr "Користувач"
 
 #: ca.ca.inc:79
 msgid "Returns TRUE if the user roles match your settings."
-msgstr ""
+msgstr "Повернення ПРАВДА, якщо користувач відповідає Вашим параметрам"
 
 #: ca.ca.inc:98
 msgid "Display a message to the user"
-msgstr ""
+msgstr "Відображення повідомлення користувачеві"
 
 #: ca.ca.inc:139
 msgid "Comparison"
@@ -391,7 +391,7 @@ msgstr "Після"
 
 #: ca.ca.inc:146
 msgid "Example: \"The current date is before the date below.\""
-msgstr ""
+msgstr "Приклад: \"Теперішня дата є перед датою нижче.\""
 
 #: ca.ca.inc:151
 msgid "Date"
@@ -399,11 +399,11 @@ msgstr "Дата"
 
 #: ca.ca.inc:153
 msgid "When the predicate is evaluated, the current date is compared to this date."
-msgstr ""
+msgstr "Коли предикат запущено, теперішня дата порівнюється до цієї дати"
 
 #: ca.ca.inc:244
 msgid "Core node fields"
-msgstr ""
+msgstr "Поля матеріалу ядра"
 
 #: ca.ca.inc:245
 msgid "Node ID"
@@ -411,7 +411,7 @@ msgstr "Ідентифікатор ноди"
 
 #: ca.ca.inc:246
 msgid "Node revision ID"
-msgstr ""
+msgstr "Ідентифікатор версії матеріалу"
 
 #: ca.ca.inc:247
 msgid "Node type"
@@ -419,7 +419,7 @@ msgstr "Тип ноди"
 
 #: ca.ca.inc:249
 msgid "Author's user ID"
-msgstr ""
+msgstr "Ідентифікатор автора"
 
 #: ca.ca.inc:250
 msgid "Node is published?"
@@ -467,7 +467,7 @@ msgstr "є меншим, ніж або дорівнює"
 
 #: ca.ca.inc:273
 msgid "Text matching"
-msgstr ""
+msgstr "Співпадання тексту"
 
 #: ca.ca.inc:274
 msgid "begins with"
@@ -507,7 +507,7 @@ msgstr "Вам не потрібно детально визначати вар�
 
 #: ca.ca.inc:329
 msgid "Message text"
-msgstr ""
+msgstr "Текст повідомлення"
 
 #: ca.ca.inc:335
 msgid "Formatting guidelines"
@@ -527,19 +527,19 @@ msgstr "Власний PHP"
 
 #: ca.ca.inc:363
 msgid "Enter the custom PHP to be evaluated when this condition is executed.  Should not include &lt;?php ?> delimiters."
-msgstr ""
+msgstr "Введення власного PHP для виконання, коли умова виконується. Не потрібно вказувати &lt;?php ?> теги"
 
 #: ca.ca.inc:396
 msgid "If you specify <em>AND</em> and want to check a custom role, remember to specify <em>authenticated user</em> where applicable."
-msgstr ""
+msgstr "Якщо вказано <em>І</em> і хочется перевірити спеціальну роль, пам'ятайте вказувати <em>зареєстрований користувач</em> де потрібно"
 
 #: ca.ca.inc:398
 msgid "OR: If the user has any of these roles."
-msgstr ""
+msgstr "АБО. Якщо користувач має одну з цих ролей"
 
 #: ca.ca.inc:399
 msgid "AND: If the user has all of these roles."
-msgstr ""
+msgstr "І. Якщо користувач має всі ці ролі"
 
 #: ca.ca.inc:405
 msgid "Roles"
@@ -547,7 +547,7 @@ msgstr "Ролі"
 
 #: ca.ca.inc:424
 msgid "Enter the custom PHP to be evaluated when this action is executed.  Should not include &lt;?php ?> delimiters."
-msgstr ""
+msgstr "Введення власного PHP для старту, якщо дія виконується. Не вставляйте  &lt;?php ?> теги"
 
 #: ca.ca.inc:438
 msgid "Variable"
@@ -567,7 +567,7 @@ msgstr "Наявні змінні PHP"
 
 #: ca.ca.inc:452
 msgid "You may use these variables in your custom PHP."
-msgstr ""
+msgstr "Ви можете використовувати ці змінні в Вашому PHP"
 
 #: ca.module:140
 msgid "administer conditional actions"
@@ -579,7 +579,7 @@ msgstr "Умовні дії"
 
 #: ca.module:23;36;42
 msgid "Administer the predicates setup to automate your store."
-msgstr ""
+msgstr "Керування параметрами предикатів для автоматизації магазину"
 
 #: ca.module:30
 msgid "Overview"
@@ -595,11 +595,11 @@ msgstr "За класом"
 
 #: ca.module:52
 msgid "Allows an administrator to create a new predicate."
-msgstr ""
+msgstr "Дозвіл адміністратору на створення нових предикатів"
 
 #: ca.module:62
 msgid "Convert Workflow-ng configurations into Conditional Actions predicates."
-msgstr ""
+msgstr "Конвертування конфігурацій Workflow-ng в предикати Умовних Дій"
 
 #: ca.module:71
 msgid "Edit predicate"
@@ -607,7 +607,7 @@ msgstr "Редагування предиката"
 
 #: ca.module:72
 msgid "Edit a predicate's meta data, conditions, and actions."
-msgstr ""
+msgstr "Редагування мета даних предикату, умов і дій"
 
 #: ca.module:80
 msgid "Meta data"
@@ -615,7 +615,7 @@ msgstr "Мета дані"
 
 #: ca.module:81
 msgid "Edit the meta data for a predicate like title, trigger, etc."
-msgstr ""
+msgstr "Редагування мета даних для предикату - назва, тригер інше"
 
 #: ca.module:90
 msgid "Conditions"
@@ -623,7 +623,7 @@ msgstr "Умови"
 
 #: ca.module:91
 msgid "Edit the conditions for a predicate."
-msgstr ""
+msgstr "Введення умов для предикату"
 
 #: ca.module:101
 msgid "Edit the actions for a predicate."
@@ -643,7 +643,7 @@ msgstr "Умовні дії"
 
 #: ca.info:0
 msgid "REQUIRED. Create conditional action configurations for taxes, shipping, and more!"
-msgstr ""
+msgstr "ОБОВ'ЯЗКОВЕ. Створення конфігурацій умовної дії для податків, доставки і іншого! "
 
 #: ca.info:0
 msgid "Ubercart - core"
